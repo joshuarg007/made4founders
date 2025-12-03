@@ -1,0 +1,98 @@
+import { Outlet, NavLink } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Link2,
+  FileText,
+  Users,
+  Calendar,
+  Rocket,
+  ClipboardCheck,
+  Building2,
+  Globe,
+  LogOut,
+  Sparkles,
+  Shield,
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
+const navItems = [
+  { to: '/', icon: Sparkles, label: 'Daily Brief' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/getting-started', icon: ClipboardCheck, label: 'Getting Started' },
+  { to: '/library', icon: Building2, label: 'Business Library' },
+  { to: '/website', icon: Globe, label: 'Web Presence' },
+  { to: '/services', icon: Link2, label: 'Services' },
+  { to: '/documents', icon: FileText, label: 'Documents' },
+  { to: '/contacts', icon: Users, label: 'Contacts' },
+  { to: '/deadlines', icon: Calendar, label: 'Deadlines' },
+  { to: '/vault', icon: Shield, label: 'Credential Vault' },
+];
+
+export default function Layout() {
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="flex h-screen bg-[#0f1117]">
+      {/* Sidebar */}
+      <aside className="w-64 bg-[#1a1d24] border-r border-white/10 flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
+              <Rocket className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">FounderOS</h1>
+              <p className="text-xs text-gray-500">Command Center</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-white/10 text-white'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="font-medium">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-white/10 space-y-3">
+          {user && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400 truncate">{user.email}</span>
+              <button
+                onClick={logout}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          <div className="text-xs text-gray-500 text-center">
+            FounderOS v1.0
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
