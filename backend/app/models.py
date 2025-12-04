@@ -58,6 +58,43 @@ class DeadlineType(str, enum.Enum):
     OTHER = "other"
 
 
+class ProductOfferedCategory(str, enum.Enum):
+    SOFTWARE = "software"
+    SAAS = "saas"
+    HARDWARE = "hardware"
+    CONSULTING = "consulting"
+    SERVICE = "service"
+    SUBSCRIPTION = "subscription"
+    LICENSE = "license"
+    OTHER = "other"
+
+
+class ProductUsedCategory(str, enum.Enum):
+    DEVELOPMENT = "development"
+    INFRASTRUCTURE = "infrastructure"
+    PRODUCTIVITY = "productivity"
+    COMMUNICATION = "communication"
+    MARKETING = "marketing"
+    FINANCE = "finance"
+    HR = "hr"
+    ANALYTICS = "analytics"
+    SECURITY = "security"
+    DESIGN = "design"
+    OTHER = "other"
+
+
+class WebLinkCategory(str, enum.Enum):
+    BUSINESS = "business"
+    GOVERNMENT = "government"
+    FINANCIAL = "financial"
+    LEGAL = "legal"
+    RESEARCH = "research"
+    NEWS = "news"
+    TOOLS = "tools"
+    REFERENCE = "reference"
+    OTHER = "other"
+
+
 class Service(Base):
     __tablename__ = "services"
 
@@ -237,3 +274,56 @@ class Credential(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     related_service = relationship("Service")
+
+
+class ProductOffered(Base):
+    """Products and services that the business offers/sells"""
+    __tablename__ = "products_offered"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(50), default=ProductOfferedCategory.OTHER.value)
+    pricing_model = Column(String(50), nullable=True)  # one-time, subscription, hourly, etc.
+    price = Column(String(100), nullable=True)  # Price description (e.g., "$99/mo", "Contact us")
+    url = Column(String(500), nullable=True)  # Product page URL
+    icon = Column(String(100), nullable=True)
+    is_active = Column(Boolean, default=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ProductUsed(Base):
+    """Tools and services that the business uses"""
+    __tablename__ = "products_used"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    vendor = Column(String(255), nullable=True)  # Company that provides it
+    category = Column(String(50), default=ProductUsedCategory.OTHER.value)
+    is_paid = Column(Boolean, default=False)
+    monthly_cost = Column(String(100), nullable=True)  # e.g., "$50/mo" or "Free tier"
+    billing_cycle = Column(String(50), nullable=True)  # monthly, annually, etc.
+    url = Column(String(500), nullable=True)
+    icon = Column(String(100), nullable=True)
+    notes = Column(Text, nullable=True)
+    renewal_date = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class WebLink(Base):
+    """Important web links and bookmarks"""
+    __tablename__ = "web_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    url = Column(String(500), nullable=False)
+    category = Column(String(50), default=WebLinkCategory.OTHER.value)
+    description = Column(Text, nullable=True)
+    icon = Column(String(100), nullable=True)
+    is_favorite = Column(Boolean, default=False)
+    last_visited = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

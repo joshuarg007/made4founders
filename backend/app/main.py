@@ -8,7 +8,7 @@ import os
 import shutil
 
 from .database import engine, get_db, Base
-from .models import Service, Document, Contact, Deadline, BusinessInfo, BusinessIdentifier, ChecklistProgress, User, VaultConfig, Credential
+from .models import Service, Document, Contact, Deadline, BusinessInfo, BusinessIdentifier, ChecklistProgress, User, VaultConfig, Credential, ProductOffered, ProductUsed, WebLink
 from .auth import router as auth_router
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
@@ -20,7 +20,10 @@ from .schemas import (
     BusinessIdentifierCreate, BusinessIdentifierUpdate, BusinessIdentifierResponse, BusinessIdentifierMasked,
     ChecklistProgressCreate, ChecklistProgressUpdate, ChecklistProgressResponse,
     VaultSetup, VaultUnlock, VaultStatus,
-    CredentialCreate, CredentialUpdate, CredentialMasked, CredentialDecrypted
+    CredentialCreate, CredentialUpdate, CredentialMasked, CredentialDecrypted,
+    ProductOfferedCreate, ProductOfferedUpdate, ProductOfferedResponse,
+    ProductUsedCreate, ProductUsedUpdate, ProductUsedResponse,
+    WebLinkCreate, WebLinkUpdate, WebLinkResponse
 )
 from .vault import (
     generate_salt, derive_key, hash_master_password, verify_master_password,
@@ -939,3 +942,165 @@ def copy_credential_field(credential_id: int, field: str, key: bytes = Depends(r
         return {"value": None}
 
     return {"value": decrypt_value(encrypted_value, key)}
+
+
+# ============ Products Offered ============
+@app.get("/api/products-offered", response_model=List[ProductOfferedResponse])
+def get_products_offered(category: str = None, db: Session = Depends(get_db)):
+    query = db.query(ProductOffered)
+    if category:
+        query = query.filter(ProductOffered.category == category)
+    return query.order_by(ProductOffered.name).all()
+
+
+@app.post("/api/products-offered", response_model=ProductOfferedResponse)
+def create_product_offered(product: ProductOfferedCreate, db: Session = Depends(get_db)):
+    db_product = ProductOffered(**product.model_dump())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+@app.get("/api/products-offered/{product_id}", response_model=ProductOfferedResponse)
+def get_product_offered(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
+@app.patch("/api/products-offered/{product_id}", response_model=ProductOfferedResponse)
+def update_product_offered(product_id: int, product: ProductOfferedUpdate, db: Session = Depends(get_db)):
+    db_product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    for key, value in product.model_dump(exclude_unset=True).items():
+        setattr(db_product, key, value)
+
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+@app.delete("/api/products-offered/{product_id}")
+def delete_product_offered(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    return {"ok": True}
+
+
+# ============ Products Used ============
+@app.get("/api/products-used", response_model=List[ProductUsedResponse])
+def get_products_used(category: str = None, is_paid: bool = None, db: Session = Depends(get_db)):
+    query = db.query(ProductUsed)
+    if category:
+        query = query.filter(ProductUsed.category == category)
+    if is_paid is not None:
+        query = query.filter(ProductUsed.is_paid == is_paid)
+    return query.order_by(ProductUsed.name).all()
+
+
+@app.post("/api/products-used", response_model=ProductUsedResponse)
+def create_product_used(product: ProductUsedCreate, db: Session = Depends(get_db)):
+    db_product = ProductUsed(**product.model_dump())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+@app.get("/api/products-used/{product_id}", response_model=ProductUsedResponse)
+def get_product_used(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
+@app.patch("/api/products-used/{product_id}", response_model=ProductUsedResponse)
+def update_product_used(product_id: int, product: ProductUsedUpdate, db: Session = Depends(get_db)):
+    db_product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    for key, value in product.model_dump(exclude_unset=True).items():
+        setattr(db_product, key, value)
+
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+@app.delete("/api/products-used/{product_id}")
+def delete_product_used(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    return {"ok": True}
+
+
+# ============ Web Links ============
+@app.get("/api/web-links", response_model=List[WebLinkResponse])
+def get_web_links(category: str = None, db: Session = Depends(get_db)):
+    query = db.query(WebLink)
+    if category:
+        query = query.filter(WebLink.category == category)
+    return query.order_by(WebLink.is_favorite.desc(), WebLink.title).all()
+
+
+@app.post("/api/web-links", response_model=WebLinkResponse)
+def create_web_link(link: WebLinkCreate, db: Session = Depends(get_db)):
+    db_link = WebLink(**link.model_dump())
+    db.add(db_link)
+    db.commit()
+    db.refresh(db_link)
+    return db_link
+
+
+@app.get("/api/web-links/{link_id}", response_model=WebLinkResponse)
+def get_web_link(link_id: int, db: Session = Depends(get_db)):
+    link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Web link not found")
+    return link
+
+
+@app.patch("/api/web-links/{link_id}", response_model=WebLinkResponse)
+def update_web_link(link_id: int, link: WebLinkUpdate, db: Session = Depends(get_db)):
+    db_link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    if not db_link:
+        raise HTTPException(status_code=404, detail="Web link not found")
+
+    for key, value in link.model_dump(exclude_unset=True).items():
+        setattr(db_link, key, value)
+
+    db.commit()
+    db.refresh(db_link)
+    return db_link
+
+
+@app.delete("/api/web-links/{link_id}")
+def delete_web_link(link_id: int, db: Session = Depends(get_db)):
+    link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Web link not found")
+    db.delete(link)
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/web-links/{link_id}/visit")
+def record_web_link_visit(link_id: int, db: Session = Depends(get_db)):
+    link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Web link not found")
+    link.last_visited = datetime.utcnow()
+    db.commit()
+    return {"ok": True}

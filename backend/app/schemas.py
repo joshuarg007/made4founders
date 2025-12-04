@@ -389,3 +389,114 @@ class CredentialDecrypted(CredentialBase):
 
     class Config:
         from_attributes = True
+
+
+# Product Offered schemas
+class ProductOfferedBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    category: str = "other"
+    pricing_model: Optional[str] = None
+    price: Optional[str] = None
+    url: Optional[str] = None
+    icon: Optional[str] = None
+    is_active: bool = True
+    notes: Optional[str] = None
+
+
+class ProductOfferedCreate(ProductOfferedBase):
+    pass
+
+
+class ProductOfferedUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    pricing_model: Optional[str] = None
+    price: Optional[str] = None
+    url: Optional[str] = None
+    icon: Optional[str] = None
+    is_active: Optional[bool] = None
+    notes: Optional[str] = None
+
+
+class ProductOfferedResponse(ProductOfferedBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Product Used schemas
+class ProductUsedBase(BaseModel):
+    name: str
+    vendor: Optional[str] = None
+    category: str = "other"
+    is_paid: bool = False
+    monthly_cost: Optional[str] = None
+    billing_cycle: Optional[str] = None
+    url: Optional[str] = None
+    icon: Optional[str] = None
+    notes: Optional[str] = None
+    renewal_date: Optional[datetime] = None
+
+
+class ProductUsedCreate(ProductUsedBase):
+    pass
+
+
+class ProductUsedUpdate(BaseModel):
+    name: Optional[str] = None
+    vendor: Optional[str] = None
+    category: Optional[str] = None
+    is_paid: Optional[bool] = None
+    monthly_cost: Optional[str] = None
+    billing_cycle: Optional[str] = None
+    url: Optional[str] = None
+    icon: Optional[str] = None
+    notes: Optional[str] = None
+    renewal_date: Optional[datetime] = None
+
+
+class ProductUsedResponse(ProductUsedBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Web Link schemas
+class WebLinkBase(BaseModel):
+    title: str
+    url: str
+    category: str = "other"
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    is_favorite: bool = False
+
+
+class WebLinkCreate(WebLinkBase):
+    pass
+
+
+class WebLinkUpdate(BaseModel):
+    title: Optional[str] = None
+    url: Optional[str] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    is_favorite: Optional[bool] = None
+
+
+class WebLinkResponse(WebLinkBase):
+    id: int
+    last_visited: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

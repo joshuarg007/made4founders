@@ -17,9 +17,8 @@ import {
   getDailyBrief,
   completeDeadlineAction,
   recordContactTouch,
-  DailyBrief as DailyBriefType,
-  DailyBriefItem,
 } from '../lib/api';
+import type { DailyBrief as DailyBriefType, DailyBriefItem } from '../lib/api';
 
 export default function DailyBrief() {
   const [brief, setBrief] = useState<DailyBriefType | null>(null);

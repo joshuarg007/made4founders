@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
+// FounderOS API Client
+const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -303,3 +304,94 @@ export const deleteCredential = (id: number) =>
 
 export const copyCredentialField = (id: number, field: 'username' | 'password' | 'notes' | 'totp_secret') =>
   fetchApi<{ value: string | null }>(`/credentials/${id}/copy/${field}`);
+
+// Products Offered
+export interface ProductOffered {
+  id: number;
+  name: string;
+  description: string | null;
+  category: string;
+  pricing_model: string | null;
+  price: string | null;
+  url: string | null;
+  icon: string | null;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getProductsOffered = (category?: string) =>
+  fetchApi<ProductOffered[]>(`/products-offered${category ? `?category=${category}` : ''}`);
+
+export const createProductOffered = (data: Partial<ProductOffered>) =>
+  fetchApi<ProductOffered>('/products-offered', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateProductOffered = (id: number, data: Partial<ProductOffered>) =>
+  fetchApi<ProductOffered>(`/products-offered/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteProductOffered = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/products-offered/${id}`, { method: 'DELETE' });
+
+// Products Used
+export interface ProductUsed {
+  id: number;
+  name: string;
+  vendor: string | null;
+  category: string;
+  is_paid: boolean;
+  monthly_cost: string | null;
+  billing_cycle: string | null;
+  url: string | null;
+  icon: string | null;
+  notes: string | null;
+  renewal_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getProductsUsed = (category?: string, isPaid?: boolean) => {
+  const params = new URLSearchParams();
+  if (category) params.append('category', category);
+  if (isPaid !== undefined) params.append('is_paid', String(isPaid));
+  const query = params.toString();
+  return fetchApi<ProductUsed[]>(`/products-used${query ? `?${query}` : ''}`);
+};
+
+export const createProductUsed = (data: Partial<ProductUsed>) =>
+  fetchApi<ProductUsed>('/products-used', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateProductUsed = (id: number, data: Partial<ProductUsed>) =>
+  fetchApi<ProductUsed>(`/products-used/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteProductUsed = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/products-used/${id}`, { method: 'DELETE' });
+
+// Web Links
+export interface WebLink {
+  id: number;
+  title: string;
+  url: string;
+  category: string;
+  description: string | null;
+  icon: string | null;
+  is_favorite: boolean;
+  last_visited: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getWebLinks = (category?: string) =>
+  fetchApi<WebLink[]>(`/web-links${category ? `?category=${category}` : ''}`);
+
+export const createWebLink = (data: Partial<WebLink>) =>
+  fetchApi<WebLink>('/web-links', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateWebLink = (id: number, data: Partial<WebLink>) =>
+  fetchApi<WebLink>(`/web-links/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteWebLink = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/web-links/${id}`, { method: 'DELETE' });
+
+export const recordWebLinkVisit = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/web-links/${id}/visit`, { method: 'POST' });

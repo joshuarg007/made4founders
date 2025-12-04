@@ -12,6 +12,9 @@ import Library from './pages/Library'
 import Website from './pages/Website'
 import Vault from './pages/Vault'
 import Login from './pages/Login'
+import ProductsOffered from './pages/ProductsOffered'
+import ProductsUsed from './pages/ProductsUsed'
+import WebLinks from './pages/WebLinks'
 
 function App() {
   return (
@@ -35,6 +38,9 @@ function App() {
         <Route path="contacts" element={<Contacts />} />
         <Route path="deadlines" element={<Deadlines />} />
         <Route path="vault" element={<Vault />} />
+        <Route path="products-offered" element={<ProductsOffered />} />
+        <Route path="products-used" element={<ProductsUsed />} />
+        <Route path="web-links" element={<WebLinks />} />
       </Route>
     </Routes>
   )

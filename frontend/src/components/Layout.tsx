@@ -12,6 +12,9 @@ import {
   LogOut,
   Sparkles,
   Shield,
+  Package,
+  Wrench,
+  Bookmark,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,6 +24,9 @@ const navItems = [
   { to: '/getting-started', icon: ClipboardCheck, label: 'Getting Started' },
   { to: '/library', icon: Building2, label: 'Business Library' },
   { to: '/website', icon: Globe, label: 'Web Presence' },
+  { to: '/products-offered', icon: Package, label: 'Products Offered' },
+  { to: '/products-used', icon: Wrench, label: 'Tools Used' },
+  { to: '/web-links', icon: Bookmark, label: 'Web Links' },
   { to: '/services', icon: Link2, label: 'Services' },
   { to: '/documents', icon: FileText, label: 'Documents' },
   { to: '/contacts', icon: Users, label: 'Contacts' },
