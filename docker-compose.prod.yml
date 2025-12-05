@@ -1,0 +1,63 @@
+# Production docker-compose - uses pre-built images from GHCR
+# This file is used by CI/CD for fast deployments (no build required)
+
+services:
+  backend:
+    image: ghcr.io/joshuarg007/founderos/backend:latest
+    container_name: founderos-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite:///./data/founderos.db
+      - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
+      - CORS_ORIGINS=https://founders.axiondeep.com
+    volumes:
+      - backend-data:/app/data
+    networks:
+      - founderos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: ghcr.io/joshuarg007/founderos/frontend:latest
+    container_name: founderos-frontend
+    restart: unless-stopped
+    networks:
+      - founderos-network
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: founderos-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot-webroot:/var/www/certbot:ro
+    networks:
+      - founderos-network
+    depends_on:
+      - frontend
+      - backend
+
+  certbot:
+    image: certbot/certbot
+    container_name: founderos-certbot
+    volumes:
+      - ./nginx/ssl:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  backend-data:
+  certbot-webroot:
+
+networks:
+  founderos-network:
+    driver: bridge

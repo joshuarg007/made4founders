@@ -310,6 +310,7 @@ class UserResponse(BaseModel):
     id: int
     email: str
     name: Optional[str]
+    role: str = "viewer"
     is_active: bool
     created_at: datetime
 
@@ -320,6 +321,24 @@ class UserResponse(BaseModel):
 class UserMe(BaseModel):
     email: str
     name: Optional[str]
+    role: str = "viewer"
+
+
+# User Management schemas (admin only)
+class UserAdminCreate(BaseModel):
+    email: str
+    password: str
+    name: Optional[str] = None
+    role: str = "viewer"
+    is_active: bool = True
+
+
+class UserAdminUpdate(BaseModel):
+    email: Optional[str] = None
+    password: Optional[str] = None
+    name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 # Vault schemas

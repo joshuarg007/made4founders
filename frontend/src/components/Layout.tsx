@@ -15,6 +15,7 @@ import {
   Package,
   Wrench,
   Bookmark,
+  UserCog,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -73,6 +74,23 @@ export default function Layout() {
               <span className="font-medium">{item.label}</span>
             </NavLink>
           ))}
+
+          {/* Admin-only: User Management */}
+          {user?.role === 'admin' && (
+            <NavLink
+              to="/users"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-white/10 text-white'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <UserCog className="w-5 h-5" />
+              <span className="font-medium">Users</span>
+            </NavLink>
+          )}
         </nav>
 
         {/* Footer */}

@@ -62,7 +62,15 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /opt/founderos
-            docker compose pull
-            docker compose up -d --force-recreate
+            cd ~/founderos
+            git pull origin main
+            # Login to GHCR to pull images (uses PAT stored in GHCR_TOKEN secret)
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u joshuarg007 --password-stdin
+            # Use production compose file (pre-built images from GHCR)
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --force-recreate
             docker system prune -f
+            docker logout ghcr.io
+          envs: GHCR_TOKEN
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}

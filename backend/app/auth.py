@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from .database import get_db
 from .models import User
-from .schemas import Token, UserCreate, UserResponse, UserMe
+from .schemas import Token, UserCreate, UserResponse, UserMe, UserAdminCreate, UserAdminUpdate
 from . import security
 
 router = APIRouter()
@@ -130,7 +130,7 @@ def logout(response: Response):
 
 @router.get("/me", response_model=UserMe)
 def me(current_user: User = Depends(get_current_user)):
-    return {"email": current_user.email, "name": current_user.name}
+    return {"email": current_user.email, "name": current_user.name, "role": current_user.role or "viewer"}
 
 
 @router.post("/register", response_model=UserResponse)
@@ -147,12 +147,17 @@ def register(
             detail="Email already registered"
         )
 
+    # Check if this is the first user - make them admin
+    user_count = db.query(User).count()
+    is_first_user = user_count == 0
+
     # Create user
     hashed_password = security.get_password_hash(user_data.password)
     user = User(
         email=user_data.email,
         hashed_password=hashed_password,
         name=user_data.name,
+        role="admin" if is_first_user else "viewer",
     )
     db.add(user)
     db.commit()
@@ -164,3 +169,129 @@ def register(
     security.set_auth_cookies(response, access, refresh)
 
     return user
+
+
+# ============ Admin-only User Management ============
+
+def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    """Require admin role for user management."""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+    return current_user
+
+
+@router.get("/users", response_model=List[UserResponse])
+def list_users(
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """List all users (admin only)."""
+    return db.query(User).order_by(User.created_at.desc()).all()
+
+
+@router.post("/users", response_model=UserResponse)
+def create_user(
+    user_data: UserAdminCreate,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Create a new user (admin only)."""
+    existing = db.query(User).filter(User.email == user_data.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    if user_data.role not in ["admin", "editor", "viewer"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    hashed_password = security.get_password_hash(user_data.password)
+    user = User(
+        email=user_data.email,
+        hashed_password=hashed_password,
+        name=user_data.name,
+        role=user_data.role,
+        is_active=user_data.is_active,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.get("/users/{user_id}", response_model=UserResponse)
+def get_user(
+    user_id: int,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Get a specific user (admin only)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.patch("/users/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    user_data: UserAdminUpdate,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Update a user (admin only)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    update_data = user_data.model_dump(exclude_unset=True)
+
+    # Prevent removing the last admin
+    if update_data.get("role") and update_data["role"] != "admin" and user.role == "admin":
+        admin_count = db.query(User).filter(User.role == "admin", User.is_active == True).count()
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot remove the last admin")
+
+    # Hash password if provided
+    if "password" in update_data and update_data["password"]:
+        update_data["hashed_password"] = security.get_password_hash(update_data.pop("password"))
+    elif "password" in update_data:
+        del update_data["password"]
+
+    # Validate role
+    if "role" in update_data and update_data["role"] not in ["admin", "editor", "viewer"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    for key, value in update_data.items():
+        setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a user (admin only)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent self-deletion
+    if user.id == admin.id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+
+    # Prevent deleting the last admin
+    if user.role == "admin":
+        admin_count = db.query(User).filter(User.role == "admin", User.is_active == True).count()
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot delete the last admin")
+
+    db.delete(user)
+    db.commit()
+    return {"ok": True}

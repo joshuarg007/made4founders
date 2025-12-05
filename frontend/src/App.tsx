@@ -15,6 +15,7 @@ import Login from './pages/Login'
 import ProductsOffered from './pages/ProductsOffered'
 import ProductsUsed from './pages/ProductsUsed'
 import WebLinks from './pages/WebLinks'
+import Users from './pages/Users'
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
         <Route path="products-offered" element={<ProductsOffered />} />
         <Route path="products-used" element={<ProductsUsed />} />
         <Route path="web-links" element={<WebLinks />} />
+        <Route path="users" element={<Users />} />
       </Route>
     </Routes>
   )

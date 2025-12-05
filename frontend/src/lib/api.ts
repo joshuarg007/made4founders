@@ -395,3 +395,41 @@ export const deleteWebLink = (id: number) =>
 
 export const recordWebLinkVisit = (id: number) =>
   fetchApi<{ ok: boolean }>(`/web-links/${id}/visit`, { method: 'POST' });
+
+// User Management (Admin only)
+export interface UserResponse {
+  id: number;
+  email: string;
+  name: string | null;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserCreate {
+  email: string;
+  password: string;
+  name?: string | null;
+  role?: string;
+  is_active?: boolean;
+}
+
+export interface UserUpdate {
+  email?: string;
+  password?: string;
+  name?: string | null;
+  role?: string;
+  is_active?: boolean;
+}
+
+export const getUsers = () =>
+  fetchApi<UserResponse[]>('/auth/users');
+
+export const createUser = (data: UserCreate) =>
+  fetchApi<UserResponse>('/auth/users', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateUser = (id: number, data: UserUpdate) =>
+  fetchApi<UserResponse>(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteUser = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/auth/users/${id}`, { method: 'DELETE' });

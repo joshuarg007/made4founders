@@ -115,9 +115,6 @@ export default function ProductsUsed() {
     }
   };
 
-  const paidProducts = filteredProducts.filter(p => p.is_paid);
-  const freeProducts = filteredProducts.filter(p => !p.is_paid);
-
   return (
     <div className="p-8 space-y-6">
       {/* Header */}

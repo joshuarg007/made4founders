@@ -7,7 +7,6 @@ import {
   MapPin,
   ExternalLink,
   CheckCircle2,
-  Circle,
   ArrowRight,
   ClipboardCheck
 } from 'lucide-react';

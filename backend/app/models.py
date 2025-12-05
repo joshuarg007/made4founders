@@ -229,6 +229,12 @@ class ChecklistProgress(Base):
     related_identifier = relationship("BusinessIdentifier")
 
 
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    EDITOR = "editor"
+    VIEWER = "viewer"
+
+
 class User(Base):
     """User authentication"""
     __tablename__ = "users"
@@ -237,6 +243,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     name = Column(String(255), nullable=True)
+    role = Column(String(50), default=UserRole.VIEWER.value)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
