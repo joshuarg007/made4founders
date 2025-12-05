@@ -7,8 +7,6 @@ import {
   Trash2,
   X,
   Search,
-  Upload,
-  AlertTriangle,
   CloudUpload,
   Loader2
 } from 'lucide-react';

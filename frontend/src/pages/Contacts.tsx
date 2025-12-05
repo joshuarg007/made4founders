@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import {
   Plus,
-  User,
   Mail,
   Phone,
   Globe,
@@ -620,9 +619,6 @@ export default function Contacts() {
   const filteredTitles = availableTitles.filter(t =>
     t.toLowerCase().includes(titleSearch.toLowerCase())
   );
-
-  // Check if current title is custom (not in the list)
-  const isCustomTitle = formData.title && !availableTitles.includes(formData.title);
 
   // Select a title
   const selectTitle = (title: string) => {

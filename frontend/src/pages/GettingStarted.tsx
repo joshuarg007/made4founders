@@ -527,9 +527,7 @@ export default function GettingStarted() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(categories.map(c => c.name))
   );
-  const [editingNotes, setEditingNotes] = useState<string | null>(null);
-  const [notesDraft, setNotesDraft] = useState<string>('');
-  const [dataDrafts, setDataDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [editingNotes] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<ChecklistItem | null>(null);
   const [modalFile, setModalFile] = useState<File | null>(null);
   const [modalDataFields, setModalDataFields] = useState<Record<string, string>>({});
@@ -671,52 +669,6 @@ export default function GettingStarted() {
       setIsEditMode(false);
       setConfirmModal(null);
     }
-  };
-
-  const saveNotes = async (id: string) => {
-    const current = progress[id];
-    const itemData = checklistData.find(i => i.id === id);
-    const dataToSave = dataDrafts[id] ? JSON.stringify(dataDrafts[id]) : current?.data;
-
-    try {
-      const res = await fetch(`${API_BASE}/checklist`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          item_id: id,
-          is_completed: current?.is_completed || false,
-          notes: notesDraft || null,
-          data: dataToSave || null
-        })
-      });
-
-      if (res.ok) {
-        const updated = await res.json();
-        setProgress(prev => ({ ...prev, [id]: updated }));
-        setEditingNotes(null);
-        setNotesDraft('');
-      }
-    } catch (error) {
-      console.error('Failed to save notes:', error);
-    }
-  };
-
-  const startEditingNotes = (id: string) => {
-    const current = progress[id];
-    setNotesDraft(current?.notes || '');
-
-    // Load existing data into drafts
-    if (current?.data) {
-      try {
-        setDataDrafts(prev => ({ ...prev, [id]: JSON.parse(current.data!) }));
-      } catch {
-        setDataDrafts(prev => ({ ...prev, [id]: {} }));
-      }
-    } else {
-      setDataDrafts(prev => ({ ...prev, [id]: {} }));
-    }
-
-    setEditingNotes(id);
   };
 
   const toggleExpand = (id: string) => {

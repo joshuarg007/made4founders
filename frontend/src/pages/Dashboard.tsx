@@ -11,7 +11,6 @@ import {
   Star,
   TrendingUp,
   CheckCircle2,
-  Building2,
   FileText,
   Users,
   Calendar,
@@ -19,7 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { getDashboardStats, getBusinessInfo, getDeadlines, getContacts, getDocuments, type DashboardStats, type BusinessInfo, type Deadline } from '../lib/api';
-import { differenceInDays, differenceInMonths, differenceInYears, format } from 'date-fns';
+import { differenceInDays, differenceInMonths, differenceInYears } from 'date-fns';
 
 interface Achievement {
   id: string;
