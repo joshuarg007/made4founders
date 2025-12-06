@@ -750,3 +750,49 @@ class TaskActivityResponse(BaseModel):
 class ColumnReorder(BaseModel):
     id: int
     position: int
+
+
+# ============ Metrics Schemas ============
+
+class MetricBase(BaseModel):
+    metric_type: str  # mrr, arr, revenue, customers, users, burn_rate, runway, cash, cac, ltv, churn, nps, custom
+    name: str
+    value: str
+    unit: Optional[str] = None
+    date: datetime
+    notes: Optional[str] = None
+
+
+class MetricCreate(MetricBase):
+    pass
+
+
+class MetricUpdate(BaseModel):
+    metric_type: Optional[str] = None
+    name: Optional[str] = None
+    value: Optional[str] = None
+    unit: Optional[str] = None
+    date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class MetricResponse(MetricBase):
+    id: int
+    created_by_id: int
+    created_by: Optional[UserBrief] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Metric summary for dashboard
+class MetricSummary(BaseModel):
+    metric_type: str
+    name: str
+    current_value: str
+    previous_value: Optional[str] = None
+    change_percent: Optional[float] = None
+    unit: Optional[str] = None
+    trend: Optional[str] = None  # up, down, flat

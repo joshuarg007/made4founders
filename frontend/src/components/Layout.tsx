@@ -17,6 +17,7 @@ import {
   Bookmark,
   UserCog,
   CheckSquare,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -24,6 +25,7 @@ const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/library', icon: Building2, label: 'Business Library' },
   { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
+  { to: '/metrics', icon: BarChart3, label: 'Metrics' },
   { to: '/getting-started', icon: ClipboardCheck, label: 'Getting Started' },
   { to: '/website', icon: Globe, label: 'Web Presence' },
   { to: '/products-offered', icon: Package, label: 'Products Offered' },

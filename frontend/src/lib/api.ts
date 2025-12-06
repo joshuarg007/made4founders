@@ -676,3 +676,91 @@ export const getTaskActivity = (taskId: number, limit?: number) =>
 // Users list for task assignment
 export const getUsersList = () =>
   fetchApi<UserBrief[]>('/users-list');
+
+
+// ============ Metrics ============
+
+export interface Metric {
+  id: number;
+  metric_type: string;
+  name: string;
+  value: string;
+  unit: string | null;
+  date: string;
+  notes: string | null;
+  created_by_id: number;
+  created_by: UserBrief | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MetricSummary {
+  metric_type: string;
+  name: string;
+  current_value: string;
+  previous_value: string | null;
+  change_percent: number | null;
+  unit: string | null;
+  trend: 'up' | 'down' | 'flat' | null;
+}
+
+export interface MetricChartData {
+  metric_type: string;
+  data: {
+    date: string;
+    value: string;
+    notes: string | null;
+  }[];
+}
+
+export const METRIC_TYPES = {
+  mrr: { label: 'MRR', unit: '$', description: 'Monthly Recurring Revenue' },
+  arr: { label: 'ARR', unit: '$', description: 'Annual Recurring Revenue' },
+  revenue: { label: 'Revenue', unit: '$', description: 'Total Revenue' },
+  customers: { label: 'Customers', unit: '', description: 'Number of Customers' },
+  users: { label: 'Users', unit: '', description: 'Number of Users' },
+  burn_rate: { label: 'Burn Rate', unit: '$', description: 'Monthly Burn Rate' },
+  runway: { label: 'Runway', unit: 'months', description: 'Cash Runway' },
+  cash: { label: 'Cash', unit: '$', description: 'Cash on Hand' },
+  cac: { label: 'CAC', unit: '$', description: 'Customer Acquisition Cost' },
+  ltv: { label: 'LTV', unit: '$', description: 'Customer Lifetime Value' },
+  churn: { label: 'Churn', unit: '%', description: 'Monthly Churn Rate' },
+  nps: { label: 'NPS', unit: '', description: 'Net Promoter Score' },
+  custom: { label: 'Custom', unit: '', description: 'Custom Metric' },
+} as const;
+
+export type MetricType = keyof typeof METRIC_TYPES;
+
+export const getMetrics = (params?: {
+  metric_type?: string;
+  start_date?: string;
+  end_date?: string;
+}) => {
+  const searchParams = new URLSearchParams();
+  if (params?.metric_type) searchParams.append('metric_type', params.metric_type);
+  if (params?.start_date) searchParams.append('start_date', params.start_date);
+  if (params?.end_date) searchParams.append('end_date', params.end_date);
+  const query = searchParams.toString();
+  return fetchApi<Metric[]>(`/metrics${query ? `?${query}` : ''}`);
+};
+
+export const createMetric = (data: {
+  metric_type: string;
+  name: string;
+  value: string;
+  unit?: string;
+  date: string;
+  notes?: string;
+}) => fetchApi<Metric>('/metrics', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateMetric = (id: number, data: Partial<Metric>) =>
+  fetchApi<Metric>(`/metrics/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteMetric = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/metrics/${id}`, { method: 'DELETE' });
+
+export const getMetricsSummary = () =>
+  fetchApi<MetricSummary[]>('/metrics/summary/latest');
+
+export const getMetricChartData = (metricType: string, months?: number) =>
+  fetchApi<MetricChartData>(`/metrics/chart/${metricType}${months ? `?months=${months}` : ''}`);

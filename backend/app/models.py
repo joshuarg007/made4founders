@@ -505,3 +505,37 @@ class TaskActivity(Base):
 
     task = relationship("Task", back_populates="activities")
     user = relationship("User", backref="task_activities")
+
+
+class MetricType(str, enum.Enum):
+    MRR = "mrr"  # Monthly Recurring Revenue
+    ARR = "arr"  # Annual Recurring Revenue
+    REVENUE = "revenue"  # Total revenue (one-time + recurring)
+    CUSTOMERS = "customers"  # Total customers
+    USERS = "users"  # Total users (if different from customers)
+    BURN_RATE = "burn_rate"  # Monthly burn rate
+    RUNWAY = "runway"  # Months of runway
+    CASH = "cash"  # Cash on hand
+    CAC = "cac"  # Customer Acquisition Cost
+    LTV = "ltv"  # Lifetime Value
+    CHURN = "churn"  # Churn rate (%)
+    NPS = "nps"  # Net Promoter Score
+    CUSTOM = "custom"  # Custom metric
+
+
+class Metric(Base):
+    """Business metrics tracking over time"""
+    __tablename__ = "metrics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    metric_type = Column(String(50), nullable=False)
+    name = Column(String(100), nullable=False)  # Display name
+    value = Column(String(100), nullable=False)  # Stored as string to handle various formats
+    unit = Column(String(20), nullable=True)  # $, %, months, etc.
+    date = Column(DateTime, nullable=False)  # Date this metric applies to
+    notes = Column(Text, nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    created_by = relationship("User", backref="metrics")

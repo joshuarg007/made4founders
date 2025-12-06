@@ -11,7 +11,7 @@ from .database import engine, get_db, Base
 from .models import (
     Service, Document, Contact, Deadline, BusinessInfo, BusinessIdentifier,
     ChecklistProgress, User, VaultConfig, Credential, ProductOffered, ProductUsed, WebLink,
-    TaskBoard, TaskColumn, Task, TaskComment, TimeEntry, TaskActivity
+    TaskBoard, TaskColumn, Task, TaskComment, TimeEntry, TaskActivity, Metric
 )
 from .auth import router as auth_router, get_current_user
 from .schemas import (
@@ -33,7 +33,8 @@ from .schemas import (
     TaskCreate, TaskUpdate, TaskResponse, TaskAssign, TaskMove,
     TaskCommentCreate, TaskCommentUpdate, TaskCommentResponse,
     TimeEntryCreate, TimeEntryUpdate, TimeEntryResponse, TimerStart,
-    TaskActivityResponse, UserBrief
+    TaskActivityResponse, UserBrief,
+    MetricCreate, MetricUpdate, MetricResponse, MetricSummary
 )
 from .vault import (
     generate_salt, derive_key, hash_master_password, verify_master_password,
@@ -1913,3 +1914,166 @@ def get_users_list(
     """Get list of users for assignment dropdowns."""
     users = db.query(User).filter(User.is_active == True).order_by(User.name, User.email).all()
     return users
+
+
+# ============ Metrics ============
+
+@app.get("/api/metrics", response_model=List[MetricResponse])
+def get_metrics(
+    metric_type: str = None,
+    start_date: datetime = None,
+    end_date: datetime = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get metrics with optional filters."""
+    query = db.query(Metric)
+    if metric_type:
+        query = query.filter(Metric.metric_type == metric_type)
+    if start_date:
+        query = query.filter(Metric.date >= start_date)
+    if end_date:
+        query = query.filter(Metric.date <= end_date)
+    return query.order_by(Metric.date.desc()).all()
+
+
+@app.post("/api/metrics", response_model=MetricResponse)
+def create_metric(
+    metric: MetricCreate,
+    current_user: User = Depends(get_editor_or_admin),
+    db: Session = Depends(get_db)
+):
+    """Create a metric (editor/admin only)."""
+    db_metric = Metric(**metric.model_dump(), created_by_id=current_user.id)
+    db.add(db_metric)
+    db.commit()
+    db.refresh(db_metric)
+    return db_metric
+
+
+@app.get("/api/metrics/{metric_id}", response_model=MetricResponse)
+def get_metric(
+    metric_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    metric = db.query(Metric).filter(Metric.id == metric_id).first()
+    if not metric:
+        raise HTTPException(status_code=404, detail="Metric not found")
+    return metric
+
+
+@app.patch("/api/metrics/{metric_id}", response_model=MetricResponse)
+def update_metric(
+    metric_id: int,
+    metric: MetricUpdate,
+    current_user: User = Depends(get_editor_or_admin),
+    db: Session = Depends(get_db)
+):
+    """Update a metric (editor/admin only)."""
+    db_metric = db.query(Metric).filter(Metric.id == metric_id).first()
+    if not db_metric:
+        raise HTTPException(status_code=404, detail="Metric not found")
+
+    for key, value in metric.model_dump(exclude_unset=True).items():
+        setattr(db_metric, key, value)
+
+    db.commit()
+    db.refresh(db_metric)
+    return db_metric
+
+
+@app.delete("/api/metrics/{metric_id}")
+def delete_metric(
+    metric_id: int,
+    current_user: User = Depends(get_editor_or_admin),
+    db: Session = Depends(get_db)
+):
+    """Delete a metric (editor/admin only)."""
+    metric = db.query(Metric).filter(Metric.id == metric_id).first()
+    if not metric:
+        raise HTTPException(status_code=404, detail="Metric not found")
+    db.delete(metric)
+    db.commit()
+    return {"ok": True}
+
+
+@app.get("/api/metrics/summary/latest", response_model=List[MetricSummary])
+def get_latest_metrics_summary(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the latest value for each metric type with change from previous."""
+    from sqlalchemy import func, desc
+
+    # Get all unique metric types
+    metric_types = db.query(Metric.metric_type, Metric.name).distinct().all()
+
+    summaries = []
+    for metric_type, name in metric_types:
+        # Get the two most recent values for this metric type
+        recent = db.query(Metric).filter(
+            Metric.metric_type == metric_type
+        ).order_by(desc(Metric.date)).limit(2).all()
+
+        if recent:
+            current = recent[0]
+            previous = recent[1] if len(recent) > 1 else None
+
+            # Calculate change percent
+            change_percent = None
+            trend = None
+            if previous:
+                try:
+                    curr_val = float(current.value.replace(',', '').replace('$', '').replace('%', ''))
+                    prev_val = float(previous.value.replace(',', '').replace('$', '').replace('%', ''))
+                    if prev_val != 0:
+                        change_percent = ((curr_val - prev_val) / prev_val) * 100
+                        if change_percent > 0:
+                            trend = "up"
+                        elif change_percent < 0:
+                            trend = "down"
+                        else:
+                            trend = "flat"
+                except (ValueError, AttributeError):
+                    pass
+
+            summaries.append(MetricSummary(
+                metric_type=metric_type,
+                name=current.name,
+                current_value=current.value,
+                previous_value=previous.value if previous else None,
+                change_percent=round(change_percent, 1) if change_percent is not None else None,
+                unit=current.unit,
+                trend=trend
+            ))
+
+    return summaries
+
+
+@app.get("/api/metrics/chart/{metric_type}")
+def get_metric_chart_data(
+    metric_type: str,
+    months: int = 12,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get metric data formatted for charts."""
+    start_date = datetime.utcnow() - timedelta(days=months * 30)
+
+    metrics = db.query(Metric).filter(
+        Metric.metric_type == metric_type,
+        Metric.date >= start_date
+    ).order_by(Metric.date).all()
+
+    return {
+        "metric_type": metric_type,
+        "data": [
+            {
+                "date": m.date.isoformat(),
+                "value": m.value,
+                "notes": m.notes
+            }
+            for m in metrics
+        ]
+    }

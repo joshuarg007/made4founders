@@ -17,6 +17,7 @@ import ProductsUsed from './pages/ProductsUsed'
 import WebLinks from './pages/WebLinks'
 import Users from './pages/Users'
 import Tasks from './pages/Tasks'
+import Metrics from './pages/Metrics'
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
         <Route path="products-used" element={<ProductsUsed />} />
         <Route path="web-links" element={<WebLinks />} />
         <Route path="tasks" element={<Tasks />} />
+        <Route path="metrics" element={<Metrics />} />
         <Route path="users" element={<Users />} />
       </Route>
     </Routes>
