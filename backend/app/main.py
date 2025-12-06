@@ -1376,11 +1376,7 @@ def get_tasks(
     result = []
     for task in tasks:
         task_dict = TaskResponse.model_validate(task).model_dump()
-        # Calculate total time
-        total_time = db.query(TimeEntry).filter(
-            TimeEntry.task_id == task.id,
-            TimeEntry.duration_minutes != None
-        ).with_entities(db.query(TimeEntry.duration_minutes).filter(TimeEntry.task_id == task.id)).all()
+        # Calculate total time from time entries
         task_dict["total_time_minutes"] = sum([t.duration_minutes or 0 for t in task.time_entries])
         task_dict["comment_count"] = len(task.comments)
         result.append(task_dict)
