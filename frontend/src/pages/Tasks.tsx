@@ -51,6 +51,9 @@ export default function Tasks() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  // Toast notification
+  const [toast, setToast] = useState<{ message: string; color: string } | null>(null);
+
   // Task form
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -240,14 +243,38 @@ export default function Tasks() {
 
   const handleStatusChange = async (taskId: number, newStatus: string) => {
     try {
-      await updateTask(taskId, { status: newStatus });
+      // Find the column that matches this status
+      const targetColumn = currentBoard?.columns.find(c => c.status === newStatus);
+
+      // Update task with new status and column
+      await updateTask(taskId, {
+        status: newStatus,
+        column_id: targetColumn?.id || undefined,
+      });
+
+      // Show toast notification
+      const statusLabels: Record<string, { label: string; color: string }> = {
+        backlog: { label: 'Backlog', color: 'bg-gray-500' },
+        todo: { label: 'To Do', color: 'bg-blue-500' },
+        in_progress: { label: 'In Progress', color: 'bg-yellow-500' },
+        done: { label: 'Done', color: 'bg-green-500' },
+      };
+      const statusInfo = statusLabels[newStatus] || { label: newStatus, color: 'bg-gray-500' };
+      setToast({ message: `Moved to ${statusInfo.label}`, color: statusInfo.color });
+      setTimeout(() => setToast(null), 2000);
+
+      // Reload tasks
       loadTasks();
+
+      // Update selectedTask to reflect the change
       if (selectedTask?.id === taskId) {
         const updated = await getTasks({ board_id: currentBoard!.id, include_completed: true });
         setSelectedTask(updated.find(t => t.id === taskId) || null);
       }
     } catch (error) {
       console.error('Failed to update task status:', error);
+      setToast({ message: 'Failed to update status', color: 'bg-red-500' });
+      setTimeout(() => setToast(null), 2000);
     }
   };
 
@@ -520,6 +547,16 @@ export default function Tasks() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div className={`${toast.color} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`}>
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-medium">{toast.message}</span>
           </div>
         </div>
       )}
