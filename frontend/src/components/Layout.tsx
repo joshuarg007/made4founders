@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   Link2,
@@ -21,11 +21,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
-  { to: '/', icon: Sparkles, label: 'Daily Brief' },
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/library', icon: Building2, label: 'Business Library' },
   { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { to: '/getting-started', icon: ClipboardCheck, label: 'Getting Started' },
-  { to: '/library', icon: Building2, label: 'Business Library' },
   { to: '/website', icon: Globe, label: 'Web Presence' },
   { to: '/products-offered', icon: Package, label: 'Products Offered' },
   { to: '/products-used', icon: Wrench, label: 'Tools Used' },
@@ -63,7 +62,6 @@ export default function Layout() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
@@ -116,8 +114,30 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto relative">
         <Outlet />
+
+        {/* Floating Daily Brief Button */}
+        <Link
+          to="/"
+          className="fixed top-6 right-6 z-40 group"
+          title="Daily Brief"
+        >
+          <div className="relative">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-violet-600 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+
+            {/* Button */}
+            <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center shadow-lg backdrop-blur-sm border border-white/20 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+
+            {/* Tooltip */}
+            <div className="absolute right-0 top-full mt-2 px-3 py-1.5 bg-[#1a1d24] rounded-lg text-sm text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity border border-white/10 shadow-xl">
+              Daily Brief
+            </div>
+          </div>
+        </Link>
       </main>
     </div>
   );
