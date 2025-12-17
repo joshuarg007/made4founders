@@ -10,7 +10,6 @@ import {
   BookOpen,
   Building2,
   Landmark,
-  Scale,
   CreditCard,
   Users,
   Globe,
