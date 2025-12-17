@@ -305,26 +305,43 @@ export default function Documents() {
           {filteredDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="p-4 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-white/20 transition"
+              className="p-4 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-white/20 transition overflow-hidden"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-8 h-8 text-violet-400" />
-                  <div>
-                    <h3 className="font-semibold text-white">{doc.name}</h3>
-                    <span className="text-xs text-gray-500 capitalize">{doc.category}</span>
+              <div className="flex items-start justify-between mb-3 gap-2">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <FileText className="w-8 h-8 text-violet-400 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-white truncate" title={doc.name}>{doc.name}</h3>
+                    {canEdit ? (
+                      <select
+                        value={doc.category}
+                        onChange={async (e) => {
+                          await updateDocument(doc.id, { category: e.target.value });
+                          loadDocuments();
+                        }}
+                        className="text-xs text-gray-400 bg-transparent border-none p-0 cursor-pointer hover:text-white focus:outline-none capitalize"
+                      >
+                        {categories.slice(1).map((cat) => (
+                          <option key={cat.value} value={cat.value} className="bg-[#1a1d24]">{cat.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-xs text-gray-500 capitalize">{doc.category}</span>
+                    )}
                   </div>
                 </div>
-                {isExpired(doc.expiration_date) && (
-                  <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-400">Expired</span>
-                )}
-                {!isExpired(doc.expiration_date) && isExpiringSoon(doc.expiration_date) && (
-                  <span className="px-2 py-1 rounded text-xs bg-amber-500/20 text-amber-400">Expiring</span>
-                )}
+                <div className="shrink-0">
+                  {isExpired(doc.expiration_date) && (
+                    <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-400">Expired</span>
+                  )}
+                  {!isExpired(doc.expiration_date) && isExpiringSoon(doc.expiration_date) && (
+                    <span className="px-2 py-1 rounded text-xs bg-amber-500/20 text-amber-400">Expiring</span>
+                  )}
+                </div>
               </div>
 
               {doc.description && (
-                <p className="text-sm text-gray-400 mb-3 line-clamp-2">{doc.description}</p>
+                <p className="text-sm text-gray-400 mb-3 line-clamp-2 overflow-hidden">{doc.description}</p>
               )}
 
               {doc.expiration_date && (
@@ -334,29 +351,34 @@ export default function Documents() {
               )}
 
               {doc.tags && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {doc.tags.split(',').map((tag, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded text-xs bg-white/5 text-gray-400">
+                <div className="flex flex-wrap gap-1 mb-3 overflow-hidden">
+                  {doc.tags.split(',').slice(0, 3).map((tag, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded text-xs bg-white/5 text-gray-400 truncate max-w-[100px]">
                       {tag.trim()}
                     </span>
                   ))}
+                  {doc.tags.split(',').length > 3 && (
+                    <span className="text-xs text-gray-500">+{doc.tags.split(',').length - 3}</span>
+                  )}
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-3 border-t border-white/10">
                 {canEdit && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => handleEdit(doc)}
-                      className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                      title="Edit"
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(doc.id)}
-                      className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                      title="Delete"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}
@@ -372,10 +394,10 @@ export default function Documents() {
                       link.click();
                       document.body.removeChild(link);
                     }}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition"
                   >
-                    Download
                     <Download className="w-3 h-3" />
+                    Download
                   </button>
                 )}
               </div>
