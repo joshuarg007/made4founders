@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import re
+import secrets
+import mimetypes
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import List
@@ -106,7 +109,7 @@ app.add_middleware(
 # Create uploads directory with restricted permissions
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+# NOTE: Static file mount removed for security - use /api/documents/{id}/download instead
 
 # Include auth router
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
@@ -233,26 +236,156 @@ def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
     return db_document
 
 
+# Allowed file extensions for upload (whitelist)
+ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.png', '.jpg', '.jpeg', '.gif', '.txt', '.csv', '.rtf'}
+# Dangerous extensions that should never be served
+DANGEROUS_EXTENSIONS = {'.exe', '.bat', '.cmd', '.sh', '.ps1', '.vbs', '.js', '.jar', '.msi', '.dll', '.scr', '.com', '.pif'}
+
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal and injection attacks."""
+    # Remove path separators and null bytes
+    filename = filename.replace('/', '').replace('\\', '').replace('\x00', '')
+    # Remove any leading dots to prevent hidden files
+    filename = filename.lstrip('.')
+    # Only allow alphanumeric, dots, underscores, hyphens
+    filename = re.sub(r'[^\w\.\-]', '_', filename)
+    # Limit length
+    if len(filename) > 200:
+        name, ext = os.path.splitext(filename)
+        filename = name[:200-len(ext)] + ext
+    return filename or 'document'
+
+
+def validate_file_extension(filename: str) -> bool:
+    """Check if file extension is allowed."""
+    ext = os.path.splitext(filename)[1].lower()
+    if ext in DANGEROUS_EXTENSIONS:
+        return False
+    if ext not in ALLOWED_EXTENSIONS:
+        return False
+    return True
+
+
 @app.post("/api/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    Secure file upload with validation.
+    - Auth required
+    - File extension whitelist
+    - Filename sanitization
+    - Unique storage name to prevent overwrites
+    """
+    # Require editor or admin
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Editor access required")
+
+    # Validate file extension
+    if not validate_file_extension(file.filename):
+        raise HTTPException(status_code=400, detail="File type not allowed")
+
+    # Sanitize and create unique filename
+    safe_name = sanitize_filename(file.filename)
+    unique_id = secrets.token_hex(8)
+    name_part, ext = os.path.splitext(safe_name)
+    storage_name = f"{unique_id}_{name_part}{ext}"
+
     # Save file
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    file_path = os.path.join(UPLOAD_DIR, storage_name)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Create document record
+    # Create document record (store original name for display, storage name for retrieval)
     db_document = Document(
         name=file.filename,
-        file_path=f"/uploads/{file.filename}",
+        file_path=storage_name,  # Now stores just the filename, not a URL path
         category="other"
     )
     db.add(db_document)
     db.commit()
     db.refresh(db_document)
+
+    logger.info(f"User {current_user.email} uploaded document {db_document.id}: {safe_name}")
+
     return db_document
+
+
+@app.get("/api/documents/{document_id}/download")
+async def download_document(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Secure file download endpoint.
+
+    Security features:
+    - Authentication required
+    - Forces download (Content-Disposition: attachment)
+    - Path traversal protection
+    - File existence validation
+    - Audit logging
+    """
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    if not document.file_path:
+        raise HTTPException(status_code=404, detail="No file attached to this document")
+
+    # Extract just the filename (handle legacy paths that might have /uploads/ prefix)
+    storage_name = document.file_path
+    if storage_name.startswith('/uploads/'):
+        storage_name = storage_name[9:]  # Remove /uploads/ prefix
+
+    # Prevent path traversal
+    if '..' in storage_name or '/' in storage_name or '\\' in storage_name:
+        logger.warning(f"Path traversal attempt by {current_user.email}: {storage_name}")
+        raise HTTPException(status_code=400, detail="Invalid file path")
+
+    # Construct full path
+    full_path = os.path.join(UPLOAD_DIR, storage_name)
+
+    # Verify file exists
+    if not os.path.isfile(full_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    # Verify the resolved path is within UPLOAD_DIR (defense in depth)
+    real_path = os.path.realpath(full_path)
+    real_upload_dir = os.path.realpath(UPLOAD_DIR)
+    if not real_path.startswith(real_upload_dir):
+        logger.warning(f"Path escape attempt by {current_user.email}: {storage_name}")
+        raise HTTPException(status_code=400, detail="Invalid file path")
+
+    # Determine safe filename for download
+    download_name = sanitize_filename(document.name)
+
+    # Get MIME type
+    mime_type, _ = mimetypes.guess_type(download_name)
+    if not mime_type:
+        mime_type = "application/octet-stream"
+
+    # Log download
+    logger.info(f"User {current_user.email} downloaded document {document_id}: {download_name}")
+
+    # Return file with security headers
+    response = FileResponse(
+        path=full_path,
+        filename=download_name,
+        media_type=mime_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{download_name}"',
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache"
+        }
+    )
+
+    return response
 
 
 @app.get("/api/documents/{document_id}", response_model=DocumentResponse)

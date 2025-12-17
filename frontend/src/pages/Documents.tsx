@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Plus,
   FileText,
-  ExternalLink,
+  Download,
   Pencil,
   Trash2,
   X,
@@ -361,16 +361,22 @@ export default function Documents() {
                   </div>
                 )}
                 {!canEdit && <div />}
-                {(doc.external_url || doc.file_path) && (
-                  <a
-                    href={doc.external_url || doc.file_path || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                {doc.file_path && (
+                  <button
+                    onClick={() => {
+                      // Secure download via API endpoint
+                      const link = document.createElement('a');
+                      link.href = `${API_BASE}/documents/${doc.id}/download`;
+                      link.download = doc.name;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
                   >
-                    Open
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                    Download
+                    <Download className="w-3 h-3" />
+                  </button>
                 )}
               </div>
             </div>
