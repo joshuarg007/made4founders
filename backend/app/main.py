@@ -341,10 +341,15 @@ async def download_document(
     storage_name = document.file_path
     if storage_name.startswith('/uploads/'):
         storage_name = storage_name[9:]  # Remove /uploads/ prefix
+    elif storage_name.startswith('uploads/'):
+        storage_name = storage_name[8:]  # Remove uploads/ prefix
 
-    # Prevent path traversal
-    if '..' in storage_name or '/' in storage_name or '\\' in storage_name:
-        logger.warning(f"Path traversal attempt by {current_user.email}: {storage_name}")
+    # Get just the basename to prevent any path traversal
+    storage_name = os.path.basename(storage_name)
+
+    # Prevent path traversal - after basename, should have no path separators
+    if '..' in storage_name or not storage_name:
+        logger.warning(f"Path traversal attempt by {current_user.email}: {document.file_path}")
         raise HTTPException(status_code=400, detail="Invalid file path")
 
     # Construct full path
@@ -352,17 +357,20 @@ async def download_document(
 
     # Verify file exists
     if not os.path.isfile(full_path):
-        raise HTTPException(status_code=404, detail="File not found on disk")
+        logger.warning(f"File not found for document {document_id}: {full_path}")
+        raise HTTPException(status_code=404, detail="File not found on server")
 
     # Verify the resolved path is within UPLOAD_DIR (defense in depth)
     real_path = os.path.realpath(full_path)
     real_upload_dir = os.path.realpath(UPLOAD_DIR)
-    if not real_path.startswith(real_upload_dir):
+    if not real_path.startswith(real_upload_dir + os.sep) and real_path != real_upload_dir:
         logger.warning(f"Path escape attempt by {current_user.email}: {storage_name}")
         raise HTTPException(status_code=400, detail="Invalid file path")
 
     # Determine safe filename for download
     download_name = sanitize_filename(document.name)
+    if not download_name:
+        download_name = storage_name
 
     # Get MIME type
     mime_type, _ = mimetypes.guess_type(download_name)

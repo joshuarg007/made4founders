@@ -391,7 +391,10 @@ export default function Documents() {
                         const response = await fetch(`${API_BASE}/documents/${doc.id}/download`, {
                           credentials: 'include'
                         });
-                        if (!response.ok) throw new Error('Download failed');
+                        if (!response.ok) {
+                          const errorData = await response.json().catch(() => ({}));
+                          throw new Error(errorData.detail || `Error ${response.status}`);
+                        }
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
                         const link = document.createElement('a');
@@ -403,7 +406,7 @@ export default function Documents() {
                         window.URL.revokeObjectURL(url);
                       } catch (error) {
                         console.error('Download failed:', error);
-                        alert('Download failed. Please try again.');
+                        alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
                       }
                     }}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition"
