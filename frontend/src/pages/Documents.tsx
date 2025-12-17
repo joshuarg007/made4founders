@@ -385,14 +385,26 @@ export default function Documents() {
                 {!canEdit && <div />}
                 {doc.file_path && (
                   <button
-                    onClick={() => {
-                      // Secure download via API endpoint
-                      const link = document.createElement('a');
-                      link.href = `${API_BASE}/documents/${doc.id}/download`;
-                      link.download = doc.name;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
+                    onClick={async () => {
+                      try {
+                        // Secure download with auth credentials
+                        const response = await fetch(`${API_BASE}/documents/${doc.id}/download`, {
+                          credentials: 'include'
+                        });
+                        if (!response.ok) throw new Error('Download failed');
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = doc.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } catch (error) {
+                        console.error('Download failed:', error);
+                        alert('Download failed. Please try again.');
+                      }
                     }}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition"
                   >
