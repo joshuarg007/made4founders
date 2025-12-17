@@ -14,7 +14,7 @@ import { getDocuments, createDocument, updateDocument, deleteDocument, type Docu
 import { useAuth } from '../context/AuthContext';
 import { format, isBefore, addDays } from 'date-fns';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
 
 const categories = [
   { value: 'all', label: 'All', icon: '📋' },
@@ -63,6 +63,7 @@ export default function Documents() {
       formData.append('file', file);
       const res = await fetch(`${API_BASE}/documents/upload`, {
         method: 'POST',
+        credentials: 'include',
         body: formData
       });
       if (res.ok) {
@@ -125,6 +126,7 @@ export default function Documents() {
         uploadFormData.append('file', modalFile);
         const uploadRes = await fetch(`${API_BASE}/documents/upload`, {
           method: 'POST',
+          credentials: 'include',
           body: uploadFormData
         });
 
