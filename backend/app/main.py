@@ -2618,7 +2618,42 @@ def get_metric_chart_data(
 
 # ============ WEB PRESENCE ROUTES ============
 
-@app.get("/api/web-presence", response_model=WebPresenceResponse)
+def serialize_web_presence(presence: WebPresence) -> dict:
+    """Convert WebPresence model to dict with parsed JSON fields."""
+    result = {
+        "id": presence.id,
+        "domain_name": presence.domain_name,
+        "domain_registrar": presence.domain_registrar,
+        "domain_expiration": presence.domain_expiration,
+        "domain_privacy": presence.domain_privacy,
+        "domain_auto_renew": presence.domain_auto_renew,
+        "email_provider": presence.email_provider,
+        "email_domain": presence.email_domain,
+        "email_admin": presence.email_admin,
+        "additional_emails": json.loads(presence.additional_emails) if presence.additional_emails else None,
+        "website_url": presence.website_url,
+        "website_platform": presence.website_platform,
+        "website_hosting": presence.website_hosting,
+        "ssl_enabled": presence.ssl_enabled,
+        "additional_websites": json.loads(presence.additional_websites) if presence.additional_websites else None,
+        "linkedin_url": presence.linkedin_url,
+        "twitter_url": presence.twitter_url,
+        "instagram_url": presence.instagram_url,
+        "facebook_url": presence.facebook_url,
+        "youtube_url": presence.youtube_url,
+        "github_url": presence.github_url,
+        "tiktok_url": presence.tiktok_url,
+        "additional_socials": json.loads(presence.additional_socials) if presence.additional_socials else None,
+        "google_business_url": presence.google_business_url,
+        "google_business_verified": presence.google_business_verified,
+        "notes": presence.notes,
+        "created_at": presence.created_at,
+        "updated_at": presence.updated_at,
+    }
+    return result
+
+
+@app.get("/api/web-presence")
 def get_web_presence(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -2630,10 +2665,10 @@ def get_web_presence(
         db.add(presence)
         db.commit()
         db.refresh(presence)
-    return presence
+    return serialize_web_presence(presence)
 
 
-@app.patch("/api/web-presence", response_model=WebPresenceResponse)
+@app.patch("/api/web-presence")
 def update_web_presence(
     data: WebPresenceUpdate,
     current_user: User = Depends(get_current_user),
@@ -2649,11 +2684,14 @@ def update_web_presence(
 
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
+        # Serialize list fields to JSON
+        if key in ('additional_emails', 'additional_websites', 'additional_socials') and value is not None:
+            value = json.dumps([item.model_dump() if hasattr(item, 'model_dump') else item for item in value])
         setattr(presence, key, value)
 
     db.commit()
     db.refresh(presence)
-    return presence
+    return serialize_web_presence(presence)
 
 
 # ============ BANK ACCOUNT ROUTES ============

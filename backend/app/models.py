@@ -523,18 +523,24 @@ class WebPresence(Base):
     domain_privacy = Column(Boolean, default=False)
     domain_auto_renew = Column(Boolean, default=False)
 
-    # Professional Email
+    # Professional Email (primary)
     email_provider = Column(String(100), nullable=True)  # Google Workspace, Microsoft 365, etc.
     email_domain = Column(String(255), nullable=True)  # yourcompany.com
     email_admin = Column(String(255), nullable=True)  # admin@yourcompany.com
 
-    # Website
+    # Additional emails - JSON array: [{provider, domain, email, notes}]
+    additional_emails = Column(Text, nullable=True)
+
+    # Website (primary)
     website_url = Column(String(500), nullable=True)
     website_platform = Column(String(100), nullable=True)  # Webflow, WordPress, etc.
     website_hosting = Column(String(100), nullable=True)  # Vercel, Netlify, AWS, etc.
     ssl_enabled = Column(Boolean, default=False)
 
-    # Social Media
+    # Additional websites - JSON array: [{url, name, platform, hosting, ssl_enabled}]
+    additional_websites = Column(Text, nullable=True)
+
+    # Social Media (legacy fields kept for backwards compatibility)
     linkedin_url = Column(String(500), nullable=True)
     twitter_url = Column(String(500), nullable=True)
     instagram_url = Column(String(500), nullable=True)
@@ -542,6 +548,9 @@ class WebPresence(Base):
     youtube_url = Column(String(500), nullable=True)
     github_url = Column(String(500), nullable=True)
     tiktok_url = Column(String(500), nullable=True)
+
+    # Additional/custom social media - JSON array: [{platform, url, handle}]
+    additional_socials = Column(Text, nullable=True)
 
     # Google Business
     google_business_url = Column(String(500), nullable=True)

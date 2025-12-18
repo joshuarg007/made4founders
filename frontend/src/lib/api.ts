@@ -785,6 +785,27 @@ export const getMetricChartData = (metricType: string, months?: number) =>
 
 
 // Web Presence
+export interface AdditionalEmail {
+  provider: string | null;
+  domain: string | null;
+  email: string | null;
+  notes: string | null;
+}
+
+export interface AdditionalWebsite {
+  name: string | null;
+  url: string | null;
+  platform: string | null;
+  hosting: string | null;
+  ssl_enabled: boolean;
+}
+
+export interface AdditionalSocial {
+  platform: string;
+  url: string | null;
+  handle: string | null;
+}
+
 export interface WebPresence {
   id: number;
   // Domain
@@ -793,15 +814,17 @@ export interface WebPresence {
   domain_expiration: string | null;
   domain_privacy: boolean;
   domain_auto_renew: boolean;
-  // Email
+  // Email (primary)
   email_provider: string | null;
   email_domain: string | null;
   email_admin: string | null;
-  // Website
+  additional_emails: AdditionalEmail[] | null;
+  // Website (primary)
   website_url: string | null;
   website_platform: string | null;
   website_hosting: string | null;
   ssl_enabled: boolean;
+  additional_websites: AdditionalWebsite[] | null;
   // Social Media
   linkedin_url: string | null;
   twitter_url: string | null;
@@ -810,6 +833,7 @@ export interface WebPresence {
   youtube_url: string | null;
   github_url: string | null;
   tiktok_url: string | null;
+  additional_socials: AdditionalSocial[] | null;
   // Google Business
   google_business_url: string | null;
   google_business_verified: boolean;

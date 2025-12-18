@@ -15,14 +15,38 @@ import {
   Github,
   Instagram,
   Youtube,
-  Facebook
+  Facebook,
+  Plus,
+  Trash2
 } from 'lucide-react';
-import { getWebPresence, updateWebPresence, type WebPresence } from '../lib/api';
+import { getWebPresence, updateWebPresence, type WebPresence, type AdditionalEmail, type AdditionalWebsite, type AdditionalSocial } from '../lib/api';
 
 const registrars = ['Namecheap', 'Cloudflare', 'GoDaddy', 'Google Domains', 'Porkbun', 'Other'];
 const emailProviders = ['Google Workspace', 'Microsoft 365', 'Zoho Mail', 'Fastmail', 'ProtonMail', 'Other'];
 const websitePlatforms = ['Webflow', 'Framer', 'WordPress', 'Squarespace', 'Wix', 'Carrd', 'Custom', 'Other'];
 const hostingProviders = ['Vercel', 'Netlify', 'AWS', 'Cloudflare Pages', 'DigitalOcean', 'Heroku', 'Other'];
+
+const socialPlatforms = [
+  { value: 'linkedin', label: 'LinkedIn', icon: Linkedin },
+  { value: 'twitter', label: 'Twitter / X', icon: null },
+  { value: 'instagram', label: 'Instagram', icon: Instagram },
+  { value: 'facebook', label: 'Facebook', icon: Facebook },
+  { value: 'youtube', label: 'YouTube', icon: Youtube },
+  { value: 'github', label: 'GitHub', icon: Github },
+  { value: 'tiktok', label: 'TikTok', icon: null },
+  { value: 'pinterest', label: 'Pinterest', icon: null },
+  { value: 'threads', label: 'Threads', icon: null },
+  { value: 'discord', label: 'Discord', icon: null },
+  { value: 'slack', label: 'Slack', icon: null },
+  { value: 'mastodon', label: 'Mastodon', icon: null },
+  { value: 'bluesky', label: 'Bluesky', icon: null },
+  { value: 'reddit', label: 'Reddit', icon: null },
+  { value: 'twitch', label: 'Twitch', icon: null },
+  { value: 'snapchat', label: 'Snapchat', icon: null },
+  { value: 'whatsapp', label: 'WhatsApp Business', icon: null },
+  { value: 'telegram', label: 'Telegram', icon: null },
+  { value: 'other', label: 'Other', icon: null },
+];
 
 export default function Website() {
   const [loading, setLoading] = useState(true);
@@ -45,7 +69,7 @@ export default function Website() {
     loadPresence();
   }, []);
 
-  const handleChange = (field: keyof WebPresence, value: string | boolean | null) => {
+  const handleChange = (field: keyof WebPresence, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
@@ -67,6 +91,57 @@ export default function Website() {
     if (!dateStr) return null;
     const diff = new Date(dateStr).getTime() - Date.now();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  // Additional emails helpers
+  const addEmail = () => {
+    const emails = formData.additional_emails || [];
+    handleChange('additional_emails', [...emails, { provider: '', domain: '', email: '', notes: '' }]);
+  };
+
+  const updateEmail = (index: number, field: keyof AdditionalEmail, value: string) => {
+    const emails = [...(formData.additional_emails || [])];
+    emails[index] = { ...emails[index], [field]: value };
+    handleChange('additional_emails', emails);
+  };
+
+  const removeEmail = (index: number) => {
+    const emails = (formData.additional_emails || []).filter((_, i) => i !== index);
+    handleChange('additional_emails', emails.length > 0 ? emails : null);
+  };
+
+  // Additional websites helpers
+  const addWebsite = () => {
+    const websites = formData.additional_websites || [];
+    handleChange('additional_websites', [...websites, { name: '', url: '', platform: '', hosting: '', ssl_enabled: false }]);
+  };
+
+  const updateWebsite = (index: number, field: keyof AdditionalWebsite, value: string | boolean) => {
+    const websites = [...(formData.additional_websites || [])];
+    websites[index] = { ...websites[index], [field]: value };
+    handleChange('additional_websites', websites);
+  };
+
+  const removeWebsite = (index: number) => {
+    const websites = (formData.additional_websites || []).filter((_, i) => i !== index);
+    handleChange('additional_websites', websites.length > 0 ? websites : null);
+  };
+
+  // Additional socials helpers
+  const addSocial = () => {
+    const socials = formData.additional_socials || [];
+    handleChange('additional_socials', [...socials, { platform: 'other', url: '', handle: '' }]);
+  };
+
+  const updateSocial = (index: number, field: keyof AdditionalSocial, value: string) => {
+    const socials = [...(formData.additional_socials || [])];
+    socials[index] = { ...socials[index], [field]: value };
+    handleChange('additional_socials', socials);
+  };
+
+  const removeSocial = (index: number) => {
+    const socials = (formData.additional_socials || []).filter((_, i) => i !== index);
+    handleChange('additional_socials', socials.length > 0 ? socials : null);
   };
 
   if (loading) {
@@ -218,14 +293,12 @@ export default function Website() {
           </div>
           <div>
             <label className="block text-sm text-gray-400 mb-1">Expiration Date</label>
-            <div className="relative">
-              <input
-                type="date"
-                value={formData.domain_expiration?.split('T')[0] || ''}
-                onChange={(e) => handleChange('domain_expiration', e.target.value ? new Date(e.target.value).toISOString() : null)}
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-              />
-            </div>
+            <input
+              type="date"
+              value={formData.domain_expiration?.split('T')[0] || ''}
+              onChange={(e) => handleChange('domain_expiration', e.target.value ? new Date(e.target.value).toISOString() : null)}
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+            />
           </div>
           <div className="flex items-center gap-6 pt-6">
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
@@ -254,17 +327,27 @@ export default function Website() {
 
       {/* Email Section */}
       <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-            <Mail className="w-5 h-5 text-violet-400" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+              <Mail className="w-5 h-5 text-violet-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Professional Email</h2>
+              <p className="text-sm text-gray-400">you@yourcompany.com for credibility</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Professional Email</h2>
-            <p className="text-sm text-gray-400">you@yourcompany.com for credibility</p>
-          </div>
+          <button
+            onClick={addEmail}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Email
+          </button>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        {/* Primary Email */}
+        <div className="grid md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Email Provider</label>
             <select
@@ -299,21 +382,81 @@ export default function Website() {
             />
           </div>
         </div>
+
+        {/* Additional Emails */}
+        {formData.additional_emails && formData.additional_emails.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-white/10">
+            <div className="text-sm text-gray-400">Additional Email Accounts</div>
+            {formData.additional_emails.map((email, index) => (
+              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5">
+                <select
+                  value={email.provider || ''}
+                  onChange={(e) => updateEmail(index, 'provider', e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                >
+                  <option value="" className="bg-[#1a1d24] text-white">Provider...</option>
+                  {emailProviders.map(p => (
+                    <option key={p} value={p} className="bg-[#1a1d24] text-white">{p}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={email.domain || ''}
+                  onChange={(e) => updateEmail(index, 'domain', e.target.value)}
+                  placeholder="Domain"
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                />
+                <input
+                  type="email"
+                  value={email.email || ''}
+                  onChange={(e) => updateEmail(index, 'email', e.target.value)}
+                  placeholder="Email address"
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={email.notes || ''}
+                    onChange={(e) => updateEmail(index, 'notes', e.target.value)}
+                    placeholder="Notes"
+                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  />
+                  <button
+                    onClick={() => removeEmail(index)}
+                    className="p-2 text-gray-500 hover:text-red-400 transition"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Website Section */}
       <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center">
-            <Monitor className="w-5 h-5 text-pink-400" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center">
+              <Monitor className="w-5 h-5 text-pink-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Website</h2>
+              <p className="text-sm text-gray-400">Your digital storefront and brand hub</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Website</h2>
-            <p className="text-sm text-gray-400">Your digital storefront and brand hub</p>
-          </div>
+          <button
+            onClick={addWebsite}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Website
+          </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        {/* Primary Website */}
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
           <div className="md:col-span-2">
             <label className="block text-sm text-gray-400 mb-1">Website URL</label>
             <input
@@ -350,7 +493,7 @@ export default function Website() {
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2 pt-6">
+          <div className="flex items-center gap-2">
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
@@ -363,21 +506,97 @@ export default function Website() {
             </label>
           </div>
         </div>
+
+        {/* Additional Websites */}
+        {formData.additional_websites && formData.additional_websites.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-white/10">
+            <div className="text-sm text-gray-400">Additional Websites</div>
+            {formData.additional_websites.map((site, index) => (
+              <div key={index} className="p-3 rounded-lg bg-white/5">
+                <div className="grid md:grid-cols-2 gap-3 mb-3">
+                  <input
+                    type="text"
+                    value={site.name || ''}
+                    onChange={(e) => updateWebsite(index, 'name', e.target.value)}
+                    placeholder="Site name (e.g., Blog, Documentation)"
+                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  />
+                  <input
+                    type="url"
+                    value={site.url || ''}
+                    onChange={(e) => updateWebsite(index, 'url', e.target.value)}
+                    placeholder="https://..."
+                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div className="grid md:grid-cols-4 gap-3">
+                  <select
+                    value={site.platform || ''}
+                    onChange={(e) => updateWebsite(index, 'platform', e.target.value)}
+                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="" className="bg-[#1a1d24] text-white">Platform...</option>
+                    {websitePlatforms.map(p => (
+                      <option key={p} value={p} className="bg-[#1a1d24] text-white">{p}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={site.hosting || ''}
+                    onChange={(e) => updateWebsite(index, 'hosting', e.target.value)}
+                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="" className="bg-[#1a1d24] text-white">Hosting...</option>
+                    {hostingProviders.map(h => (
+                      <option key={h} value={h} className="bg-[#1a1d24] text-white">{h}</option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={site.ssl_enabled || false}
+                      onChange={(e) => updateWebsite(index, 'ssl_enabled', e.target.checked)}
+                      className="rounded bg-white/5 border-white/10 text-cyan-500"
+                    />
+                    SSL
+                  </label>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => removeWebsite(index)}
+                      className="p-2 text-gray-500 hover:text-red-400 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Social Media Section */}
       <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-            <Share2 className="w-5 h-5 text-blue-400" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <Share2 className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Social Media</h2>
+              <p className="text-sm text-gray-400">Connect with your audience</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Social Media</h2>
-            <p className="text-sm text-gray-400">Connect with your audience</p>
-          </div>
+          <button
+            onClick={addSocial}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Social
+          </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        {/* Built-in Social Media Fields */}
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="flex items-center gap-2 text-sm text-gray-400 mb-1">
               <Linkedin className="w-4 h-4" /> LinkedIn
@@ -465,6 +684,48 @@ export default function Website() {
             />
           </div>
         </div>
+
+        {/* Additional Social Media */}
+        {formData.additional_socials && formData.additional_socials.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-white/10">
+            <div className="text-sm text-gray-400">Additional Social Media</div>
+            {formData.additional_socials.map((social, index) => (
+              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5">
+                <select
+                  value={social.platform}
+                  onChange={(e) => updateSocial(index, 'platform', e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                >
+                  {socialPlatforms.map(p => (
+                    <option key={p.value} value={p.value} className="bg-[#1a1d24] text-white">{p.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={social.handle || ''}
+                  onChange={(e) => updateSocial(index, 'handle', e.target.value)}
+                  placeholder="@handle"
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                />
+                <input
+                  type="url"
+                  value={social.url || ''}
+                  onChange={(e) => updateSocial(index, 'url', e.target.value)}
+                  placeholder="https://..."
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => removeSocial(index)}
+                    className="p-2 text-gray-500 hover:text-red-400 transition"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Google Business Section */}

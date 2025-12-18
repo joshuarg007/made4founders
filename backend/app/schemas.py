@@ -830,6 +830,27 @@ class MetricSummary(BaseModel):
 
 # ============ Web Presence Schemas ============
 
+class AdditionalEmail(BaseModel):
+    provider: Optional[str] = None
+    domain: Optional[str] = None
+    email: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AdditionalWebsite(BaseModel):
+    name: Optional[str] = None
+    url: Optional[str] = None
+    platform: Optional[str] = None
+    hosting: Optional[str] = None
+    ssl_enabled: bool = False
+
+
+class AdditionalSocial(BaseModel):
+    platform: str
+    url: Optional[str] = None
+    handle: Optional[str] = None
+
+
 class WebPresenceBase(BaseModel):
     # Domain
     domain_name: Optional[str] = None
@@ -838,16 +859,22 @@ class WebPresenceBase(BaseModel):
     domain_privacy: bool = False
     domain_auto_renew: bool = False
 
-    # Professional Email
+    # Professional Email (primary)
     email_provider: Optional[str] = None
     email_domain: Optional[str] = None
     email_admin: Optional[str] = None
 
-    # Website
+    # Additional emails
+    additional_emails: Optional[List[AdditionalEmail]] = None
+
+    # Website (primary)
     website_url: Optional[str] = None
     website_platform: Optional[str] = None
     website_hosting: Optional[str] = None
     ssl_enabled: bool = False
+
+    # Additional websites
+    additional_websites: Optional[List[AdditionalWebsite]] = None
 
     # Social Media
     linkedin_url: Optional[str] = None
@@ -857,6 +884,9 @@ class WebPresenceBase(BaseModel):
     youtube_url: Optional[str] = None
     github_url: Optional[str] = None
     tiktok_url: Optional[str] = None
+
+    # Additional/custom social media
+    additional_socials: Optional[List[AdditionalSocial]] = None
 
     # Google Business
     google_business_url: Optional[str] = None
