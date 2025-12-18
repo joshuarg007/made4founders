@@ -552,9 +552,20 @@ class WebPresence(Base):
     # Additional/custom social media - JSON array: [{platform, url, handle}]
     additional_socials = Column(Text, nullable=True)
 
-    # Google Business
+    # Business Listings
     google_business_url = Column(String(500), nullable=True)
     google_business_verified = Column(Boolean, default=False)
+    apple_business_url = Column(String(500), nullable=True)
+    apple_business_verified = Column(Boolean, default=False)
+    bing_places_url = Column(String(500), nullable=True)
+    bing_places_verified = Column(Boolean, default=False)
+    yelp_url = Column(String(500), nullable=True)
+    yelp_claimed = Column(Boolean, default=False)
+    bbb_url = Column(String(500), nullable=True)
+    bbb_accredited = Column(Boolean, default=False)
+
+    # Additional business listings - JSON array: [{platform, url, verified, handle}]
+    additional_listings = Column(Text, nullable=True)
 
     # Additional notes
     notes = Column(Text, nullable=True)

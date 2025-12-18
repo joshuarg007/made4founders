@@ -806,6 +806,13 @@ export interface AdditionalSocial {
   handle: string | null;
 }
 
+export interface AdditionalListing {
+  platform: string;
+  url: string | null;
+  verified: boolean;
+  handle: string | null;
+}
+
 export interface WebPresence {
   id: number;
   // Domain
@@ -834,9 +841,18 @@ export interface WebPresence {
   github_url: string | null;
   tiktok_url: string | null;
   additional_socials: AdditionalSocial[] | null;
-  // Google Business
+  // Business Listings
   google_business_url: string | null;
   google_business_verified: boolean;
+  apple_business_url: string | null;
+  apple_business_verified: boolean;
+  bing_places_url: string | null;
+  bing_places_verified: boolean;
+  yelp_url: string | null;
+  yelp_claimed: boolean;
+  bbb_url: string | null;
+  bbb_accredited: boolean;
+  additional_listings: AdditionalListing[] | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

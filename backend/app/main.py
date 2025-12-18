@@ -2646,6 +2646,15 @@ def serialize_web_presence(presence: WebPresence) -> dict:
         "additional_socials": json.loads(presence.additional_socials) if presence.additional_socials else None,
         "google_business_url": presence.google_business_url,
         "google_business_verified": presence.google_business_verified,
+        "apple_business_url": presence.apple_business_url,
+        "apple_business_verified": presence.apple_business_verified,
+        "bing_places_url": presence.bing_places_url,
+        "bing_places_verified": presence.bing_places_verified,
+        "yelp_url": presence.yelp_url,
+        "yelp_claimed": presence.yelp_claimed,
+        "bbb_url": presence.bbb_url,
+        "bbb_accredited": presence.bbb_accredited,
+        "additional_listings": json.loads(presence.additional_listings) if presence.additional_listings else None,
         "notes": presence.notes,
         "created_at": presence.created_at,
         "updated_at": presence.updated_at,
@@ -2685,7 +2694,7 @@ def update_web_presence(
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         # Serialize list fields to JSON
-        if key in ('additional_emails', 'additional_websites', 'additional_socials') and value is not None:
+        if key in ('additional_emails', 'additional_websites', 'additional_socials', 'additional_listings') and value is not None:
             value = json.dumps([item.model_dump() if hasattr(item, 'model_dump') else item for item in value])
         setattr(presence, key, value)
 

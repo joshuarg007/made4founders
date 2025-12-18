@@ -19,7 +19,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { getWebPresence, updateWebPresence, type WebPresence, type AdditionalEmail, type AdditionalWebsite, type AdditionalSocial } from '../lib/api';
+import { getWebPresence, updateWebPresence, type WebPresence, type AdditionalEmail, type AdditionalWebsite, type AdditionalSocial, type AdditionalListing } from '../lib/api';
 
 const registrars = ['Namecheap', 'Cloudflare', 'GoDaddy', 'Google Domains', 'Porkbun', 'Other'];
 const emailProviders = ['Google Workspace', 'Microsoft 365', 'Zoho Mail', 'Fastmail', 'ProtonMail', 'Other'];
@@ -46,6 +46,19 @@ const socialPlatforms = [
   { value: 'whatsapp', label: 'WhatsApp Business', icon: null },
   { value: 'telegram', label: 'Telegram', icon: null },
   { value: 'other', label: 'Other', icon: null },
+];
+
+const listingPlatforms = [
+  { value: 'facebook_business', label: 'Facebook Business Page' },
+  { value: 'nextdoor', label: 'Nextdoor Business' },
+  { value: 'tripadvisor', label: 'TripAdvisor' },
+  { value: 'foursquare', label: 'Foursquare' },
+  { value: 'yellowpages', label: 'Yellow Pages' },
+  { value: 'angi', label: 'Angi (Angie\'s List)' },
+  { value: 'thumbtack', label: 'Thumbtack' },
+  { value: 'mapquest', label: 'MapQuest' },
+  { value: 'waze', label: 'Waze' },
+  { value: 'other', label: 'Other' },
 ];
 
 export default function Website() {
@@ -142,6 +155,23 @@ export default function Website() {
   const removeSocial = (index: number) => {
     const socials = (formData.additional_socials || []).filter((_, i) => i !== index);
     handleChange('additional_socials', socials.length > 0 ? socials : null);
+  };
+
+  // Additional listings helpers
+  const addListing = () => {
+    const listings = formData.additional_listings || [];
+    handleChange('additional_listings', [...listings, { platform: 'other', url: '', verified: false, handle: '' }]);
+  };
+
+  const updateListing = (index: number, field: keyof AdditionalListing, value: string | boolean) => {
+    const listings = [...(formData.additional_listings || [])];
+    listings[index] = { ...listings[index], [field]: value };
+    handleChange('additional_listings', listings);
+  };
+
+  const removeListing = (index: number) => {
+    const listings = (formData.additional_listings || []).filter((_, i) => i !== index);
+    handleChange('additional_listings', listings.length > 0 ? listings : null);
   };
 
   if (loading) {
@@ -728,30 +758,42 @@ export default function Website() {
         )}
       </div>
 
-      {/* Google Business Section */}
+      {/* Business Listings Section */}
       <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-emerald-400" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Business Listings</h2>
+              <p className="text-sm text-gray-400">Get found on maps and directories</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Google Business Profile</h2>
-            <p className="text-sm text-gray-400">Local search visibility</p>
-          </div>
+          <button
+            onClick={addListing}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Listing
+          </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Google Business URL</label>
+        {/* Main Listings */}
+        <div className="space-y-4">
+          {/* Google Business */}
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🔍</span>
+              <span className="text-sm font-medium text-white">Google Business</span>
+            </div>
             <input
               type="url"
               value={formData.google_business_url || ''}
               onChange={(e) => handleChange('google_business_url', e.target.value)}
               placeholder="https://business.google.com/..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
-          </div>
-          <div className="flex items-center gap-2 pt-6">
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
@@ -763,7 +805,151 @@ export default function Website() {
               Verified
             </label>
           </div>
+
+          {/* Apple Business Connect */}
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2">
+              <span className="text-lg"></span>
+              <span className="text-sm font-medium text-white">Apple Business Connect</span>
+            </div>
+            <input
+              type="url"
+              value={formData.apple_business_url || ''}
+              onChange={(e) => handleChange('apple_business_url', e.target.value)}
+              placeholder="https://businessconnect.apple.com/..."
+              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.apple_business_verified || false}
+                onChange={(e) => handleChange('apple_business_verified', e.target.checked)}
+                className="rounded bg-white/5 border-white/10 text-cyan-500"
+              />
+              <CheckCircle2 className="w-4 h-4" />
+              Verified
+            </label>
+          </div>
+
+          {/* Bing Places */}
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🅱️</span>
+              <span className="text-sm font-medium text-white">Bing Places</span>
+            </div>
+            <input
+              type="url"
+              value={formData.bing_places_url || ''}
+              onChange={(e) => handleChange('bing_places_url', e.target.value)}
+              placeholder="https://bingplaces.com/..."
+              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.bing_places_verified || false}
+                onChange={(e) => handleChange('bing_places_verified', e.target.checked)}
+                className="rounded bg-white/5 border-white/10 text-cyan-500"
+              />
+              <CheckCircle2 className="w-4 h-4" />
+              Verified
+            </label>
+          </div>
+
+          {/* Yelp */}
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⭐</span>
+              <span className="text-sm font-medium text-white">Yelp</span>
+            </div>
+            <input
+              type="url"
+              value={formData.yelp_url || ''}
+              onChange={(e) => handleChange('yelp_url', e.target.value)}
+              placeholder="https://yelp.com/biz/..."
+              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.yelp_claimed || false}
+                onChange={(e) => handleChange('yelp_claimed', e.target.checked)}
+                className="rounded bg-white/5 border-white/10 text-cyan-500"
+              />
+              <CheckCircle2 className="w-4 h-4" />
+              Claimed
+            </label>
+          </div>
+
+          {/* BBB */}
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🏛️</span>
+              <span className="text-sm font-medium text-white">Better Business Bureau</span>
+            </div>
+            <input
+              type="url"
+              value={formData.bbb_url || ''}
+              onChange={(e) => handleChange('bbb_url', e.target.value)}
+              placeholder="https://bbb.org/..."
+              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.bbb_accredited || false}
+                onChange={(e) => handleChange('bbb_accredited', e.target.checked)}
+                className="rounded bg-white/5 border-white/10 text-cyan-500"
+              />
+              <CheckCircle2 className="w-4 h-4" />
+              Accredited
+            </label>
+          </div>
         </div>
+
+        {/* Additional Listings */}
+        {formData.additional_listings && formData.additional_listings.length > 0 && (
+          <div className="space-y-3 pt-4 mt-4 border-t border-white/10">
+            <div className="text-sm text-gray-400">Additional Listings</div>
+            {formData.additional_listings.map((listing, index) => (
+              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5">
+                <select
+                  value={listing.platform}
+                  onChange={(e) => updateListing(index, 'platform', e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                >
+                  {listingPlatforms.map(p => (
+                    <option key={p.value} value={p.value} className="bg-[#1a1d24] text-white">{p.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="url"
+                  value={listing.url || ''}
+                  onChange={(e) => updateListing(index, 'url', e.target.value)}
+                  placeholder="https://..."
+                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                />
+                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={listing.verified || false}
+                    onChange={(e) => updateListing(index, 'verified', e.target.checked)}
+                    className="rounded bg-white/5 border-white/10 text-cyan-500"
+                  />
+                  Verified/Claimed
+                </label>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => removeListing(index)}
+                    className="p-2 text-gray-500 hover:text-red-400 transition"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Notes Section */}

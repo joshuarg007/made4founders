@@ -851,6 +851,13 @@ class AdditionalSocial(BaseModel):
     handle: Optional[str] = None
 
 
+class AdditionalListing(BaseModel):
+    platform: str
+    url: Optional[str] = None
+    verified: bool = False
+    handle: Optional[str] = None
+
+
 class WebPresenceBase(BaseModel):
     # Domain
     domain_name: Optional[str] = None
@@ -888,9 +895,20 @@ class WebPresenceBase(BaseModel):
     # Additional/custom social media
     additional_socials: Optional[List[AdditionalSocial]] = None
 
-    # Google Business
+    # Business Listings
     google_business_url: Optional[str] = None
     google_business_verified: bool = False
+    apple_business_url: Optional[str] = None
+    apple_business_verified: bool = False
+    bing_places_url: Optional[str] = None
+    bing_places_verified: bool = False
+    yelp_url: Optional[str] = None
+    yelp_claimed: bool = False
+    bbb_url: Optional[str] = None
+    bbb_accredited: bool = False
+
+    # Additional business listings
+    additional_listings: Optional[List[AdditionalListing]] = None
 
     notes: Optional[str] = None
 
