@@ -806,6 +806,20 @@ export default function Website() {
           ))}
         </div>
       </div>
+
+      {/* Floating Save Button */}
+      {hasChanges && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-105 transition-all"
+          >
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            Save Changes
+          </button>
+        </div>
+      )}
     </div>
   );
 }
