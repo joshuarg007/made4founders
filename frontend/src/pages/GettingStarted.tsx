@@ -1323,7 +1323,14 @@ export default function GettingStarted() {
             Trigger-based
           </button>
           <button
-            onClick={() => setShowOnlyIncomplete(!showOnlyIncomplete)}
+            onClick={() => {
+              const newValue = !showOnlyIncomplete;
+              setShowOnlyIncomplete(newValue);
+              // Auto-expand all categories when showing incomplete items
+              if (newValue) {
+                setExpandedCategories(new Set(categories.map(c => c.name)));
+              }
+            }}
             className={`px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
               showOnlyIncomplete ? 'bg-violet-500/30 text-violet-300' : 'bg-white/5 text-gray-400 hover:bg-white/10'
             }`}
