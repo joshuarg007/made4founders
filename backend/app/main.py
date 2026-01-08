@@ -75,6 +75,19 @@ logger = logging.getLogger(__name__)
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+# Auto-migrate: Add calendar_token column if it doesn't exist
+try:
+    from sqlalchemy import text, inspect
+    inspector = inspect(engine)
+    columns = [col['name'] for col in inspector.get_columns('users')]
+    if 'calendar_token' not in columns:
+        with engine.connect() as conn:
+            conn.execute(text('ALTER TABLE users ADD COLUMN calendar_token VARCHAR(64)'))
+            conn.commit()
+        logger.info("Added calendar_token column to users table")
+except Exception as e:
+    logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
+
 app = FastAPI(
     title="FounderOS API",
     version="1.0.0",

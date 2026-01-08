@@ -175,7 +175,8 @@ export default function ProductsOffered() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className={`p-4 rounded-xl bg-[#1a1d24] border transition group ${
+              onClick={() => handleEdit(product)}
+              className={`p-4 rounded-xl bg-[#1a1d24] border transition group cursor-pointer ${
                 product.is_active ? 'border-white/10 hover:border-white/20' : 'border-white/5 opacity-60'
               }`}
             >
@@ -188,7 +189,7 @@ export default function ProductsOffered() {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleToggleActive(product)}
+                  onClick={(e) => { e.stopPropagation(); handleToggleActive(product); }}
                   className={`p-1 rounded ${product.is_active ? 'text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
                   title={product.is_active ? 'Active' : 'Inactive'}
                 >
@@ -216,13 +217,13 @@ export default function ProductsOffered() {
               <div className="flex items-center justify-between pt-3 border-t border-white/10">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleEdit(product)}
+                    onClick={(e) => { e.stopPropagation(); handleEdit(product); }}
                     className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(product.id)}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }}
                     className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -233,6 +234,7 @@ export default function ProductsOffered() {
                     href={product.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
                   >
                     View
