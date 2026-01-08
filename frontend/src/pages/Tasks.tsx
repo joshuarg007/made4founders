@@ -477,7 +477,6 @@ export default function Tasks() {
           searchQuery={searchQuery}
           filterAssignee={filterAssignee}
           filterPriority={filterPriority}
-          canEdit={canEdit}
         />
       )}
 
@@ -1265,7 +1264,6 @@ function CalendarView({
   searchQuery,
   filterAssignee,
   filterPriority,
-  canEdit,
 }: {
   tasks: Task[];
   backlogColumn?: TaskColumn;
@@ -1274,7 +1272,6 @@ function CalendarView({
   searchQuery: string;
   filterAssignee: number | null;
   filterPriority: string | null;
-  canEdit: boolean;
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
