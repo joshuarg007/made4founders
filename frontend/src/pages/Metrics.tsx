@@ -490,8 +490,13 @@ export default function Metrics() {
                     )}
                     <input
                       type="text"
+                      inputMode="decimal"
                       value={formData.value}
-                      onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                      onChange={(e) => {
+                        // Only allow numbers, decimal point, and comma
+                        const sanitized = e.target.value.replace(/[^0-9.,\-]/g, '');
+                        setFormData({ ...formData, value: sanitized });
+                      }}
                       className={`w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 ${formData.unit === '$' ? 'pl-7' : ''}`}
                       placeholder="0"
                       required
