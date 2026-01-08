@@ -292,7 +292,7 @@ export default function Dashboard() {
           <div className="text-sm text-gray-400">Completed</div>
         </Link>
 
-        <div className="p-6 rounded-xl bg-[#1a1d24] border border-white/10">
+        <Link to="/deadlines" className="group p-6 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-amber-500/50 transition">
           <div className="flex items-center justify-between mb-3">
             <Calendar className="w-5 h-5 text-amber-400" />
             {stats && stats.upcoming_deadlines > 0 && (
@@ -303,7 +303,7 @@ export default function Dashboard() {
           </div>
           <div className="text-3xl font-bold text-white">{stats?.upcoming_deadlines || 0}</div>
           <div className="text-sm text-gray-400">Upcoming</div>
-        </div>
+        </Link>
       </div>
 
       {/* Achievements Section */}
