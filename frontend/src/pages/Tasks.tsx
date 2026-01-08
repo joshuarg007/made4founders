@@ -6,14 +6,15 @@ import {
   CheckCircle2, Circle, AlertCircle, Calendar, User, X,
   Trash2, Edit3, Play, Square,
   Send, Timer, History, Flag, CalendarDays, ChevronLeft, ChevronRight,
-  ChevronDown, ChevronUp, Minimize2, Maximize2
+  ChevronDown, ChevronUp, Link2, Copy, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
   getBoards, getTasks, createTask, updateTask, deleteTask, completeTask,
   reopenTask, moveTask, assignTask, getUsersList, getTaskComments,
   createComment, getTimeEntries, createTimeEntry, startTimer, stopTimer,
-  getRunningTimer, getTaskActivity,
+  getRunningTimer, getTaskActivity, getCalendarToken, generateCalendarToken,
+  getCalendarFeedUrl,
 } from '../lib/api';
 import type { TaskBoard, TaskColumn, Task, UserBrief, TaskComment, TimeEntry, TaskActivity } from '../lib/api';
 import { format, formatDistanceToNow, isPast, isToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
@@ -55,6 +56,11 @@ export default function Tasks() {
 
   // Toast notification
   const [toast, setToast] = useState<{ message: string; color: string } | null>(null);
+
+  // Calendar sync modal
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [calendarToken, setCalendarToken] = useState<string | null>(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
 
   // Task form
   const [taskForm, setTaskForm] = useState({
@@ -313,6 +319,45 @@ export default function Tasks() {
     setShowTaskModal(true);
   };
 
+  // Calendar sync functions
+  const loadCalendarToken = async () => {
+    try {
+      const data = await getCalendarToken();
+      setCalendarToken(data.calendar_token);
+    } catch (error) {
+      console.error('Failed to load calendar token:', error);
+    }
+  };
+
+  const handleGenerateToken = async () => {
+    setCalendarLoading(true);
+    try {
+      const data = await generateCalendarToken();
+      setCalendarToken(data.calendar_token);
+      setToast({ message: 'Calendar URL generated!', color: 'bg-green-500' });
+      setTimeout(() => setToast(null), 2000);
+    } catch (error) {
+      console.error('Failed to generate calendar token:', error);
+      setToast({ message: 'Failed to generate URL', color: 'bg-red-500' });
+      setTimeout(() => setToast(null), 2000);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const copyCalendarUrl = () => {
+    if (calendarToken) {
+      navigator.clipboard.writeText(getCalendarFeedUrl(calendarToken));
+      setToast({ message: 'Copied to clipboard!', color: 'bg-green-500' });
+      setTimeout(() => setToast(null), 2000);
+    }
+  };
+
+  const openCalendarModal = async () => {
+    setShowCalendarModal(true);
+    await loadCalendarToken();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -361,6 +406,16 @@ export default function Tasks() {
                 Calendar
               </button>
             </div>
+
+            {/* Calendar Sync button */}
+            <button
+              onClick={openCalendarModal}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition"
+              title="Sync with Google Calendar"
+            >
+              <Link2 className="w-4 h-4" />
+              <span className="text-sm">Sync</span>
+            </button>
 
             {canEdit && (
               <button
@@ -601,6 +656,88 @@ export default function Tasks() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Calendar Sync Modal */}
+      {showCalendarModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowCalendarModal(false)}>
+          <div
+            className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-cyan-400" />
+                Calendar Sync
+              </h2>
+              <button onClick={() => setShowCalendarModal(false)}>
+                <X className="w-5 h-5 text-gray-400 hover:text-white" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-gray-400 text-sm">
+                Subscribe to your tasks and deadlines in Google Calendar, Apple Calendar, Outlook, or any app that supports iCal feeds.
+              </p>
+
+              {calendarToken ? (
+                <div className="space-y-3">
+                  <label className="block text-sm text-gray-400">Your Calendar URL</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={getCalendarFeedUrl(calendarToken)}
+                      className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm font-mono truncate"
+                    />
+                    <button
+                      onClick={copyCalendarUrl}
+                      className="px-3 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition flex items-center gap-1"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      onClick={handleGenerateToken}
+                      disabled={calendarLoading}
+                      className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
+                      Regenerate URL
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 text-sm mb-4">
+                    Generate a subscription URL to sync your calendar
+                  </p>
+                  <button
+                    onClick={handleGenerateToken}
+                    disabled={calendarLoading}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition flex items-center gap-2 mx-auto"
+                  >
+                    {calendarLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Link2 className="w-4 h-4" />
+                    )}
+                    Generate URL
+                  </button>
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-white/10">
+                <h3 className="text-sm font-medium text-white mb-2">How to subscribe:</h3>
+                <ul className="text-xs text-gray-400 space-y-1">
+                  <li><span className="text-cyan-400">Google Calendar:</span> Settings &gt; Add calendar &gt; From URL</li>
+                  <li><span className="text-cyan-400">Apple Calendar:</span> File &gt; New Calendar Subscription</li>
+                  <li><span className="text-cyan-400">Outlook:</span> Add calendar &gt; Subscribe from web</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       )}

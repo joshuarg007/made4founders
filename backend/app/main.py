@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from icalendar import Calendar as ICalendar, Event as ICalEvent
+from uuid import uuid4
 import re
 import secrets
 import mimetypes
@@ -2776,3 +2778,131 @@ def delete_bank_account(
     db.delete(account)
     db.commit()
     return {"message": "Bank account deleted"}
+
+
+# ============ Calendar Integration (iCal) ============
+
+@app.post("/api/calendar/generate-token")
+def generate_calendar_token(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate or regenerate a calendar subscription token for the current user."""
+    # Generate a unique token
+    token = secrets.token_urlsafe(32)
+
+    # Update user's calendar token
+    current_user.calendar_token = token
+    db.commit()
+
+    return {"calendar_token": token}
+
+
+@app.get("/api/calendar/token")
+def get_calendar_token(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the current user's calendar subscription token."""
+    return {"calendar_token": current_user.calendar_token}
+
+
+@app.get("/api/calendar/feed/{token}.ics")
+def get_calendar_feed(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get iCal feed for tasks and deadlines.
+    This endpoint uses a token for authentication so it can be used by calendar apps.
+    """
+    # Find user by calendar token
+    user = db.query(User).filter(User.calendar_token == token).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Invalid calendar token")
+
+    # Create calendar
+    cal = ICalendar()
+    cal.add('prodid', '-//FounderOS//Task Calendar//EN')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
+    cal.add('x-wr-calname', 'FounderOS Tasks & Deadlines')
+
+    # Add deadlines
+    deadlines = db.query(Deadline).filter(Deadline.is_completed == False).all()
+    for deadline in deadlines:
+        event = ICalEvent()
+        event.add('uid', f'deadline-{deadline.id}@founderos')
+        event.add('summary', f'[Deadline] {deadline.title}')
+        if deadline.description:
+            event.add('description', deadline.description)
+        event.add('dtstart', deadline.due_date.date())
+        event.add('dtend', deadline.due_date.date())
+
+        # Add reminder/alarm
+        if deadline.reminder_days:
+            from icalendar import Alarm
+            alarm = Alarm()
+            alarm.add('action', 'DISPLAY')
+            alarm.add('description', f'Reminder: {deadline.title}')
+            alarm.add('trigger', timedelta(days=-deadline.reminder_days))
+            event.add_component(alarm)
+
+        # Add categories based on type
+        event.add('categories', [deadline.deadline_type.upper()])
+        event.add('status', 'CONFIRMED')
+        cal.add_component(event)
+
+    # Add tasks with due dates
+    tasks = db.query(Task).filter(
+        Task.due_date != None,
+        Task.status != 'done'
+    ).all()
+
+    for task in tasks:
+        event = ICalEvent()
+        event.add('uid', f'task-{task.id}@founderos')
+
+        # Add priority indicator to title
+        priority_prefix = {
+            'urgent': '[!!!] ',
+            'high': '[!!] ',
+            'medium': '[!] ',
+            'low': ''
+        }.get(task.priority, '')
+
+        event.add('summary', f'{priority_prefix}{task.title}')
+        if task.description:
+            event.add('description', task.description)
+        event.add('dtstart', task.due_date.date())
+        event.add('dtend', task.due_date.date())
+
+        # Map priority to iCal priority (1=high, 5=medium, 9=low)
+        ical_priority = {
+            'urgent': 1,
+            'high': 2,
+            'medium': 5,
+            'low': 9
+        }.get(task.priority, 5)
+        event.add('priority', ical_priority)
+
+        # Add status
+        status_map = {
+            'backlog': 'TENTATIVE',
+            'todo': 'CONFIRMED',
+            'in_progress': 'CONFIRMED',
+            'done': 'COMPLETED'
+        }
+        event.add('status', status_map.get(task.status, 'CONFIRMED'))
+        event.add('categories', ['TASK', task.priority.upper()])
+        cal.add_component(event)
+
+    # Return as .ics file
+    return Response(
+        content=cal.to_ical(),
+        media_type='text/calendar',
+        headers={
+            'Content-Disposition': 'attachment; filename="founderos-calendar.ics"'
+        }
+    )

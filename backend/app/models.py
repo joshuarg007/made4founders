@@ -246,6 +246,7 @@ class User(Base):
     name = Column(String(255), nullable=True)
     role = Column(String(50), default=UserRole.VIEWER.value)
     is_active = Column(Boolean, default=True)
+    calendar_token = Column(String(64), unique=True, nullable=True, index=True)  # For iCal feed auth
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

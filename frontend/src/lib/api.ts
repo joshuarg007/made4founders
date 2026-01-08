@@ -893,3 +893,19 @@ export const updateBankAccount = (id: number, data: Partial<BankAccount>) =>
 
 export const deleteBankAccount = (id: number) =>
   fetchApi<{ ok: boolean }>(`/bank-accounts/${id}`, { method: 'DELETE' });
+
+// Calendar Integration
+export interface CalendarToken {
+  calendar_token: string | null;
+}
+
+export const getCalendarToken = () =>
+  fetchApi<CalendarToken>('/calendar/token');
+
+export const generateCalendarToken = () =>
+  fetchApi<CalendarToken>('/calendar/generate-token', { method: 'POST' });
+
+export const getCalendarFeedUrl = (token: string) => {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+  return `${baseUrl}/api/calendar/feed/${token}.ics`;
+};
