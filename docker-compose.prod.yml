@@ -12,6 +12,7 @@ services:
       - CORS_ORIGINS=https://founders.axiondeep.com
     volumes:
       - backend-data:/app/data
+      - uploads-data:/app/uploads
     networks:
       - founderos-network
     healthcheck:
@@ -56,6 +57,7 @@ services:
 
 volumes:
   backend-data:
+  uploads-data:
   certbot-webroot:
 
 networks:
