@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   AlertTriangle,
   Calendar,
@@ -27,23 +28,44 @@ import {
 import type { DailyBrief as DailyBriefType, DailyBriefItem, ChecklistProgress } from '../lib/api';
 
 // Key required checklist items to show when daily brief is empty
+// Urgency: 'critical' = must do first, 'high' = important, 'medium' = should do soon
 const KEY_REQUIRED_ITEMS = [
-  { id: 'choose-structure', title: 'Choose Business Structure' },
-  { id: 'articles-incorporation', title: 'File Articles of Incorporation' },
-  { id: 'registered-agent', title: 'Appoint Registered Agent' },
-  { id: 'ein', title: 'Get EIN' },
-  { id: 'boi-report', title: 'File BOI Report (FinCEN)' },
-  { id: 'nm-crs', title: 'NM CRS Registration' },
-  { id: 'bylaws', title: 'Bylaws / Operating Agreement' },
-  { id: 'business-bank', title: 'Open Business Bank Account' },
-  { id: 'accounting-system', title: 'Set Up Accounting' },
-  { id: 'domain-name', title: 'Register Domain' },
-  { id: 'business-email', title: 'Set Up Professional Email' },
-  { id: 'website', title: 'Build Company Website' },
-  { id: 'mfa-enforcement', title: 'Enforce MFA on All Accounts' },
+  { id: 'choose-structure', title: 'Choose Business Structure', urgency: 'critical' as const },
+  { id: 'articles-incorporation', title: 'File Articles of Incorporation', urgency: 'critical' as const },
+  { id: 'ein', title: 'Get EIN', urgency: 'critical' as const },
+  { id: 'registered-agent', title: 'Appoint Registered Agent', urgency: 'high' as const },
+  { id: 'boi-report', title: 'File BOI Report (FinCEN)', urgency: 'high' as const },
+  { id: 'business-bank', title: 'Open Business Bank Account', urgency: 'high' as const },
+  { id: 'nm-crs', title: 'NM CRS Registration', urgency: 'high' as const },
+  { id: 'bylaws', title: 'Bylaws / Operating Agreement', urgency: 'medium' as const },
+  { id: 'accounting-system', title: 'Set Up Accounting', urgency: 'medium' as const },
+  { id: 'domain-name', title: 'Register Domain', urgency: 'medium' as const },
+  { id: 'business-email', title: 'Set Up Professional Email', urgency: 'medium' as const },
+  { id: 'website', title: 'Build Company Website', urgency: 'medium' as const },
+  { id: 'mfa-enforcement', title: 'Enforce MFA on All Accounts', urgency: 'medium' as const },
 ];
 
+const getUrgencyStyle = (urgency: 'critical' | 'high' | 'medium') => {
+  switch (urgency) {
+    case 'critical':
+      return 'bg-red-500/20 text-red-300 border-red-500/30';
+    case 'high':
+      return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+    case 'medium':
+      return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+  }
+};
+
+const getUrgencyLabel = (urgency: 'critical' | 'high' | 'medium') => {
+  switch (urgency) {
+    case 'critical': return 'Do First';
+    case 'high': return 'Important';
+    case 'medium': return 'Soon';
+  }
+};
+
 export default function DailyBrief() {
+  const { user } = useAuth();
   const [brief, setBrief] = useState<DailyBriefType | null>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<number | null>(null);
@@ -315,7 +337,7 @@ export default function DailyBrief() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">
-            {getGreeting()}{brief.company_name ? `, ${brief.company_name}` : ''}.
+            {getGreeting()}{user?.name ? `, ${user.name}` : ''}.
           </h1>
           <p className="text-gray-400 mt-1">
             {format(new Date(), 'EEEE, MMMM d, yyyy')}
@@ -342,9 +364,17 @@ export default function DailyBrief() {
             </div>
             <div className="space-y-2 mb-4">
               {incompleteChecklist.slice(0, 5).map(item => (
-                <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                  <div className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
-                  <span className="text-white text-sm">{item.title}</span>
+                <div key={item.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+                      item.urgency === 'critical' ? 'bg-red-400' :
+                      item.urgency === 'high' ? 'bg-amber-400' : 'bg-blue-400'
+                    }`} />
+                    <span className="text-white text-sm">{item.title}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-medium border shrink-0 ${getUrgencyStyle(item.urgency)}`}>
+                    {getUrgencyLabel(item.urgency)}
+                  </span>
                 </div>
               ))}
               {incompleteChecklist.length > 5 && (
