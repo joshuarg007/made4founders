@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Plus,
   ExternalLink,
@@ -17,9 +17,12 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  HelpCircle
+  HelpCircle,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
 import { getProductsUsed, createProductUsed, updateProductUsed, deleteProductUsed, type ProductUsed } from '../lib/api';
+import { serviceTemplates, searchTemplates, type ServiceTemplate } from '../data/serviceTemplates';
 
 const categories = [
   { value: 'all', label: 'All', icon: '🔧' },
@@ -94,6 +97,53 @@ export default function ProductsUsed() {
   const [selectedProduct, setSelectedProduct] = useState<ProductUsed | null>(null);
   const [editingProduct, setEditingProduct] = useState<ProductUsed | null>(null);
   const [formData, setFormData] = useState(emptyFormData);
+
+  // Template selector state
+  const [templateSearch, setTemplateSearch] = useState('');
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const [filteredTemplates, setFilteredTemplates] = useState<ServiceTemplate[]>([]);
+  const templateDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Filter templates when search changes
+  useEffect(() => {
+    if (templateSearch.length > 0) {
+      setFilteredTemplates(searchTemplates(templateSearch).slice(0, 10));
+      setShowTemplateDropdown(true);
+    } else {
+      setFilteredTemplates(serviceTemplates.slice(0, 10));
+    }
+  }, [templateSearch]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
+        setShowTemplateDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Apply template to form
+  const applyTemplate = (template: ServiceTemplate) => {
+    setFormData({
+      ...formData,
+      name: template.name,
+      vendor: template.vendor,
+      category: template.category,
+      icon: template.icon,
+      description: template.description,
+      features: template.features,
+      url: template.url,
+      login_url: template.login_url,
+      is_paid: template.is_paid,
+      billing_cycle: template.billing_cycle || '',
+      license_type: template.license_type || '',
+    });
+    setTemplateSearch('');
+    setShowTemplateDropdown(false);
+  };
 
   const loadProducts = async () => {
     const data = await getProductsUsed(
@@ -572,6 +622,57 @@ export default function ProductsUsed() {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-6">
+              {/* Template Selector - Only show when adding new tool */}
+              {!editingProduct && (
+                <div className="relative" ref={templateDropdownRef}>
+                  <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                    Quick Fill from Template
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input
+                      type="text"
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      onFocus={() => setShowTemplateDropdown(true)}
+                      placeholder="Search AWS, Stripe, Slack, GitHub..."
+                      className="w-full pl-10 pr-10 py-2 rounded-lg bg-gradient-to-r from-yellow-500/10 to-cyan-500/10 border border-yellow-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500/50"
+                    />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  </div>
+
+                  {showTemplateDropdown && (
+                    <div className="absolute z-10 w-full mt-1 max-h-64 overflow-y-auto rounded-lg bg-[#1a1d24] border border-white/20 shadow-xl">
+                      {filteredTemplates.length === 0 ? (
+                        <div className="p-3 text-gray-500 text-sm">No templates found</div>
+                      ) : (
+                        filteredTemplates.map((template, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => applyTemplate(template)}
+                            className="w-full px-3 py-2 flex items-center gap-3 hover:bg-white/10 transition text-left"
+                          >
+                            <span className="text-xl">{template.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white font-medium truncate">{template.name}</div>
+                              <div className="text-xs text-gray-500 truncate">{template.vendor} · {template.category}</div>
+                            </div>
+                            <span className={`text-xs px-2 py-0.5 rounded ${template.is_paid ? 'bg-violet-500/20 text-violet-300' : 'bg-green-500/20 text-green-300'}`}>
+                              {template.is_paid ? 'Paid' : 'Free'}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                      <div className="p-2 border-t border-white/10 text-xs text-gray-500 text-center">
+                        {serviceTemplates.length} templates available · Type to search
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Basic Info Section */}
               <div>
                 <h3 className="text-sm font-medium text-cyan-400 mb-3">Basic Information</h3>
