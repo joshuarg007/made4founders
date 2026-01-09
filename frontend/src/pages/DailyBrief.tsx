@@ -56,7 +56,7 @@ const getUrgencyStyle = (urgency: 'critical' | 'high' | 'medium') => {
   }
 };
 
-const getUrgencyLabel = (urgency: 'critical' | 'high' | 'medium') => {
+const getChecklistUrgencyLabel = (urgency: 'critical' | 'high' | 'medium') => {
   switch (urgency) {
     case 'critical': return 'Do First';
     case 'high': return 'Important';
@@ -373,7 +373,7 @@ export default function DailyBrief() {
                     <span className="text-white text-sm">{item.title}</span>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-medium border shrink-0 ${getUrgencyStyle(item.urgency)}`}>
-                    {getUrgencyLabel(item.urgency)}
+                    {getChecklistUrgencyLabel(item.urgency)}
                   </span>
                 </div>
               ))}
