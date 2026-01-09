@@ -413,6 +413,16 @@ export interface ProductUsed {
   icon: string | null;
   notes: string | null;
   renewal_date: string | null;
+  // New detailed fields
+  description: string | null;
+  use_case: string | null;
+  features: string | null;
+  integrations: string | null;
+  login_url: string | null;
+  account_email: string | null;
+  license_type: string | null;
+  status: string;
+  contract_end_date: string | null;
   created_at: string;
   updated_at: string;
 }

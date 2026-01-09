@@ -320,6 +320,16 @@ class ProductUsed(Base):
     icon = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
     renewal_date = Column(DateTime, nullable=True)
+    # New detailed fields
+    description = Column(Text, nullable=True)  # What the product is
+    use_case = Column(Text, nullable=True)  # How we use it in our business
+    features = Column(Text, nullable=True)  # Key features we use (comma-separated)
+    integrations = Column(Text, nullable=True)  # What it integrates with
+    login_url = Column(String(500), nullable=True)  # Direct login URL
+    account_email = Column(String(255), nullable=True)  # Email used for this account
+    license_type = Column(String(100), nullable=True)  # free, starter, pro, enterprise
+    status = Column(String(50), default="active")  # active, trial, cancelled, considering
+    contract_end_date = Column(DateTime, nullable=True)  # When contract ends
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -490,6 +490,16 @@ class ProductUsedBase(BaseModel):
     icon: Optional[str] = None
     notes: Optional[str] = None
     renewal_date: Optional[datetime] = None
+    # New detailed fields
+    description: Optional[str] = None
+    use_case: Optional[str] = None
+    features: Optional[str] = None
+    integrations: Optional[str] = None
+    login_url: Optional[str] = None
+    account_email: Optional[str] = None
+    license_type: Optional[str] = None
+    status: str = "active"
+    contract_end_date: Optional[datetime] = None
 
 
 class ProductUsedCreate(ProductUsedBase):
@@ -507,6 +517,15 @@ class ProductUsedUpdate(BaseModel):
     icon: Optional[str] = None
     notes: Optional[str] = None
     renewal_date: Optional[datetime] = None
+    description: Optional[str] = None
+    use_case: Optional[str] = None
+    features: Optional[str] = None
+    integrations: Optional[str] = None
+    login_url: Optional[str] = None
+    account_email: Optional[str] = None
+    license_type: Optional[str] = None
+    status: Optional[str] = None
+    contract_end_date: Optional[datetime] = None
 
 
 class ProductUsedResponse(ProductUsedBase):

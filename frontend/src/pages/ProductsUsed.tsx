@@ -8,7 +8,16 @@ import {
   Search,
   Wrench,
   DollarSign,
-  Gift
+  Gift,
+  LogIn,
+  Mail,
+  Link2,
+  Puzzle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  XCircle,
+  HelpCircle
 } from 'lucide-react';
 import { getProductsUsed, createProductUsed, updateProductUsed, deleteProductUsed, type ProductUsed } from '../lib/api';
 
@@ -35,6 +44,45 @@ const billingCycles = [
   { value: 'usage', label: 'Usage-based' },
 ];
 
+const licenseTypes = [
+  { value: 'free', label: 'Free' },
+  { value: 'freemium', label: 'Freemium' },
+  { value: 'starter', label: 'Starter' },
+  { value: 'pro', label: 'Pro' },
+  { value: 'business', label: 'Business' },
+  { value: 'enterprise', label: 'Enterprise' },
+  { value: 'custom', label: 'Custom' },
+];
+
+const statusOptions = [
+  { value: 'active', label: 'Active', icon: CheckCircle, color: 'text-green-400' },
+  { value: 'trial', label: 'Trial', icon: Clock, color: 'text-yellow-400' },
+  { value: 'cancelled', label: 'Cancelled', icon: XCircle, color: 'text-red-400' },
+  { value: 'considering', label: 'Considering', icon: HelpCircle, color: 'text-blue-400' },
+];
+
+const emptyFormData = {
+  name: '',
+  vendor: '',
+  category: 'other',
+  is_paid: false,
+  monthly_cost: '',
+  billing_cycle: '',
+  url: '',
+  icon: '',
+  notes: '',
+  renewal_date: '',
+  description: '',
+  use_case: '',
+  features: '',
+  integrations: '',
+  login_url: '',
+  account_email: '',
+  license_type: '',
+  status: 'active',
+  contract_end_date: ''
+};
+
 export default function ProductsUsed() {
   const [products, setProducts] = useState<ProductUsed[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,19 +90,10 @@ export default function ProductsUsed() {
   const [filterPaid, setFilterPaid] = useState<boolean | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductUsed | null>(null);
   const [editingProduct, setEditingProduct] = useState<ProductUsed | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    vendor: '',
-    category: 'other',
-    is_paid: false,
-    monthly_cost: '',
-    billing_cycle: '',
-    url: '',
-    icon: '',
-    notes: '',
-    renewal_date: ''
-  });
+  const [formData, setFormData] = useState(emptyFormData);
 
   const loadProducts = async () => {
     const data = await getProductsUsed(
@@ -71,14 +110,16 @@ export default function ProductsUsed() {
 
   const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.vendor?.toLowerCase().includes(searchQuery.toLowerCase())
+    p.vendor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const submitData = {
       ...formData,
-      renewal_date: formData.renewal_date ? new Date(formData.renewal_date).toISOString() : null
+      renewal_date: formData.renewal_date ? new Date(formData.renewal_date).toISOString() : null,
+      contract_end_date: formData.contract_end_date ? new Date(formData.contract_end_date).toISOString() : null
     };
     if (editingProduct) {
       await updateProductUsed(editingProduct.id, submitData);
@@ -87,11 +128,12 @@ export default function ProductsUsed() {
     }
     setShowModal(false);
     setEditingProduct(null);
-    setFormData({ name: '', vendor: '', category: 'other', is_paid: false, monthly_cost: '', billing_cycle: '', url: '', icon: '', notes: '', renewal_date: '' });
+    setFormData(emptyFormData);
     loadProducts();
   };
 
-  const handleEdit = (product: ProductUsed) => {
+  const handleEdit = (product: ProductUsed, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setEditingProduct(product);
     setFormData({
       name: product.name,
@@ -103,16 +145,44 @@ export default function ProductsUsed() {
       url: product.url || '',
       icon: product.icon || '',
       notes: product.notes || '',
-      renewal_date: product.renewal_date ? product.renewal_date.split('T')[0] : ''
+      renewal_date: product.renewal_date ? product.renewal_date.split('T')[0] : '',
+      description: product.description || '',
+      use_case: product.use_case || '',
+      features: product.features || '',
+      integrations: product.integrations || '',
+      login_url: product.login_url || '',
+      account_email: product.account_email || '',
+      license_type: product.license_type || '',
+      status: product.status || 'active',
+      contract_end_date: product.contract_end_date ? product.contract_end_date.split('T')[0] : ''
     });
     setShowModal(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (confirm('Delete this tool?')) {
       await deleteProductUsed(id);
       loadProducts();
     }
+  };
+
+  const handleCardClick = (product: ProductUsed) => {
+    setSelectedProduct(product);
+    setShowDetailModal(true);
+  };
+
+  const getStatusInfo = (status: string) => {
+    return statusOptions.find(s => s.value === status) || statusOptions[0];
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -124,7 +194,7 @@ export default function ProductsUsed() {
           <p className="text-gray-400 mt-1">Software and services your business relies on</p>
         </div>
         <button
-          onClick={() => { setEditingProduct(null); setFormData({ name: '', vendor: '', category: 'other', is_paid: false, monthly_cost: '', billing_cycle: '', url: '', icon: '', notes: '', renewal_date: '' }); setShowModal(true); }}
+          onClick={() => { setEditingProduct(null); setFormData(emptyFormData); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
         >
           <Plus className="w-4 h-4" />
@@ -133,24 +203,26 @@ export default function ProductsUsed() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="p-4 rounded-xl bg-[#1a1d24] border border-white/10">
           <div className="text-2xl font-bold text-white">{products.length}</div>
           <div className="text-sm text-gray-400">Total Tools</div>
         </div>
         <div className="p-4 rounded-xl bg-[#1a1d24] border border-white/10">
-          <div className="text-2xl font-bold text-green-400">{products.filter(p => !p.is_paid).length}</div>
-          <div className="text-sm text-gray-400">Free</div>
+          <div className="text-2xl font-bold text-green-400">{products.filter(p => p.status === 'active').length}</div>
+          <div className="text-sm text-gray-400">Active</div>
+        </div>
+        <div className="p-4 rounded-xl bg-[#1a1d24] border border-white/10">
+          <div className="text-2xl font-bold text-yellow-400">{products.filter(p => p.status === 'trial').length}</div>
+          <div className="text-sm text-gray-400">On Trial</div>
         </div>
         <div className="p-4 rounded-xl bg-[#1a1d24] border border-white/10">
           <div className="text-2xl font-bold text-violet-400">{products.filter(p => p.is_paid).length}</div>
           <div className="text-sm text-gray-400">Paid</div>
         </div>
         <div className="p-4 rounded-xl bg-[#1a1d24] border border-white/10">
-          <div className="text-2xl font-bold text-cyan-400">
-            {new Set(products.map(p => p.category)).size}
-          </div>
-          <div className="text-sm text-gray-400">Categories</div>
+          <div className="text-2xl font-bold text-cyan-400">{products.filter(p => !p.is_paid).length}</div>
+          <div className="text-sm text-gray-400">Free</div>
         </div>
       </div>
 
@@ -228,85 +300,269 @@ export default function ProductsUsed() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className={`p-4 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-white/20 transition group ${product.url ? 'cursor-pointer' : ''}`}
-              onClick={() => product.url && window.open(product.url, '_blank', 'noopener,noreferrer')}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{product.icon || '🔧'}</span>
-                  <div>
-                    <h3 className="font-semibold text-white flex items-center gap-2">
-                      {product.name}
-                      {product.url && <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-cyan-400 transition" />}
-                    </h3>
-                    {product.vendor && (
-                      <span className="text-xs text-gray-500">by {product.vendor}</span>
-                    )}
+          {filteredProducts.map((product) => {
+            const statusInfo = getStatusInfo(product.status);
+            const StatusIcon = statusInfo.icon;
+            return (
+              <div
+                key={product.id}
+                onClick={() => handleCardClick(product)}
+                className="p-4 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-cyan-500/50 transition cursor-pointer group"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{product.icon || '🔧'}</span>
+                    <div>
+                      <h3 className="font-semibold text-white group-hover:text-cyan-400 transition">{product.name}</h3>
+                      {product.vendor && (
+                        <span className="text-xs text-gray-500">by {product.vendor}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusIcon className={`w-4 h-4 ${statusInfo.color}`} />
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${
+                      product.is_paid
+                        ? 'bg-violet-500/20 text-violet-300'
+                        : 'bg-green-500/20 text-green-300'
+                    }`}>
+                      {product.is_paid ? 'Paid' : 'Free'}
+                    </span>
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 text-xs rounded-full ${
-                  product.is_paid
-                    ? 'bg-violet-500/20 text-violet-300'
-                    : 'bg-green-500/20 text-green-300'
-                }`}>
-                  {product.is_paid ? 'Paid' : 'Free'}
-                </span>
-              </div>
 
-              <div className="text-xs text-gray-500 capitalize mb-2">{product.category}</div>
+                {product.description && (
+                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">{product.description}</p>
+                )}
 
-              {(product.monthly_cost || product.billing_cycle) && (
-                <div className="flex gap-2 mb-3">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="text-xs text-gray-500 capitalize bg-white/5 px-2 py-0.5 rounded">{product.category}</span>
+                  {product.license_type && (
+                    <span className="text-xs text-gray-500 capitalize bg-white/5 px-2 py-0.5 rounded">{product.license_type}</span>
+                  )}
                   {product.monthly_cost && (
                     <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/20 text-cyan-300">
                       {product.monthly_cost}
                     </span>
                   )}
-                  {product.billing_cycle && (
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-300">
-                      {product.billing_cycle}
-                    </span>
-                  )}
                 </div>
-              )}
 
-              {product.notes && (
-                <p className="text-sm text-gray-400 mb-3 line-clamp-2">{product.notes}</p>
-              )}
-
-              <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                <div className="flex gap-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleEdit(product); }}
-                    className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }}
-                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                {product.url && (
+                <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => handleEdit(product, e)}
+                      className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(product.id, e)}
+                      className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                   <span className="text-xs text-gray-500 group-hover:text-cyan-400 transition">
-                    Click to open
+                    Click to view details
                   </span>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Detail Modal */}
+      {showDetailModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{selectedProduct.icon || '🔧'}</span>
+                <div>
+                  <h2 className="text-xl font-semibold text-white">{selectedProduct.name}</h2>
+                  {selectedProduct.vendor && (
+                    <span className="text-sm text-gray-400">by {selectedProduct.vendor}</span>
+                  )}
+                </div>
+              </div>
+              <button onClick={() => setShowDetailModal(false)} className="text-gray-500 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-6">
+              {/* Status & Badges */}
+              <div className="flex flex-wrap gap-2">
+                {(() => {
+                  const statusInfo = getStatusInfo(selectedProduct.status);
+                  const StatusIcon = statusInfo.icon;
+                  return (
+                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 ${statusInfo.color}`}>
+                      <StatusIcon className="w-4 h-4" />
+                      {statusInfo.label}
+                    </span>
+                  );
+                })()}
+                <span className={`px-3 py-1 rounded-full ${
+                  selectedProduct.is_paid
+                    ? 'bg-violet-500/20 text-violet-300'
+                    : 'bg-green-500/20 text-green-300'
+                }`}>
+                  {selectedProduct.is_paid ? 'Paid' : 'Free'}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/10 text-gray-300 capitalize">
+                  {selectedProduct.category}
+                </span>
+                {selectedProduct.license_type && (
+                  <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 capitalize">
+                    {selectedProduct.license_type}
+                  </span>
+                )}
+              </div>
+
+              {/* Description */}
+              {selectedProduct.description && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-2">What is it?</h3>
+                  <p className="text-white">{selectedProduct.description}</p>
+                </div>
+              )}
+
+              {/* Use Case */}
+              {selectedProduct.use_case && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-2">How we use it</h3>
+                  <p className="text-white">{selectedProduct.use_case}</p>
+                </div>
+              )}
+
+              {/* Features */}
+              {selectedProduct.features && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-2">Key Features</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProduct.features.split(',').map((feature, i) => (
+                      <span key={i} className="px-2 py-1 rounded bg-white/5 text-gray-300 text-sm">
+                        {feature.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Integrations */}
+              {selectedProduct.integrations && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                    <Puzzle className="w-4 h-4" /> Integrates with
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProduct.integrations.split(',').map((integration, i) => (
+                      <span key={i} className="px-2 py-1 rounded bg-violet-500/20 text-violet-300 text-sm">
+                        {integration.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Billing Info */}
+              {(selectedProduct.monthly_cost || selectedProduct.billing_cycle || selectedProduct.renewal_date || selectedProduct.contract_end_date) && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" /> Billing
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-white/5">
+                    {selectedProduct.monthly_cost && (
+                      <div>
+                        <span className="text-xs text-gray-500">Cost</span>
+                        <p className="text-white">{selectedProduct.monthly_cost}</p>
+                      </div>
+                    )}
+                    {selectedProduct.billing_cycle && (
+                      <div>
+                        <span className="text-xs text-gray-500">Billing Cycle</span>
+                        <p className="text-white capitalize">{selectedProduct.billing_cycle}</p>
+                      </div>
+                    )}
+                    {selectedProduct.renewal_date && (
+                      <div>
+                        <span className="text-xs text-gray-500">Renewal Date</span>
+                        <p className="text-white">{formatDate(selectedProduct.renewal_date)}</p>
+                      </div>
+                    )}
+                    {selectedProduct.contract_end_date && (
+                      <div>
+                        <span className="text-xs text-gray-500">Contract Ends</span>
+                        <p className="text-white">{formatDate(selectedProduct.contract_end_date)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Account Info */}
+              {selectedProduct.account_email && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> Account Email
+                  </h3>
+                  <p className="text-white">{selectedProduct.account_email}</p>
+                </div>
+              )}
+
+              {/* Notes */}
+              {selectedProduct.notes && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-2">Notes</h3>
+                  <p className="text-gray-300 whitespace-pre-wrap">{selectedProduct.notes}</p>
+                </div>
+              )}
+
+              {/* Links */}
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-white/10">
+                {selectedProduct.url && (
+                  <a
+                    href={selectedProduct.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+                  >
+                    <Link2 className="w-4 h-4" />
+                    Website
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                {selectedProduct.login_url && (
+                  <a
+                    href={selectedProduct.login_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Login
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                <button
+                  onClick={() => { setShowDetailModal(false); handleEdit(selectedProduct); }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 transition ml-auto"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingProduct ? 'Edit Tool' : 'Add Tool'}
@@ -315,118 +571,242 @@ export default function ProductsUsed() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-400 mb-1">Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Vendor</label>
-                  <input
-                    type="text"
-                    value={formData.vendor}
-                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                    placeholder="e.g., Google, AWS"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Icon (emoji)</label>
-                  <input
-                    type="text"
-                    value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    placeholder="🔧"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Category</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  >
-                    {categories.slice(1).map((cat) => (
-                      <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">{cat.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center">
-                  <label className="flex items-center gap-2 text-sm text-gray-400 mt-6">
+            <form onSubmit={handleSubmit} className="p-4 space-y-6">
+              {/* Basic Info Section */}
+              <div>
+                <h3 className="text-sm font-medium text-cyan-400 mb-3">Basic Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="block text-sm text-gray-400 mb-1">Name *</label>
                     <input
-                      type="checkbox"
-                      checked={formData.is_paid}
-                      onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
-                      className="rounded bg-white/5 border-white/10"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g., Slack, AWS, Figma"
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                     />
-                    Paid subscription
-                  </label>
-                </div>
-                {formData.is_paid && (
-                  <>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Cost</label>
-                      <input
-                        type="text"
-                        value={formData.monthly_cost}
-                        onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
-                        placeholder="e.g., $50/mo"
-                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Billing Cycle</label>
-                      <select
-                        value={formData.billing_cycle}
-                        onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                      >
-                        <option value="" className="bg-[#1a1d24] text-white">Select...</option>
-                        {billingCycles.map((bc) => (
-                          <option key={bc.value} value={bc.value} className="bg-[#1a1d24] text-white">{bc.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-sm text-gray-400 mb-1">Renewal Date</label>
-                      <input
-                        type="date"
-                        value={formData.renewal_date}
-                        onChange={(e) => setFormData({ ...formData, renewal_date: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                      />
-                    </div>
-                  </>
-                )}
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-400 mb-1">URL</label>
-                  <input
-                    type="url"
-                    value={formData.url}
-                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-400 mb-1">Notes</label>
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  />
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="block text-sm text-gray-400 mb-1">Vendor</label>
+                    <input
+                      type="text"
+                      value={formData.vendor}
+                      onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                      placeholder="e.g., Google, Microsoft, Atlassian"
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Category</label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    >
+                      {categories.slice(1).map((cat) => (
+                        <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">{cat.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status.value} value={status.value} className="bg-[#1a1d24] text-white">{status.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Icon (emoji)</label>
+                    <input
+                      type="text"
+                      value={formData.icon}
+                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                      placeholder="🔧"
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">License Type</label>
+                    <select
+                      value={formData.license_type}
+                      onChange={(e) => setFormData({ ...formData, license_type: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    >
+                      <option value="" className="bg-[#1a1d24] text-white">Select...</option>
+                      {licenseTypes.map((lt) => (
+                        <option key={lt.value} value={lt.value} className="bg-[#1a1d24] text-white">{lt.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-3 pt-4">
+
+              {/* Description Section */}
+              <div>
+                <h3 className="text-sm font-medium text-cyan-400 mb-3">Description & Usage</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">What is this tool?</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={2}
+                      placeholder="Brief description of what this tool/service is..."
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">How do we use it?</label>
+                    <textarea
+                      value={formData.use_case}
+                      onChange={(e) => setFormData({ ...formData, use_case: e.target.value })}
+                      rows={2}
+                      placeholder="Describe how your business uses this tool..."
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Key Features (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={formData.features}
+                      onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+                      placeholder="e.g., Real-time sync, API access, SSO"
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Integrates with (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={formData.integrations}
+                      onChange={(e) => setFormData({ ...formData, integrations: e.target.value })}
+                      placeholder="e.g., Slack, GitHub, Jira"
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Billing Section */}
+              <div>
+                <h3 className="text-sm font-medium text-cyan-400 mb-3">Billing & Cost</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="flex items-center gap-2 text-sm text-gray-400">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_paid}
+                        onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
+                        className="rounded bg-white/5 border-white/10"
+                      />
+                      Paid subscription
+                    </label>
+                  </div>
+                  {formData.is_paid && (
+                    <>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Cost</label>
+                        <input
+                          type="text"
+                          value={formData.monthly_cost}
+                          onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
+                          placeholder="e.g., $50/mo, $500/yr"
+                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Billing Cycle</label>
+                        <select
+                          value={formData.billing_cycle}
+                          onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                        >
+                          <option value="" className="bg-[#1a1d24] text-white">Select...</option>
+                          {billingCycles.map((bc) => (
+                            <option key={bc.value} value={bc.value} className="bg-[#1a1d24] text-white">{bc.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Renewal Date</label>
+                        <input
+                          type="date"
+                          value={formData.renewal_date}
+                          onChange={(e) => setFormData({ ...formData, renewal_date: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Contract End Date</label>
+                        <input
+                          type="date"
+                          value={formData.contract_end_date}
+                          onChange={(e) => setFormData({ ...formData, contract_end_date: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Access & Links Section */}
+              <div>
+                <h3 className="text-sm font-medium text-cyan-400 mb-3">Access & Links</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Website URL</label>
+                    <input
+                      type="url"
+                      value={formData.url}
+                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      placeholder="https://..."
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Login URL</label>
+                    <input
+                      type="url"
+                      value={formData.login_url}
+                      onChange={(e) => setFormData({ ...formData, login_url: e.target.value })}
+                      placeholder="https://app.example.com/login"
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm text-gray-400 mb-1">Account Email</label>
+                    <input
+                      type="email"
+                      value={formData.account_email}
+                      onChange={(e) => setFormData({ ...formData, account_email: e.target.value })}
+                      placeholder="Which email is this account registered with?"
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes Section */}
+              <div>
+                <h3 className="text-sm font-medium text-cyan-400 mb-3">Additional Notes</h3>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
+                  placeholder="Any other notes, tips, or important information..."
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -438,7 +818,7 @@ export default function ProductsUsed() {
                   type="submit"
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
                 >
-                  {editingProduct ? 'Save' : 'Add Tool'}
+                  {editingProduct ? 'Save Changes' : 'Add Tool'}
                 </button>
               </div>
             </form>
