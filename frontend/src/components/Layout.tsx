@@ -5,7 +5,6 @@ import {
   FileText,
   Users,
   Calendar,
-  Rocket,
   ClipboardCheck,
   Building2,
   Globe,
@@ -50,9 +49,7 @@ export default function Layout() {
         {/* Logo */}
         <div className="p-6 border-b border-white/10">
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
-              <Rocket className="w-5 h-5 text-white" />
-            </div>
+            <img src="/logo.png" alt="AxionDeep" className="h-10 w-auto" />
             <div>
               <h1 className="text-lg font-bold text-white">FounderOS</h1>
               <p className="text-xs text-gray-500">Command Center</p>
