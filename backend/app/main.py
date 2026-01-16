@@ -28,9 +28,20 @@ from .models import (
     Service, Document, Contact, Deadline, BusinessInfo, BusinessIdentifier,
     ChecklistProgress, User, VaultConfig, Credential, ProductOffered, ProductUsed, WebLink,
     TaskBoard, TaskColumn, Task, TaskComment, TimeEntry, TaskActivity, Metric,
-    WebPresence, BankAccount
+    WebPresence, BankAccount, Organization, BrandColor, BrandFont, BrandAsset,
+    BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
+    EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
+    AccountingConnection
 )
 from .auth import router as auth_router, get_current_user
+from .oauth import router as oauth_router
+from .stripe_billing import router as stripe_router
+from .branding import router as branding_router
+from .marketing import router as marketing_router
+from .social_oauth import router as social_oauth_router
+from .accounting_oauth import router as accounting_router
+from .mailchimp_api import mailchimp_router
+from .templates import router as templates_router
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
     DocumentCreate, DocumentUpdate, DocumentResponse,
@@ -89,7 +100,7 @@ except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
 
 app = FastAPI(
-    title="FounderOS API",
+    title="Made4Founders API",
     version="1.0.0",
     docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
     redoc_url=None,
@@ -144,15 +155,23 @@ else:
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 # NOTE: Static file mount removed for security - use /api/documents/{id}/download instead
 
-# Include auth router
+# Include routers
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(oauth_router, prefix="/api/auth", tags=["oauth"])
+app.include_router(stripe_router, prefix="/api/billing", tags=["billing"])
+app.include_router(branding_router, prefix="/api/branding", tags=["branding"])
+app.include_router(marketing_router, prefix="/api/marketing", tags=["marketing"])
+app.include_router(mailchimp_router, prefix="/api/mailchimp", tags=["mailchimp"])
+app.include_router(templates_router, prefix="/api/templates", tags=["templates"])
+app.include_router(social_oauth_router, prefix="/api/social", tags=["social"])
+app.include_router(accounting_router, prefix="/api/accounting", tags=["accounting"])
 
 # Startup validation
 @app.on_event("startup")
 async def startup_validation():
     """Validate security configuration on startup."""
     secret_key = os.getenv("SECRET_KEY", "")
-    if not secret_key or secret_key == "founderos-dev-secret-change-in-production":
+    if not secret_key or secret_key == "made4founders-dev-secret-change-in-production":
         if os.getenv("ENVIRONMENT") == "production":
             logger.error("CRITICAL: Using default SECRET_KEY in production!")
         else:
@@ -162,7 +181,7 @@ async def startup_validation():
     if not app_key and os.getenv("ENVIRONMENT") == "production":
         logger.warning("APP_ENCRYPTION_KEY not set - using derived key")
 
-    logger.info("FounderOS API started with security middleware enabled")
+    logger.info("Made4Founders API started with security middleware enabled")
 
 
 # ============ Dashboard ============
@@ -718,7 +737,7 @@ def complete_deadline(deadline_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "ok", "service": "founderos"}
+    return {"status": "ok", "service": "made4founders"}
 
 
 # ============ Daily Brief ============
@@ -2644,6 +2663,406 @@ def get_metric_chart_data(
     }
 
 
+# ============ ANALYTICS ROUTES ============
+
+from .models import MetricGoal
+from .schemas import (
+    MetricGoalCreate, MetricGoalUpdate, MetricGoalResponse,
+    AnalyticsOverview, GrowthMetric, FinancialHealth, CustomerHealth, AnalyticsDashboard
+)
+
+
+def parse_metric_value(value: str) -> float:
+    """Parse a metric value string to float."""
+    try:
+        # Remove common formatting
+        cleaned = value.replace(',', '').replace('$', '').replace('%', '').strip()
+        return float(cleaned)
+    except (ValueError, AttributeError):
+        return 0.0
+
+
+def get_period_days(period: str) -> int:
+    """Convert period string to days."""
+    periods = {
+        "7d": 7,
+        "30d": 30,
+        "90d": 90,
+        "1y": 365,
+        "all": 3650  # ~10 years
+    }
+    return periods.get(period, 30)
+
+
+@app.get("/api/analytics/dashboard")
+def get_analytics_dashboard(
+    period: str = "30d",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive analytics dashboard data."""
+    from sqlalchemy import func, desc
+
+    days = get_period_days(period)
+    start_date = datetime.utcnow() - timedelta(days=days)
+    prev_start = start_date - timedelta(days=days)
+    prev_end = start_date
+
+    # Get all metrics in period
+    current_metrics = db.query(Metric).filter(
+        Metric.date >= start_date
+    ).all()
+
+    prev_metrics = db.query(Metric).filter(
+        Metric.date >= prev_start,
+        Metric.date < prev_end
+    ).all()
+
+    # Get unique metric types
+    metric_types = db.query(Metric.metric_type).distinct().all()
+    metric_types = [m[0] for m in metric_types]
+
+    # Calculate trends per metric type
+    improving = 0
+    declining = 0
+    flat = 0
+    growth_metrics = []
+
+    for mt in metric_types:
+        # Get latest value for current period
+        current = db.query(Metric).filter(
+            Metric.metric_type == mt,
+            Metric.date >= start_date
+        ).order_by(desc(Metric.date)).first()
+
+        # Get latest value for previous period
+        previous = db.query(Metric).filter(
+            Metric.metric_type == mt,
+            Metric.date >= prev_start,
+            Metric.date < prev_end
+        ).order_by(desc(Metric.date)).first()
+
+        if current and previous:
+            curr_val = parse_metric_value(current.value)
+            prev_val = parse_metric_value(previous.value)
+
+            if prev_val != 0:
+                pct_change = ((curr_val - prev_val) / abs(prev_val)) * 100
+            else:
+                pct_change = 100 if curr_val > 0 else 0
+
+            # Invert for metrics where down is good
+            inverted = mt in ['burn_rate', 'churn', 'cac']
+            actual_change = pct_change * (-1 if inverted else 1)
+
+            if actual_change > 1:
+                improving += 1
+            elif actual_change < -1:
+                declining += 1
+            else:
+                flat += 1
+
+            growth_metrics.append(GrowthMetric(
+                metric_type=mt,
+                name=current.name,
+                current_value=curr_val,
+                previous_value=prev_val,
+                absolute_change=round(curr_val - prev_val, 2),
+                percent_change=round(pct_change, 1),
+                unit=current.unit
+            ))
+        elif current:
+            flat += 1
+
+    # Build financial health
+    def get_latest_value(metric_type: str) -> float | None:
+        m = db.query(Metric).filter(
+            Metric.metric_type == metric_type
+        ).order_by(desc(Metric.date)).first()
+        return parse_metric_value(m.value) if m else None
+
+    mrr = get_latest_value('mrr')
+    prev_mrr = None
+    prev_mrr_metric = db.query(Metric).filter(
+        Metric.metric_type == 'mrr',
+        Metric.date < start_date
+    ).order_by(desc(Metric.date)).first()
+    if prev_mrr_metric:
+        prev_mrr = parse_metric_value(prev_mrr_metric.value)
+
+    mrr_growth = None
+    if mrr and prev_mrr and prev_mrr > 0:
+        mrr_growth = round(((mrr - prev_mrr) / prev_mrr) * 100, 1)
+
+    financial = FinancialHealth(
+        mrr=mrr,
+        arr=get_latest_value('arr'),
+        burn_rate=get_latest_value('burn_rate'),
+        runway_months=get_latest_value('runway'),
+        cash=get_latest_value('cash'),
+        mrr_growth=mrr_growth,
+        revenue=get_latest_value('revenue')
+    )
+
+    # Build customer health
+    customers = get_latest_value('customers')
+    prev_customers_metric = db.query(Metric).filter(
+        Metric.metric_type == 'customers',
+        Metric.date < start_date
+    ).order_by(desc(Metric.date)).first()
+    prev_customers = parse_metric_value(prev_customers_metric.value) if prev_customers_metric else None
+
+    customer_growth = None
+    if customers and prev_customers and prev_customers > 0:
+        customer_growth = round(((customers - prev_customers) / prev_customers) * 100, 1)
+
+    ltv = get_latest_value('ltv')
+    cac = get_latest_value('cac')
+    ltv_cac_ratio = None
+    if ltv and cac and cac > 0:
+        ltv_cac_ratio = round(ltv / cac, 2)
+
+    customer = CustomerHealth(
+        total_customers=int(customers) if customers else None,
+        customer_growth=customer_growth,
+        churn_rate=get_latest_value('churn'),
+        ltv=ltv,
+        cac=cac,
+        ltv_cac_ratio=ltv_cac_ratio,
+        nps=get_latest_value('nps')
+    )
+
+    # Get goals with progress
+    goals_db = db.query(MetricGoal).filter(
+        MetricGoal.is_achieved == False
+    ).all()
+
+    goals = []
+    for g in goals_db:
+        current_val = get_latest_value(g.metric_type)
+        progress = None
+        if current_val is not None and g.target_value != 0:
+            progress = round((current_val / g.target_value) * 100, 1)
+
+        goals.append(MetricGoalResponse(
+            id=g.id,
+            metric_type=g.metric_type,
+            target_value=g.target_value,
+            target_date=g.target_date,
+            name=g.name,
+            notes=g.notes,
+            current_value=current_val,
+            progress_percent=progress,
+            is_achieved=g.is_achieved,
+            created_at=g.created_at,
+            updated_at=g.updated_at
+        ))
+
+    overview = AnalyticsOverview(
+        period=period,
+        total_metrics=len(metric_types),
+        metrics_with_data=len([m for m in growth_metrics if m.current_value]),
+        improving_metrics=improving,
+        declining_metrics=declining,
+        flat_metrics=flat
+    )
+
+    return AnalyticsDashboard(
+        overview=overview,
+        financial=financial,
+        customer=customer,
+        growth_metrics=growth_metrics,
+        goals=goals
+    )
+
+
+@app.get("/api/analytics/multi-chart")
+def get_multi_metric_chart(
+    metric_types: str,  # comma-separated
+    period: str = "30d",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get chart data for multiple metrics at once."""
+    types = [t.strip() for t in metric_types.split(',')]
+    days = get_period_days(period)
+    start_date = datetime.utcnow() - timedelta(days=days)
+
+    result = {}
+    for mt in types:
+        metrics = db.query(Metric).filter(
+            Metric.metric_type == mt,
+            Metric.date >= start_date
+        ).order_by(Metric.date).all()
+
+        result[mt] = [
+            {
+                "date": m.date.isoformat(),
+                "value": parse_metric_value(m.value),
+                "formatted": m.value
+            }
+            for m in metrics
+        ]
+
+    return result
+
+
+# Goal CRUD
+@app.get("/api/analytics/goals", response_model=List[MetricGoalResponse])
+def get_metric_goals(
+    include_achieved: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all metric goals."""
+    query = db.query(MetricGoal)
+    if not include_achieved:
+        query = query.filter(MetricGoal.is_achieved == False)
+
+    goals = query.order_by(MetricGoal.target_date).all()
+
+    result = []
+    for g in goals:
+        # Get current value
+        latest = db.query(Metric).filter(
+            Metric.metric_type == g.metric_type
+        ).order_by(Metric.date.desc()).first()
+
+        current_val = parse_metric_value(latest.value) if latest else None
+        progress = None
+        if current_val is not None and g.target_value != 0:
+            progress = round((current_val / g.target_value) * 100, 1)
+
+        result.append(MetricGoalResponse(
+            id=g.id,
+            metric_type=g.metric_type,
+            target_value=g.target_value,
+            target_date=g.target_date,
+            name=g.name,
+            notes=g.notes,
+            current_value=current_val,
+            progress_percent=progress,
+            is_achieved=g.is_achieved,
+            created_at=g.created_at,
+            updated_at=g.updated_at
+        ))
+
+    return result
+
+
+@app.post("/api/analytics/goals", response_model=MetricGoalResponse)
+def create_metric_goal(
+    goal: MetricGoalCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new metric goal."""
+    if current_user.role not in ['admin', 'editor']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    db_goal = MetricGoal(
+        metric_type=goal.metric_type,
+        target_value=goal.target_value,
+        target_date=goal.target_date,
+        name=goal.name,
+        notes=goal.notes,
+        created_by_id=current_user.id
+    )
+    db.add(db_goal)
+    db.commit()
+    db.refresh(db_goal)
+
+    # Get current value
+    latest = db.query(Metric).filter(
+        Metric.metric_type == goal.metric_type
+    ).order_by(Metric.date.desc()).first()
+
+    current_val = parse_metric_value(latest.value) if latest else None
+    progress = None
+    if current_val is not None and goal.target_value != 0:
+        progress = round((current_val / goal.target_value) * 100, 1)
+
+    return MetricGoalResponse(
+        id=db_goal.id,
+        metric_type=db_goal.metric_type,
+        target_value=db_goal.target_value,
+        target_date=db_goal.target_date,
+        name=db_goal.name,
+        notes=db_goal.notes,
+        current_value=current_val,
+        progress_percent=progress,
+        is_achieved=db_goal.is_achieved,
+        created_at=db_goal.created_at,
+        updated_at=db_goal.updated_at
+    )
+
+
+@app.patch("/api/analytics/goals/{goal_id}", response_model=MetricGoalResponse)
+def update_metric_goal(
+    goal_id: int,
+    goal_update: MetricGoalUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a metric goal."""
+    if current_user.role not in ['admin', 'editor']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    db_goal = db.query(MetricGoal).filter(MetricGoal.id == goal_id).first()
+    if not db_goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+
+    update_data = goal_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_goal, field, value)
+
+    db.commit()
+    db.refresh(db_goal)
+
+    # Get current value
+    latest = db.query(Metric).filter(
+        Metric.metric_type == db_goal.metric_type
+    ).order_by(Metric.date.desc()).first()
+
+    current_val = parse_metric_value(latest.value) if latest else None
+    progress = None
+    if current_val is not None and db_goal.target_value != 0:
+        progress = round((current_val / db_goal.target_value) * 100, 1)
+
+    return MetricGoalResponse(
+        id=db_goal.id,
+        metric_type=db_goal.metric_type,
+        target_value=db_goal.target_value,
+        target_date=db_goal.target_date,
+        name=db_goal.name,
+        notes=db_goal.notes,
+        current_value=current_val,
+        progress_percent=progress,
+        is_achieved=db_goal.is_achieved,
+        created_at=db_goal.created_at,
+        updated_at=db_goal.updated_at
+    )
+
+
+@app.delete("/api/analytics/goals/{goal_id}")
+def delete_metric_goal(
+    goal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a metric goal."""
+    if current_user.role not in ['admin', 'editor']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    db_goal = db.query(MetricGoal).filter(MetricGoal.id == goal_id).first()
+    if not db_goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+
+    db.delete(db_goal)
+    db.commit()
+    return {"ok": True}
+
+
 # ============ WEB PRESENCE ROUTES ============
 
 def safe_json_loads(value: str | None) -> list | None:
@@ -2871,17 +3290,17 @@ def get_calendar_feed(
 
     # Create calendar
     cal = ICalendar()
-    cal.add('prodid', '-//FounderOS//Task Calendar//EN')
+    cal.add('prodid', '-//Made4Founders//Task Calendar//EN')
     cal.add('version', '2.0')
     cal.add('calscale', 'GREGORIAN')
     cal.add('method', 'PUBLISH')
-    cal.add('x-wr-calname', 'FounderOS Tasks & Deadlines')
+    cal.add('x-wr-calname', 'Made4Founders Tasks & Deadlines')
 
     # Add deadlines
     deadlines = db.query(Deadline).filter(Deadline.is_completed == False).all()
     for deadline in deadlines:
         event = ICalEvent()
-        event.add('uid', f'deadline-{deadline.id}@founderos')
+        event.add('uid', f'deadline-{deadline.id}@made4founders')
         event.add('summary', f'[Deadline] {deadline.title}')
         if deadline.description:
             event.add('description', deadline.description)
@@ -2909,7 +3328,7 @@ def get_calendar_feed(
 
     for task in tasks:
         event = ICalEvent()
-        event.add('uid', f'task-{task.id}@founderos')
+        event.add('uid', f'task-{task.id}@made4founders')
 
         # Add priority indicator to title
         priority_prefix = {
@@ -2950,6 +3369,6 @@ def get_calendar_feed(
         content=cal.to_ical(),
         media_type='text/calendar',
         headers={
-            'Content-Disposition': 'attachment; filename="founderos-calendar.ics"'
+            'Content-Disposition': 'attachment; filename="made4founders-calendar.ics"'
         }
     )

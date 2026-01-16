@@ -1,5 +1,5 @@
 """
-Security Middleware for FounderOS
+Security Middleware for Made4Founders
 
 Features:
 - Security headers (HSTS, CSP, X-Frame-Options, etc.)

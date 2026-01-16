@@ -1,4 +1,4 @@
-// FounderOS API Client
+// Made4Founders API Client
 const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
 
 // User-friendly error messages
@@ -72,6 +72,49 @@ export interface DashboardStats {
 }
 
 export const getDashboardStats = () => fetchApi<DashboardStats>('/dashboard/stats');
+
+// OAuth
+export interface OAuthLoginResponse {
+  url: string;
+}
+
+export const getGoogleLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/google/login');
+export const getGitHubLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/github/login');
+
+// Stripe Billing
+export interface StripeConfig {
+  publishable_key: string;
+}
+
+export interface SubscriptionStatus {
+  tier: string;
+  status: string;
+  trial_ends_at: string | null;
+  subscription_ends_at: string | null;
+  stripe_customer_id: string | null;
+}
+
+export interface CheckoutSession {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface PortalSession {
+  portal_url: string;
+}
+
+export const getStripeConfig = () => fetchApi<StripeConfig>('/billing/config');
+
+export const getSubscriptionStatus = () => fetchApi<SubscriptionStatus>('/billing/subscription');
+
+export const createCheckoutSession = (priceKey: string) =>
+  fetchApi<CheckoutSession>('/billing/create-checkout-session', {
+    method: 'POST',
+    body: JSON.stringify({ price_key: priceKey }),
+  });
+
+export const createPortalSession = () =>
+  fetchApi<PortalSession>('/billing/create-portal-session', { method: 'POST' });
 
 // Services
 export interface Service {
@@ -848,6 +891,105 @@ export const getMetricChartData = (metricType: string, months?: number) =>
   fetchApi<MetricChartData>(`/metrics/chart/${metricType}${months ? `?months=${months}` : ''}`);
 
 
+// Analytics
+export interface AnalyticsOverview {
+  period: string;
+  total_metrics: number;
+  metrics_with_data: number;
+  improving_metrics: number;
+  declining_metrics: number;
+  flat_metrics: number;
+}
+
+export interface GrowthMetric {
+  metric_type: string;
+  name: string;
+  current_value: number;
+  previous_value: number;
+  absolute_change: number;
+  percent_change: number;
+  unit: string | null;
+}
+
+export interface FinancialHealth {
+  mrr: number | null;
+  arr: number | null;
+  burn_rate: number | null;
+  runway_months: number | null;
+  cash: number | null;
+  mrr_growth: number | null;
+  revenue: number | null;
+}
+
+export interface CustomerHealth {
+  total_customers: number | null;
+  customer_growth: number | null;
+  churn_rate: number | null;
+  ltv: number | null;
+  cac: number | null;
+  ltv_cac_ratio: number | null;
+  nps: number | null;
+}
+
+export interface MetricGoal {
+  id: number;
+  metric_type: string;
+  target_value: number;
+  target_date: string | null;
+  name: string | null;
+  notes: string | null;
+  current_value: number | null;
+  progress_percent: number | null;
+  is_achieved: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnalyticsDashboard {
+  overview: AnalyticsOverview;
+  financial: FinancialHealth;
+  customer: CustomerHealth;
+  growth_metrics: GrowthMetric[];
+  goals: MetricGoal[];
+}
+
+export interface MultiChartData {
+  [metricType: string]: {
+    date: string;
+    value: number;
+    formatted: string;
+  }[];
+}
+
+export const getAnalyticsDashboard = (period: string = '30d') =>
+  fetchApi<AnalyticsDashboard>(`/analytics/dashboard?period=${period}`);
+
+export const getMultiMetricChart = (metricTypes: string[], period: string = '30d') =>
+  fetchApi<MultiChartData>(`/analytics/multi-chart?metric_types=${metricTypes.join(',')}&period=${period}`);
+
+export const getMetricGoals = (includeAchieved: boolean = false) =>
+  fetchApi<MetricGoal[]>(`/analytics/goals?include_achieved=${includeAchieved}`);
+
+export const createMetricGoal = (data: {
+  metric_type: string;
+  target_value: number;
+  target_date?: string;
+  name?: string;
+  notes?: string;
+}) => fetchApi<MetricGoal>('/analytics/goals', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateMetricGoal = (id: number, data: Partial<{
+  target_value: number;
+  target_date: string;
+  name: string;
+  notes: string;
+  is_achieved: boolean;
+}>) => fetchApi<MetricGoal>(`/analytics/goals/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteMetricGoal = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/analytics/goals/${id}`, { method: 'DELETE' });
+
+
 // Web Presence
 export interface AdditionalEmail {
   provider: string | null;
@@ -973,3 +1115,113 @@ export const getCalendarFeedUrl = (token: string) => {
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
   return `${baseUrl}/api/calendar/feed/${token}.ics`;
 };
+
+
+// ============ Social Media OAuth ============
+
+export interface SocialAccount {
+  id: number;
+  provider: string;
+  account_name: string | null;
+  account_id: string | null;
+  profile_url: string | null;
+  is_connected: boolean;
+  connected_at: string | null;
+  expires_at: string | null;
+  scopes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SocialConnectResponse {
+  url: string;
+  state: string;
+}
+
+export const getSocialAccounts = () =>
+  fetchApi<SocialAccount[]>('/social/accounts');
+
+export const getSocialAccount = (provider: string) =>
+  fetchApi<SocialAccount>(`/social/accounts/${provider}`);
+
+export const connectSocialAccount = (provider: 'twitter' | 'linkedin' | 'facebook' | 'instagram') =>
+  fetchApi<SocialConnectResponse>(`/social/${provider}/connect`);
+
+export const disconnectSocialAccount = (provider: string) =>
+  fetchApi<{ ok: boolean }>(`/social/accounts/${provider}`, { method: 'DELETE' });
+
+
+// ============ Axios-like API wrapper for legacy components ============
+// Used by Marketing.tsx, Branding.tsx
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyData = any;
+
+interface ApiConfig {
+  responseType?: 'blob' | 'json';
+  headers?: Record<string, string>;
+}
+
+const api = {
+  get: async <T = AnyData>(url: string, config?: ApiConfig): Promise<{ data: T }> => {
+    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...config?.headers },
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw { response: { status: res.status, data: error } };
+    }
+    if (config?.responseType === 'blob') {
+      return { data: await res.blob() as T };
+    }
+    return { data: await res.json() as T };
+  },
+  post: async <T = AnyData>(url: string, data?: AnyData, config?: ApiConfig): Promise<{ data: T }> => {
+    const isFormData = data instanceof FormData;
+    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: isFormData ? config?.headers : { 'Content-Type': 'application/json', ...config?.headers },
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw { response: { status: res.status, data: error } };
+    }
+    if (config?.responseType === 'blob') {
+      return { data: await res.blob() as T };
+    }
+    return { data: await res.json() as T };
+  },
+  put: async <T = AnyData>(url: string, data?: AnyData, config?: ApiConfig): Promise<{ data: T }> => {
+    const isFormData = data instanceof FormData;
+    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: isFormData ? config?.headers : { 'Content-Type': 'application/json', ...config?.headers },
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw { response: { status: res.status, data: error } };
+    }
+    if (config?.responseType === 'blob') {
+      return { data: await res.blob() as T };
+    }
+    return { data: await res.json() as T };
+  },
+  delete: async <T = AnyData>(url: string): Promise<{ data: T }> => {
+    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw { response: { status: res.status, data: error } };
+    }
+    return { data: await res.json() as T };
+  },
+};
+
+export default api;

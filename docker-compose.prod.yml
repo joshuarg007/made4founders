@@ -3,18 +3,18 @@
 
 services:
   backend:
-    image: ghcr.io/joshuarg007/founderos/backend:latest
-    container_name: founderos-backend
+    image: ghcr.io/joshuarg007/made4founders/backend:latest
+    container_name: made4founders-backend
     restart: unless-stopped
     environment:
-      - DATABASE_URL=sqlite:///./data/founderos.db
+      - DATABASE_URL=sqlite:///./data/made4founders.db
       - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
-      - CORS_ORIGINS=https://founders.axiondeep.com
+      - CORS_ORIGINS=https://made4founders.com
     volumes:
       - backend-data:/app/data
       - uploads-data:/app/uploads
     networks:
-      - founderos-network
+      - made4founders-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
@@ -22,17 +22,17 @@ services:
       retries: 3
 
   frontend:
-    image: ghcr.io/joshuarg007/founderos/frontend:latest
-    container_name: founderos-frontend
+    image: ghcr.io/joshuarg007/made4founders/frontend:latest
+    container_name: made4founders-frontend
     restart: unless-stopped
     networks:
-      - founderos-network
+      - made4founders-network
     depends_on:
       - backend
 
   nginx:
     image: nginx:alpine
-    container_name: founderos-nginx
+    container_name: made4founders-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -42,14 +42,14 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - certbot-webroot:/var/www/certbot:ro
     networks:
-      - founderos-network
+      - made4founders-network
     depends_on:
       - frontend
       - backend
 
   certbot:
     image: certbot/certbot
-    container_name: founderos-certbot
+    container_name: made4founders-certbot
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - certbot-webroot:/var/www/certbot
@@ -61,5 +61,5 @@ volumes:
   certbot-webroot:
 
 networks:
-  founderos-network:
+  made4founders-network:
     driver: bridge

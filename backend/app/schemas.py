@@ -847,6 +847,87 @@ class MetricSummary(BaseModel):
     trend: Optional[str] = None  # up, down, flat
 
 
+# ============ Analytics Schemas ============
+
+class MetricGoalBase(BaseModel):
+    metric_type: str
+    target_value: float
+    target_date: Optional[datetime] = None
+    name: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class MetricGoalCreate(MetricGoalBase):
+    pass
+
+
+class MetricGoalUpdate(BaseModel):
+    target_value: Optional[float] = None
+    target_date: Optional[datetime] = None
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    is_achieved: Optional[bool] = None
+
+
+class MetricGoalResponse(MetricGoalBase):
+    id: int
+    current_value: Optional[float] = None
+    progress_percent: Optional[float] = None
+    is_achieved: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AnalyticsOverview(BaseModel):
+    period: str  # 7d, 30d, 90d, 1y, all
+    total_metrics: int
+    metrics_with_data: int
+    improving_metrics: int
+    declining_metrics: int
+    flat_metrics: int
+
+
+class GrowthMetric(BaseModel):
+    metric_type: str
+    name: str
+    current_value: float
+    previous_value: float
+    absolute_change: float
+    percent_change: float
+    unit: Optional[str] = None
+
+
+class FinancialHealth(BaseModel):
+    mrr: Optional[float] = None
+    arr: Optional[float] = None
+    burn_rate: Optional[float] = None
+    runway_months: Optional[float] = None
+    cash: Optional[float] = None
+    mrr_growth: Optional[float] = None  # percent
+    revenue: Optional[float] = None
+
+
+class CustomerHealth(BaseModel):
+    total_customers: Optional[int] = None
+    customer_growth: Optional[float] = None  # percent
+    churn_rate: Optional[float] = None
+    ltv: Optional[float] = None
+    cac: Optional[float] = None
+    ltv_cac_ratio: Optional[float] = None
+    nps: Optional[float] = None
+
+
+class AnalyticsDashboard(BaseModel):
+    overview: AnalyticsOverview
+    financial: FinancialHealth
+    customer: CustomerHealth
+    growth_metrics: List[GrowthMetric]
+    goals: List[MetricGoalResponse]
+
+
 # ============ Web Presence Schemas ============
 
 class AdditionalEmail(BaseModel):

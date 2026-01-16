@@ -1,10 +1,10 @@
 #!/bin/bash
-# FounderOS Lightsail Deployment
+# Made4Founders Lightsail Deployment
 # Run this on your Lightsail instance after SSH'ing in
 
 set -e
 
-echo "=== FounderOS Lightsail Setup ==="
+echo "=== Made4Founders Lightsail Setup ==="
 
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -19,8 +19,8 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 # Clone repo
 cd ~
-git clone https://github.com/joshuarg007/founderos.git
-cd founderos
+git clone https://github.com/joshuarg007/made4founders.git
+cd made4founders
 
 # Generate secrets
 SECRET_KEY=$(openssl rand -hex 32)
@@ -36,7 +36,7 @@ docker-compose up -d
 
 echo ""
 echo "=== Setup Complete ==="
-echo "FounderOS is starting up..."
+echo "Made4Founders is starting up..."
 echo ""
 echo "Next steps:"
 echo "1. Point founders.axiondeep.com DNS to this server's IP"

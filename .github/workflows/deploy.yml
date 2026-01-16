@@ -46,7 +46,7 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
           build-args: |
-            VITE_API_URL=https://founders.axiondeep.com
+            VITE_API_URL=https://made4founders.com
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -62,7 +62,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd ~/founderos
+            cd ~/made4founders
             git pull origin main
             # Login to GHCR to pull images (uses PAT stored in GHCR_TOKEN secret)
             echo "$GHCR_TOKEN" | docker login ghcr.io -u joshuarg007 --password-stdin

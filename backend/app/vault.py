@@ -270,7 +270,7 @@ def get_app_encryption_key() -> bytes:
     if not app_secret:
         # In production, this should be a properly generated key
         # For development, derive from SECRET_KEY
-        secret_key = os.getenv("SECRET_KEY", "founderos-dev-secret")
+        secret_key = os.getenv("SECRET_KEY", "made4founders-dev-secret")
         app_secret = hashlib.sha256(f"app_encryption:{secret_key}".encode()).hexdigest()
 
     # Derive a proper key

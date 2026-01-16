@@ -1389,7 +1389,7 @@ export default function GettingStarted() {
               {/* Grid Items */}
               {isExpanded && items.length > 0 && (
                 <div className="border-t border-white/10 p-3">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     {items.map((item) => {
                       const isComplete = progress[item.id]?.is_completed;
                       const itemData = getItemData(item.id);

@@ -19,7 +19,7 @@ RUN mkdir -p /app/data /app/uploads
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
-ENV DATABASE_URL=sqlite:///./data/founderos.db
+ENV DATABASE_URL=sqlite:///./data/made4founders.db
 
 EXPOSE 8000
 

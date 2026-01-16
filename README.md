@@ -1,4 +1,4 @@
-# FounderOS
+# Made4Founders
 
 **Command Center for Founders** - A comprehensive startup management platform designed to help founders track everything needed to run their business.
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-FounderOS is a self-hosted business operations dashboard that consolidates critical founder tasks into one secure platform. From compliance checklists to encrypted credential storage, from deadline tracking to business metrics — everything a founder needs in one place.
+Made4Founders is a self-hosted business operations dashboard that consolidates critical founder tasks into one secure platform. From compliance checklists to encrypted credential storage, from deadline tracking to business metrics — everything a founder needs in one place.
 
 ## Features
 
@@ -95,8 +95,8 @@ FounderOS is a self-hosted business operations dashboard that consolidates criti
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/founderos.git
-cd founderos
+git clone https://github.com/your-username/made4founders.git
+cd made4founders
 
 # Backend setup (port 8001)
 cd backend
@@ -167,7 +167,7 @@ python -c "import secrets; print(secrets.token_hex(16))"
 ## Project Structure
 
 ```
-founderos/
+made4founders/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app + all routes
@@ -299,7 +299,7 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml
 ssh -i your-key.pem ubuntu@your-server-ip
 
 # Navigate to project
-cd ~/founderos
+cd ~/made4founders
 
 # Pull latest changes
 git pull
@@ -347,7 +347,7 @@ npm run lint
 
 ## Database
 
-SQLite database located at `backend/founderos.db`
+SQLite database located at `backend/made4founders.db`
 
 ### Key Tables
 

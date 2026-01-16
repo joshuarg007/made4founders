@@ -5,17 +5,27 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: founderos-backend
+    container_name: made4founders-backend
     restart: unless-stopped
     environment:
-      - DATABASE_URL=sqlite:///./data/founderos.db
+      - DATABASE_URL=sqlite:///./data/made4founders.db
       - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
-      - CORS_ORIGINS=https://founders.axiondeep.com
+      - APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-changeme-in-production}
+      - CORS_ORIGINS=https://made4founders.com
+      - FRONTEND_URL=https://made4founders.com
+      # Google OAuth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=https://made4founders.com/api/auth/google/callback
+      # GitHub OAuth
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_REDIRECT_URI=https://made4founders.com/api/auth/github/callback
     volumes:
       - backend-data:/app/data
       - uploads-data:/app/uploads
     networks:
-      - founderos-network
+      - made4founders-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
@@ -27,17 +37,17 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=https://founders.axiondeep.com
-    container_name: founderos-frontend
+        - VITE_API_URL=https://made4founders.com
+    container_name: made4founders-frontend
     restart: unless-stopped
     networks:
-      - founderos-network
+      - made4founders-network
     depends_on:
       - backend
 
   nginx:
     image: nginx:alpine
-    container_name: founderos-nginx
+    container_name: made4founders-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -47,7 +57,7 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - certbot-webroot:/var/www/certbot:ro
     networks:
-      - founderos-network
+      - made4founders-network
     depends_on:
       - frontend
       - backend
@@ -55,7 +65,7 @@ services:
   # Certbot for SSL certificates
   certbot:
     image: certbot/certbot
-    container_name: founderos-certbot
+    container_name: made4founders-certbot
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - certbot-webroot:/var/www/certbot
@@ -67,5 +77,5 @@ volumes:
   certbot-webroot:
 
 networks:
-  founderos-network:
+  made4founders-network:
     driver: bridge

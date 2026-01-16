@@ -57,7 +57,7 @@ export default function GlobalErrorToast() {
               <p className="text-sm text-red-200/80 mt-1">{error.message}</p>
               <div className="flex items-center gap-4 mt-3 text-xs">
                 <a
-                  href="https://github.com/joshuarg007/founderos/issues"
+                  href="https://github.com/joshuarg007/made4founders/issues"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-red-300 hover:text-red-100 transition"

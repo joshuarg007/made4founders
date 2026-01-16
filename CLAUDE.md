@@ -1,4 +1,4 @@
-# FounderOS - Command Center for Founders
+# Made4Founders - Command Center for Founders
 
 > **FOR CLAUDE: Read the SESSION STATE section before doing anything.**
 
@@ -55,7 +55,7 @@ cd frontend && npm install && npm run dev
 
 ### Manual Deploy (if needed)
 ```bash
-ssh -i ~/.ssh/LightsailDefaultKey-us-east-2.pem ubuntu@3.150.255.144 "cd ~/founderos && git pull && sudo docker compose up -d --build"
+ssh -i ~/.ssh/LightsailDefaultKey-us-east-2.pem ubuntu@3.150.255.144 "cd ~/made4founders && git pull && sudo docker compose up -d --build"
 ```
 
 ---
@@ -167,7 +167,7 @@ COOKIE_DOMAIN=.axiondeep.com
 
 ## Database Schema
 
-SQLite database at `backend/founderos.db`
+SQLite database at `backend/made4founders.db`
 
 ### Key Tables
 - `users` - Authentication and roles
@@ -183,7 +183,7 @@ SQLite database at `backend/founderos.db`
 
 ## File Structure
 ```
-founderos/
+made4founders/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py           # FastAPI app + all routes

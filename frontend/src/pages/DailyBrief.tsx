@@ -160,9 +160,9 @@ export default function DailyBrief() {
     };
 
     const content = (
-      <div className="flex items-center justify-between p-4 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-white/20 transition group">
-        <div className="flex items-center gap-4">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-white/20 transition group gap-3">
+        <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
             isDeadline ? 'bg-violet-500/20 text-violet-400' :
             isDocument ? 'bg-amber-500/20 text-amber-400' :
             isTask ? 'bg-emerald-500/20 text-emerald-400' :
@@ -173,16 +173,16 @@ export default function DailyBrief() {
              isTask ? <CheckSquare className="w-5 h-5" /> :
              <User className="w-5 h-5" />}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-medium text-white">{item.title || item.name}</h4>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="font-medium text-white truncate">{item.title || item.name}</h4>
               {isTask && item.priority && item.priority !== 'medium' && (
-                <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${getPriorityColor(item.priority)}`}>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize flex-shrink-0 ${getPriorityColor(item.priority)}`}>
                   {item.priority}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
               {item.deadline_type && (
                 <span className="capitalize">{item.deadline_type}</span>
               )}
@@ -194,13 +194,13 @@ export default function DailyBrief() {
               )}
               {isTask && item.assigned_to && (
                 <>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span>@{item.assigned_to}</span>
                 </>
               )}
               {(item.due_date || item.expiration_date) && (
                 <>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span>{formatDueDate(item)}</span>
                 </>
               )}
@@ -210,9 +210,9 @@ export default function DailyBrief() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 ml-13 sm:ml-0">
           {item.days_until !== undefined && (
-            <span className={`text-sm font-medium ${
+            <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
               item.days_until < 0 ? 'text-red-400' :
               item.days_until === 0 ? 'text-amber-400' :
               item.days_until <= 3 ? 'text-yellow-400' :
@@ -225,16 +225,16 @@ export default function DailyBrief() {
             <button
               onClick={(e) => { e.preventDefault(); onComplete(); }}
               disabled={completing === item.id}
-              className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition font-medium text-sm disabled:opacity-50"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition font-medium text-xs sm:text-sm disabled:opacity-50 whitespace-nowrap"
             >
               {completing === item.id ? 'Completing...' : 'Done'}
             </button>
           )}
           {!isDeadline && !isTask && (
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-400 transition" />
+            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-400 transition flex-shrink-0" />
           )}
           {isTask && (
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-400 transition" />
+            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-400 transition flex-shrink-0" />
           )}
         </div>
       </div>

@@ -1,8 +1,8 @@
-# FounderOS - Development Guide
+# Made4Founders - Development Guide
 
 ## Project Overview
 
-FounderOS is a **Founder Command Center** - an all-in-one dashboard for first-time founders to manage their startup formation, compliance, and operations. Built with React + TypeScript frontend and FastAPI + SQLite backend.
+Made4Founders is a **Founder Command Center** - an all-in-one dashboard for first-time founders to manage their startup formation, compliance, and operations. Built with React + TypeScript frontend and FastAPI + SQLite backend.
 
 ## Tech Stack
 

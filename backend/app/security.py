@@ -1,5 +1,5 @@
 """
-Security utilities for FounderOS.
+Security utilities for Made4Founders.
 
 Features:
 - JWT token creation and validation (HS512)
@@ -20,7 +20,7 @@ from passlib.context import CryptContext
 # ============ CONFIGURATION ============
 
 # JWT settings - MUST set SECRET_KEY in production
-SECRET_KEY = os.getenv("SECRET_KEY", "founderos-dev-secret-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY", "made4founders-dev-secret-change-in-production")
 if len(SECRET_KEY) < 32:
     import warnings
     warnings.warn("SECRET_KEY should be at least 32 characters for security")

@@ -1,10 +1,520 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, Float, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
 
 from .database import Base
 
+
+# ============ MULTI-TENANCY & SUBSCRIPTION ENUMS ============
+
+class SubscriptionTier(str, enum.Enum):
+    FREE = "free"
+    STARTER = "starter"
+    PRO = "pro"
+    ENTERPRISE = "enterprise"
+
+
+class SubscriptionStatus(str, enum.Enum):
+    TRIALING = "trialing"
+    ACTIVE = "active"
+    PAST_DUE = "past_due"
+    CANCELED = "canceled"
+    UNPAID = "unpaid"
+
+
+class OAuthProvider(str, enum.Enum):
+    GOOGLE = "google"
+    GITHUB = "github"
+    TWITTER = "twitter"
+    FACEBOOK = "facebook"
+    INSTAGRAM = "instagram"
+    LINKEDIN = "linkedin"
+
+
+class BrandAssetType(str, enum.Enum):
+    LOGO_PRIMARY = "logo_primary"
+    LOGO_HORIZONTAL = "logo_horizontal"
+    LOGO_STACKED = "logo_stacked"
+    LOGO_ICON = "logo_icon"
+    LOGO_DARK = "logo_dark"
+    LOGO_LIGHT = "logo_light"
+    FAVICON = "favicon"
+    APP_ICON = "app_icon"
+    SOCIAL_COVER = "social_cover"
+    PATTERN = "pattern"
+    OTHER = "other"
+
+
+class ColorType(str, enum.Enum):
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
+    ACCENT = "accent"
+    BACKGROUND = "background"
+    TEXT = "text"
+    SUCCESS = "success"
+    WARNING = "warning"
+    ERROR = "error"
+    CUSTOM = "custom"
+
+
+class FontUsage(str, enum.Enum):
+    HEADING = "heading"
+    BODY = "body"
+    ACCENT = "accent"
+    MONOSPACE = "monospace"
+
+
+class EmailTemplateType(str, enum.Enum):
+    NEWSLETTER = "newsletter"
+    ANNOUNCEMENT = "announcement"
+    PROMOTIONAL = "promotional"
+    EVENT = "event"
+    FOLLOW_UP = "follow_up"
+    WELCOME = "welcome"
+    CUSTOM = "custom"
+
+
+class SocialPlatform(str, enum.Enum):
+    TWITTER = "twitter"
+    LINKEDIN = "linkedin"
+    FACEBOOK = "facebook"
+    INSTAGRAM = "instagram"
+    THREADS = "threads"
+
+
+class CampaignStatus(str, enum.Enum):
+    DRAFT = "draft"
+    SCHEDULED = "scheduled"
+    SENT = "sent"
+    FAILED = "failed"
+
+
+class DocumentTemplateCategory(str, enum.Enum):
+    NDA = "nda"
+    OPERATING_AGREEMENT = "operating_agreement"
+    BOARD_RESOLUTION = "board_resolution"
+    CONTRACTOR_AGREEMENT = "contractor_agreement"
+    EMPLOYEE_OFFER = "employee_offer"
+    INVESTOR_UPDATE = "investor_update"
+    TERMS_OF_SERVICE = "terms_of_service"
+    PRIVACY_POLICY = "privacy_policy"
+    OTHER = "other"
+
+
+# ============ MULTI-TENANCY MODELS ============
+
+class Organization(Base):
+    """Multi-tenant organization (company/startup)"""
+    __tablename__ = "organizations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(100), unique=True, index=True, nullable=False)  # URL-friendly identifier
+
+    # Subscription
+    stripe_customer_id = Column(String(255), nullable=True, unique=True)
+    stripe_subscription_id = Column(String(255), nullable=True)
+    subscription_tier = Column(String(50), default=SubscriptionTier.FREE.value)
+    subscription_status = Column(String(50), default=SubscriptionStatus.TRIALING.value)
+    trial_ends_at = Column(DateTime, nullable=True)
+    subscription_ends_at = Column(DateTime, nullable=True)
+
+    # Settings
+    settings = Column(JSON, nullable=True)  # JSON for flexible org settings
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    users = relationship("User", back_populates="organization")
+    subscription_history = relationship("SubscriptionHistory", back_populates="organization")
+
+
+class SubscriptionHistory(Base):
+    """Track subscription changes for billing history"""
+    __tablename__ = "subscription_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    event_type = Column(String(50), nullable=False)  # created, updated, canceled, renewed
+    tier = Column(String(50), nullable=False)
+    amount_cents = Column(Integer, nullable=True)
+    stripe_invoice_id = Column(String(255), nullable=True)
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+
+    event_metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    organization = relationship("Organization", back_populates="subscription_history")
+
+
+class OAuthConnection(Base):
+    """Store OAuth connections for social posting"""
+    __tablename__ = "oauth_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    provider = Column(String(50), nullable=False)  # twitter, facebook, instagram, linkedin
+    provider_user_id = Column(String(255), nullable=True)
+    provider_username = Column(String(255), nullable=True)
+
+    access_token = Column(Text, nullable=False)  # Encrypted
+    refresh_token = Column(Text, nullable=True)  # Encrypted
+    token_expires_at = Column(DateTime, nullable=True)
+
+    scopes = Column(Text, nullable=True)  # Comma-separated scopes
+    is_active = Column(Boolean, default=True)
+
+    # For pages/business accounts (FB, IG, LinkedIn)
+    page_id = Column(String(255), nullable=True)
+    page_name = Column(String(255), nullable=True)
+    page_access_token = Column(Text, nullable=True)  # Encrypted
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AccountingConnection(Base):
+    """Store OAuth connections for accounting software integrations"""
+    __tablename__ = "accounting_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    provider = Column(String(50), nullable=False)  # quickbooks, xero, freshbooks, wave, zoho
+    company_id = Column(String(255), nullable=True)  # Provider's company/org ID
+    company_name = Column(String(255), nullable=True)
+
+    access_token = Column(Text, nullable=False)  # Encrypted
+    refresh_token = Column(Text, nullable=True)  # Encrypted
+    token_expires_at = Column(DateTime, nullable=True)
+
+    scopes = Column(Text, nullable=True)  # Comma-separated scopes
+    extra_data = Column(Text, nullable=True)  # JSON for provider-specific data
+    is_active = Column(Boolean, default=True)
+
+    last_sync_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ============ BRANDING MODELS ============
+
+class BrandColor(Base):
+    """Brand color palette"""
+    __tablename__ = "brand_colors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    name = Column(String(100), nullable=False)  # e.g., "Ocean Blue", "Sunset Orange"
+    hex_value = Column(String(7), nullable=False)  # #RRGGBB
+    rgb_value = Column(String(20), nullable=True)  # "255, 128, 0"
+    hsl_value = Column(String(20), nullable=True)  # "30, 100%, 50%"
+    color_type = Column(String(50), default=ColorType.CUSTOM.value)
+    sort_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BrandFont(Base):
+    """Brand typography"""
+    __tablename__ = "brand_fonts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    name = Column(String(100), nullable=False)  # e.g., "Inter", "Playfair Display"
+    font_family = Column(String(255), nullable=False)  # CSS font-family value
+    font_url = Column(String(500), nullable=True)  # Google Fonts or custom URL
+    font_weight = Column(String(50), nullable=True)  # "400", "400,500,700"
+    usage_type = Column(String(50), default=FontUsage.BODY.value)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BrandAsset(Base):
+    """Brand assets (logos, icons, patterns)"""
+    __tablename__ = "brand_assets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    name = Column(String(255), nullable=False)
+    asset_type = Column(String(50), default=BrandAssetType.OTHER.value)
+    file_path = Column(String(500), nullable=False)
+    file_name = Column(String(255), nullable=False)
+    file_size = Column(Integer, nullable=True)  # bytes
+    mime_type = Column(String(100), nullable=True)
+
+    # Image dimensions
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+
+    # For dark/light variants
+    background_type = Column(String(20), nullable=True)  # "dark", "light", "transparent"
+
+    description = Column(Text, nullable=True)
+    sort_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BrandGuideline(Base):
+    """Brand guidelines and voice"""
+    __tablename__ = "brand_guidelines"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+
+    # Company identity
+    company_name = Column(String(255), nullable=True)
+    tagline = Column(String(500), nullable=True)
+    mission_statement = Column(Text, nullable=True)
+
+    # Brand voice
+    voice_tone = Column(String(100), nullable=True)  # "Professional", "Casual", "Friendly"
+    voice_description = Column(Text, nullable=True)
+
+    # Usage guidelines
+    logo_min_size = Column(String(50), nullable=True)  # e.g., "32px"
+    logo_clear_space = Column(String(50), nullable=True)  # e.g., "10% of width"
+    color_usage_notes = Column(Text, nullable=True)
+    typography_notes = Column(Text, nullable=True)
+    dos_and_donts = Column(Text, nullable=True)  # JSON array
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ============ MARKETING MODELS ============
+
+class EmailTemplate(Base):
+    """Email templates for marketing"""
+    __tablename__ = "email_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    name = Column(String(255), nullable=False)
+    template_type = Column(String(50), default=EmailTemplateType.CUSTOM.value)
+
+    # Template content
+    subject_line = Column(String(500), nullable=True)
+    preview_text = Column(String(255), nullable=True)
+    html_content = Column(Text, nullable=True)
+    json_content = Column(JSON, nullable=True)  # For structured builder
+
+    # Source
+    source = Column(String(50), default="custom")  # custom, mailchimp, uploaded
+    external_id = Column(String(255), nullable=True)  # Mailchimp template ID
+
+    thumbnail_path = Column(String(500), nullable=True)
+    is_default = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class MarketingCampaign(Base):
+    """Marketing campaigns"""
+    __tablename__ = "marketing_campaigns"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    title = Column(String(255), nullable=False)
+    core_message = Column(Text, nullable=True)
+    status = Column(String(50), default=CampaignStatus.DRAFT.value)
+
+    # Channels
+    include_email = Column(Boolean, default=False)
+    include_twitter = Column(Boolean, default=False)
+    include_linkedin = Column(Boolean, default=False)
+    include_facebook = Column(Boolean, default=False)
+    include_instagram = Column(Boolean, default=False)
+
+    # Email settings
+    email_template_id = Column(Integer, ForeignKey("email_templates.id"), nullable=True)
+    email_subject = Column(String(500), nullable=True)
+    mailchimp_campaign_id = Column(String(255), nullable=True)
+
+    # Scheduling
+    scheduled_at = Column(DateTime, nullable=True)
+    sent_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    created_by = relationship("User", backref="created_campaigns")
+    email_template = relationship("EmailTemplate")
+    versions = relationship("CampaignVersion", back_populates="campaign", cascade="all, delete-orphan")
+
+
+class CampaignVersion(Base):
+    """Platform-specific content for campaigns"""
+    __tablename__ = "campaign_versions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey("marketing_campaigns.id", ondelete="CASCADE"), nullable=False)
+
+    platform = Column(String(50), nullable=False)  # email, twitter, linkedin, facebook, instagram
+    content = Column(Text, nullable=False)
+    character_count = Column(Integer, nullable=True)
+
+    # For email
+    html_content = Column(Text, nullable=True)
+
+    # For social with images
+    image_path = Column(String(500), nullable=True)
+
+    # Posting status
+    posted_at = Column(DateTime, nullable=True)
+    post_id = Column(String(255), nullable=True)  # External post ID
+    post_url = Column(String(500), nullable=True)
+    error_message = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    campaign = relationship("MarketingCampaign", back_populates="versions")
+
+
+class EmailAnalytics(Base):
+    """Email campaign analytics from Mailchimp"""
+    __tablename__ = "email_analytics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    campaign_id = Column(Integer, ForeignKey("marketing_campaigns.id", ondelete="CASCADE"), nullable=True)
+
+    mailchimp_campaign_id = Column(String(255), nullable=False)
+
+    # Metrics
+    emails_sent = Column(Integer, default=0)
+    emails_delivered = Column(Integer, default=0)
+    opens = Column(Integer, default=0)
+    unique_opens = Column(Integer, default=0)
+    clicks = Column(Integer, default=0)
+    unique_clicks = Column(Integer, default=0)
+    unsubscribes = Column(Integer, default=0)
+    bounces = Column(Integer, default=0)
+
+    # Rates (stored as percentages)
+    open_rate = Column(Float, nullable=True)
+    click_rate = Column(Float, nullable=True)
+    unsubscribe_rate = Column(Float, nullable=True)
+    bounce_rate = Column(Float, nullable=True)
+
+    # Top links
+    top_links = Column(JSON, nullable=True)  # [{url, clicks, unique_clicks}]
+
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    campaign = relationship("MarketingCampaign", backref="email_analytics")
+
+
+class SocialAnalytics(Base):
+    """Social media post analytics"""
+    __tablename__ = "social_analytics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    campaign_version_id = Column(Integer, ForeignKey("campaign_versions.id", ondelete="CASCADE"), nullable=True)
+
+    platform = Column(String(50), nullable=False)
+    post_id = Column(String(255), nullable=False)
+
+    # Common metrics
+    impressions = Column(Integer, default=0)
+    reach = Column(Integer, default=0)
+    engagements = Column(Integer, default=0)
+    likes = Column(Integer, default=0)
+    comments = Column(Integer, default=0)
+    shares = Column(Integer, default=0)
+    clicks = Column(Integer, default=0)
+
+    # Platform-specific stored as JSON
+    platform_metrics = Column(JSON, nullable=True)
+
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    campaign_version = relationship("CampaignVersion", backref="social_analytics")
+
+
+# ============ EMAIL INTEGRATION ============
+
+class EmailIntegration(Base):
+    """Email service provider integrations"""
+    __tablename__ = "email_integrations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+
+    provider = Column(String(50), nullable=False)  # mailchimp, sendgrid, brevo
+    api_key_encrypted = Column(Text, nullable=False)
+    server_prefix = Column(String(20), nullable=True)  # For Mailchimp
+
+    # Default audience/list
+    default_list_id = Column(String(255), nullable=True)
+    default_list_name = Column(String(255), nullable=True)
+
+    is_active = Column(Boolean, default=True)
+    last_synced_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ============ DOCUMENT TEMPLATES ============
+
+class DocumentTemplate(Base):
+    """Pre-built document templates and user-rendered documents"""
+    __tablename__ = "document_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(50), default=DocumentTemplateCategory.OTHER.value)
+
+    # Template source (for system templates)
+    template_id = Column(String(100), nullable=True)  # Reference to built-in template
+
+    # Template file (for file-based templates)
+    file_path = Column(String(500), nullable=True)
+    file_format = Column(String(20), nullable=True)  # docx, pdf, html
+
+    # Rendered content (for text-based templates)
+    content = Column(Text, nullable=True)
+
+    # Customization
+    variables = Column(JSON, nullable=True)  # [{name, label, type, default}]
+
+    # Metadata
+    is_system = Column(Boolean, default=False)  # System templates vs user-rendered
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)  # NULL = global
+
+    preview_image = Column(String(500), nullable=True)
+    download_count = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ============ EXISTING ENUMS (unchanged) ============
 
 class ServiceCategory(str, enum.Enum):
     BANKING = "banking"
@@ -99,6 +609,7 @@ class Service(Base):
     __tablename__ = "services"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False)
     url = Column(String(500), nullable=False)
     category = Column(String(50), default=ServiceCategory.OTHER.value)
@@ -116,6 +627,7 @@ class Document(Base):
     __tablename__ = "documents"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False)
     category = Column(String(50), default=DocumentCategory.OTHER.value)
     file_path = Column(String(500), nullable=True)  # Local file path
@@ -132,6 +644,7 @@ class Contact(Base):
     __tablename__ = "contacts"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False)
     title = Column(String(255), nullable=True)  # Job title
     company = Column(String(255), nullable=True)
@@ -151,6 +664,7 @@ class Deadline(Base):
     __tablename__ = "deadlines"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     deadline_type = Column(String(50), default=DeadlineType.OTHER.value)
@@ -174,6 +688,7 @@ class BusinessInfo(Base):
     __tablename__ = "business_info"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, unique=True)
     legal_name = Column(String(255), nullable=True)
     dba_name = Column(String(255), nullable=True)  # Doing Business As
     entity_type = Column(String(50), nullable=True)  # LLC, C-Corp, S-Corp, etc.
@@ -197,6 +712,7 @@ class BusinessIdentifier(Base):
     __tablename__ = "business_identifiers"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     identifier_type = Column(String(50), nullable=False)  # ein, duns, state_id, etc.
     label = Column(String(100), nullable=False)  # Display name
     value = Column(String(255), nullable=False)  # The actual number/ID
@@ -216,7 +732,8 @@ class ChecklistProgress(Base):
     __tablename__ = "checklist_progress"
 
     id = Column(Integer, primary_key=True, index=True)
-    item_id = Column(String(100), nullable=False, unique=True)  # matches frontend item IDs
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    item_id = Column(String(100), nullable=False)  # matches frontend item IDs
     is_completed = Column(Boolean, default=False)
     completed_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)  # User notes about this item
@@ -242,13 +759,34 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=True)  # Nullable for OAuth-only users
     name = Column(String(255), nullable=True)
     role = Column(String(50), default=UserRole.VIEWER.value)
     is_active = Column(Boolean, default=True)
     calendar_token = Column(String(64), unique=True, nullable=True, index=True)  # For iCal feed auth
+
+    # Multi-tenancy
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    is_org_owner = Column(Boolean, default=False)  # Organization owner/creator
+
+    # OAuth fields
+    oauth_provider = Column(String(50), nullable=True)  # google, github
+    oauth_provider_id = Column(String(255), nullable=True)  # Provider's user ID
+    avatar_url = Column(String(500), nullable=True)
+
+    # Email verification
+    email_verified = Column(Boolean, default=False)
+    email_verification_token = Column(String(255), nullable=True)
+    email_verified_at = Column(DateTime, nullable=True)
+
+    # Stripe
+    stripe_customer_id = Column(String(255), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", back_populates="users")
 
 
 class VaultConfig(Base):
@@ -256,6 +794,7 @@ class VaultConfig(Base):
     __tablename__ = "vault_config"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, unique=True)
     master_password_hash = Column(String(255), nullable=False)  # bcrypt hash
     salt = Column(String(255), nullable=False)  # For key derivation
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -267,6 +806,7 @@ class Credential(Base):
     __tablename__ = "credentials"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False)  # Display name (not encrypted)
     service_url = Column(String(500), nullable=True)  # URL (not encrypted)
     category = Column(String(50), default="other")  # banking, tax, legal, etc.
@@ -292,6 +832,7 @@ class ProductOffered(Base):
     __tablename__ = "products_offered"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     category = Column(String(50), default=ProductOfferedCategory.OTHER.value)
@@ -310,6 +851,7 @@ class ProductUsed(Base):
     __tablename__ = "products_used"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False)
     vendor = Column(String(255), nullable=True)  # Company that provides it
     category = Column(String(50), default=ProductUsedCategory.OTHER.value)
@@ -339,6 +881,7 @@ class WebLink(Base):
     __tablename__ = "web_links"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     title = Column(String(255), nullable=False)
     url = Column(String(500), nullable=False)
     category = Column(String(50), default=WebLinkCategory.OTHER.value)
@@ -383,6 +926,7 @@ class TaskBoard(Base):
     __tablename__ = "task_boards"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     is_default = Column(Boolean, default=False)
@@ -526,6 +1070,7 @@ class WebPresence(Base):
     __tablename__ = "web_presence"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, unique=True)
 
     # Domain
     domain_name = Column(String(255), nullable=True)
@@ -599,6 +1144,7 @@ class BankAccount(Base):
     __tablename__ = "bank_accounts"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     account_type = Column(String(50), nullable=False)  # checking, savings, coinbase, paypal, stripe, etc.
     institution_name = Column(String(255), nullable=False)
     account_name = Column(String(255), nullable=True)  # Nickname for the account
@@ -634,6 +1180,7 @@ class Metric(Base):
     __tablename__ = "metrics"
 
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     metric_type = Column(String(50), nullable=False)
     name = Column(String(100), nullable=False)  # Display name
     value = Column(String(100), nullable=False)  # Stored as string to handle various formats
@@ -645,3 +1192,22 @@ class Metric(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     created_by = relationship("User", backref="metrics")
+
+
+class MetricGoal(Base):
+    """Goals/targets for metrics"""
+    __tablename__ = "metric_goals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    metric_type = Column(String(50), nullable=False)
+    name = Column(String(100), nullable=True)
+    target_value = Column(Float, nullable=False)
+    target_date = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    is_achieved = Column(Boolean, default=False)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    created_by = relationship("User", backref="metric_goals")

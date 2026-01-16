@@ -2,16 +2,80 @@ import { useEffect, useState } from 'react';
 import {
   Plus,
   Building2,
-  CreditCard,
   Pencil,
   Trash2,
   X,
   Star,
   ExternalLink,
   Loader2,
-  Wallet
+  Calculator,
+  Check,
+  RefreshCw,
 } from 'lucide-react';
 import { getBankAccounts, createBankAccount, updateBankAccount, deleteBankAccount, type BankAccount } from '../lib/api';
+import api from '../lib/api';
+
+// Accounting Software Providers
+const ACCOUNTING_PROVIDERS = [
+  {
+    id: 'quickbooks',
+    name: 'QuickBooks',
+    description: 'Most popular accounting software',
+    color: 'bg-[#2CA01C]',
+    hoverColor: 'hover:bg-[#238a15]',
+    logo: '/logos/quickbooks.svg',
+  },
+  {
+    id: 'xero',
+    name: 'Xero',
+    description: 'Beautiful accounting software',
+    color: 'bg-[#13B5EA]',
+    hoverColor: 'hover:bg-[#0e9ac7]',
+    logo: '/logos/xero.svg',
+  },
+  {
+    id: 'freshbooks',
+    name: 'FreshBooks',
+    description: 'Invoicing and accounting',
+    color: 'bg-[#0075DD]',
+    hoverColor: 'hover:bg-[#0062ba]',
+    logo: '/logos/freshbooks.svg',
+  },
+  {
+    id: 'wave',
+    name: 'Wave',
+    description: 'Free accounting software',
+    color: 'bg-[#094D92]',
+    hoverColor: 'hover:bg-[#073a6e]',
+    logo: '/logos/wave.svg',
+  },
+  {
+    id: 'zoho',
+    name: 'Zoho Books',
+    description: 'Online accounting software',
+    color: 'bg-[#E42527]',
+    hoverColor: 'hover:bg-[#c11f21]',
+    logo: '/logos/zoho.svg',
+  },
+];
+
+interface AccountingAccount {
+  id: number;
+  provider: string;
+  company_name: string | null;
+  company_id: string | null;
+  is_active: boolean;
+  last_sync_at: string | null;
+  created_at: string;
+}
+
+interface ConnectedAccounting {
+  quickbooks: AccountingAccount | null;
+  xero: AccountingAccount | null;
+  freshbooks: AccountingAccount | null;
+  wave: AccountingAccount | null;
+  zoho: AccountingAccount | null;
+}
 
 const accountTypes = [
   { value: 'checking', label: 'Checking Account', icon: '🏦' },
@@ -49,6 +113,19 @@ export default function Banking() {
     notes: ''
   });
 
+  // Accounting integrations state
+  const [accountingConnections, setAccountingConnections] = useState<ConnectedAccounting>({
+    quickbooks: null,
+    xero: null,
+    freshbooks: null,
+    wave: null,
+    zoho: null,
+  });
+  const [accountingLoading, setAccountingLoading] = useState<string | null>(null);
+  const [accountingSuccess, setAccountingSuccess] = useState<string | null>(null);
+  const [accountingError, setAccountingError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState<string | null>(null);
+
   const loadAccounts = async () => {
     try {
       const data = await getBankAccounts();
@@ -60,9 +137,77 @@ export default function Banking() {
     }
   };
 
+  const loadAccountingConnections = async () => {
+    try {
+      const res = await api.get('/api/accounting/accounts');
+      setAccountingConnections(res.data);
+    } catch (err) {
+      console.error('Failed to load accounting connections:', err);
+    }
+  };
+
   useEffect(() => {
     loadAccounts();
+    loadAccountingConnections();
+
+    // Check for OAuth callback params
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get('connected');
+    const error = params.get('error');
+
+    if (connected) {
+      setAccountingSuccess(`Successfully connected ${connected}!`);
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => setAccountingSuccess(null), 5000);
+      loadAccountingConnections();
+    }
+    if (error) {
+      setAccountingError(decodeURIComponent(error));
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => setAccountingError(null), 5000);
+    }
   }, []);
+
+  const handleAccountingConnect = async (provider: string) => {
+    setAccountingLoading(provider);
+    setAccountingError(null);
+    try {
+      const res = await api.get(`/api/accounting/${provider}/connect`);
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err: any) {
+      setAccountingError(err.response?.data?.detail || `Failed to connect ${provider}`);
+      setAccountingLoading(null);
+    }
+  };
+
+  const handleAccountingDisconnect = async (provider: string) => {
+    if (!confirm(`Disconnect ${provider}?`)) return;
+    setAccountingLoading(provider);
+    try {
+      await api.delete(`/api/accounting/accounts/${provider}`);
+      await loadAccountingConnections();
+    } catch (err: any) {
+      setAccountingError(err.response?.data?.detail || `Failed to disconnect ${provider}`);
+    } finally {
+      setAccountingLoading(null);
+    }
+  };
+
+  const handleSync = async (provider: string) => {
+    setSyncing(provider);
+    try {
+      await api.get(`/api/accounting/sync/${provider}`);
+      await loadAccountingConnections();
+      setAccountingSuccess(`${provider} synced successfully!`);
+      setTimeout(() => setAccountingSuccess(null), 3000);
+    } catch (err: any) {
+      setAccountingError(err.response?.data?.detail || `Failed to sync ${provider}`);
+    } finally {
+      setSyncing(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,15 +293,136 @@ export default function Banking() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Banking & Finance</h1>
-          <p className="text-gray-400 mt-1">Manage your financial accounts and payment processors</p>
+          <p className="text-gray-400 mt-1">Manage your accounting software, financial accounts, and payment processors</p>
         </div>
-        <button
-          onClick={() => { setEditingAccount(null); resetForm(); setShowModal(true); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
-        >
-          <Plus className="w-4 h-4" />
-          Add Account
-        </button>
+      </div>
+
+      {/* Accounting Software Integrations */}
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Calculator className="w-5 h-5 text-emerald-400" />
+          Accounting Software
+        </h2>
+        <p className="text-gray-400 text-sm mb-4">
+          Connect your accounting software to sync invoices, expenses, and financial data.
+        </p>
+
+        {/* Success/Error messages */}
+        {accountingSuccess && (
+          <div className="mb-4 p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 flex items-center gap-2">
+            <Check className="w-5 h-5" />
+            {accountingSuccess}
+          </div>
+        )}
+        {accountingError && (
+          <div className="mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 flex items-center gap-2">
+            <X className="w-5 h-5" />
+            {accountingError}
+          </div>
+        )}
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {ACCOUNTING_PROVIDERS.map((provider) => {
+            const connection = accountingConnections[provider.id as keyof ConnectedAccounting];
+            const isConnected = connection?.is_active;
+            const isLoading = accountingLoading === provider.id;
+            const isSyncing = syncing === provider.id;
+
+            return (
+              <div
+                key={provider.id}
+                className={`rounded-xl border p-4 transition ${
+                  isConnected
+                    ? `${provider.color} border-white/20 shadow-lg`
+                    : 'bg-[#1a1d24] border-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl font-bold ${
+                    isConnected ? 'bg-white/20 text-white' : `${provider.color} text-white`
+                  }`}>
+                    {provider.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-white block">{provider.name}</span>
+                    {isConnected && connection?.company_name && (
+                      <p className="text-xs text-white/70 truncate">{connection.company_name}</p>
+                    )}
+                    {!isConnected && (
+                      <p className="text-xs text-gray-500 truncate">{provider.description}</p>
+                    )}
+                  </div>
+                </div>
+
+                {isConnected && connection?.last_sync_at && (
+                  <p className="text-xs text-white/60 mb-3">
+                    Last sync: {new Date(connection.last_sync_at).toLocaleDateString()}
+                  </p>
+                )}
+
+                <div className="flex gap-2">
+                  {isConnected ? (
+                    <>
+                      <button
+                        onClick={() => handleSync(provider.id)}
+                        disabled={isSyncing}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm disabled:opacity-50"
+                      >
+                        {isSyncing ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4" />
+                        )}
+                        Sync
+                      </button>
+                      <button
+                        onClick={() => handleAccountingDisconnect(provider.id)}
+                        disabled={isLoading}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition text-sm disabled:opacity-50"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <X className="w-4 h-4" />
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleAccountingConnect(provider.id)}
+                      disabled={isLoading}
+                      className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg ${provider.color} ${provider.hoverColor} text-white transition text-sm font-medium disabled:opacity-50`}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                      Connect
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Bank Accounts Section Header */}
+      <div className="border-t border-white/10 pt-8 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-cyan-400" />
+            Bank Accounts & Payment Processors
+          </h2>
+          <button
+            onClick={() => { setEditingAccount(null); resetForm(); setShowModal(true); }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+          >
+            <Plus className="w-4 h-4" />
+            Add Account
+          </button>
+        </div>
       </div>
 
       {/* Empty State */}
@@ -176,10 +442,7 @@ export default function Banking() {
           {/* Bank Accounts */}
           {bankAccounts.length > 0 && (
             <section>
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-cyan-400" />
-                Bank Accounts
-              </h2>
+              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">Bank Accounts</h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {bankAccounts.map(account => (
                   <AccountCard
@@ -197,10 +460,7 @@ export default function Banking() {
           {/* Payment Processors */}
           {paymentProcessors.length > 0 && (
             <section>
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-violet-400" />
-                Payment Processors
-              </h2>
+              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">Payment Processors</h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {paymentProcessors.map(account => (
                   <AccountCard
@@ -218,10 +478,7 @@ export default function Banking() {
           {/* Crypto */}
           {cryptoAccounts.length > 0 && (
             <section>
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-amber-400" />
-                Cryptocurrency
-              </h2>
+              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">Cryptocurrency</h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cryptoAccounts.map(account => (
                   <AccountCard
@@ -239,7 +496,7 @@ export default function Banking() {
           {/* Other */}
           {otherAccounts.length > 0 && (
             <section>
-              <h2 className="text-lg font-semibold text-white mb-4">Other Accounts</h2>
+              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">Other Accounts</h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {otherAccounts.map(account => (
                   <AccountCard

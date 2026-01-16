@@ -1,5 +1,5 @@
 #!/bin/bash
-# FounderOS Deployment Script
+# Made4Founders Deployment Script
 # Run this on the server to set up initial deployment
 
 set -e
@@ -7,18 +7,18 @@ set -e
 DOMAIN="founders.axiondeep.com"
 EMAIL="admin@axiondeep.com"  # Change to your email
 
-echo "=== FounderOS Deployment Script ==="
+echo "=== Made4Founders Deployment Script ==="
 
 # Create directories
 echo "Creating directories..."
-sudo mkdir -p /opt/founderos
-sudo chown $USER:$USER /opt/founderos
+sudo mkdir -p /opt/made4founders
+sudo chown $USER:$USER /opt/made4founders
 
 # Clone or pull latest
-cd /opt/founderos
+cd /opt/made4founders
 if [ ! -d ".git" ]; then
     echo "Cloning repository..."
-    git clone https://github.com/joshuarg007/founderos.git .
+    git clone https://github.com/joshuarg007/made4founders.git .
 else
     echo "Pulling latest changes..."
     git pull origin main
@@ -52,7 +52,7 @@ http {
             root /var/www/certbot;
         }
         location / {
-            return 200 'FounderOS Setup';
+            return 200 'Made4Founders Setup';
             add_header Content-Type text/plain;
         }
     }
@@ -80,7 +80,7 @@ docker compose up -d
 
 echo ""
 echo "=== Deployment Complete ==="
-echo "FounderOS is now available at: https://$DOMAIN"
+echo "Made4Founders is now available at: https://$DOMAIN"
 echo ""
 echo "To view logs: docker compose logs -f"
 echo "To stop: docker compose down"
