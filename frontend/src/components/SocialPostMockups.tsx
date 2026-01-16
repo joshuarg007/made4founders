@@ -1,4 +1,4 @@
-import React from 'react';
+// Social Post Mockup Components
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, ThumbsUp, Send, Bookmark, Globe } from 'lucide-react';
 
 interface SocialPostMockupProps {
@@ -286,7 +286,6 @@ export function FacebookPostMockup({ content, imageUrl, userName, timestamp = 'J
 // ============ Instagram Mockup ============
 export function InstagramPostMockup({ content, imageUrl, userName, timestamp = 'Just now' }: SocialPostMockupProps) {
   const initials = getInitials(userName);
-  const displayName = userName.includes('@') ? userName.split('@')[0] : userName;
   const handle = generateHandle(userName);
 
   return (
