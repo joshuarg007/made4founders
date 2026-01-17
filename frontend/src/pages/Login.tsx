@@ -103,7 +103,16 @@ export default function Login() {
         )}
 
         {/* Email/Password Form First */}
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          autoComplete="on"
+          action="/login"
+          method="POST"
+        >
+          {/* Hidden username field for browser password managers */}
+          <input type="hidden" name="username" value={email} autoComplete="username" />
+
           {isRegister && (
             <div>
               <label htmlFor="name" className="block text-sm text-gray-400 mb-1">Name</label>
@@ -124,9 +133,9 @@ export default function Login() {
             <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
             <input
               id="email"
-              name="email"
+              name="username"
               type="email"
-              autoComplete={isRegister ? "email" : "username"}
+              autoComplete="username email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
