@@ -158,7 +158,7 @@ export default function Layout() {
         {/* Logo */}
         <div className="p-4 border-b border-white/10">
           <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src="/logo.png" alt="Made4Founders" className="h-8 w-auto" />
+            <img src="/logo.png" alt="Made4Founders" className="h-10 w-auto" />
           </Link>
         </div>
 
