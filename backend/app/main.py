@@ -87,16 +87,25 @@ logger = logging.getLogger(__name__)
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-# Auto-migrate: Add calendar_token column if it doesn't exist
+# Auto-migrate: Add missing columns if they don't exist
 try:
     from sqlalchemy import text, inspect
     inspector = inspect(engine)
     columns = [col['name'] for col in inspector.get_columns('users')]
-    if 'calendar_token' not in columns:
-        with engine.connect() as conn:
-            conn.execute(text('ALTER TABLE users ADD COLUMN calendar_token VARCHAR(64)'))
-            conn.commit()
-        logger.info("Added calendar_token column to users table")
+
+    migrations = [
+        ('calendar_token', 'ALTER TABLE users ADD COLUMN calendar_token VARCHAR(64)'),
+        ('mfa_enabled', 'ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN DEFAULT 0'),
+        ('mfa_secret', 'ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(64)'),
+        ('mfa_backup_codes', 'ALTER TABLE users ADD COLUMN mfa_backup_codes TEXT'),
+    ]
+
+    with engine.connect() as conn:
+        for col_name, sql in migrations:
+            if col_name not in columns:
+                conn.execute(text(sql))
+                logger.info(f"Added {col_name} column to users table")
+        conn.commit()
 except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
 
