@@ -91,9 +91,10 @@ Base.metadata.create_all(bind=engine)
 try:
     from sqlalchemy import text, inspect
     inspector = inspect(engine)
-    columns = [col['name'] for col in inspector.get_columns('users')]
 
-    migrations = [
+    # Users table migrations
+    user_columns = [col['name'] for col in inspector.get_columns('users')]
+    user_migrations = [
         ('calendar_token', 'ALTER TABLE users ADD COLUMN calendar_token VARCHAR(64)'),
         ('mfa_enabled', 'ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN DEFAULT 0'),
         ('mfa_secret', 'ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(64)'),
@@ -101,10 +102,32 @@ try:
     ]
 
     with engine.connect() as conn:
-        for col_name, sql in migrations:
-            if col_name not in columns:
+        for col_name, sql in user_migrations:
+            if col_name not in user_columns:
                 conn.execute(text(sql))
                 logger.info(f"Added {col_name} column to users table")
+        conn.commit()
+
+    # Contacts table migrations
+    contact_columns = [col['name'] for col in inspector.get_columns('contacts')]
+    contact_migrations = [
+        ('secondary_email', 'ALTER TABLE contacts ADD COLUMN secondary_email VARCHAR(255)'),
+        ('mobile_phone', 'ALTER TABLE contacts ADD COLUMN mobile_phone VARCHAR(50)'),
+        ('city', 'ALTER TABLE contacts ADD COLUMN city VARCHAR(100)'),
+        ('state', 'ALTER TABLE contacts ADD COLUMN state VARCHAR(100)'),
+        ('country', 'ALTER TABLE contacts ADD COLUMN country VARCHAR(100)'),
+        ('timezone', 'ALTER TABLE contacts ADD COLUMN timezone VARCHAR(50)'),
+        ('linkedin_url', 'ALTER TABLE contacts ADD COLUMN linkedin_url VARCHAR(500)'),
+        ('twitter_handle', 'ALTER TABLE contacts ADD COLUMN twitter_handle VARCHAR(100)'),
+        ('birthday', 'ALTER TABLE contacts ADD COLUMN birthday DATE'),
+        ('tags', 'ALTER TABLE contacts ADD COLUMN tags TEXT'),
+    ]
+
+    with engine.connect() as conn:
+        for col_name, sql in contact_migrations:
+            if col_name not in contact_columns:
+                conn.execute(text(sql))
+                logger.info(f"Added {col_name} column to contacts table")
         conn.commit()
 except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
