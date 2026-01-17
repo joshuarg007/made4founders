@@ -4,7 +4,7 @@ import type { DropResult } from '@hello-pangea/dnd';
 import {
   Plus, Search, LayoutGrid, Clock, MessageSquare,
   CheckCircle2, Circle, AlertCircle, Calendar, User, X,
-  Trash2, Edit3, Play, Square,
+  Trash2, Edit3, Play, Square, Save,
   Send, Timer, History, Flag, CalendarDays, ChevronLeft, ChevronRight,
   ChevronDown, ChevronUp, Link2, Copy, RefreshCw
 } from 'lucide-react';
@@ -542,8 +542,10 @@ export default function Tasks() {
           task={selectedTask}
           users={users}
           onClose={() => setSelectedTask(null)}
-          onComplete={handleCompleteTask}
-          onReopen={handleReopenTask}
+          onSave={() => {
+            loadData();
+            setSelectedTask(null);
+          }}
           onDelete={handleDeleteTask}
           onAssign={handleAssignTask}
           onStatusChange={handleStatusChange}
@@ -994,8 +996,7 @@ function TaskDetailPanel({
   task,
   users,
   onClose,
-  onComplete,
-  onReopen,
+  onSave,
   onDelete,
   onAssign,
   onStatusChange,
@@ -1006,8 +1007,7 @@ function TaskDetailPanel({
   task: Task;
   users: UserBrief[];
   onClose: () => void;
-  onComplete: (id: number) => void;
-  onReopen: (id: number) => void;
+  onSave: () => void;
   onDelete: (id: number) => void;
   onAssign: (taskId: number, userId: number | null) => void;
   onStatusChange: (taskId: number, status: string) => void;
@@ -1435,25 +1435,17 @@ function TaskDetailPanel({
               onClick={onClose}
               className="px-4 py-2 text-gray-400 hover:text-white transition"
             >
-              Close
+              Cancel
             </button>
-            {task.status !== 'done' ? (
+            {canEdit && (
               <button
-                onClick={() => onComplete(task.id)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 transition shadow-lg"
+                onClick={onSave}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-cyan-500 text-white font-medium hover:bg-cyan-600 transition shadow-lg"
               >
-                <CheckCircle2 className="w-5 h-5" />
-                Complete Task
+                <Save className="w-5 h-5" />
+                Save Changes
               </button>
-            ) : canEdit ? (
-              <button
-                onClick={() => onReopen(task.id)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition"
-              >
-                <Circle className="w-5 h-5" />
-                Reopen Task
-              </button>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
