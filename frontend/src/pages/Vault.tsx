@@ -13,9 +13,11 @@ import {
   Key,
   User,
   FileText,
-  Globe,
   Search,
   AlertTriangle,
+  Star,
+  List,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   getVaultStatus,
@@ -36,15 +38,15 @@ import {
 } from '../lib/api';
 
 const categories = [
-  { value: 'banking', label: 'Banking', icon: '🏦' },
-  { value: 'tax', label: 'Tax', icon: '📋' },
-  { value: 'legal', label: 'Legal', icon: '⚖️' },
-  { value: 'government', label: 'Government', icon: '🏛️' },
-  { value: 'accounting', label: 'Accounting', icon: '📊' },
-  { value: 'insurance', label: 'Insurance', icon: '🛡️' },
-  { value: 'vendors', label: 'Vendors', icon: '🤝' },
-  { value: 'tools', label: 'Tools', icon: '🔧' },
-  { value: 'other', label: 'Other', icon: '📁' },
+  { value: 'banking', label: 'Banking', icon: '🏦', color: 'emerald', border: 'border-l-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  { value: 'tax', label: 'Tax', icon: '📋', color: 'amber', border: 'border-l-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400' },
+  { value: 'legal', label: 'Legal', icon: '⚖️', color: 'blue', border: 'border-l-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-400' },
+  { value: 'government', label: 'Government', icon: '🏛️', color: 'red', border: 'border-l-red-500', bg: 'bg-red-500/10', text: 'text-red-400' },
+  { value: 'accounting', label: 'Accounting', icon: '📊', color: 'cyan', border: 'border-l-cyan-500', bg: 'bg-cyan-500/10', text: 'text-cyan-400' },
+  { value: 'insurance', label: 'Insurance', icon: '🛡️', color: 'purple', border: 'border-l-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' },
+  { value: 'vendors', label: 'Vendors', icon: '🤝', color: 'pink', border: 'border-l-pink-500', bg: 'bg-pink-500/10', text: 'text-pink-400' },
+  { value: 'tools', label: 'Tools', icon: '🔧', color: 'violet', border: 'border-l-violet-500', bg: 'bg-violet-500/10', text: 'text-violet-400' },
+  { value: 'other', label: 'Other', icon: '📁', color: 'gray', border: 'border-l-gray-500', bg: 'bg-gray-500/10', text: 'text-gray-400' },
 ];
 
 // Predefined field types for quick adding
@@ -115,7 +117,16 @@ export default function Vault() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+  // View mode and favorites (persisted in localStorage)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
+    const saved = localStorage.getItem('vault-view-mode');
+    return (saved as 'list' | 'grid') || 'list';
+  });
+  const [favorites, setFavorites] = useState<number[]>(() => {
+    const saved = localStorage.getItem('vault-favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     loadVaultStatus();
@@ -126,6 +137,15 @@ export default function Vault() {
       loadCredentials();
     }
   }, [vaultStatus?.is_unlocked]);
+
+  // Persist view mode and favorites
+  useEffect(() => {
+    localStorage.setItem('vault-view-mode', viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem('vault-favorites', JSON.stringify(favorites));
+  }, [favorites]);
 
   const loadVaultStatus = async () => {
     try {
@@ -216,7 +236,6 @@ export default function Vault() {
     try {
       await deleteCredential(id);
       await loadCredentials();
-      setDeleteConfirm(null);
       if (viewingCredential?.id === id) {
         setViewingCredential(null);
       }
@@ -291,9 +310,26 @@ export default function Vault() {
     return matchesSearch && matchesCategory;
   });
 
-  const getCategoryIcon = (category: string) => {
-    return categories.find(c => c.value === category)?.icon || '📁';
+  const getCategoryInfo = (category: string) => {
+    return categories.find(c => c.value === category) || categories[categories.length - 1];
   };
+
+  const getCategoryIcon = (category: string) => {
+    return getCategoryInfo(category).icon;
+  };
+
+  const toggleFavorite = (id: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setFavorites(prev =>
+      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+    );
+  };
+
+  const isFavorite = (id: number) => favorites.includes(id);
+
+  // Separate favorites and regular credentials
+  const favoriteCredentials = filteredCredentials.filter(c => favorites.includes(c.id));
+  const regularCredentials = filteredCredentials.filter(c => !favorites.includes(c.id));
 
   if (loading) {
     return (
@@ -421,13 +457,35 @@ export default function Vault() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* View Toggle */}
+          <div className="flex items-center bg-[#1a1d24] rounded-lg border border-white/10 p-1">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition ${
+                viewMode === 'list' ? 'bg-violet-500 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+              title="List view"
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition ${
+                viewMode === 'grid' ? 'bg-violet-500 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+              title="Grid view"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+
           <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 rounded-lg bg-violet-500 text-white font-medium hover:bg-violet-600 transition flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
-            Add Credential
+            Add
           </button>
           <button
             onClick={handleLock}
@@ -476,135 +534,215 @@ export default function Vault() {
         </div>
       </div>
 
-      {/* Credentials Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCredentials.map(cred => (
-          <div
-            key={cred.id}
-            className="p-4 rounded-xl bg-[#1a1d24] border border-white/10 hover:border-violet-500/30 transition group"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{getCategoryIcon(cred.category)}</span>
-                <div>
-                  <h3 className="font-semibold text-white">{cred.name}</h3>
-                  {cred.service_url && (
-                    <a
-                      href={cred.service_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-gray-500 hover:text-cyan-400 flex items-center gap-1"
+      {/* Credentials List/Grid */}
+      <div className="space-y-6">
+        {/* Favorites Section */}
+        {favoriteCredentials.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <h2 className="text-sm font-semibold text-amber-400 uppercase tracking-wide">Favorites</h2>
+              <span className="text-xs text-gray-500">({favoriteCredentials.length})</span>
+            </div>
+            {viewMode === 'list' ? (
+              <div className="space-y-1">
+                {favoriteCredentials.map(cred => {
+                  const cat = getCategoryInfo(cred.category);
+                  return (
+                    <div
+                      key={cred.id}
+                      onClick={() => handleView(cred.id)}
+                      className={`flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group`}
                     >
-                      <Globe className="w-3 h-3" />
-                      {new URL(cred.service_url).hostname}
-                    </a>
-                  )}
-                </div>
+                      <span className="text-xl">{cat.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-white truncate">{cred.name}</h3>
+                        {cred.service_url && (
+                          <span className="text-xs text-gray-500 truncate block">
+                            {new URL(cred.service_url).hostname}
+                          </span>
+                        )}
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${cat.bg} ${cat.text}`}>
+                        {cat.label}
+                      </span>
+                      {/* Indicators */}
+                      <div className="flex items-center gap-1.5">
+                        {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
+                        {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
+                        {cred.has_notes && <span title="Has notes"><FileText className="w-3.5 h-3.5 text-gray-500" /></span>}
+                      </div>
+                      {/* Hover Actions */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
+                          title="Copy username"
+                        >
+                          <User className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                          title="Copy password"
+                        >
+                          <Key className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => toggleFavorite(cred.id, e)}
+                          className="p-1.5 rounded text-amber-400 hover:bg-white/10"
+                          title="Remove from favorites"
+                        >
+                          <Star className="w-4 h-4 fill-amber-400" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
+                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                <button
-                  onClick={() => handleView(cred.id)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
-                  title="View"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleEdit(cred.id)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
-                  title="Edit"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                {deleteConfirm === cred.id ? (
-                  <button
-                    onClick={() => handleDelete(cred.id)}
-                    className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                    title="Confirm delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setDeleteConfirm(cred.id)}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/10"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {favoriteCredentials.map(cred => {
+                  const cat = getCategoryInfo(cred.category);
+                  return (
+                    <div
+                      key={cred.id}
+                      onClick={() => handleView(cred.id)}
+                      className={`p-4 rounded-xl bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group text-center`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-2xl">{cat.icon}</span>
+                        <button
+                          onClick={(e) => toggleFavorite(cred.id, e)}
+                          className="p-1 rounded text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
+                        >
+                          <Star className="w-4 h-4 fill-amber-400" />
+                        </button>
+                      </div>
+                      <h3 className="font-medium text-white text-sm truncate">{cred.name}</h3>
+                      <span className={`inline-block mt-2 px-2 py-0.5 rounded text-xs ${cat.bg} ${cat.text}`}>
+                        {cat.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-
-            {/* Quick copy buttons */}
-            <div className="flex items-center gap-2">
-              {cred.has_username && (
-                <button
-                  onClick={() => handleCopy(cred.id, 'username')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
-                    copiedField === `${cred.id}-username`
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {copiedField === `${cred.id}-username` ? (
-                    <>Copied!</>
-                  ) : (
-                    <>
-                      <User className="w-4 h-4" />
-                      Username
-                    </>
-                  )}
-                </button>
-              )}
-              {cred.has_password && (
-                <button
-                  onClick={() => handleCopy(cred.id, 'password')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
-                    copiedField === `${cred.id}-password`
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {copiedField === `${cred.id}-password` ? (
-                    <>Copied!</>
-                  ) : (
-                    <>
-                      <Key className="w-4 h-4" />
-                      Password
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
-            {/* Indicators */}
-            <div className="flex items-center flex-wrap gap-2 mt-3">
-              {cred.has_notes && (
-                <span className="text-xs text-gray-500 flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
-                  Notes
-                </span>
-              )}
-              {cred.has_totp && (
-                <span className="text-xs text-violet-400 flex items-center gap-1">
-                  <Shield className="w-3 h-3" />
-                  2FA
-                </span>
-              )}
-              {cred.has_custom_fields && cred.custom_field_count > 0 && (
-                <span className="text-xs text-cyan-400 flex items-center gap-1">
-                  <Key className="w-3 h-3" />
-                  {cred.custom_field_count} extra field{cred.custom_field_count !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
+            )}
           </div>
-        ))}
+        )}
+
+        {/* All Credentials Section */}
+        {regularCredentials.length > 0 && (
+          <div>
+            {favoriteCredentials.length > 0 && (
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">All Credentials</h2>
+                <span className="text-xs text-gray-500">({regularCredentials.length})</span>
+              </div>
+            )}
+            {viewMode === 'list' ? (
+              <div className="space-y-1">
+                {regularCredentials.map(cred => {
+                  const cat = getCategoryInfo(cred.category);
+                  return (
+                    <div
+                      key={cred.id}
+                      onClick={() => handleView(cred.id)}
+                      className={`flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group`}
+                    >
+                      <span className="text-xl">{cat.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-white truncate">{cred.name}</h3>
+                        {cred.service_url && (
+                          <span className="text-xs text-gray-500 truncate block">
+                            {new URL(cred.service_url).hostname}
+                          </span>
+                        )}
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${cat.bg} ${cat.text}`}>
+                        {cat.label}
+                      </span>
+                      {/* Indicators */}
+                      <div className="flex items-center gap-1.5">
+                        {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
+                        {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
+                        {cred.has_notes && <span title="Has notes"><FileText className="w-3.5 h-3.5 text-gray-500" /></span>}
+                      </div>
+                      {/* Hover Actions */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
+                          title="Copy username"
+                        >
+                          <User className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                          title="Copy password"
+                        >
+                          <Key className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => toggleFavorite(cred.id, e)}
+                          className="p-1.5 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10"
+                          title="Add to favorites"
+                        >
+                          <Star className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
+                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {regularCredentials.map(cred => {
+                  const cat = getCategoryInfo(cred.category);
+                  return (
+                    <div
+                      key={cred.id}
+                      onClick={() => handleView(cred.id)}
+                      className={`p-4 rounded-xl bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group text-center`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-2xl">{cat.icon}</span>
+                        <button
+                          onClick={(e) => toggleFavorite(cred.id, e)}
+                          className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
+                        >
+                          <Star className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <h3 className="font-medium text-white text-sm truncate">{cred.name}</h3>
+                      <span className={`inline-block mt-2 px-2 py-0.5 rounded text-xs ${cat.bg} ${cat.text}`}>
+                        {cat.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {filteredCredentials.length === 0 && (
-          <div className="col-span-full py-20 text-center">
+          <div className="py-20 text-center">
             <Shield className="w-12 h-12 text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-400 mb-2">
               {searchQuery || selectedCategory ? 'No matching credentials' : 'No credentials yet'}
@@ -626,12 +764,25 @@ export default function Vault() {
           <div className="relative w-full max-w-md bg-[#1a1d24] border-l border-white/10 h-full overflow-y-auto">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">Credential Details</h2>
-              <button
-                onClick={() => setViewingCredential(null)}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleFavorite(viewingCredential.id)}
+                  className={`p-2 rounded-lg transition ${
+                    isFavorite(viewingCredential.id)
+                      ? 'text-amber-400 hover:bg-amber-500/10'
+                      : 'text-gray-400 hover:text-amber-400 hover:bg-white/10'
+                  }`}
+                  title={isFavorite(viewingCredential.id) ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Star className={`w-5 h-5 ${isFavorite(viewingCredential.id) ? 'fill-amber-400' : ''}`} />
+                </button>
+                <button
+                  onClick={() => setViewingCredential(null)}
+                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 space-y-6">

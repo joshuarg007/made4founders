@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, AlertCircle, ArrowLeft, Shield, Eye, EyeOff } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { getGoogleLoginUrl, getGitHubLoginUrl } from '../lib/api';
 
 // SVG Icons for OAuth providers
@@ -82,11 +82,9 @@ export default function Login() {
 
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
-          <Shield className="w-6 h-6 text-white" />
-        </div>
+        <img src="/logo.png" alt="Made4Founders" className="h-12 w-auto" />
         <div>
-          <h1 className="text-2xl font-bold text-white">FounderOS</h1>
+          <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
           <p className="text-sm text-gray-500">Command Center</p>
         </div>
       </div>
@@ -236,7 +234,7 @@ export default function Login() {
       </div>
 
       <p className="mt-8 text-xs text-gray-500">
-        FounderOS — Your startup command center
+        Made4Founders — Your startup command center
       </p>
     </div>
   );

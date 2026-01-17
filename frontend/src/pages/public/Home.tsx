@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom';
 import {
   Shield,
-  Zap,
   BarChart3,
   FileText,
-  Users,
   CheckCircle,
   ArrowRight,
   Sparkles,
@@ -13,34 +11,50 @@ import {
   Globe,
 } from 'lucide-react';
 
+// Marketing images
+import heroImage from '../../assets/hero-section-holographic.webp';
+import dashboardIcon from '../../assets/dashboard-icon.webp';
+import checklistIcon from '../../assets/checklist-icon.webp';
+import vaultIcon from '../../assets/vault-icon.webp';
+import analyticsIcon from '../../assets/analytics-icon.webp';
+import marketingIcon from '../../assets/marketing-icon.webp';
+import documentsIcon from '../../assets/documents-icon.webp';
+import trustSection from '../../assets/about-trust-section.webp';
+
 const features = [
   {
     icon: Building2,
+    image: dashboardIcon,
     title: 'Business Command Center',
     description: 'One dashboard to track compliance, deadlines, documents, and metrics.',
   },
   {
     icon: CheckCircle,
+    image: checklistIcon,
     title: 'Smart Checklist',
     description: '98 compliance items across 11 categories. Never miss a filing deadline.',
   },
   {
     icon: Lock,
+    image: vaultIcon,
     title: 'Encrypted Vault',
     description: 'Bank-level AES-256 encryption for your sensitive credentials.',
   },
   {
     icon: BarChart3,
+    image: analyticsIcon,
     title: 'Metrics Dashboard',
     description: 'Track MRR, ARR, runway, CAC, LTV, and custom KPIs over time.',
   },
   {
     icon: Globe,
+    image: marketingIcon,
     title: 'Marketing Suite',
     description: 'Create branded emails and social posts. Connect Mailchimp, Twitter, LinkedIn.',
   },
   {
     icon: FileText,
+    image: documentsIcon,
     title: 'Document Templates',
     description: 'NDAs, operating agreements, board resolutions ready to customize.',
   },
@@ -135,6 +149,16 @@ export default function Home() {
               <span className="font-semibold text-gray-400 hidden sm:inline">Sequoia</span>
             </div>
           </div>
+
+          {/* Hero Image */}
+          <div className="mt-16 relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d14] via-transparent to-transparent z-10" />
+            <img
+              src={heroImage}
+              alt="Made4Founders Dashboard"
+              className="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl shadow-cyan-500/10 border border-white/10"
+            />
+          </div>
         </div>
       </section>
 
@@ -170,8 +194,8 @@ export default function Home() {
                 key={feature.title}
                 className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 hover:border-white/10 transition-all"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center mb-6 group-hover:from-cyan-500/30 group-hover:to-blue-600/30 transition-colors">
-                  <feature.icon className="w-6 h-6 text-cyan-400" />
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-600/10 flex items-center justify-center mb-6 group-hover:from-cyan-500/20 group-hover:to-blue-600/20 transition-colors overflow-hidden">
+                  <img src={feature.image} alt={feature.title} className="w-12 h-12 object-contain" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
                 <p className="text-gray-400">{feature.description}</p>
@@ -239,20 +263,12 @@ export default function Home() {
               </ul>
             </div>
             <div className="flex-1">
-              <div className="p-8 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-600/10 border border-white/10">
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { icon: Shield, label: 'AES-256' },
-                    { icon: Lock, label: 'Zero-Knowledge' },
-                    { icon: Users, label: 'Role-Based Access' },
-                    { icon: Zap, label: '2FA Support' },
-                  ].map((item) => (
-                    <div key={item.label} className="p-4 rounded-xl bg-white/5 text-center">
-                      <item.icon className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
-                      <span className="text-sm text-gray-300">{item.label}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="rounded-2xl overflow-hidden border border-white/10">
+                <img
+                  src={trustSection}
+                  alt="Bank-level security"
+                  className="w-full h-auto"
+                />
               </div>
             </div>
           </div>
