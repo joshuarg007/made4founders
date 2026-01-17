@@ -862,8 +862,8 @@ export default function Vault() {
                           </span>
                           {/* Indicators */}
                           <div className="flex items-center gap-1">
-                            {cred.has_totp && <Shield className="w-3.5 h-3.5 text-violet-400" title="2FA" />}
-                            {cred.has_custom_fields && <Key className="w-3.5 h-3.5 text-cyan-400" title={`${cred.custom_field_count} fields`} />}
+                            {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
+                            {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
                           </div>
                         </div>
                       </div>
@@ -1014,8 +1014,8 @@ export default function Vault() {
                           </span>
                           {/* Indicators */}
                           <div className="flex items-center gap-1">
-                            {cred.has_totp && <Shield className="w-3.5 h-3.5 text-violet-400" title="2FA" />}
-                            {cred.has_custom_fields && <Key className="w-3.5 h-3.5 text-cyan-400" title={`${cred.custom_field_count} fields`} />}
+                            {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
+                            {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
                           </div>
                         </div>
                       </div>

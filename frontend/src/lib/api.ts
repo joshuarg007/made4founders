@@ -128,6 +128,7 @@ export interface BusinessUpdate {
   parent_id?: number | null;
   is_active?: boolean;
   is_archived?: boolean;
+  gamification_enabled?: boolean;
 }
 
 export const getBusinesses = (includeArchived = false) =>

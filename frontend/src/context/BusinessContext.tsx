@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import {
-  Business,
-  BusinessWithChildren,
+  type Business,
+  type BusinessWithChildren,
   getBusinesses,
   getBusinessesTree,
   switchBusiness as apiSwitchBusiness,
   createBusiness as apiCreateBusiness,
-  BusinessCreate,
+  type BusinessCreate,
 } from '../lib/api';
 import { useAuth } from './AuthContext';
 

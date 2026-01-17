@@ -22,7 +22,6 @@ import {
   Users,
   TrendingUp,
   X,
-  ChevronRight,
   Share2,
   Shield,
 } from 'lucide-react';
@@ -36,10 +35,8 @@ import {
   acceptChallenge,
   declineChallenge,
   cancelChallenge,
-  getChallengeProgress,
 } from '../lib/api';
 import type {
-  LeaderboardEntry,
   BusinessAchievement,
   LeaderboardResponse,
   Challenge,
@@ -1159,7 +1156,6 @@ function ChallengeCard({
 
   const isWinner = isCompleted && challenge.winner_id === currentBusinessId;
   const isLoser = isCompleted && challenge.winner_id && challenge.winner_id !== currentBusinessId;
-  const isDraw = isCompleted && !challenge.winner_id;
 
   return (
     <div className={`relative rounded-xl border overflow-hidden transition-all duration-300 ${

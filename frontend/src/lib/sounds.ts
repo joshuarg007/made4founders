@@ -144,6 +144,7 @@ function playChord(
 export function playVictorySound() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return; // Muted or unavailable
     const now = ctx.currentTime;
 
     // Triumphant fanfare melody (C major -> E major -> G major -> High C)
@@ -183,6 +184,7 @@ export function playVictorySound() {
 export function playAchievementSound() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return; // Muted or unavailable
     const now = ctx.currentTime;
 
     // Magical arpeggio (pentatonic scale for pleasant sound)
@@ -260,6 +262,7 @@ export function playLevelUpSound() {
 export function playQuestCompleteSound() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return; // Muted or unavailable
     const now = ctx.currentTime;
 
     // Two-note completion chime
@@ -282,6 +285,7 @@ export function playQuestCompleteSound() {
 export function playXPSound() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return; // Muted or unavailable
     const now = ctx.currentTime;
 
     // Quick ascending blip
@@ -297,6 +301,7 @@ export function playXPSound() {
 export function playDefeatSound() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return; // Muted or unavailable
     const now = ctx.currentTime;
 
     // Descending minor notes
@@ -319,6 +324,7 @@ export function playDefeatSound() {
 export function playClickSound() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return; // Muted or unavailable
     const now = ctx.currentTime;
 
     playNote(800, now, 0.05, 0.1, 'sine');
@@ -332,6 +338,7 @@ export function playClickSound() {
 export function playNotificationSound() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return; // Muted or unavailable
     const now = ctx.currentTime;
 
     playNote(659.25, now, 0.1, 0.15, 'sine');        // E5
