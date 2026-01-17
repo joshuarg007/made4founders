@@ -10,6 +10,9 @@ import Features from './pages/public/Features'
 import Pricing from './pages/public/Pricing'
 import About from './pages/public/About'
 import Signup from './pages/public/Signup'
+import Privacy from './pages/public/Privacy'
+import Terms from './pages/public/Terms'
+import Security from './pages/public/Security'
 
 // Protected pages
 import DailyBrief from './pages/DailyBrief'
@@ -41,6 +44,9 @@ function App() {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/about" element={<About />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/security" element={<Security />} />
       </Route>
 
       {/* Login page (separate from public layout for cleaner UX) */}

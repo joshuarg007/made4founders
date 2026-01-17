@@ -9,7 +9,12 @@ import {
   X,
   Search,
   Check,
-  ChevronDown
+  ChevronDown,
+  Linkedin,
+  Twitter,
+  MapPin,
+  Clock,
+  Smartphone
 } from 'lucide-react';
 import { getContacts, createContact, updateContact, deleteContact, type Contact } from '../lib/api';
 import { format } from 'date-fns';
@@ -599,9 +604,19 @@ export default function Contacts() {
     company: '',
     contact_type: 'other',
     email: '',
+    secondary_email: '',
     phone: '',
+    mobile_phone: '',
     address: '',
+    city: '',
+    state: '',
+    country: '',
+    timezone: '',
     website: '',
+    linkedin_url: '',
+    twitter_handle: '',
+    birthday: '',
+    tags: '',
     responsibilities: '',
     notes: ''
   });
@@ -700,7 +715,7 @@ export default function Contacts() {
       }
       setShowModal(false);
       setEditingContact(null);
-      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', website: '', responsibilities: '', notes: '' });
+      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', secondary_email: '', phone: '', mobile_phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday: '', tags: '', responsibilities: '', notes: '' });
       setShowResponsibilitiesDropdown(false);
       setResponsibilitySearch('');
       setShowTitleDropdown(false);
@@ -722,9 +737,19 @@ export default function Contacts() {
       company: contact.company || '',
       contact_type: contact.contact_type,
       email: contact.email || '',
+      secondary_email: contact.secondary_email || '',
       phone: contact.phone || '',
+      mobile_phone: contact.mobile_phone || '',
       address: contact.address || '',
+      city: contact.city || '',
+      state: contact.state || '',
+      country: contact.country || '',
+      timezone: contact.timezone || '',
       website: contact.website || '',
+      linkedin_url: contact.linkedin_url || '',
+      twitter_handle: contact.twitter_handle || '',
+      birthday: contact.birthday || '',
+      tags: contact.tags || '',
       responsibilities: contact.responsibilities || '',
       notes: contact.notes || ''
     });
@@ -758,7 +783,7 @@ export default function Contacts() {
           <p className="text-gray-400 mt-1">Your business rolodex</p>
         </div>
         <button
-          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', website: '', responsibilities: '', notes: '' }); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
+          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', secondary_email: '', phone: '', mobile_phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday: '', tags: '', responsibilities: '', notes: '' }); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
         >
           <Plus className="w-4 h-4" />
@@ -847,26 +872,67 @@ export default function Contacts() {
                 )}
               </div>
 
-              <div className="space-y-2 mb-3">
+              <div className="space-y-1.5 mb-3">
                 {contact.email && (
                   <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
-                    <Mail className="w-4 h-4" />
-                    {contact.email}
+                    <Mail className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{contact.email}</span>
                   </a>
                 )}
                 {contact.phone && (
                   <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
-                    <Phone className="w-4 h-4" />
+                    <Phone className="w-4 h-4 flex-shrink-0" />
                     {contact.phone}
                   </a>
                 )}
-                {contact.website && (
-                  <a href={contact.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
-                    <Globe className="w-4 h-4" />
-                    {contact.website.replace(/^https?:\/\//, '')}
+                {contact.mobile_phone && (
+                  <a href={`tel:${contact.mobile_phone}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
+                    <Smartphone className="w-4 h-4 flex-shrink-0" />
+                    {contact.mobile_phone}
                   </a>
                 )}
+                {contact.website && (
+                  <a href={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
+                    <Globe className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{contact.website.replace(/^https?:\/\//, '')}</span>
+                  </a>
+                )}
+                {contact.linkedin_url && (
+                  <a href={contact.linkedin_url.startsWith('http') ? contact.linkedin_url : `https://${contact.linkedin_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
+                    <Linkedin className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">LinkedIn</span>
+                  </a>
+                )}
+                {contact.twitter_handle && (
+                  <a href={`https://twitter.com/${contact.twitter_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300">
+                    <Twitter className="w-4 h-4 flex-shrink-0" />
+                    @{contact.twitter_handle.replace('@', '')}
+                  </a>
+                )}
+                {(contact.city || contact.state || contact.country) && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    {[contact.city, contact.state, contact.country].filter(Boolean).join(', ')}
+                  </div>
+                )}
+                {contact.timezone && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    {contact.timezone}
+                  </div>
+                )}
               </div>
+
+              {/* Tags */}
+              {contact.tags && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {contact.tags.split(',').map((tag, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded text-xs bg-violet-500/10 text-violet-400">
+                      {tag.trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {contact.notes && (
                 <p className="text-xs text-gray-500 mb-3 line-clamp-2">{contact.notes}</p>
@@ -1033,6 +1099,10 @@ export default function Contacts() {
                     ))}
                   </select>
                 </div>
+                {/* Contact Info Section */}
+                <div className="col-span-2 pt-2 border-t border-white/10">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Contact Information</p>
+                </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Email</label>
                   <input
@@ -1043,13 +1113,38 @@ export default function Contacts() {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm text-gray-400 mb-1">Secondary Email</label>
+                  <input
+                    type="email"
+                    value={formData.secondary_email}
+                    onChange={(e) => setFormData({ ...formData, secondary_email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
                   <label className="block text-sm text-gray-400 mb-1">Phone</label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    placeholder="Office/work phone"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Mobile Phone</label>
+                  <input
+                    type="tel"
+                    value={formData.mobile_phone}
+                    onChange={(e) => setFormData({ ...formData, mobile_phone: e.target.value })}
+                    placeholder="Cell/mobile"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+
+                {/* Online Presence Section */}
+                <div className="col-span-2 pt-2 border-t border-white/10">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Online Presence</p>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Website</label>
@@ -1058,8 +1153,33 @@ export default function Contacts() {
                     value={formData.website}
                     onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">LinkedIn URL</label>
+                  <input
+                    type="url"
+                    value={formData.linkedin_url}
+                    onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
+                    placeholder="https://linkedin.com/in/..."
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Twitter/X Handle</label>
+                  <input
+                    type="text"
+                    value={formData.twitter_handle}
+                    onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
+                    placeholder="@username"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+
+                {/* Location Section */}
+                <div className="col-span-2 pt-2 border-t border-white/10">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Location</p>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Address</label>
@@ -1067,7 +1187,83 @@ export default function Contacts() {
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Street address"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">City</label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">State/Province</label>
+                  <input
+                    type="text"
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Country</label>
+                  <input
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Timezone</label>
+                  <select
+                    value={formData.timezone}
+                    onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="" className="bg-[#1a1d24]">Select timezone...</option>
+                    <option value="America/New_York" className="bg-[#1a1d24]">Eastern (ET)</option>
+                    <option value="America/Chicago" className="bg-[#1a1d24]">Central (CT)</option>
+                    <option value="America/Denver" className="bg-[#1a1d24]">Mountain (MT)</option>
+                    <option value="America/Los_Angeles" className="bg-[#1a1d24]">Pacific (PT)</option>
+                    <option value="America/Anchorage" className="bg-[#1a1d24]">Alaska (AKT)</option>
+                    <option value="Pacific/Honolulu" className="bg-[#1a1d24]">Hawaii (HST)</option>
+                    <option value="Europe/London" className="bg-[#1a1d24]">London (GMT/BST)</option>
+                    <option value="Europe/Paris" className="bg-[#1a1d24]">Paris (CET)</option>
+                    <option value="Europe/Berlin" className="bg-[#1a1d24]">Berlin (CET)</option>
+                    <option value="Asia/Tokyo" className="bg-[#1a1d24]">Tokyo (JST)</option>
+                    <option value="Asia/Shanghai" className="bg-[#1a1d24]">Shanghai (CST)</option>
+                    <option value="Asia/Singapore" className="bg-[#1a1d24]">Singapore (SGT)</option>
+                    <option value="Australia/Sydney" className="bg-[#1a1d24]">Sydney (AEST)</option>
+                    <option value="UTC" className="bg-[#1a1d24]">UTC</option>
+                  </select>
+                </div>
+
+                {/* Additional Info Section */}
+                <div className="col-span-2 pt-2 border-t border-white/10">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Additional Info</p>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Birthday</label>
+                  <input
+                    type="date"
+                    value={formData.birthday}
+                    onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Tags</label>
+                  <input
+                    type="text"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    placeholder="vip, partner, lead (comma-separated)"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">

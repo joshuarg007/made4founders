@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Literal
-from datetime import datetime
+from datetime import datetime, date
 
 
 # Service schemas
@@ -95,9 +95,19 @@ class ContactBase(BaseModel):
     company: Optional[str] = None
     contact_type: str = "other"
     email: Optional[str] = None
+    secondary_email: Optional[str] = None
     phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
     address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    timezone: Optional[str] = None
     website: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    twitter_handle: Optional[str] = None
+    birthday: Optional[date] = None
+    tags: Optional[str] = None
     responsibilities: Optional[str] = None  # What this contact handles for you
     notes: Optional[str] = None
 
@@ -112,9 +122,19 @@ class ContactUpdate(BaseModel):
     company: Optional[str] = None
     contact_type: Optional[str] = None
     email: Optional[str] = None
+    secondary_email: Optional[str] = None
     phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
     address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    timezone: Optional[str] = None
     website: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    twitter_handle: Optional[str] = None
+    birthday: Optional[date] = None
+    tags: Optional[str] = None
     responsibilities: Optional[str] = None
     notes: Optional[str] = None
     last_contacted: Optional[datetime] = None

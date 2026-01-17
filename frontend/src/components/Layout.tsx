@@ -169,18 +169,18 @@ export default function Layout() {
                   onClick={() => toggleSection(section.id)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-left border ${
                     isActive
-                      ? `${section.color.bg} ${section.color.text} ${section.color.border}`
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white border-transparent'
+                      ? `${section.color.bg} ${section.color.border}`
+                      : 'hover:bg-white/5 border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isActive ? section.color.activeBg : 'bg-white/5'}`}>
-                      <section.icon className="w-3.5 h-3.5" />
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isActive ? section.color.activeBg : section.color.bg}`}>
+                      <section.icon className={`w-3.5 h-3.5 ${section.color.text}`} />
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">{section.label}</span>
+                    <span className={`text-xs font-bold uppercase tracking-wide ${section.color.text}`}>{section.label}</span>
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`}
+                    className={`w-4 h-4 transition-transform ${section.color.text} ${isExpanded ? 'rotate-0' : '-rotate-90'}`}
                   />
                 </button>
 

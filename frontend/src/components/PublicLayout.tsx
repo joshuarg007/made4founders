@@ -154,9 +154,9 @@ export default function PublicLayout() {
             <div>
               <h3 className="text-sm font-semibold text-white mb-4">Legal</h3>
               <ul className="space-y-3">
-                <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Security</a></li>
+                <li><Link to="/privacy" className="text-sm text-gray-400 hover:text-white transition-colors">Privacy</Link></li>
+                <li><Link to="/terms" className="text-sm text-gray-400 hover:text-white transition-colors">Terms</Link></li>
+                <li><Link to="/security" className="text-sm text-gray-400 hover:text-white transition-colors">Security</Link></li>
               </ul>
             </div>
           </div>
