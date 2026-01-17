@@ -160,14 +160,14 @@ APP_ENCRYPTION_KEY=<32+ char random string>
 ENVIRONMENT=production
 COOKIE_SECURE=true
 COOKIE_SAMESITE=strict
-CORS_ORIGINS=https://founders.axiondeep.com
+CORS_ORIGINS=https://made4founders.com
 ```
 
 ### Optional
 ```bash
 ACCESS_TOKEN_EXPIRE_MINUTES=15
 REFRESH_TOKEN_EXPIRE_DAYS=7
-COOKIE_DOMAIN=.axiondeep.com
+COOKIE_DOMAIN=.made4founders.com
 ```
 
 ---

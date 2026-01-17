@@ -193,7 +193,7 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | https://founders.axiondeep.com | Active |
+| Production | https://made4founders.com | Active |
 | Staging | - | Not configured |
 | Local | http://localhost:5173 | Development |
 

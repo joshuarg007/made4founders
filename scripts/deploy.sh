@@ -4,7 +4,7 @@
 
 set -e
 
-DOMAIN="founders.axiondeep.com"
+DOMAIN="made4founders.com"
 EMAIL="admin@axiondeep.com"  # Change to your email
 
 echo "=== Made4Founders Deployment Script ==="

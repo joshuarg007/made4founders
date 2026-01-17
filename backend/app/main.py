@@ -123,7 +123,7 @@ app.add_middleware(RequestValidationMiddleware)
 app.add_middleware(AuditLogMiddleware)
 
 # 5. CORS - Tightened configuration
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174,http://localhost:3000,https://founders.axiondeep.com")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174,http://localhost:3000,https://made4founders.com")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in CORS_ORIGINS.split(",")],
