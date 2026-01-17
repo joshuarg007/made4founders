@@ -18,6 +18,14 @@ import {
   Palette,
 } from 'lucide-react';
 
+// Feature images
+import checklistIcon from '../../assets/checklist-icon.webp';
+import vaultIcon from '../../assets/vault-icon.webp';
+import analyticsIcon from '../../assets/analytics-icon.webp';
+import dashboardIcon from '../../assets/dashboard-icon.webp';
+import documentsIcon from '../../assets/documents-icon.webp';
+import marketingIcon from '../../assets/marketing-icon.webp';
+
 const featureCategories = [
   {
     title: 'Operations',
@@ -25,6 +33,7 @@ const featureCategories = [
     features: [
       {
         icon: ListChecks,
+        image: checklistIcon,
         title: 'Smart Compliance Checklist',
         description: '98 items across 11 categories including entity formation, federal requirements, government contracting, state & local, corporate governance, banking, and more. Never miss a deadline.',
       },
@@ -35,6 +44,7 @@ const featureCategories = [
       },
       {
         icon: FileText,
+        image: documentsIcon,
         title: 'Document Management',
         description: 'Secure document storage with categories, tags, and expiration tracking. Download-only access with path traversal protection.',
       },
@@ -51,6 +61,7 @@ const featureCategories = [
     features: [
       {
         icon: Lock,
+        image: vaultIcon,
         title: 'Encrypted Credential Vault',
         description: 'AES-256-GCM encryption with Argon2id key derivation. Your master password never leaves your device.',
       },
@@ -61,6 +72,7 @@ const featureCategories = [
       },
       {
         icon: BarChart3,
+        image: analyticsIcon,
         title: 'Business Metrics',
         description: 'Track MRR, ARR, runway, burn rate, CAC, LTV, churn, NPS, and custom KPIs over time with trend analysis.',
       },
@@ -87,6 +99,7 @@ const featureCategories = [
       },
       {
         icon: Share2,
+        image: marketingIcon,
         title: 'Social Media Publishing',
         description: 'Create posts optimized for each platform. Connect Twitter, LinkedIn, Facebook, and Instagram.',
       },
@@ -108,6 +121,7 @@ const featureCategories = [
       },
       {
         icon: Zap,
+        image: dashboardIcon,
         title: 'Daily Brief',
         description: 'Start each day with a personalized dashboard showing overdue items, tasks, and priorities.',
       },
@@ -168,12 +182,29 @@ export default function Features() {
               {category.features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
+                  className="group p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all hover:bg-white/[0.07]"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center mb-6">
-                    <feature.icon className="w-6 h-6 text-cyan-400" />
+                  {feature.image ? (
+                    <div className="mb-6 -mx-2 -mt-2">
+                      <img
+                        src={feature.image}
+                        alt={feature.title}
+                        className="w-full h-40 object-cover rounded-xl opacity-90 group-hover:opacity-100 transition-opacity"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center mb-6">
+                      <feature.icon className="w-6 h-6 text-cyan-400" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 mb-3">
+                    {feature.image && (
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
+                        <feature.icon className="w-4 h-4 text-cyan-400" />
+                      </div>
+                    )}
+                    <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
                   <p className="text-gray-400 leading-relaxed">{feature.description}</p>
                 </div>
               ))}

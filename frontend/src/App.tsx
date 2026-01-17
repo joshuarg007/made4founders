@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import PublicLayout from './components/PublicLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import GlobalErrorToast from './components/GlobalErrorToast'
+import ScrollToTop from './components/ScrollToTop'
 
 // Public pages
 import Home from './pages/public/Home'
@@ -37,6 +38,7 @@ import Leaderboard from './pages/Leaderboard'
 function App() {
   return (
     <>
+    <ScrollToTop />
     <GlobalErrorToast />
     <Routes>
       {/* Public routes */}

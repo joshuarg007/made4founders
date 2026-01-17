@@ -139,28 +139,6 @@ export default function About() {
           </p>
         </section>
 
-        {/* Team placeholder */}
-        <section className="mb-24">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">The Team</h2>
-            <p className="text-gray-400">
-              A small, focused team of founders, engineers, and designers
-              obsessed with making startup operations simpler.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {['Founder & CEO', 'CTO', 'Head of Product'].map((role) => (
-              <div key={role} className="text-center">
-                <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
-                  <span className="text-4xl text-cyan-400">?</span>
-                </div>
-                <div className="text-white font-semibold mb-1">Coming Soon</div>
-                <div className="text-gray-500 text-sm">{role}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* CTA */}
         <section className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
