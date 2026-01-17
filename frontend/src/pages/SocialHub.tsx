@@ -4,7 +4,6 @@ import {
   Send,
   Share2,
   Settings,
-  BarChart2,
   Plus,
   Trash2,
   Edit3,
@@ -63,17 +62,6 @@ interface EmailIntegration {
   from_name: string | null;
 }
 
-interface AnalyticsSummary {
-  total_emails_sent: number;
-  total_opens: number;
-  total_clicks: number;
-  open_rate: number;
-  click_rate: number;
-  social_impressions: number;
-  social_engagements: number;
-  social_clicks: number;
-}
-
 const TEMPLATE_TYPES = [
   { value: 'newsletter', label: 'Newsletter' },
   { value: 'announcement', label: 'Announcement' },
@@ -102,7 +90,6 @@ export default function SocialHub() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [integrations, setIntegrations] = useState<EmailIntegration[]>([]);
-  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
 
   // Modals
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -118,16 +105,14 @@ export default function SocialHub() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [templatesRes, campaignsRes, integrationsRes, analyticsRes] = await Promise.all([
+      const [templatesRes, campaignsRes, integrationsRes] = await Promise.all([
         api.get('/api/marketing/templates'),
         api.get('/api/marketing/campaigns'),
         api.get('/api/marketing/integrations'),
-        api.get('/api/marketing/analytics/summary'),
       ]);
       setTemplates(templatesRes.data);
       setCampaigns(campaignsRes.data);
       setIntegrations(integrationsRes.data);
-      setAnalytics(analyticsRes.data);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load marketing data');
     } finally {
@@ -1326,61 +1311,6 @@ function IntegrationsTab({ integrations, onRefresh }: {
 
         <p className="mt-4 text-xs text-gray-500">
           Note: Some platforms require additional setup. Make sure you have configured the OAuth credentials in your environment.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ============ Analytics Tab ============
-function AnalyticsTab({ analytics }: { analytics: AnalyticsSummary }) {
-  const stats = [
-    { label: 'Emails Sent', value: analytics.total_emails_sent.toLocaleString(), color: 'text-cyan-400' },
-    { label: 'Opens', value: analytics.total_opens.toLocaleString(), color: 'text-green-400' },
-    { label: 'Clicks', value: analytics.total_clicks.toLocaleString(), color: 'text-blue-400' },
-    { label: 'Open Rate', value: `${analytics.open_rate}%`, color: 'text-purple-400' },
-    { label: 'Click Rate', value: `${analytics.click_rate}%`, color: 'text-pink-400' },
-  ];
-
-  const socialStats = [
-    { label: 'Impressions', value: analytics.social_impressions.toLocaleString() },
-    { label: 'Engagements', value: analytics.social_engagements.toLocaleString() },
-    { label: 'Clicks', value: analytics.social_clicks.toLocaleString() },
-  ];
-
-  return (
-    <div>
-      <h2 className="text-lg font-semibold text-white mb-6">Marketing Analytics</h2>
-
-      {/* Email Stats */}
-      <div className="mb-8">
-        <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Email Performance</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-sm text-gray-500">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Social Stats */}
-      <div>
-        <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Social Media Performance</h3>
-        <div className="grid grid-cols-3 gap-4">
-          {socialStats.map((stat) => (
-            <div key={stat.label} className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-sm text-gray-500">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-8 p-6 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-600/10 border border-white/10">
-        <p className="text-gray-400 text-center">
-          Detailed analytics will be available once you start sending campaigns and connect your social accounts.
         </p>
       </div>
     </div>

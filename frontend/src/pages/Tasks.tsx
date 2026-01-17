@@ -11,7 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import {
   getBoards, getTasks, createTask, updateTask, deleteTask, completeTask,
-  reopenTask, moveTask, assignTask, getUsersList, getTaskComments,
+  moveTask, assignTask, getUsersList, getTaskComments,
   createComment, getTimeEntries, createTimeEntry, startTimer, stopTimer,
   getRunningTimer, getTaskActivity, getCalendarToken, generateCalendarToken,
   getCalendarFeedUrl,
@@ -237,15 +237,6 @@ export default function Tasks() {
       }
     } catch (error) {
       console.error('Failed to complete task:', error);
-    }
-  };
-
-  const handleReopenTask = async (taskId: number) => {
-    try {
-      await reopenTask(taskId);
-      loadTasks();
-    } catch (error) {
-      console.error('Failed to reopen task:', error);
     }
   };
 
