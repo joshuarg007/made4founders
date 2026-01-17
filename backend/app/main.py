@@ -3932,16 +3932,19 @@ def get_editor_or_admin(current_user: User = Depends(get_current_user)) -> User:
 
 @app.get("/api/boards", response_model=List[TaskBoardResponse])
 def get_boards(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get all boards."""
-    boards = db.query(TaskBoard).order_by(TaskBoard.is_default.desc(), TaskBoard.name).all()
+    """Get all boards for user's organization."""
+    boards = db.query(TaskBoard).filter(
+        TaskBoard.organization_id == current_user.organization_id
+    ).order_by(TaskBoard.is_default.desc(), TaskBoard.name).all()
 
-    # If no boards exist, create a default one
+    # If no boards exist, create a default one for this organization
     if not boards:
         default_board = TaskBoard(
             name="Main Board",
             description="Default task board",
             is_default=True,
-            created_by_id=current_user.id
+            created_by_id=current_user.id,
+            organization_id=current_user.organization_id
         )
         db.add(default_board)
         db.commit()
@@ -3971,7 +3974,7 @@ def create_board(
     db: Session = Depends(get_db)
 ):
     """Create a new board (editor/admin only)."""
-    db_board = TaskBoard(**board.model_dump(), created_by_id=current_user.id)
+    db_board = TaskBoard(**board.model_dump(), created_by_id=current_user.id, organization_id=current_user.organization_id)
     db.add(db_board)
     db.commit()
     db.refresh(db_board)
@@ -4108,8 +4111,14 @@ def get_tasks(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get tasks with filters."""
-    query = db.query(Task)
+    """Get tasks with filters - only from user's organization."""
+    # Get board IDs that belong to user's organization
+    org_board_ids = [b.id for b in db.query(TaskBoard).filter(
+        TaskBoard.organization_id == current_user.organization_id
+    ).all()]
+
+    query = db.query(Task).filter(Task.board_id.in_(org_board_ids))
+
     if board_id:
         query = query.filter(Task.board_id == board_id)
     if column_id:

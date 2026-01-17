@@ -32,6 +32,18 @@
 
 ---
 
+## Demo Account (Production)
+| Field | Value |
+|-------|-------|
+| Email | `demo@made4founders.com` |
+| Password | `Demo2024!` |
+| Role | Admin |
+| Business | TechFlow AI (Level 7, 4850 XP) |
+
+Pre-populated with: 10 deadlines, 6 contacts, 24 metrics, 8 tasks
+
+---
+
 ## Project Overview
 A comprehensive startup management platform with React frontend and FastAPI backend. Designed to help founders track everything needed to run their business.
 
