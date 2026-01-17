@@ -63,14 +63,57 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd ~/made4founders
+
+            # CRITICAL: Protect .env file
+            # 1. Verify .env exists before doing anything
+            if [ ! -f .env ]; then
+              echo "ERROR: .env file missing! Restoring from backup..."
+              if [ -f ~/.env.made4founders.backup ]; then
+                cp ~/.env.made4founders.backup .env
+                echo "Restored .env from backup"
+              else
+                echo "FATAL: No .env file and no backup found! Aborting deploy."
+                exit 1
+              fi
+            fi
+
+            # 2. Backup .env to home directory (outside repo) before any changes
+            cp .env ~/.env.made4founders.backup
+
+            # 3. Verify critical env vars are present
+            if ! grep -q "GOOGLE_CLIENT_ID" .env || ! grep -q "GITHUB_CLIENT_ID" .env; then
+              echo "ERROR: Critical OAuth env vars missing from .env!"
+              exit 1
+            fi
+
+            # 4. Git pull (with stash to protect any local changes)
+            git stash
             git pull origin main
-            # Login to GHCR to pull images (uses PAT stored in GHCR_TOKEN secret)
+            git stash pop 2>/dev/null || true
+
+            # 5. Restore .env if git pull somehow removed it
+            if [ ! -f .env ]; then
+              cp ~/.env.made4founders.backup .env
+              echo "Restored .env after git pull"
+            fi
+
+            # Login to GHCR to pull images
             echo "$GHCR_TOKEN" | docker login ghcr.io -u joshuarg007 --password-stdin
-            # Use production compose file (pre-built images from GHCR)
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --force-recreate
+
+            # Deploy with explicit env file
+            docker compose --env-file .env -f docker-compose.prod.yml pull
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --force-recreate
+
+            # Verify containers have env vars
+            sleep 5
+            if ! docker exec made4founders-backend printenv | grep -q "GOOGLE_CLIENT_ID"; then
+              echo "WARNING: Backend missing GOOGLE_CLIENT_ID after deploy!"
+            fi
+
             docker system prune -f
             docker logout ghcr.io
+
+            echo "Deploy complete. Env vars verified."
           envs: GHCR_TOKEN
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
