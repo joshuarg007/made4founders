@@ -230,21 +230,25 @@ async def startup_validation():
 def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     now = datetime.utcnow()
     thirty_days = now + timedelta(days=30)
+    org_id = current_user.organization_id
 
     return DashboardStats(
-        total_services=db.query(Service).count(),
-        total_documents=db.query(Document).count(),
-        total_contacts=db.query(Contact).count(),
+        total_services=db.query(Service).filter(Service.organization_id == org_id).count(),
+        total_documents=db.query(Document).filter(Document.organization_id == org_id).count(),
+        total_contacts=db.query(Contact).filter(Contact.organization_id == org_id).count(),
         upcoming_deadlines=db.query(Deadline).filter(
+            Deadline.organization_id == org_id,
             Deadline.is_completed == False,
             Deadline.due_date >= now,
             Deadline.due_date <= thirty_days
         ).count(),
         expiring_documents=db.query(Document).filter(
+            Document.organization_id == org_id,
             Document.expiration_date != None,
             Document.expiration_date <= thirty_days
         ).count(),
         overdue_deadlines=db.query(Deadline).filter(
+            Deadline.organization_id == org_id,
             Deadline.is_completed == False,
             Deadline.due_date < now
         ).count()
@@ -2332,7 +2336,7 @@ def get_challenge_progress(
 # ============ Services ============
 @app.get("/api/services", response_model=List[ServiceResponse])
 def get_services(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    query = db.query(Service)
+    query = db.query(Service).filter(Service.organization_id == current_user.organization_id)
     if category:
         query = query.filter(Service.category == category)
     return query.order_by(Service.is_favorite.desc(), Service.name).all()
@@ -2340,7 +2344,7 @@ def get_services(category: str = None, current_user: User = Depends(get_current_
 
 @app.post("/api/services", response_model=ServiceResponse)
 def create_service(service: ServiceCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_service = Service(**service.model_dump())
+    db_service = Service(**service.model_dump(), organization_id=current_user.organization_id)
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
@@ -2412,7 +2416,7 @@ def check_file_exists(file_path: str) -> bool:
 
 @app.get("/api/documents")
 def get_documents(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    query = db.query(Document)
+    query = db.query(Document).filter(Document.organization_id == current_user.organization_id)
     if category:
         query = query.filter(Document.category == category)
     documents = query.order_by(Document.created_at.desc()).all()
@@ -2730,7 +2734,7 @@ def delete_document(document_id: int, current_user: User = Depends(get_current_u
 # ============ Contacts ============
 @app.get("/api/contacts", response_model=List[ContactResponse])
 def get_contacts(contact_type: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    query = db.query(Contact)
+    query = db.query(Contact).filter(Contact.organization_id == current_user.organization_id)
     if contact_type:
         query = query.filter(Contact.contact_type == contact_type)
     return query.order_by(Contact.name).all()
@@ -2738,7 +2742,7 @@ def get_contacts(contact_type: str = None, current_user: User = Depends(get_curr
 
 @app.post("/api/contacts", response_model=ContactResponse)
 def create_contact(contact: ContactCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_contact = Contact(**contact.model_dump())
+    db_contact = Contact(**contact.model_dump(), organization_id=current_user.organization_id)
     db.add(db_contact)
     db.commit()
     db.refresh(db_contact)
@@ -2795,7 +2799,7 @@ def get_deadlines(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Deadline)
+    query = db.query(Deadline).filter(Deadline.organization_id == current_user.organization_id)
     if deadline_type:
         query = query.filter(Deadline.deadline_type == deadline_type)
     if not include_completed:
@@ -2805,7 +2809,7 @@ def get_deadlines(
 
 @app.post("/api/deadlines", response_model=DeadlineResponse)
 def create_deadline(deadline: DeadlineCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_deadline = Deadline(**deadline.model_dump())
+    db_deadline = Deadline(**deadline.model_dump(), organization_id=current_user.organization_id)
     db.add(db_deadline)
     db.commit()
     db.refresh(db_deadline)
@@ -3155,7 +3159,9 @@ def get_business_identifiers(
     db: Session = Depends(get_db)
 ):
     """Get all identifiers with masked values (requires auth)."""
-    identifiers = db.query(BusinessIdentifier).order_by(BusinessIdentifier.identifier_type).all()
+    identifiers = db.query(BusinessIdentifier).filter(
+        BusinessIdentifier.organization_id == current_user.organization_id
+    ).order_by(BusinessIdentifier.identifier_type).all()
     masked_list = []
     for ident in identifiers:
         masked_list.append(BusinessIdentifierMasked(
@@ -3332,13 +3338,13 @@ def delete_business_identifier(
 # ============ Checklist Progress ============
 @app.get("/api/checklist", response_model=List[ChecklistProgressResponse])
 def get_checklist_progress(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(ChecklistProgress).all()
+    return db.query(ChecklistProgress).filter(ChecklistProgress.organization_id == current_user.organization_id).all()
 
 
 @app.get("/api/checklist/bulk")
 def get_checklist_progress_bulk(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get all checklist items as a dict keyed by item_id"""
-    items = db.query(ChecklistProgress).all()
+    items = db.query(ChecklistProgress).filter(ChecklistProgress.organization_id == current_user.organization_id).all()
     return {"items": {item.item_id: ChecklistProgressResponse.model_validate(item).model_dump() for item in items}}
 
 
@@ -3532,7 +3538,9 @@ def require_vault_unlocked():
 @app.get("/api/credentials", response_model=List[CredentialMasked])
 def get_credentials(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get all credentials (masked - doesn't require unlock)."""
-    credentials = db.query(Credential).order_by(Credential.name).all()
+    credentials = db.query(Credential).filter(
+        Credential.organization_id == current_user.organization_id
+    ).order_by(Credential.name).all()
     result = []
     for c in credentials:
         # Count custom fields if present
@@ -3753,7 +3761,7 @@ def copy_credential_field(credential_id: int, field: str, index: int = None, key
 # ============ Products Offered ============
 @app.get("/api/products-offered", response_model=List[ProductOfferedResponse])
 def get_products_offered(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    query = db.query(ProductOffered)
+    query = db.query(ProductOffered).filter(ProductOffered.organization_id == current_user.organization_id)
     if category:
         query = query.filter(ProductOffered.category == category)
     return query.order_by(ProductOffered.name).all()
@@ -3761,7 +3769,7 @@ def get_products_offered(category: str = None, current_user: User = Depends(get_
 
 @app.post("/api/products-offered", response_model=ProductOfferedResponse)
 def create_product_offered(product: ProductOfferedCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_product = ProductOffered(**product.model_dump())
+    db_product = ProductOffered(**product.model_dump(), organization_id=current_user.organization_id)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -3803,7 +3811,7 @@ def delete_product_offered(product_id: int, current_user: User = Depends(get_cur
 # ============ Products Used ============
 @app.get("/api/products-used", response_model=List[ProductUsedResponse])
 def get_products_used(category: str = None, is_paid: bool = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    query = db.query(ProductUsed)
+    query = db.query(ProductUsed).filter(ProductUsed.organization_id == current_user.organization_id)
     if category:
         query = query.filter(ProductUsed.category == category)
     if is_paid is not None:
@@ -3813,7 +3821,7 @@ def get_products_used(category: str = None, is_paid: bool = None, current_user: 
 
 @app.post("/api/products-used", response_model=ProductUsedResponse)
 def create_product_used(product: ProductUsedCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_product = ProductUsed(**product.model_dump())
+    db_product = ProductUsed(**product.model_dump(), organization_id=current_user.organization_id)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -3855,7 +3863,7 @@ def delete_product_used(product_id: int, current_user: User = Depends(get_curren
 # ============ Web Links ============
 @app.get("/api/web-links", response_model=List[WebLinkResponse])
 def get_web_links(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    query = db.query(WebLink)
+    query = db.query(WebLink).filter(WebLink.organization_id == current_user.organization_id)
     if category:
         query = query.filter(WebLink.category == category)
     return query.order_by(WebLink.is_favorite.desc(), WebLink.title).all()
@@ -3863,7 +3871,7 @@ def get_web_links(category: str = None, current_user: User = Depends(get_current
 
 @app.post("/api/web-links", response_model=WebLinkResponse)
 def create_web_link(link: WebLinkCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_link = WebLink(**link.model_dump())
+    db_link = WebLink(**link.model_dump(), organization_id=current_user.organization_id)
     db.add(db_link)
     db.commit()
     db.refresh(db_link)
@@ -4718,7 +4726,7 @@ def get_metrics(
     db: Session = Depends(get_db)
 ):
     """Get metrics with optional filters."""
-    query = db.query(Metric)
+    query = db.query(Metric).filter(Metric.organization_id == current_user.organization_id)
     if metric_type:
         query = query.filter(Metric.metric_type == metric_type)
     if start_date:
@@ -4735,7 +4743,7 @@ def create_metric(
     db: Session = Depends(get_db)
 ):
     """Create a metric (editor/admin only)."""
-    db_metric = Metric(**metric.model_dump(), created_by_id=current_user.id)
+    db_metric = Metric(**metric.model_dump(), created_by_id=current_user.id, organization_id=current_user.organization_id)
     db.add(db_metric)
     db.commit()
     db.refresh(db_metric)
