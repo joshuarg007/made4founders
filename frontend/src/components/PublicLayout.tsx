@@ -120,7 +120,7 @@ export default function PublicLayout() {
                 <img src="/logo.png" alt="Made4Founders" className="h-9 w-auto" />
               </Link>
               <p className="mt-4 text-sm text-gray-500">
-                The command center for ambitious founders.
+                Built by founders, for founders. Secure. Profitable. Fun.
               </p>
             </div>
 

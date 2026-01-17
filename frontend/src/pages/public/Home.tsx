@@ -25,7 +25,7 @@ const features = [
   {
     icon: Building2,
     image: dashboardIcon,
-    title: 'Business Command Center',
+    title: 'Founder Dashboard',
     description: 'One dashboard to track compliance, deadlines, documents, and metrics.',
   },
   {
@@ -109,17 +109,17 @@ export default function Home() {
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight mb-6">
-            The Command Center
+            Built by Founders
             <br />
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">
-              for Founders
+              For Founders
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="max-w-2xl mx-auto text-lg sm:text-xl text-gray-400 mb-10">
-            Stop juggling spreadsheets and sticky notes. Manage compliance, documents, marketing,
-            and metrics in one beautiful dashboard designed for ambitious founders.
+            Bank-grade security. Tools that grow revenue. Gamification that makes work fun.
+            Everything you need to run your startup — built by people who've been there.
           </p>
 
           {/* CTA Buttons */}

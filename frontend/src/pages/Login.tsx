@@ -85,7 +85,7 @@ export default function Login() {
         <img src="/logo.png" alt="Made4Founders" className="h-12 w-auto" />
         <div>
           <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
-          <p className="text-sm text-gray-500">Command Center</p>
+          <p className="text-sm text-gray-500">By Founders, For Founders</p>
         </div>
       </div>
 
@@ -234,7 +234,7 @@ export default function Login() {
       </div>
 
       <p className="mt-8 text-xs text-gray-500">
-        Made4Founders — Your startup command center
+        Made4Founders — Built by founders, for founders
       </p>
     </div>
   );

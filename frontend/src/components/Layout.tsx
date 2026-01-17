@@ -46,7 +46,7 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     id: 'command',
-    label: 'Command Center',
+    label: 'Mission Control',
     icon: Rocket,
     color: {
       bg: 'bg-cyan-500/10',

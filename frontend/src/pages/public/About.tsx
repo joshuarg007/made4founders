@@ -82,8 +82,8 @@ export default function About() {
                   existed.
                 </p>
                 <p>
-                  <strong className="text-white">Made4Founders is the command center we always wanted.</strong>
-                  {' '}One place to manage your business, secure your data, and stay on top of everything.
+                  <strong className="text-white">Made4Founders is the platform we always wanted.</strong>
+                  {' '}Secure your business, grow your revenue, and actually enjoy the journey.
                 </p>
               </div>
             </div>
