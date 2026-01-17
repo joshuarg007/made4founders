@@ -11,7 +11,6 @@ from .database import get_db
 from .models import User
 from .schemas import Token, UserCreate, UserResponse, UserMe, UserAdminCreate, UserAdminUpdate
 from . import security
-from .mfa import verify_mfa_code_or_backup
 from .captcha import verify_captcha, get_captcha_config
 
 router = APIRouter()
@@ -181,6 +180,9 @@ def login_with_mfa(
     db: Session = Depends(get_db),
 ):
     """Complete login with MFA verification."""
+    # Import here to avoid circular import with mfa.py
+    from .mfa import verify_mfa_code_or_backup
+
     # Verify the MFA token
     try:
         payload = jwt.decode(

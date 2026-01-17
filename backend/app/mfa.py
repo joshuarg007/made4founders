@@ -18,8 +18,7 @@ from pydantic import BaseModel
 from .database import get_db
 from .models import User
 from .security import verify_password, get_password_hash
-
-# Note: get_current_user is imported inside functions to avoid circular import with auth.py
+from .auth import get_current_user
 
 router = APIRouter()
 
@@ -78,15 +77,9 @@ def generate_qr_code(secret: str, email: str) -> str:
     return base64.b64encode(buffer.getvalue()).decode()
 
 
-def get_current_user_dependency():
-    """Lazy import to avoid circular dependency."""
-    from .auth import get_current_user
-    return get_current_user
-
-
 @router.get("/status")
 async def mfa_status(
-    current_user: User = Depends(get_current_user_dependency()),
+    current_user: User = Depends(get_current_user),
 ):
     """Check if MFA is enabled for the current user."""
     return {
@@ -96,7 +89,7 @@ async def mfa_status(
 
 @router.post("/setup", response_model=MFASetupResponse)
 async def mfa_setup(
-    current_user: User = Depends(get_current_user_dependency()),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -131,7 +124,7 @@ async def mfa_setup(
 @router.post("/verify")
 async def mfa_verify_setup(
     request: MFAVerifyRequest,
-    current_user: User = Depends(get_current_user_dependency()),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -158,7 +151,7 @@ async def mfa_verify_setup(
 @router.post("/disable")
 async def mfa_disable(
     request: MFADisableRequest,
-    current_user: User = Depends(get_current_user_dependency()),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -188,7 +181,7 @@ async def mfa_disable(
 @router.post("/regenerate-backup-codes")
 async def regenerate_backup_codes(
     request: MFAVerifyRequest,
-    current_user: User = Depends(get_current_user_dependency()),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
