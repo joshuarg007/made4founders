@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, AlertCircle, ArrowLeft, Shield } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, Shield, Eye, EyeOff } from 'lucide-react';
 import { getGoogleLoginUrl, getGitHubLoginUrl } from '../lib/api';
 
 // SVG Icons for OAuth providers
@@ -24,6 +24,7 @@ export default function Login() {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,47 +104,7 @@ export default function Login() {
           </div>
         )}
 
-        {/* OAuth Buttons */}
-        <div className="space-y-3 mb-6">
-          <button
-            type="button"
-            onClick={() => handleOAuthLogin('google')}
-            disabled={oauthLoading !== null}
-            className="w-full py-3 px-4 rounded-lg bg-white text-gray-800 font-medium hover:bg-gray-100 transition disabled:opacity-50 flex items-center justify-center gap-3"
-          >
-            {oauthLoading === 'google' ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <GoogleIcon />
-            )}
-            Continue with Google
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleOAuthLogin('github')}
-            disabled={oauthLoading !== null}
-            className="w-full py-3 px-4 rounded-lg bg-[#24292e] text-white font-medium hover:bg-[#2f363d] transition disabled:opacity-50 flex items-center justify-center gap-3"
-          >
-            {oauthLoading === 'github' ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <GitHubIcon />
-            )}
-            Continue with GitHub
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-[#1a1d24] text-gray-500">or continue with email</span>
-          </div>
-        </div>
-
+        {/* Email/Password Form First */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
             <div>
@@ -172,15 +133,24 @@ export default function Login() {
 
           <div>
             <label className="block text-sm text-gray-400 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
-              placeholder="At least 6 characters"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 pr-12 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
+                placeholder="At least 6 characters"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -198,6 +168,47 @@ export default function Login() {
             )}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-[#1a1d24] text-gray-500">or continue with</span>
+          </div>
+        </div>
+
+        {/* OAuth Buttons */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin('google')}
+            disabled={oauthLoading !== null}
+            className="w-full py-3 px-4 rounded-lg bg-white text-gray-800 font-medium hover:bg-gray-100 transition disabled:opacity-50 flex items-center justify-center gap-3"
+          >
+            {oauthLoading === 'google' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            Continue with Google
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin('github')}
+            disabled={oauthLoading !== null}
+            className="w-full py-3 px-4 rounded-lg bg-[#24292e] text-white font-medium hover:bg-[#2f363d] transition disabled:opacity-50 flex items-center justify-center gap-3"
+          >
+            {oauthLoading === 'github' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <GitHubIcon />
+            )}
+            Continue with GitHub
+          </button>
+        </div>
 
         <div className="mt-6 text-center">
           <button

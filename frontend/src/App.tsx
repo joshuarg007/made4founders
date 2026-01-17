@@ -31,6 +31,7 @@ import SocialHub from './pages/SocialHub'
 import Insights from './pages/Insights'
 import Offerings from './pages/Offerings'
 import Finance from './pages/Finance'
+import Vault from './pages/Vault'
 
 function App() {
   return (
@@ -76,6 +77,7 @@ function App() {
         <Route path="insights" element={<Insights />} />
         <Route path="offerings" element={<Offerings />} />
         <Route path="finance" element={<Finance />} />
+        <Route path="vault" element={<Vault />} />
       </Route>
 
       {/* Redirect old routes to new structure */}

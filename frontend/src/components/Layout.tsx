@@ -17,6 +17,7 @@ import {
   Megaphone,
   ChevronDown,
   Rocket,
+  Shield,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -74,6 +75,7 @@ const navSections: NavSection[] = [
       { to: '/app/documents', icon: FileText, label: 'Documents' },
       { to: '/app/contacts', icon: Users, label: 'Contacts' },
       { to: '/app/deadlines', icon: Calendar, label: 'Deadlines' },
+      { to: '/app/vault', icon: Shield, label: 'Credential Vault' },
     ],
   },
   {
