@@ -31,7 +31,8 @@ from .models import (
     WebPresence, BankAccount, Organization, BrandColor, BrandFont, BrandAsset,
     BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
-    AccountingConnection
+    AccountingConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
+    Challenge, ChallengeParticipant
 )
 from .auth import router as auth_router, get_current_user
 from .oauth import router as oauth_router
@@ -49,6 +50,7 @@ from .schemas import (
     ContactCreate, ContactUpdate, ContactResponse,
     DeadlineCreate, DeadlineUpdate, DeadlineResponse,
     DashboardStats,
+    BusinessCreate, BusinessUpdate, BusinessResponse, BusinessWithChildren, BusinessSwitchRequest,
     BusinessInfoCreate, BusinessInfoUpdate, BusinessInfoResponse,
     BusinessIdentifierCreate, BusinessIdentifierUpdate, BusinessIdentifierResponse, BusinessIdentifierMasked,
     ChecklistProgressCreate, ChecklistProgressUpdate, ChecklistProgressResponse,
@@ -65,7 +67,12 @@ from .schemas import (
     TaskActivityResponse, UserBrief,
     MetricCreate, MetricUpdate, MetricResponse, MetricSummary,
     WebPresenceCreate, WebPresenceUpdate, WebPresenceResponse,
-    BankAccountCreate, BankAccountUpdate, BankAccountResponse
+    BankAccountCreate, BankAccountUpdate, BankAccountResponse,
+    QuestCreate, QuestResponse, BusinessQuestResponse, QuestClaimResponse,
+    AchievementCreate, AchievementResponse, BusinessAchievementResponse, AchievementClaimResponse,
+    LeaderboardEntry, LeaderboardResponse,
+    ChallengeCreate, ChallengeResponse, ChallengeParticipantBrief, ChallengeAcceptRequest,
+    ChallengeJoinByCodeRequest, ChallengeListResponse, ChallengeResultResponse
 )
 from .vault import (
     generate_salt, derive_key, hash_master_password, verify_master_password,
@@ -244,6 +251,2084 @@ def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Sess
     )
 
 
+# ============ Businesses (Fractal Hierarchy) ============
+
+def build_business_tree(businesses: List[Business], parent_id=None) -> List[dict]:
+    """Build nested tree structure from flat list of businesses"""
+    tree = []
+    for biz in businesses:
+        if biz.parent_id == parent_id:
+            children = build_business_tree(businesses, biz.id)
+            biz_dict = {
+                "id": biz.id,
+                "organization_id": biz.organization_id,
+                "parent_id": biz.parent_id,
+                "name": biz.name,
+                "slug": biz.slug,
+                "business_type": biz.business_type,
+                "description": biz.description,
+                "color": biz.color,
+                "emoji": biz.emoji,
+                "is_active": biz.is_active,
+                "is_archived": biz.is_archived,
+                "xp": biz.xp,
+                "level": biz.level,
+                "current_streak": biz.current_streak,
+                "longest_streak": biz.longest_streak,
+                "health_score": biz.health_score,
+                "health_compliance": biz.health_compliance,
+                "health_financial": biz.health_financial,
+                "health_operations": biz.health_operations,
+                "health_growth": biz.health_growth,
+                "achievements": biz.achievements or [],
+                "created_at": biz.created_at,
+                "updated_at": biz.updated_at,
+                "children": children
+            }
+            tree.append(biz_dict)
+    return tree
+
+
+@app.get("/api/businesses", response_model=List[BusinessResponse])
+def get_businesses(
+    include_archived: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all businesses for the organization (flat list)"""
+    query = db.query(Business).filter(Business.organization_id == current_user.organization_id)
+    if not include_archived:
+        query = query.filter(Business.is_archived == False)
+    return query.order_by(Business.parent_id.nullsfirst(), Business.name).all()
+
+
+@app.get("/api/businesses/tree")
+def get_businesses_tree(
+    include_archived: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get businesses as nested tree structure"""
+    query = db.query(Business).filter(Business.organization_id == current_user.organization_id)
+    if not include_archived:
+        query = query.filter(Business.is_archived == False)
+    businesses = query.all()
+    return build_business_tree(businesses)
+
+
+@app.get("/api/businesses/current", response_model=BusinessResponse)
+def get_current_business(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get user's current business context"""
+    if not current_user.current_business_id:
+        raise HTTPException(status_code=404, detail="No business selected")
+    business = db.query(Business).filter(
+        Business.id == current_user.current_business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    return business
+
+
+@app.post("/api/businesses/switch")
+def switch_business(
+    request: BusinessSwitchRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Switch user's current business context"""
+    if request.business_id:
+        # Verify business exists and belongs to user's org
+        business = db.query(Business).filter(
+            Business.id == request.business_id,
+            Business.organization_id == current_user.organization_id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+    current_user.current_business_id = request.business_id
+    db.commit()
+    return {"message": "Business context switched", "business_id": request.business_id}
+
+
+@app.post("/api/businesses", response_model=BusinessResponse)
+def create_business(
+    business: BusinessCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new business/venture"""
+    # Verify parent exists if specified
+    if business.parent_id:
+        parent = db.query(Business).filter(
+            Business.id == business.parent_id,
+            Business.organization_id == current_user.organization_id
+        ).first()
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent business not found")
+
+    # Generate slug if not provided
+    slug = business.slug
+    if not slug:
+        slug = re.sub(r'[^a-z0-9]+', '-', business.name.lower()).strip('-')
+
+    db_business = Business(
+        organization_id=current_user.organization_id,
+        **business.model_dump(exclude={'slug'}),
+        slug=slug
+    )
+    db.add(db_business)
+    db.commit()
+    db.refresh(db_business)
+    return db_business
+
+
+@app.get("/api/businesses/{business_id}", response_model=BusinessResponse)
+def get_business(
+    business_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific business"""
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    return business
+
+
+@app.put("/api/businesses/{business_id}", response_model=BusinessResponse)
+def update_business(
+    business_id: int,
+    business_update: BusinessUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a business"""
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Verify new parent if being changed
+    if business_update.parent_id is not None and business_update.parent_id != business.parent_id:
+        if business_update.parent_id:
+            parent = db.query(Business).filter(
+                Business.id == business_update.parent_id,
+                Business.organization_id == current_user.organization_id
+            ).first()
+            if not parent:
+                raise HTTPException(status_code=404, detail="Parent business not found")
+            # Prevent circular reference
+            if parent.id == business.id:
+                raise HTTPException(status_code=400, detail="Cannot set self as parent")
+
+    update_data = business_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(business, key, value)
+
+    db.commit()
+    db.refresh(business)
+    return business
+
+
+@app.delete("/api/businesses/{business_id}")
+def delete_business(
+    business_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a business (soft delete by archiving, or hard delete if no children)"""
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Check for children
+    children = db.query(Business).filter(Business.parent_id == business_id).first()
+    if children:
+        # Soft delete (archive) if has children
+        business.is_archived = True
+        db.commit()
+        return {"message": "Business archived (has children)", "archived": True}
+
+    # Hard delete if no children
+    db.delete(business)
+    db.commit()
+    return {"message": "Business deleted"}
+
+
+# ============ XP Helper Functions ============
+
+def _award_xp(db: Session, business_id: int, xp_amount: int, organization_id: int, user: User = None) -> dict | None:
+    """
+    Internal helper to award XP to a business.
+    Returns XP stats or None if business not found or gamification disabled.
+
+    Respects gamification toggle:
+    - Business.gamification_enabled must be True
+    - If user provided, User.gamification_enabled must also be True
+    """
+    if not business_id or xp_amount <= 0:
+        return None
+
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == organization_id
+    ).first()
+
+    if not business:
+        return None
+
+    # Check gamification toggle - skip if disabled
+    if not business.gamification_enabled:
+        return None
+
+    # Check user preference if provided
+    if user and not user.gamification_enabled:
+        return None
+
+    business.xp += xp_amount
+
+    # Level up logic (every 500 * level^1.5 XP)
+    xp_for_level = lambda lvl: int(500 * (lvl ** 1.5))
+    while business.xp >= xp_for_level(business.level):
+        business.level += 1
+
+    # Update streak
+    from datetime import date as date_type
+    today = date_type.today()
+    if business.last_activity_date:
+        days_diff = (today - business.last_activity_date).days
+        if days_diff == 1:
+            business.current_streak += 1
+            if business.current_streak > business.longest_streak:
+                business.longest_streak = business.current_streak
+        elif days_diff > 1:
+            business.current_streak = 1
+    else:
+        business.current_streak = 1
+
+    business.last_activity_date = today
+
+    db.commit()
+
+    # Update achievement progress for XP-based achievements
+    # (These need to be updated after XP changes)
+    _update_achievement_progress_internal(db, business_id, "xp_total", absolute_value=business.xp)
+    _update_achievement_progress_internal(db, business_id, "level_reach", absolute_value=business.level)
+    _update_achievement_progress_internal(db, business_id, "streak_days", absolute_value=business.current_streak)
+
+    return {
+        "xp": business.xp,
+        "level": business.level,
+        "current_streak": business.current_streak,
+        "longest_streak": business.longest_streak,
+        "xp_awarded": xp_amount
+    }
+
+
+def _update_achievement_progress_internal(db: Session, business_id: int, action_type: str, increment: int = 1, absolute_value: int = None):
+    """
+    Internal helper to update achievement progress.
+    Called from _award_xp and action-specific locations.
+    """
+    # Find all achievements matching this action type that aren't yet unlocked
+    business_achievements = db.query(BusinessAchievement).join(Achievement).filter(
+        BusinessAchievement.business_id == business_id,
+        BusinessAchievement.is_unlocked == False,
+        Achievement.requirement_type == action_type
+    ).all()
+
+    for ba in business_achievements:
+        if absolute_value is not None:
+            ba.current_count = absolute_value
+        else:
+            ba.current_count += increment
+
+        if ba.current_count >= ba.target_count:
+            ba.is_unlocked = True
+            ba.unlocked_at = datetime.utcnow()
+
+
+def _calculate_task_xp(task, completed_early: bool = False) -> int:
+    """
+    Calculate XP reward for completing a task.
+
+    XP Breakdown:
+    - Base completion: +10 XP
+    - High priority: +5 XP bonus
+    - Urgent priority: +10 XP bonus
+    - Early completion (before due date): +5 XP bonus
+    """
+    xp = 10  # Base XP
+
+    # Priority bonuses
+    if task.priority == "high":
+        xp += 5
+    elif task.priority == "urgent":
+        xp += 10
+
+    # Early completion bonus
+    if completed_early:
+        xp += 5
+
+    return xp
+
+
+# XP values for various actions
+XP_CHECKLIST_COMPLETE = 15  # Checklist items are foundational
+XP_METRIC_ENTRY = 5         # Keeping metrics updated
+XP_DOCUMENT_UPLOAD = 10     # Adding documentation
+XP_CONTACT_CREATED = 5      # Building network
+
+
+# ============ Quest System ============
+
+# Default quest templates - seeded on first request
+DEFAULT_QUESTS = [
+    # Daily quests
+    {
+        "slug": "complete-1-task",
+        "name": "Task Starter",
+        "description": "Complete 1 task today",
+        "quest_type": "daily",
+        "category": "tasks",
+        "target_count": 1,
+        "action_type": "task_complete",
+        "xp_reward": 15,
+        "icon": "✓",
+        "difficulty": "easy",
+        "min_level": 1
+    },
+    {
+        "slug": "complete-3-tasks",
+        "name": "Task Master",
+        "description": "Complete 3 tasks today",
+        "quest_type": "daily",
+        "category": "tasks",
+        "target_count": 3,
+        "action_type": "task_complete",
+        "xp_reward": 30,
+        "icon": "✓✓✓",
+        "difficulty": "medium",
+        "min_level": 1
+    },
+    {
+        "slug": "log-metric",
+        "name": "Data Driven",
+        "description": "Log a business metric",
+        "quest_type": "daily",
+        "category": "metrics",
+        "target_count": 1,
+        "action_type": "metric_create",
+        "xp_reward": 20,
+        "icon": "📊",
+        "difficulty": "easy",
+        "min_level": 1
+    },
+    {
+        "slug": "add-document",
+        "name": "Documenter",
+        "description": "Upload a document",
+        "quest_type": "daily",
+        "category": "documents",
+        "target_count": 1,
+        "action_type": "document_upload",
+        "xp_reward": 20,
+        "icon": "📄",
+        "difficulty": "easy",
+        "min_level": 1
+    },
+    {
+        "slug": "complete-checklist",
+        "name": "Compliance Hero",
+        "description": "Complete a checklist item",
+        "quest_type": "daily",
+        "category": "checklist",
+        "target_count": 1,
+        "action_type": "checklist_complete",
+        "xp_reward": 25,
+        "icon": "📋",
+        "difficulty": "medium",
+        "min_level": 1
+    },
+    {
+        "slug": "add-contact",
+        "name": "Networker",
+        "description": "Add a new contact",
+        "quest_type": "daily",
+        "category": "contacts",
+        "target_count": 1,
+        "action_type": "contact_create",
+        "xp_reward": 15,
+        "icon": "👤",
+        "difficulty": "easy",
+        "min_level": 1
+    },
+    # Weekly quests
+    {
+        "slug": "weekly-5-tasks",
+        "name": "Weekly Warrior",
+        "description": "Complete 5 tasks this week",
+        "quest_type": "weekly",
+        "category": "tasks",
+        "target_count": 5,
+        "action_type": "task_complete",
+        "xp_reward": 75,
+        "icon": "🏆",
+        "difficulty": "medium",
+        "min_level": 2
+    },
+    {
+        "slug": "weekly-10-tasks",
+        "name": "Productivity Champion",
+        "description": "Complete 10 tasks this week",
+        "quest_type": "weekly",
+        "category": "tasks",
+        "target_count": 10,
+        "action_type": "task_complete",
+        "xp_reward": 150,
+        "icon": "👑",
+        "difficulty": "hard",
+        "min_level": 3
+    },
+    {
+        "slug": "weekly-3-metrics",
+        "name": "Analytics Pro",
+        "description": "Log 3 metrics this week",
+        "quest_type": "weekly",
+        "category": "metrics",
+        "target_count": 3,
+        "action_type": "metric_create",
+        "xp_reward": 50,
+        "icon": "📈",
+        "difficulty": "medium",
+        "min_level": 2
+    },
+    # Achievement quests (one-time)
+    {
+        "slug": "first-task",
+        "name": "First Steps",
+        "description": "Complete your first task",
+        "quest_type": "achievement",
+        "category": "tasks",
+        "target_count": 1,
+        "action_type": "task_complete",
+        "xp_reward": 50,
+        "icon": "🎯",
+        "difficulty": "easy",
+        "min_level": 1
+    },
+    {
+        "slug": "streak-7",
+        "name": "Week Warrior",
+        "description": "Maintain a 7-day activity streak",
+        "quest_type": "achievement",
+        "category": "streak",
+        "target_count": 7,
+        "action_type": "streak_days",
+        "xp_reward": 100,
+        "icon": "🔥",
+        "difficulty": "medium",
+        "min_level": 1
+    },
+    {
+        "slug": "streak-30",
+        "name": "Monthly Master",
+        "description": "Maintain a 30-day activity streak",
+        "quest_type": "achievement",
+        "category": "streak",
+        "target_count": 30,
+        "action_type": "streak_days",
+        "xp_reward": 500,
+        "icon": "🌟",
+        "difficulty": "hard",
+        "min_level": 1
+    },
+]
+
+
+# Default achievement definitions
+DEFAULT_ACHIEVEMENTS = [
+    # Task achievements
+    {
+        "slug": "first-task",
+        "name": "First Steps",
+        "description": "Complete your very first task",
+        "category": "tasks",
+        "rarity": "common",
+        "requirement_type": "task_complete",
+        "requirement_count": 1,
+        "xp_reward": 50,
+        "icon": "🎯",
+        "badge_color": "gray",
+        "sort_order": 1
+    },
+    {
+        "slug": "task-10",
+        "name": "Getting Things Done",
+        "description": "Complete 10 tasks",
+        "category": "tasks",
+        "rarity": "common",
+        "requirement_type": "task_complete",
+        "requirement_count": 10,
+        "xp_reward": 100,
+        "icon": "✅",
+        "badge_color": "green",
+        "sort_order": 2
+    },
+    {
+        "slug": "task-50",
+        "name": "Task Champion",
+        "description": "Complete 50 tasks",
+        "category": "tasks",
+        "rarity": "uncommon",
+        "requirement_type": "task_complete",
+        "requirement_count": 50,
+        "xp_reward": 250,
+        "icon": "🏅",
+        "badge_color": "blue",
+        "sort_order": 3
+    },
+    {
+        "slug": "task-100",
+        "name": "Century Club",
+        "description": "Complete 100 tasks",
+        "category": "tasks",
+        "rarity": "rare",
+        "requirement_type": "task_complete",
+        "requirement_count": 100,
+        "xp_reward": 500,
+        "icon": "💯",
+        "badge_color": "purple",
+        "sort_order": 4
+    },
+    {
+        "slug": "task-500",
+        "name": "Legendary Achiever",
+        "description": "Complete 500 tasks",
+        "category": "tasks",
+        "rarity": "legendary",
+        "requirement_type": "task_complete",
+        "requirement_count": 500,
+        "xp_reward": 2000,
+        "icon": "👑",
+        "badge_color": "gold",
+        "sort_order": 5
+    },
+    # Streak achievements
+    {
+        "slug": "streak-3",
+        "name": "Warming Up",
+        "description": "Maintain a 3-day activity streak",
+        "category": "streaks",
+        "rarity": "common",
+        "requirement_type": "streak_days",
+        "requirement_count": 3,
+        "xp_reward": 50,
+        "icon": "🔥",
+        "badge_color": "orange",
+        "sort_order": 10
+    },
+    {
+        "slug": "streak-7",
+        "name": "Week Warrior",
+        "description": "Maintain a 7-day activity streak",
+        "category": "streaks",
+        "rarity": "uncommon",
+        "requirement_type": "streak_days",
+        "requirement_count": 7,
+        "xp_reward": 150,
+        "icon": "🔥",
+        "badge_color": "orange",
+        "sort_order": 11
+    },
+    {
+        "slug": "streak-14",
+        "name": "Fortnight Focus",
+        "description": "Maintain a 14-day activity streak",
+        "category": "streaks",
+        "rarity": "rare",
+        "requirement_type": "streak_days",
+        "requirement_count": 14,
+        "xp_reward": 300,
+        "icon": "🔥",
+        "badge_color": "red",
+        "sort_order": 12
+    },
+    {
+        "slug": "streak-30",
+        "name": "Monthly Master",
+        "description": "Maintain a 30-day activity streak",
+        "category": "streaks",
+        "rarity": "epic",
+        "requirement_type": "streak_days",
+        "requirement_count": 30,
+        "xp_reward": 750,
+        "icon": "🌟",
+        "badge_color": "purple",
+        "sort_order": 13
+    },
+    {
+        "slug": "streak-100",
+        "name": "Consistency Legend",
+        "description": "Maintain a 100-day activity streak",
+        "category": "streaks",
+        "rarity": "legendary",
+        "requirement_type": "streak_days",
+        "requirement_count": 100,
+        "xp_reward": 2500,
+        "icon": "💫",
+        "badge_color": "gold",
+        "sort_order": 14
+    },
+    # Document achievements
+    {
+        "slug": "first-document",
+        "name": "Paperwork Started",
+        "description": "Upload your first document",
+        "category": "documents",
+        "rarity": "common",
+        "requirement_type": "document_upload",
+        "requirement_count": 1,
+        "xp_reward": 50,
+        "icon": "📄",
+        "badge_color": "gray",
+        "sort_order": 20
+    },
+    {
+        "slug": "document-10",
+        "name": "Document Collector",
+        "description": "Upload 10 documents",
+        "category": "documents",
+        "rarity": "uncommon",
+        "requirement_type": "document_upload",
+        "requirement_count": 10,
+        "xp_reward": 150,
+        "icon": "📁",
+        "badge_color": "blue",
+        "sort_order": 21
+    },
+    # Checklist achievements
+    {
+        "slug": "checklist-10",
+        "name": "Compliance Starter",
+        "description": "Complete 10 checklist items",
+        "category": "checklist",
+        "rarity": "common",
+        "requirement_type": "checklist_complete",
+        "requirement_count": 10,
+        "xp_reward": 150,
+        "icon": "📋",
+        "badge_color": "green",
+        "sort_order": 30
+    },
+    {
+        "slug": "checklist-50",
+        "name": "Compliance Expert",
+        "description": "Complete 50 checklist items",
+        "category": "checklist",
+        "rarity": "rare",
+        "requirement_type": "checklist_complete",
+        "requirement_count": 50,
+        "xp_reward": 500,
+        "icon": "✔️",
+        "badge_color": "purple",
+        "sort_order": 31
+    },
+    # Contact achievements
+    {
+        "slug": "first-contact",
+        "name": "Making Connections",
+        "description": "Add your first contact",
+        "category": "contacts",
+        "rarity": "common",
+        "requirement_type": "contact_create",
+        "requirement_count": 1,
+        "xp_reward": 50,
+        "icon": "👤",
+        "badge_color": "gray",
+        "sort_order": 40
+    },
+    {
+        "slug": "contact-25",
+        "name": "Network Builder",
+        "description": "Add 25 contacts",
+        "category": "contacts",
+        "rarity": "uncommon",
+        "requirement_type": "contact_create",
+        "requirement_count": 25,
+        "xp_reward": 200,
+        "icon": "👥",
+        "badge_color": "blue",
+        "sort_order": 41
+    },
+    # Quest achievements
+    {
+        "slug": "quest-10",
+        "name": "Quest Seeker",
+        "description": "Complete 10 quests",
+        "category": "quests",
+        "rarity": "uncommon",
+        "requirement_type": "quest_complete",
+        "requirement_count": 10,
+        "xp_reward": 200,
+        "icon": "⚔️",
+        "badge_color": "blue",
+        "sort_order": 50
+    },
+    {
+        "slug": "quest-50",
+        "name": "Quest Master",
+        "description": "Complete 50 quests",
+        "category": "quests",
+        "rarity": "rare",
+        "requirement_type": "quest_complete",
+        "requirement_count": 50,
+        "xp_reward": 500,
+        "icon": "🗡️",
+        "badge_color": "purple",
+        "sort_order": 51
+    },
+    # Milestone achievements
+    {
+        "slug": "level-5",
+        "name": "Rising Star",
+        "description": "Reach level 5",
+        "category": "milestones",
+        "rarity": "uncommon",
+        "requirement_type": "level_reach",
+        "requirement_count": 5,
+        "xp_reward": 250,
+        "icon": "⭐",
+        "badge_color": "blue",
+        "sort_order": 60
+    },
+    {
+        "slug": "level-10",
+        "name": "Established",
+        "description": "Reach level 10",
+        "category": "milestones",
+        "rarity": "rare",
+        "requirement_type": "level_reach",
+        "requirement_count": 10,
+        "xp_reward": 500,
+        "icon": "🌟",
+        "badge_color": "purple",
+        "sort_order": 61
+    },
+    {
+        "slug": "level-25",
+        "name": "Expert Founder",
+        "description": "Reach level 25",
+        "category": "milestones",
+        "rarity": "epic",
+        "requirement_type": "level_reach",
+        "requirement_count": 25,
+        "xp_reward": 1500,
+        "icon": "💎",
+        "badge_color": "purple",
+        "sort_order": 62
+    },
+    {
+        "slug": "xp-1000",
+        "name": "XP Collector",
+        "description": "Earn 1,000 total XP",
+        "category": "milestones",
+        "rarity": "common",
+        "requirement_type": "xp_total",
+        "requirement_count": 1000,
+        "xp_reward": 100,
+        "icon": "💰",
+        "badge_color": "green",
+        "sort_order": 70
+    },
+    {
+        "slug": "xp-10000",
+        "name": "XP Master",
+        "description": "Earn 10,000 total XP",
+        "category": "milestones",
+        "rarity": "rare",
+        "requirement_type": "xp_total",
+        "requirement_count": 10000,
+        "xp_reward": 500,
+        "icon": "💎",
+        "badge_color": "purple",
+        "sort_order": 71
+    },
+]
+
+
+def _seed_default_achievements(db: Session):
+    """Seed default achievement templates if they don't exist."""
+    for achievement_data in DEFAULT_ACHIEVEMENTS:
+        existing = db.query(Achievement).filter(Achievement.slug == achievement_data["slug"]).first()
+        if not existing:
+            achievement = Achievement(**achievement_data)
+            db.add(achievement)
+    db.commit()
+
+
+def _seed_default_quests(db: Session):
+    """Seed default quest templates if they don't exist."""
+    for quest_data in DEFAULT_QUESTS:
+        existing = db.query(Quest).filter(Quest.slug == quest_data["slug"]).first()
+        if not existing:
+            quest = Quest(**quest_data)
+            db.add(quest)
+    db.commit()
+
+
+def _get_daily_quests_for_business(db: Session, business: Business, count: int = 3) -> List[BusinessQuest]:
+    """
+    Get or generate daily quests for a business.
+    Returns existing quests if already generated today, otherwise generates new ones.
+    """
+    from datetime import date as date_type
+    today = date_type.today()
+
+    # Check if we already have today's daily quests
+    existing_daily = db.query(BusinessQuest).join(Quest).filter(
+        BusinessQuest.business_id == business.id,
+        BusinessQuest.assigned_date == today,
+        Quest.quest_type == "daily"
+    ).all()
+
+    if existing_daily:
+        return existing_daily
+
+    # Generate new daily quests
+    # Get available daily quests for this business level
+    available_quests = db.query(Quest).filter(
+        Quest.quest_type == "daily",
+        Quest.is_active == True,
+        Quest.min_level <= business.level
+    ).all()
+
+    if not available_quests:
+        return []
+
+    # Randomly select quests (or all if fewer than count)
+    import random
+    selected = random.sample(available_quests, min(count, len(available_quests)))
+
+    # Calculate end of day for expiration
+    end_of_day = datetime.combine(today, datetime.max.time())
+
+    new_quests = []
+    for quest in selected:
+        bq = BusinessQuest(
+            business_id=business.id,
+            quest_id=quest.id,
+            target_count=quest.target_count,
+            xp_reward=quest.xp_reward,
+            assigned_date=today,
+            expires_at=end_of_day
+        )
+        db.add(bq)
+        new_quests.append(bq)
+
+    db.commit()
+    for bq in new_quests:
+        db.refresh(bq)
+
+    return new_quests
+
+
+def _get_weekly_quests_for_business(db: Session, business: Business, count: int = 2) -> List[BusinessQuest]:
+    """
+    Get or generate weekly quests for a business.
+    """
+    from datetime import date as date_type
+    today = date_type.today()
+    # Get start of week (Monday)
+    start_of_week = today - timedelta(days=today.weekday())
+
+    # Check for existing weekly quests this week
+    existing_weekly = db.query(BusinessQuest).join(Quest).filter(
+        BusinessQuest.business_id == business.id,
+        BusinessQuest.assigned_date >= start_of_week,
+        Quest.quest_type == "weekly"
+    ).all()
+
+    if existing_weekly:
+        return existing_weekly
+
+    # Generate new weekly quests
+    available_quests = db.query(Quest).filter(
+        Quest.quest_type == "weekly",
+        Quest.is_active == True,
+        Quest.min_level <= business.level
+    ).all()
+
+    if not available_quests:
+        return []
+
+    import random
+    selected = random.sample(available_quests, min(count, len(available_quests)))
+
+    # End of week (Sunday night)
+    end_of_week = datetime.combine(start_of_week + timedelta(days=6), datetime.max.time())
+
+    new_quests = []
+    for quest in selected:
+        bq = BusinessQuest(
+            business_id=business.id,
+            quest_id=quest.id,
+            target_count=quest.target_count,
+            xp_reward=quest.xp_reward,
+            assigned_date=today,
+            expires_at=end_of_week
+        )
+        db.add(bq)
+        new_quests.append(bq)
+
+    db.commit()
+    for bq in new_quests:
+        db.refresh(bq)
+
+    return new_quests
+
+
+def _update_quest_progress(db: Session, business_id: int, action_type: str, increment: int = 1):
+    """
+    Update progress on all active quests matching the action type.
+    Called when an action is performed (task completed, metric logged, etc.)
+    """
+    from datetime import date as date_type
+    today = date_type.today()
+
+    # Find all uncompleted quests for this business matching the action type
+    active_quests = db.query(BusinessQuest).join(Quest).filter(
+        BusinessQuest.business_id == business_id,
+        BusinessQuest.is_completed == False,
+        Quest.action_type == action_type,
+        # Not expired
+        (BusinessQuest.expires_at == None) | (BusinessQuest.expires_at > datetime.utcnow())
+    ).all()
+
+    for bq in active_quests:
+        bq.current_count += increment
+
+        # Check if quest is now complete
+        if bq.current_count >= bq.target_count:
+            bq.is_completed = True
+            bq.completed_at = datetime.utcnow()
+
+
+# Quest API Endpoints
+
+@app.get("/api/quests/templates", response_model=List[QuestResponse])
+def get_quest_templates(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all available quest templates (admin use)."""
+    # Seed defaults if needed
+    _seed_default_quests(db)
+    return db.query(Quest).filter(Quest.is_active == True).all()
+
+
+@app.get("/api/businesses/{business_id}/quests", response_model=List[BusinessQuestResponse])
+def get_business_quests(
+    business_id: int,
+    include_completed: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all quests for a business.
+    Automatically generates daily/weekly quests if not already generated.
+    """
+    # Verify business belongs to user's org
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Check if gamification is enabled
+    if not business.gamification_enabled:
+        return []
+
+    if not current_user.gamification_enabled:
+        return []
+
+    # Seed quest templates if needed
+    _seed_default_quests(db)
+
+    # Get/generate daily and weekly quests
+    _get_daily_quests_for_business(db, business)
+    _get_weekly_quests_for_business(db, business)
+
+    # Build query
+    query = db.query(BusinessQuest).filter(BusinessQuest.business_id == business_id)
+
+    if not include_completed:
+        query = query.filter(
+            (BusinessQuest.is_claimed == False) |
+            (BusinessQuest.completed_at > datetime.utcnow() - timedelta(hours=24))
+        )
+
+    # Filter out expired uncompleted quests
+    query = query.filter(
+        (BusinessQuest.expires_at == None) |
+        (BusinessQuest.expires_at > datetime.utcnow()) |
+        (BusinessQuest.is_completed == True)
+    )
+
+    return query.order_by(BusinessQuest.assigned_date.desc()).all()
+
+
+@app.post("/api/businesses/{business_id}/quests/{quest_id}/claim", response_model=QuestClaimResponse)
+def claim_quest_reward(
+    business_id: int,
+    quest_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Claim the XP reward for a completed quest."""
+    # Verify business
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Find the business quest
+    bq = db.query(BusinessQuest).filter(
+        BusinessQuest.id == quest_id,
+        BusinessQuest.business_id == business_id
+    ).first()
+    if not bq:
+        raise HTTPException(status_code=404, detail="Quest not found")
+
+    # Check if already claimed
+    if bq.is_claimed:
+        raise HTTPException(status_code=400, detail="Quest already claimed")
+
+    # Check if completed
+    if not bq.is_completed:
+        raise HTTPException(status_code=400, detail="Quest not yet completed")
+
+    # Award XP
+    bq.is_claimed = True
+    bq.claimed_at = datetime.utcnow()
+
+    result = _award_xp(db, business_id, bq.xp_reward, current_user.organization_id, current_user)
+
+    # Update achievement progress for quest completion
+    _update_achievement_progress_internal(db, business_id, "quest_complete")
+
+    db.commit()
+
+    if result:
+        return QuestClaimResponse(
+            success=True,
+            xp_awarded=bq.xp_reward,
+            new_xp=result["xp"],
+            new_level=result["level"],
+            message=f"Claimed {bq.xp_reward} XP!"
+        )
+    else:
+        # Gamification was disabled, but still mark as claimed
+        return QuestClaimResponse(
+            success=True,
+            xp_awarded=0,
+            new_xp=business.xp,
+            new_level=business.level,
+            message="Quest completed (gamification disabled)"
+        )
+
+
+@app.post("/api/businesses/{business_id}/xp")
+def add_business_xp(
+    business_id: int,
+    xp_amount: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Add XP to a business (used by gamification system)"""
+    result = _award_xp(db, business_id, xp_amount, current_user.organization_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    db.commit()
+    return result
+
+
+# ============ Achievements ============
+
+def _get_or_create_business_achievements(db: Session, business: Business):
+    """
+    Ensure all achievements exist for a business.
+    Creates BusinessAchievement entries for any missing achievements.
+    """
+    # Seed default achievements if needed
+    _seed_default_achievements(db)
+
+    # Get all active achievements
+    all_achievements = db.query(Achievement).filter(Achievement.is_active == True).all()
+
+    # Get existing business achievements
+    existing = db.query(BusinessAchievement).filter(
+        BusinessAchievement.business_id == business.id
+    ).all()
+    existing_ids = {ba.achievement_id for ba in existing}
+
+    # Create missing business achievements
+    for achievement in all_achievements:
+        if achievement.id not in existing_ids:
+            ba = BusinessAchievement(
+                business_id=business.id,
+                achievement_id=achievement.id,
+                current_count=0,
+                target_count=achievement.requirement_count,
+                xp_reward=achievement.xp_reward,
+                is_unlocked=False
+            )
+            db.add(ba)
+
+    db.commit()
+
+
+def _update_achievement_progress(db: Session, business_id: int, action_type: str, increment: int = 1, absolute_value: int = None):
+    """
+    Update progress on achievements based on action type.
+    Uses absolute_value for things like streak/level/xp that have a current value rather than increment.
+    """
+    # Find all achievements matching this action type that aren't yet unlocked
+    business_achievements = db.query(BusinessAchievement).join(Achievement).filter(
+        BusinessAchievement.business_id == business_id,
+        BusinessAchievement.is_unlocked == False,
+        Achievement.requirement_type == action_type
+    ).all()
+
+    for ba in business_achievements:
+        if absolute_value is not None:
+            # For things like streaks, level, XP - use the absolute value
+            ba.current_count = absolute_value
+        else:
+            # For countable things - increment
+            ba.current_count += increment
+
+        # Check if achievement is now complete
+        if ba.current_count >= ba.target_count:
+            ba.is_unlocked = True
+            ba.unlocked_at = datetime.utcnow()
+
+    db.commit()
+
+
+@app.get("/api/achievements", response_model=List[AchievementResponse])
+def get_achievements(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all available achievement templates."""
+    _seed_default_achievements(db)
+    return db.query(Achievement).filter(Achievement.is_active == True).order_by(Achievement.sort_order).all()
+
+
+@app.get("/api/businesses/{business_id}/achievements", response_model=List[BusinessAchievementResponse])
+def get_business_achievements(
+    business_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all achievements for a business with progress."""
+    # Verify business belongs to user's org
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Check if gamification is enabled
+    if not business.gamification_enabled:
+        return []
+
+    if not current_user.gamification_enabled:
+        return []
+
+    # Ensure all achievements exist for this business
+    _get_or_create_business_achievements(db, business)
+
+    # Get all business achievements with their achievement data
+    return db.query(BusinessAchievement).filter(
+        BusinessAchievement.business_id == business_id
+    ).order_by(
+        BusinessAchievement.is_unlocked.desc(),
+        Achievement.sort_order
+    ).all()
+
+
+@app.post("/api/businesses/{business_id}/achievements/{achievement_id}/claim", response_model=AchievementClaimResponse)
+def claim_achievement_reward(
+    business_id: int,
+    achievement_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Claim the XP reward for an unlocked achievement."""
+    # Verify business
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Find the business achievement
+    ba = db.query(BusinessAchievement).filter(
+        BusinessAchievement.id == achievement_id,
+        BusinessAchievement.business_id == business_id
+    ).first()
+    if not ba:
+        raise HTTPException(status_code=404, detail="Achievement not found")
+
+    # Check if already claimed
+    if ba.xp_claimed:
+        raise HTTPException(status_code=400, detail="Achievement reward already claimed")
+
+    # Check if unlocked
+    if not ba.is_unlocked:
+        raise HTTPException(status_code=400, detail="Achievement not yet unlocked")
+
+    # Award XP
+    ba.xp_claimed = True
+
+    result = _award_xp(db, business_id, ba.xp_reward, current_user.organization_id, current_user)
+
+    db.commit()
+
+    achievement = db.query(Achievement).filter(Achievement.id == ba.achievement_id).first()
+
+    if result:
+        return AchievementClaimResponse(
+            success=True,
+            xp_awarded=ba.xp_reward,
+            new_xp=result["xp"],
+            new_level=result["level"],
+            message=f"Achievement '{achievement.name}' claimed! +{ba.xp_reward} XP"
+        )
+    else:
+        return AchievementClaimResponse(
+            success=True,
+            xp_awarded=0,
+            new_xp=business.xp,
+            new_level=business.level,
+            message="Achievement unlocked (gamification disabled)"
+        )
+
+
+# ============ Leaderboard ============
+
+@app.get("/api/leaderboard", response_model=LeaderboardResponse)
+def get_leaderboard(
+    limit: int = 25,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the global leaderboard of businesses ranked by XP.
+    Only includes businesses with gamification enabled.
+    """
+    # Query top businesses by XP
+    businesses = db.query(Business, Organization).join(
+        Organization, Business.organization_id == Organization.id
+    ).filter(
+        Business.gamification_enabled == True,
+        Business.is_active == True,
+        Business.is_archived == False
+    ).order_by(
+        Business.xp.desc()
+    ).limit(limit).all()
+
+    entries = []
+    for rank, (business, org) in enumerate(businesses, 1):
+        # Count unlocked achievements for this business
+        achievements_count = db.query(BusinessAchievement).filter(
+            BusinessAchievement.business_id == business.id,
+            BusinessAchievement.is_unlocked == True
+        ).count()
+
+        entries.append(LeaderboardEntry(
+            rank=rank,
+            business_id=business.id,
+            business_name=business.name,
+            business_emoji=business.emoji,
+            business_color=business.color,
+            organization_name=org.name,
+            xp=business.xp,
+            level=business.level,
+            current_streak=business.current_streak,
+            longest_streak=business.longest_streak,
+            achievements_count=achievements_count
+        ))
+
+    # Find current user's rank if not in top results
+    user_rank = None
+    if current_user.current_business_id:
+        user_business = db.query(Business).filter(
+            Business.id == current_user.current_business_id
+        ).first()
+        if user_business and user_business.gamification_enabled:
+            # Count how many businesses have more XP
+            higher_xp_count = db.query(Business).filter(
+                Business.gamification_enabled == True,
+                Business.is_active == True,
+                Business.is_archived == False,
+                Business.xp > user_business.xp
+            ).count()
+            user_rank = higher_xp_count + 1
+
+    total_count = db.query(Business).filter(
+        Business.gamification_enabled == True,
+        Business.is_active == True,
+        Business.is_archived == False
+    ).count()
+
+    return LeaderboardResponse(
+        entries=entries,
+        total_count=total_count,
+        user_rank=user_rank
+    )
+
+
+# ============ Challenge System ============
+
+import secrets
+import string
+
+# Challenge type to action mapping (for progress tracking)
+CHALLENGE_ACTION_MAP = {
+    "task_sprint": "task_complete",
+    "xp_race": "xp_earned",
+    "streak_showdown": "streak_days",
+    "quest_champion": "quest_complete",
+    "checklist_blitz": "checklist_complete",
+    "document_dash": "document_upload",
+    "contact_collector": "contact_create",
+}
+
+# Duration to timedelta mapping
+DURATION_MAP = {
+    "3_days": timedelta(days=3),
+    "1_week": timedelta(days=7),
+    "2_weeks": timedelta(days=14),
+    "1_month": timedelta(days=30),
+}
+
+# Titles that can be earned
+CHALLENGE_TITLES = {
+    "first_win": {"name": "Challenger", "description": "Win your first challenge", "wins_required": 1},
+    "five_wins": {"name": "Competitor", "description": "Win 5 challenges", "wins_required": 5},
+    "ten_wins": {"name": "Champion", "description": "Win 10 challenges", "wins_required": 10},
+    "twenty_five_wins": {"name": "Grand Champion", "description": "Win 25 challenges", "wins_required": 25},
+    "streak_3": {"name": "Hot Streak", "description": "Win 3 challenges in a row", "streak_required": 3},
+    "streak_5": {"name": "Unstoppable", "description": "Win 5 challenges in a row", "streak_required": 5},
+    "streak_10": {"name": "Legendary", "description": "Win 10 challenges in a row", "streak_required": 10},
+}
+
+
+def _generate_invite_code(length: int = 8) -> str:
+    """Generate a unique invite code."""
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(length))
+
+
+def _get_current_count_for_challenge_type(db: Session, business_id: int, challenge_type: str) -> int:
+    """Get the current count for a specific challenge type."""
+    business = db.query(Business).filter(Business.id == business_id).first()
+    if not business:
+        return 0
+
+    if challenge_type == "xp_race":
+        return business.xp
+    elif challenge_type == "streak_showdown":
+        return business.current_streak
+    elif challenge_type == "task_sprint":
+        # Count completed tasks
+        return db.query(Task).filter(
+            Task.business_id == business_id,
+            Task.status == "done"
+        ).count()
+    elif challenge_type == "quest_champion":
+        # Count claimed quests
+        return db.query(BusinessQuest).filter(
+            BusinessQuest.business_id == business_id,
+            BusinessQuest.is_claimed == True
+        ).count()
+    elif challenge_type == "checklist_blitz":
+        return db.query(ChecklistProgress).filter(
+            ChecklistProgress.business_id == business_id,
+            ChecklistProgress.is_completed == True
+        ).count()
+    elif challenge_type == "document_dash":
+        return db.query(Document).filter(Document.business_id == business_id).count()
+    elif challenge_type == "contact_collector":
+        return db.query(Contact).filter(Contact.business_id == business_id).count()
+
+    return 0
+
+
+def _calculate_handicap(level1: int, level2: int) -> tuple[int, int]:
+    """
+    Calculate handicap percentages based on level difference.
+    Higher level player gets 0%, lower level gets boost.
+    Returns (handicap1, handicap2)
+    """
+    if level1 == level2:
+        return (0, 0)
+
+    level_diff = abs(level1 - level2)
+    # 5% per level difference, max 50%
+    handicap = min(level_diff * 5, 50)
+
+    if level1 > level2:
+        return (0, handicap)  # Player 2 gets handicap
+    else:
+        return (handicap, 0)  # Player 1 gets handicap
+
+
+def _update_challenge_progress(db: Session, business_id: int, action_type: str, increment: int = 1, absolute_value: int = None):
+    """Update progress for all active challenges this business is in."""
+    # Find active challenge participations for this business
+    participations = db.query(ChallengeParticipant).join(Challenge).filter(
+        ChallengeParticipant.business_id == business_id,
+        ChallengeParticipant.has_accepted == True,
+        Challenge.status == "active"
+    ).all()
+
+    for participation in participations:
+        challenge = participation.challenge
+        challenge_action = CHALLENGE_ACTION_MAP.get(challenge.challenge_type)
+
+        if challenge_action == action_type:
+            if absolute_value is not None:
+                participation.current_count = absolute_value
+            else:
+                participation.current_count += increment
+
+            participation.progress = participation.current_count - participation.starting_count
+            # Apply handicap
+            participation.adjusted_progress = int(
+                participation.progress * (1 + participation.handicap_percent / 100)
+            )
+
+            # Check if target reached (if target_count set)
+            if challenge.target_count and participation.adjusted_progress >= challenge.target_count:
+                _complete_challenge(db, challenge, participation.business_id)
+
+    db.commit()
+
+
+def _complete_challenge(db: Session, challenge: Challenge, winner_id: int = None):
+    """Complete a challenge and determine winner."""
+    if challenge.status == "completed":
+        return
+
+    # Get all participants
+    participants = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.challenge_id == challenge.id,
+        ChallengeParticipant.has_accepted == True
+    ).all()
+
+    if not participants:
+        challenge.status = "cancelled"
+        db.commit()
+        return
+
+    # Sort by adjusted progress (descending)
+    participants.sort(key=lambda p: p.adjusted_progress, reverse=True)
+
+    # Assign ranks
+    for rank, participant in enumerate(participants, 1):
+        participant.final_rank = rank
+
+    # Determine winner (highest adjusted progress, or provided winner_id for target-based)
+    if winner_id:
+        challenge.winner_id = winner_id
+    else:
+        if participants[0].adjusted_progress > 0:
+            # Check for tie
+            if len(participants) > 1 and participants[0].adjusted_progress == participants[1].adjusted_progress:
+                challenge.winner_id = None  # Tie
+            else:
+                challenge.winner_id = participants[0].business_id
+        else:
+            challenge.winner_id = None  # No one made progress
+
+    challenge.status = "completed"
+    challenge.completed_at = datetime.utcnow()
+
+    # Distribute XP
+    total_wagered = sum(p.xp_wagered for p in participants)
+
+    for participant in participants:
+        business = db.query(Business).filter(Business.id == participant.business_id).first()
+        if not business:
+            continue
+
+        if challenge.winner_id == participant.business_id:
+            # Winner gets: their wager back + opponent's wager + bonus
+            participant.xp_won = total_wagered + challenge.winner_bonus_xp
+            participant.xp_lost = 0
+            business.xp += participant.xp_won
+
+            # Update win stats
+            business.challenge_wins += 1
+            business.challenge_win_streak += 1
+            if business.challenge_win_streak > business.best_challenge_win_streak:
+                business.best_challenge_win_streak = business.challenge_win_streak
+
+            # Check for new titles
+            _check_and_award_titles(db, business)
+
+        elif challenge.winner_id is None:
+            # Draw - everyone gets their wager back
+            participant.xp_won = participant.xp_wagered
+            participant.xp_lost = 0
+            business.xp += participant.xp_wagered  # Return wager
+            business.challenge_draws += 1
+            business.challenge_win_streak = 0  # Reset streak on draw
+
+        else:
+            # Loser loses their wager
+            participant.xp_won = 0
+            participant.xp_lost = participant.xp_wagered
+            business.challenge_losses += 1
+            business.challenge_win_streak = 0  # Reset streak
+
+    db.commit()
+
+
+def _check_and_award_titles(db: Session, business: Business):
+    """Check if business earned any new titles."""
+    current_titles = business.titles or []
+
+    for title_id, title_info in CHALLENGE_TITLES.items():
+        if title_id in current_titles:
+            continue
+
+        if "wins_required" in title_info and business.challenge_wins >= title_info["wins_required"]:
+            current_titles.append(title_id)
+        elif "streak_required" in title_info and business.challenge_win_streak >= title_info["streak_required"]:
+            current_titles.append(title_id)
+
+    business.titles = current_titles
+
+
+def _build_challenge_response(
+    db: Session,
+    challenge: Challenge,
+    current_business_id: int = None
+) -> ChallengeResponse:
+    """Build a full challenge response with participant info."""
+    participants_brief = []
+
+    for p in challenge.participants:
+        business = db.query(Business).filter(Business.id == p.business_id).first()
+        if business:
+            participants_brief.append(ChallengeParticipantBrief(
+                id=p.id,
+                business_id=p.business_id,
+                business_name=business.name,
+                business_emoji=business.emoji,
+                business_color=business.color,
+                business_level=business.level,
+                is_creator=p.is_creator,
+                has_accepted=p.has_accepted,
+                progress=p.progress,
+                adjusted_progress=p.adjusted_progress,
+                handicap_percent=p.handicap_percent,
+                xp_wagered=p.xp_wagered,
+                final_rank=p.final_rank,
+                xp_won=p.xp_won,
+                xp_lost=p.xp_lost,
+            ))
+
+    # Calculate time remaining
+    time_remaining = None
+    if challenge.ends_at and challenge.status == "active":
+        delta = challenge.ends_at - datetime.utcnow()
+        if delta.total_seconds() > 0:
+            days = delta.days
+            hours = delta.seconds // 3600
+            minutes = (delta.seconds % 3600) // 60
+            if days > 0:
+                time_remaining = f"{days}d {hours}h"
+            elif hours > 0:
+                time_remaining = f"{hours}h {minutes}m"
+            else:
+                time_remaining = f"{minutes}m"
+
+    # Find current user's progress and opponent's progress
+    your_progress = None
+    opponent_progress = None
+    if current_business_id:
+        for p in participants_brief:
+            if p.business_id == current_business_id:
+                your_progress = p.adjusted_progress
+            else:
+                opponent_progress = p.adjusted_progress
+
+    return ChallengeResponse(
+        id=challenge.id,
+        name=challenge.name,
+        description=challenge.description,
+        challenge_type=challenge.challenge_type,
+        invite_code=challenge.invite_code,
+        is_public=challenge.is_public,
+        duration=challenge.duration,
+        status=challenge.status,
+        starts_at=challenge.starts_at,
+        ends_at=challenge.ends_at,
+        target_count=challenge.target_count,
+        xp_wager=challenge.xp_wager,
+        winner_bonus_xp=challenge.winner_bonus_xp,
+        handicap_enabled=challenge.handicap_enabled,
+        created_by_id=challenge.created_by_id,
+        winner_id=challenge.winner_id,
+        participant_count=challenge.participant_count,
+        max_participants=challenge.max_participants,
+        created_at=challenge.created_at,
+        completed_at=challenge.completed_at,
+        participants=participants_brief,
+        time_remaining=time_remaining,
+        your_progress=your_progress,
+        opponent_progress=opponent_progress,
+    )
+
+
+@app.post("/api/challenges", response_model=ChallengeResponse)
+def create_challenge(
+    challenge_data: ChallengeCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new challenge."""
+    if not current_user.current_business_id:
+        raise HTTPException(status_code=400, detail="No business selected")
+
+    business = db.query(Business).filter(
+        Business.id == current_user.current_business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    if not business.gamification_enabled:
+        raise HTTPException(status_code=400, detail="Gamification is disabled for this business")
+
+    # Validate wager against available XP
+    if challenge_data.xp_wager > business.xp:
+        raise HTTPException(status_code=400, detail=f"Insufficient XP. You have {business.xp} XP")
+
+    # Generate unique invite code
+    invite_code = _generate_invite_code()
+    while db.query(Challenge).filter(Challenge.invite_code == invite_code).first():
+        invite_code = _generate_invite_code()
+
+    # Create challenge
+    challenge = Challenge(
+        name=challenge_data.name,
+        description=challenge_data.description,
+        challenge_type=challenge_data.challenge_type,
+        invite_code=invite_code,
+        duration=challenge_data.duration,
+        target_count=challenge_data.target_count,
+        xp_wager=challenge_data.xp_wager,
+        winner_bonus_xp=100 + (challenge_data.xp_wager // 2),  # Bonus scales with wager
+        handicap_enabled=challenge_data.handicap_enabled,
+        is_public=challenge_data.is_public,
+        max_participants=challenge_data.max_participants,
+        created_by_id=business.id,
+        status="pending",
+    )
+    db.add(challenge)
+    db.flush()  # Get the ID
+
+    # Add creator as first participant
+    starting_count = _get_current_count_for_challenge_type(db, business.id, challenge_data.challenge_type)
+    creator_participant = ChallengeParticipant(
+        challenge_id=challenge.id,
+        business_id=business.id,
+        is_creator=True,
+        has_accepted=True,
+        accepted_at=datetime.utcnow(),
+        starting_count=starting_count,
+        current_count=starting_count,
+        xp_wagered=challenge_data.xp_wager,
+    )
+    db.add(creator_participant)
+
+    # Deduct wagered XP from creator
+    if challenge_data.xp_wager > 0:
+        business.xp -= challenge_data.xp_wager
+
+    challenge.participant_count = 1
+    db.commit()
+    db.refresh(challenge)
+
+    return _build_challenge_response(db, challenge, business.id)
+
+
+@app.get("/api/challenges", response_model=ChallengeListResponse)
+def get_challenges(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all challenges for the current business."""
+    if not current_user.current_business_id:
+        return ChallengeListResponse(active=[], pending=[], completed=[], invitations=[])
+
+    business_id = current_user.current_business_id
+
+    # Check for expired challenges and complete them
+    expired_challenges = db.query(Challenge).filter(
+        Challenge.status == "active",
+        Challenge.ends_at < datetime.utcnow()
+    ).all()
+    for challenge in expired_challenges:
+        _complete_challenge(db, challenge)
+
+    # Get challenges where this business is a participant
+    my_participations = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.business_id == business_id
+    ).all()
+    my_challenge_ids = [p.challenge_id for p in my_participations]
+
+    active = []
+    pending = []
+    completed = []
+    invitations = []
+
+    for participation in my_participations:
+        challenge = db.query(Challenge).filter(Challenge.id == participation.challenge_id).first()
+        if not challenge:
+            continue
+
+        response = _build_challenge_response(db, challenge, business_id)
+
+        if challenge.status == "active":
+            active.append(response)
+        elif challenge.status == "pending":
+            if participation.has_accepted:
+                pending.append(response)
+            else:
+                invitations.append(response)
+        elif challenge.status == "completed":
+            completed.append(response)
+
+    # Sort: active by end time, completed by completion time
+    active.sort(key=lambda c: c.ends_at or datetime.max)
+    completed.sort(key=lambda c: c.completed_at or datetime.min, reverse=True)
+
+    return ChallengeListResponse(
+        active=active,
+        pending=pending,
+        completed=completed[:20],  # Limit completed to recent 20
+        invitations=invitations,
+    )
+
+
+@app.get("/api/challenges/public", response_model=List[ChallengeResponse])
+def get_public_challenges(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get public challenges that can be joined."""
+    challenges = db.query(Challenge).filter(
+        Challenge.is_public == True,
+        Challenge.status == "pending",
+        Challenge.participant_count < Challenge.max_participants
+    ).order_by(Challenge.created_at.desc()).limit(20).all()
+
+    business_id = current_user.current_business_id
+    return [_build_challenge_response(db, c, business_id) for c in challenges]
+
+
+@app.get("/api/challenges/{challenge_id}", response_model=ChallengeResponse)
+def get_challenge(
+    challenge_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific challenge."""
+    challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    # Check if user is a participant or challenge is public
+    is_participant = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.challenge_id == challenge_id,
+        ChallengeParticipant.business_id == current_user.current_business_id
+    ).first()
+
+    if not is_participant and not challenge.is_public:
+        raise HTTPException(status_code=403, detail="Not authorized to view this challenge")
+
+    return _build_challenge_response(db, challenge, current_user.current_business_id)
+
+
+@app.post("/api/challenges/join", response_model=ChallengeResponse)
+def join_challenge_by_code(
+    request: ChallengeJoinByCodeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Join a challenge using invite code."""
+    if not current_user.current_business_id:
+        raise HTTPException(status_code=400, detail="No business selected")
+
+    business = db.query(Business).filter(
+        Business.id == current_user.current_business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    if not business.gamification_enabled:
+        raise HTTPException(status_code=400, detail="Gamification is disabled")
+
+    # Find challenge by invite code
+    challenge = db.query(Challenge).filter(
+        Challenge.invite_code == request.invite_code.upper()
+    ).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Invalid invite code")
+
+    if challenge.status != "pending":
+        raise HTTPException(status_code=400, detail="This challenge is no longer accepting participants")
+
+    if challenge.participant_count >= challenge.max_participants:
+        raise HTTPException(status_code=400, detail="Challenge is full")
+
+    # Check if already participating
+    existing = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.challenge_id == challenge.id,
+        ChallengeParticipant.business_id == business.id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Already participating in this challenge")
+
+    # Validate wager
+    if request.xp_wager > business.xp:
+        raise HTTPException(status_code=400, detail=f"Insufficient XP. You have {business.xp} XP")
+
+    # Calculate handicap
+    creator = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.challenge_id == challenge.id,
+        ChallengeParticipant.is_creator == True
+    ).first()
+    creator_business = db.query(Business).filter(Business.id == creator.business_id).first()
+
+    handicap1, handicap2 = (0, 0)
+    if challenge.handicap_enabled and creator_business:
+        handicap1, handicap2 = _calculate_handicap(creator_business.level, business.level)
+        creator.handicap_percent = handicap1
+
+    # Add participant
+    starting_count = _get_current_count_for_challenge_type(db, business.id, challenge.challenge_type)
+    participant = ChallengeParticipant(
+        challenge_id=challenge.id,
+        business_id=business.id,
+        is_creator=False,
+        has_accepted=True,
+        accepted_at=datetime.utcnow(),
+        starting_count=starting_count,
+        current_count=starting_count,
+        xp_wagered=request.xp_wager,
+        handicap_percent=handicap2,
+    )
+    db.add(participant)
+
+    # Deduct wagered XP
+    if request.xp_wager > 0:
+        business.xp -= request.xp_wager
+
+    challenge.participant_count += 1
+
+    # If challenge is now full, start it
+    if challenge.participant_count >= challenge.max_participants:
+        challenge.status = "active"
+        challenge.starts_at = datetime.utcnow()
+        challenge.ends_at = datetime.utcnow() + DURATION_MAP.get(challenge.duration, timedelta(days=7))
+
+    db.commit()
+    db.refresh(challenge)
+
+    return _build_challenge_response(db, challenge, business.id)
+
+
+@app.post("/api/challenges/{challenge_id}/accept", response_model=ChallengeResponse)
+def accept_challenge(
+    challenge_id: int,
+    request: ChallengeAcceptRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Accept a challenge invitation."""
+    if not current_user.current_business_id:
+        raise HTTPException(status_code=400, detail="No business selected")
+
+    business = db.query(Business).filter(
+        Business.id == current_user.current_business_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    participation = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.challenge_id == challenge_id,
+        ChallengeParticipant.business_id == business.id
+    ).first()
+    if not participation:
+        raise HTTPException(status_code=403, detail="Not invited to this challenge")
+
+    if participation.has_accepted:
+        raise HTTPException(status_code=400, detail="Already accepted")
+
+    # Validate wager
+    if request.xp_wager > business.xp:
+        raise HTTPException(status_code=400, detail=f"Insufficient XP. You have {business.xp} XP")
+
+    participation.has_accepted = True
+    participation.accepted_at = datetime.utcnow()
+    participation.xp_wagered = request.xp_wager
+    participation.starting_count = _get_current_count_for_challenge_type(db, business.id, challenge.challenge_type)
+    participation.current_count = participation.starting_count
+
+    # Deduct wagered XP
+    if request.xp_wager > 0:
+        business.xp -= request.xp_wager
+
+    # Check if all participants have accepted
+    all_accepted = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.challenge_id == challenge_id,
+        ChallengeParticipant.has_accepted == False
+    ).count() == 0
+
+    if all_accepted and challenge.participant_count >= 2:
+        challenge.status = "active"
+        challenge.starts_at = datetime.utcnow()
+        challenge.ends_at = datetime.utcnow() + DURATION_MAP.get(challenge.duration, timedelta(days=7))
+
+    db.commit()
+    db.refresh(challenge)
+
+    return _build_challenge_response(db, challenge, business.id)
+
+
+@app.post("/api/challenges/{challenge_id}/decline")
+def decline_challenge(
+    challenge_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Decline a challenge invitation."""
+    if not current_user.current_business_id:
+        raise HTTPException(status_code=400, detail="No business selected")
+
+    participation = db.query(ChallengeParticipant).filter(
+        ChallengeParticipant.challenge_id == challenge_id,
+        ChallengeParticipant.business_id == current_user.current_business_id
+    ).first()
+    if not participation:
+        raise HTTPException(status_code=404, detail="Not invited to this challenge")
+
+    if participation.has_accepted:
+        raise HTTPException(status_code=400, detail="Already accepted - cannot decline")
+
+    participation.declined_at = datetime.utcnow()
+    db.delete(participation)
+
+    challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    if challenge:
+        challenge.participant_count -= 1
+
+    db.commit()
+
+    return {"success": True, "message": "Challenge declined"}
+
+
+@app.delete("/api/challenges/{challenge_id}")
+def cancel_challenge(
+    challenge_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Cancel a challenge (creator only, pending challenges only)."""
+    if not current_user.current_business_id:
+        raise HTTPException(status_code=400, detail="No business selected")
+
+    challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    if challenge.created_by_id != current_user.current_business_id:
+        raise HTTPException(status_code=403, detail="Only the creator can cancel this challenge")
+
+    if challenge.status != "pending":
+        raise HTTPException(status_code=400, detail="Can only cancel pending challenges")
+
+    # Refund all wagered XP
+    for participant in challenge.participants:
+        if participant.xp_wagered > 0:
+            business = db.query(Business).filter(Business.id == participant.business_id).first()
+            if business:
+                business.xp += participant.xp_wagered
+
+    challenge.status = "cancelled"
+    db.commit()
+
+    return {"success": True, "message": "Challenge cancelled and XP refunded"}
+
+
+@app.get("/api/challenges/{challenge_id}/progress")
+def get_challenge_progress(
+    challenge_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get live progress for a challenge (for real-time updates)."""
+    challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    # Update progress for all participants
+    for participant in challenge.participants:
+        if participant.has_accepted:
+            current = _get_current_count_for_challenge_type(db, participant.business_id, challenge.challenge_type)
+            participant.current_count = current
+            participant.progress = current - participant.starting_count
+            participant.adjusted_progress = int(
+                participant.progress * (1 + participant.handicap_percent / 100)
+            )
+
+    db.commit()
+
+    return _build_challenge_response(db, challenge, current_user.current_business_id)
+
+
 # ============ Services ============
 @app.get("/api/services", response_model=List[ServiceResponse])
 def get_services(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -396,6 +2481,7 @@ def validate_file_extension(filename: str) -> bool:
 @app.post("/api/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
+    business_id: int = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -425,15 +2511,27 @@ async def upload_document(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    # Determine business_id: use provided, fall back to user's current business
+    doc_business_id = business_id or current_user.current_business_id
+
     # Create document record (store original name for display, storage name for retrieval)
     db_document = Document(
         name=file.filename,
         file_path=storage_name,  # Now stores just the filename, not a URL path
-        category="other"
+        category="other",
+        business_id=doc_business_id
     )
     db.add(db_document)
     db.commit()
     db.refresh(db_document)
+
+    # Award XP for uploading a document
+    if doc_business_id:
+        _award_xp(db, doc_business_id, XP_DOCUMENT_UPLOAD, current_user.organization_id)
+        # Update quest and achievement progress
+        _update_quest_progress(db, doc_business_id, "document_upload")
+        _update_achievement_progress_internal(db, doc_business_id, "document_upload")
+        db.commit()
 
     logger.info(f"User {current_user.email} uploaded document {db_document.id}: {safe_name}")
 
@@ -644,6 +2742,16 @@ def create_contact(contact: ContactCreate, current_user: User = Depends(get_curr
     db.add(db_contact)
     db.commit()
     db.refresh(db_contact)
+
+    # Award XP for creating a contact
+    business_id = db_contact.business_id or current_user.current_business_id
+    if business_id:
+        _award_xp(db, business_id, XP_CONTACT_CREATED, current_user.organization_id)
+        # Update quest and achievement progress
+        _update_quest_progress(db, business_id, "contact_create")
+        _update_achievement_progress_internal(db, business_id, "contact_create")
+        db.commit()
+
     return db_contact
 
 
@@ -1249,10 +3357,17 @@ def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_u
 
     if existing:
         # Update existing
+        was_completed = existing.is_completed
         for key, value in progress.model_dump(exclude_unset=True).items():
             setattr(existing, key, value)
         if progress.is_completed and not existing.completed_at:
             existing.completed_at = datetime.utcnow()
+            # Award XP for newly completing checklist item
+            if not was_completed and existing.business_id:
+                _award_xp(db, existing.business_id, XP_CHECKLIST_COMPLETE, current_user.organization_id)
+                # Update quest and achievement progress
+                _update_quest_progress(db, existing.business_id, "checklist_complete")
+                _update_achievement_progress_internal(db, existing.business_id, "checklist_complete")
         elif not progress.is_completed:
             existing.completed_at = None
         db.commit()
@@ -1266,6 +3381,13 @@ def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_u
         db.add(db_item)
         db.commit()
         db.refresh(db_item)
+        # Award XP for completing checklist item on creation
+        if progress.is_completed and db_item.business_id:
+            _award_xp(db, db_item.business_id, XP_CHECKLIST_COMPLETE, current_user.organization_id)
+            # Update quest and achievement progress
+            _update_quest_progress(db, db_item.business_id, "checklist_complete")
+            _update_achievement_progress_internal(db, db_item.business_id, "checklist_complete")
+            db.commit()
         return db_item
 
 
@@ -1276,6 +3398,7 @@ def update_checklist_item(item_id: str, progress: ChecklistProgressUpdate, curre
         raise HTTPException(status_code=404, detail="Checklist item not found")
 
     update_data = progress.model_dump(exclude_unset=True)
+    was_completed = db_item.is_completed
 
     if update_data.get("is_completed") and not db_item.is_completed:
         update_data["completed_at"] = datetime.utcnow()
@@ -1284,6 +3407,13 @@ def update_checklist_item(item_id: str, progress: ChecklistProgressUpdate, curre
 
     for key, value in update_data.items():
         setattr(db_item, key, value)
+
+    # Award XP for newly completing checklist item
+    if update_data.get("is_completed") and not was_completed and db_item.business_id:
+        _award_xp(db, db_item.business_id, XP_CHECKLIST_COMPLETE, current_user.organization_id)
+        # Update quest and achievement progress
+        _update_quest_progress(db, db_item.business_id, "checklist_complete")
+        _update_achievement_progress_internal(db, db_item.business_id, "checklist_complete")
 
     db.commit()
     db.refresh(db_item)
@@ -2082,6 +4212,22 @@ def update_task(
         # Set completed_at if status is done
         if update_data["status"] == "done" and not db_task.completed_at:
             update_data["completed_at"] = datetime.utcnow()
+
+            # Award XP for task completion
+            # Use task's business_id, or fall back to board's business_id
+            business_id = db_task.business_id
+            if not business_id:
+                board = db.query(TaskBoard).filter(TaskBoard.id == db_task.board_id).first()
+                business_id = board.business_id if board else None
+
+            if business_id:
+                completed_early = db_task.due_date and datetime.utcnow() < db_task.due_date
+                xp_amount = _calculate_task_xp(db_task, completed_early)
+                _award_xp(db, business_id, xp_amount, current_user.organization_id)
+                # Update quest and achievement progress
+                _update_quest_progress(db, business_id, "task_complete")
+                _update_achievement_progress_internal(db, business_id, "task_complete")
+
         elif update_data["status"] != "done":
             update_data["completed_at"] = None
 
@@ -2181,6 +4327,22 @@ def complete_task(
         new_value="done"
     )
     db.add(activity)
+
+    # Award XP for task completion
+    # Use task's business_id, or fall back to board's business_id
+    business_id = db_task.business_id
+    if not business_id:
+        board = db.query(TaskBoard).filter(TaskBoard.id == db_task.board_id).first()
+        business_id = board.business_id if board else None
+
+    if business_id:
+        completed_early = db_task.due_date and datetime.utcnow() < db_task.due_date
+        xp_amount = _calculate_task_xp(db_task, completed_early)
+        _award_xp(db, business_id, xp_amount, current_user.organization_id)
+        # Update quest and achievement progress
+        _update_quest_progress(db, business_id, "task_complete")
+        _update_achievement_progress_internal(db, business_id, "task_complete")
+
     db.commit()
     db.refresh(db_task)
     return db_task
@@ -2568,6 +4730,15 @@ def create_metric(
     db.add(db_metric)
     db.commit()
     db.refresh(db_metric)
+
+    # Award XP for logging a metric
+    if db_metric.business_id:
+        _award_xp(db, db_metric.business_id, XP_METRIC_ENTRY, current_user.organization_id)
+        # Update quest and achievement progress
+        _update_quest_progress(db, db_metric.business_id, "metric_create")
+        _update_achievement_progress_internal(db, db_metric.business_id, "metric_create")
+        db.commit()
+
     return db_metric
 
 

@@ -102,6 +102,19 @@ class DocumentTemplateCategory(str, enum.Enum):
     OTHER = "other"
 
 
+# ============ BUSINESS TYPES ============
+
+class BusinessType(str, enum.Enum):
+    CORPORATION = "corporation"  # C-Corp, S-Corp
+    LLC = "llc"
+    PRODUCT = "product"  # SaaS, app, physical product
+    SERVICE = "service"  # Consulting, agency
+    PROJECT = "project"  # Time-bound initiative
+    DEPARTMENT = "department"  # Internal division
+    BRAND = "brand"  # Sub-brand
+    OTHER = "other"
+
+
 # ============ MULTI-TENANCY MODELS ============
 
 class Organization(Base):
@@ -130,6 +143,414 @@ class Organization(Base):
     # Relationships
     users = relationship("User", back_populates="organization")
     subscription_history = relationship("SubscriptionHistory", back_populates="organization")
+    businesses = relationship("Business", back_populates="organization", foreign_keys="Business.organization_id")
+
+
+class Business(Base):
+    """
+    Fractal business/venture structure.
+
+    Supports hierarchical organization:
+    - Top-level: Axion Deep Labs (C-Corp)
+      - Child: Site2CRM (Product)
+      - Child: Quanta (Product)
+        - Grandchild: Quanta API (Service)
+        - Grandchild: Quanta Dashboard (Service)
+
+    Items can be assigned to any level. When viewing a business,
+    you see items assigned to it + all items from parent levels (inherited).
+    """
+    __tablename__ = "businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    # Fractal hierarchy - NULL parent_id means top-level business
+    parent_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
+
+    # Basic info
+    name = Column(String(255), nullable=False)  # "Site2CRM", "Quanta"
+    slug = Column(String(100), index=True, nullable=True)  # URL-friendly identifier
+    business_type = Column(String(50), default=BusinessType.OTHER.value)
+    description = Column(Text, nullable=True)
+
+    # Visual identity
+    color = Column(String(7), nullable=True)  # Hex color e.g., "#FF6B35"
+    emoji = Column(String(10), nullable=True)  # Emoji icon e.g., "🚀"
+    logo_path = Column(String(500), nullable=True)  # Path to logo file
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    is_archived = Column(Boolean, default=False)
+
+    # ============ GAMIFICATION ============
+    # XP and Leveling
+    xp = Column(Integer, default=0)
+    level = Column(Integer, default=1)
+
+    # Streaks (days of consecutive activity)
+    current_streak = Column(Integer, default=0)
+    longest_streak = Column(Integer, default=0)
+    last_activity_date = Column(Date, nullable=True)
+
+    # Health Score (0-100, calculated from various factors)
+    health_score = Column(Integer, default=0)
+    health_compliance = Column(Integer, default=0)  # Compliance subscore
+    health_financial = Column(Integer, default=0)  # Financial subscore
+    health_operations = Column(Integer, default=0)  # Operations subscore
+    health_growth = Column(Integer, default=0)  # Growth subscore
+    health_updated_at = Column(DateTime, nullable=True)
+
+    # Gamification toggle (for the sticklers who don't like fun)
+    gamification_enabled = Column(Boolean, default=True)
+
+    # Achievements (JSON array of earned achievement IDs)
+    achievements = Column(JSON, nullable=True)
+
+    # Daily quest progress (JSON, resets daily)
+    daily_quests = Column(JSON, nullable=True)
+    daily_quests_date = Column(Date, nullable=True)
+
+    # ============ CHALLENGE STATS ============
+    challenge_wins = Column(Integer, default=0)
+    challenge_losses = Column(Integer, default=0)
+    challenge_draws = Column(Integer, default=0)
+    challenge_win_streak = Column(Integer, default=0)
+    best_challenge_win_streak = Column(Integer, default=0)
+
+    # Titles earned (JSON array) - e.g., ["Champion", "Undefeated", "Streak Master"]
+    titles = Column(JSON, nullable=True)
+
+    # Current active title being displayed
+    active_title = Column(String(50), nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", back_populates="businesses", foreign_keys=[organization_id])
+    parent = relationship("Business", remote_side=[id], backref="children")
+
+
+# ============ QUEST SYSTEM ============
+
+class QuestType(str, enum.Enum):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    ACHIEVEMENT = "achievement"  # One-time achievements
+
+
+class QuestCategory(str, enum.Enum):
+    TASKS = "tasks"
+    METRICS = "metrics"
+    DOCUMENTS = "documents"
+    CONTACTS = "contacts"
+    CHECKLIST = "checklist"
+    STREAK = "streak"
+    GENERAL = "general"
+
+
+class Quest(Base):
+    """
+    Quest template definitions.
+    These define what quests are available in the system.
+    """
+    __tablename__ = "quests"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Quest identity
+    slug = Column(String(100), unique=True, nullable=False)  # e.g., "complete-3-tasks"
+    name = Column(String(255), nullable=False)  # "Task Master"
+    description = Column(Text, nullable=True)  # "Complete 3 tasks today"
+
+    # Quest type and category
+    quest_type = Column(String(20), default=QuestType.DAILY.value)
+    category = Column(String(20), default=QuestCategory.GENERAL.value)
+
+    # Requirements
+    target_count = Column(Integer, default=1)  # How many to complete
+    action_type = Column(String(50), nullable=False)  # "task_complete", "metric_create", etc.
+
+    # Rewards
+    xp_reward = Column(Integer, default=25)
+
+    # Display
+    icon = Column(String(50), nullable=True)  # Emoji or icon name
+    difficulty = Column(String(20), default="easy")  # easy, medium, hard
+
+    # Availability
+    is_active = Column(Boolean, default=True)
+    min_level = Column(Integer, default=1)  # Minimum business level to receive this quest
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class BusinessQuest(Base):
+    """
+    Quest instance assigned to a business.
+    Tracks progress toward quest completion.
+    """
+    __tablename__ = "business_quests"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Links
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    quest_id = Column(Integer, ForeignKey("quests.id", ondelete="CASCADE"), nullable=False)
+
+    # Progress tracking
+    current_count = Column(Integer, default=0)
+    target_count = Column(Integer, nullable=False)  # Copied from quest for history
+
+    # Status
+    is_completed = Column(Boolean, default=False)
+    is_claimed = Column(Boolean, default=False)  # XP claimed?
+
+    # Timing
+    assigned_date = Column(Date, nullable=False)  # When quest was assigned
+    expires_at = Column(DateTime, nullable=True)  # When quest expires (daily = end of day)
+    completed_at = Column(DateTime, nullable=True)
+    claimed_at = Column(DateTime, nullable=True)
+
+    # Reward (copied from quest for history)
+    xp_reward = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    business = relationship("Business", backref="quests")
+    quest = relationship("Quest", backref="business_instances")
+
+    # Unique constraint: one quest per business per day (for daily quests)
+    __table_args__ = (
+        Index('ix_business_quest_date', 'business_id', 'quest_id', 'assigned_date'),
+    )
+
+
+# ============ ACHIEVEMENT SYSTEM ============
+
+class AchievementCategory(str, enum.Enum):
+    TASKS = "tasks"
+    STREAKS = "streaks"
+    METRICS = "metrics"
+    DOCUMENTS = "documents"
+    CONTACTS = "contacts"
+    CHECKLIST = "checklist"
+    QUESTS = "quests"
+    MILESTONES = "milestones"
+
+
+class Achievement(Base):
+    """
+    Achievement template definitions.
+    Defines what achievements are available in the system.
+    """
+    __tablename__ = "achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Achievement identity
+    slug = Column(String(100), unique=True, nullable=False)  # e.g., "first-task"
+    name = Column(String(255), nullable=False)  # "First Steps"
+    description = Column(Text, nullable=True)  # "Complete your first task"
+
+    # Category and rarity
+    category = Column(String(20), default=AchievementCategory.MILESTONES.value)
+    rarity = Column(String(20), default="common")  # common, uncommon, rare, epic, legendary
+
+    # Requirements
+    requirement_type = Column(String(50), nullable=False)  # "task_complete", "streak_days", etc.
+    requirement_count = Column(Integer, default=1)  # Number needed to unlock
+
+    # Rewards
+    xp_reward = Column(Integer, default=50)
+
+    # Display
+    icon = Column(String(50), nullable=True)  # Emoji or icon name
+    badge_color = Column(String(20), nullable=True)  # Color for badge display
+
+    # Ordering
+    sort_order = Column(Integer, default=0)
+
+    # Availability
+    is_active = Column(Boolean, default=True)
+    is_secret = Column(Boolean, default=False)  # Hidden until unlocked
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class BusinessAchievement(Base):
+    """
+    Tracks which achievements a business has earned.
+    """
+    __tablename__ = "business_achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Links
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    achievement_id = Column(Integer, ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False)
+
+    # Progress (for achievements that can be partially completed)
+    current_count = Column(Integer, default=0)
+    target_count = Column(Integer, nullable=False)
+
+    # Status
+    is_unlocked = Column(Boolean, default=False)
+    unlocked_at = Column(DateTime, nullable=True)
+
+    # XP claimed
+    xp_claimed = Column(Boolean, default=False)
+    xp_reward = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    business = relationship("Business", backref="earned_achievements")
+    achievement = relationship("Achievement", backref="business_instances")
+
+    # Unique constraint: one achievement per business
+    __table_args__ = (
+        Index('ix_business_achievement', 'business_id', 'achievement_id', unique=True),
+    )
+
+
+# ============ CHALLENGE SYSTEM ============
+
+class ChallengeType(str, enum.Enum):
+    TASK_SPRINT = "task_sprint"           # Most tasks completed
+    XP_RACE = "xp_race"                   # Most XP earned
+    STREAK_SHOWDOWN = "streak_showdown"   # Maintain/grow streak
+    QUEST_CHAMPION = "quest_champion"     # Most quests completed
+    CHECKLIST_BLITZ = "checklist_blitz"   # Most checklist items done
+    DOCUMENT_DASH = "document_dash"       # Most documents uploaded
+    CONTACT_COLLECTOR = "contact_collector"  # Most contacts added
+
+
+class ChallengeStatus(str, enum.Enum):
+    PENDING = "pending"       # Waiting for opponent to accept
+    ACTIVE = "active"         # Challenge in progress
+    COMPLETED = "completed"   # Challenge finished, winner determined
+    CANCELLED = "cancelled"   # Cancelled by creator or expired
+    DECLINED = "declined"     # Opponent declined
+
+
+class ChallengeDuration(str, enum.Enum):
+    THREE_DAYS = "3_days"
+    ONE_WEEK = "1_week"
+    TWO_WEEKS = "2_weeks"
+    ONE_MONTH = "1_month"
+
+
+class Challenge(Base):
+    """
+    Head-to-head or group challenge between businesses.
+    Privacy-safe: only tracks counts, never content.
+    """
+    __tablename__ = "challenges"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Challenge identity
+    name = Column(String(255), nullable=False)  # "Weekend Warrior Showdown"
+    description = Column(Text, nullable=True)
+    challenge_type = Column(String(50), nullable=False)  # ChallengeType
+
+    # Invite system
+    invite_code = Column(String(20), unique=True, nullable=False, index=True)
+    is_public = Column(Boolean, default=False)  # Show on public challenge board
+
+    # Timing
+    duration = Column(String(20), nullable=False)  # ChallengeDuration
+    status = Column(String(20), default=ChallengeStatus.PENDING.value)
+    starts_at = Column(DateTime, nullable=True)  # When challenge begins
+    ends_at = Column(DateTime, nullable=True)    # When challenge ends
+
+    # Target (optional - if set, first to reach wins)
+    target_count = Column(Integer, nullable=True)  # e.g., "First to 10 tasks"
+
+    # Stakes - XP wager
+    xp_wager = Column(Integer, default=0)         # XP each participant bets
+    winner_bonus_xp = Column(Integer, default=100)  # Base bonus for winner
+
+    # Handicap system (percentage boost for underdog)
+    handicap_enabled = Column(Boolean, default=True)
+
+    # Creator
+    created_by_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+
+    # Winner (set when challenge completes)
+    winner_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
+
+    # Stats
+    participant_count = Column(Integer, default=2)  # For group challenges
+    max_participants = Column(Integer, default=2)   # 2 = head-to-head
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    creator = relationship("Business", foreign_keys=[created_by_id], backref="created_challenges")
+    winner = relationship("Business", foreign_keys=[winner_id], backref="won_challenges")
+    participants = relationship("ChallengeParticipant", back_populates="challenge", cascade="all, delete-orphan")
+
+
+class ChallengeParticipant(Base):
+    """
+    Tracks each participant's progress in a challenge.
+    """
+    __tablename__ = "challenge_participants"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Links
+    challenge_id = Column(Integer, ForeignKey("challenges.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+
+    # Participation status
+    is_creator = Column(Boolean, default=False)
+    has_accepted = Column(Boolean, default=False)  # Must accept to participate
+    accepted_at = Column(DateTime, nullable=True)
+    declined_at = Column(DateTime, nullable=True)
+
+    # Progress tracking
+    starting_count = Column(Integer, default=0)    # Value at challenge start (for delta calculation)
+    current_count = Column(Integer, default=0)     # Current value
+    progress = Column(Integer, default=0)          # current - starting (the actual progress)
+
+    # Handicap (percentage - e.g., 10 = 10% boost to score)
+    handicap_percent = Column(Integer, default=0)
+    adjusted_progress = Column(Integer, default=0)  # progress * (1 + handicap_percent/100)
+
+    # XP wagered by this participant
+    xp_wagered = Column(Integer, default=0)
+
+    # Result
+    final_rank = Column(Integer, nullable=True)    # 1st, 2nd, etc.
+    xp_won = Column(Integer, default=0)            # XP won from challenge
+    xp_lost = Column(Integer, default=0)           # XP lost from wager
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    challenge = relationship("Challenge", back_populates="participants")
+    business = relationship("Business", backref="challenge_participations")
+
+    # Unique constraint: one participation per business per challenge
+    __table_args__ = (
+        Index('ix_challenge_participant', 'challenge_id', 'business_id', unique=True),
+    )
 
 
 class SubscriptionHistory(Base):
@@ -610,6 +1031,7 @@ class Service(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)  # Optional business assignment
     name = Column(String(255), nullable=False)
     url = Column(String(500), nullable=False)
     category = Column(String(50), default=ServiceCategory.OTHER.value)
@@ -628,6 +1050,7 @@ class Document(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     category = Column(String(50), default=DocumentCategory.OTHER.value)
     file_path = Column(String(500), nullable=True)  # Local file path
@@ -645,6 +1068,7 @@ class Contact(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     title = Column(String(255), nullable=True)  # Job title
     company = Column(String(255), nullable=True)
@@ -675,6 +1099,7 @@ class Deadline(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     deadline_type = Column(String(50), default=DeadlineType.OTHER.value)
@@ -723,6 +1148,7 @@ class BusinessIdentifier(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     identifier_type = Column(String(50), nullable=False)  # ein, duns, state_id, etc.
     label = Column(String(100), nullable=False)  # Display name
     value = Column(String(255), nullable=False)  # The actual number/ID
@@ -743,6 +1169,7 @@ class ChecklistProgress(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     item_id = Column(String(100), nullable=False)  # matches frontend item IDs
     is_completed = Column(Boolean, default=False)
     completed_at = Column(DateTime, nullable=True)
@@ -778,6 +1205,12 @@ class User(Base):
     # Multi-tenancy
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     is_org_owner = Column(Boolean, default=False)  # Organization owner/creator
+
+    # Current business context (which business user is viewing)
+    current_business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
+
+    # User preferences
+    gamification_enabled = Column(Boolean, default=True)  # Personal gamification toggle
 
     # OAuth fields
     oauth_provider = Column(String(50), nullable=True)  # google, github
@@ -822,6 +1255,7 @@ class Credential(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)  # Display name (not encrypted)
     service_url = Column(String(500), nullable=True)  # URL (not encrypted)
     category = Column(String(50), default="other")  # banking, tax, legal, etc.
@@ -848,6 +1282,7 @@ class ProductOffered(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     category = Column(String(50), default=ProductOfferedCategory.OTHER.value)
@@ -867,6 +1302,7 @@ class ProductUsed(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     vendor = Column(String(255), nullable=True)  # Company that provides it
     category = Column(String(50), default=ProductUsedCategory.OTHER.value)
@@ -897,6 +1333,7 @@ class WebLink(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(255), nullable=False)
     url = Column(String(500), nullable=False)
     category = Column(String(50), default=WebLinkCategory.OTHER.value)
@@ -942,6 +1379,7 @@ class TaskBoard(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     is_default = Column(Boolean, default=False)
@@ -979,6 +1417,9 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
+
+    # Business assignment (can override board's business)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
 
     # Status & Organization
     board_id = Column(Integer, ForeignKey("task_boards.id", ondelete="CASCADE"), nullable=False)
@@ -1160,6 +1601,7 @@ class BankAccount(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     account_type = Column(String(50), nullable=False)  # checking, savings, coinbase, paypal, stripe, etc.
     institution_name = Column(String(255), nullable=False)
     account_name = Column(String(255), nullable=True)  # Nickname for the account
@@ -1196,6 +1638,7 @@ class Metric(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     metric_type = Column(String(50), nullable=False)
     name = Column(String(100), nullable=False)  # Display name
     value = Column(String(100), nullable=False)  # Stored as string to handle various formats
@@ -1215,6 +1658,7 @@ class MetricGoal(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     metric_type = Column(String(50), nullable=False)
     name = Column(String(100), nullable=True)
     target_value = Column(Float, nullable=False)

@@ -18,8 +18,10 @@ import {
   ChevronDown,
   Rocket,
   Shield,
+  Trophy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import BusinessSwitcher from './BusinessSwitcher';
 
 interface NavItem {
   to: string;
@@ -92,6 +94,7 @@ const navSections: NavSection[] = [
     items: [
       { to: '/app/social-hub', icon: Megaphone, label: 'Social Hub' },
       { to: '/app/insights', icon: BarChart3, label: 'Insights' },
+      { to: '/app/leaderboard', icon: Trophy, label: 'Leaderboard' },
     ],
   },
   {
@@ -153,14 +156,15 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="w-64 bg-[#1a1d24] border-r border-white/10 flex flex-col relative">
         {/* Logo */}
-        <div className="p-5 border-b border-white/10">
+        <div className="p-4 border-b border-white/10">
           <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src="/logo.png" alt="Made4Founders" className="h-9 w-auto" />
-            <div>
-              <h1 className="text-lg font-bold text-white leading-tight">Made4Founders</h1>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider">Command Center</p>
-            </div>
+            <img src="/logo.png" alt="Made4Founders" className="h-8 w-auto" />
           </Link>
+        </div>
+
+        {/* Business Switcher */}
+        <div className="p-3 border-b border-white/10">
+          <BusinessSwitcher />
         </div>
 
         {/* Navigation - with bottom padding for fixed footer */}

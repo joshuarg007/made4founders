@@ -135,6 +135,11 @@ const checklistData: ChecklistItem[] = [
     description: 'File biennial/annual report with Secretary of State to maintain good standing.',
     category: 'Entity Formation',
     priority: 'required',
+    links: [
+      { label: 'NM SOS Business Services', url: 'https://www.sos.nm.gov/business-services/' },
+      { label: 'Delaware Annual Report', url: 'https://corp.delaware.gov/paytaxes/' },
+      { label: 'Wyoming Annual Report', url: 'https://sos.wyo.gov/Business/AnnualReport.aspx' }
+    ],
     tips: ['Set calendar reminder for due date', 'Late fees apply if missed'],
     documentHints: ['Biennial report filing confirmation']
   },
@@ -183,6 +188,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Annual corporate income tax return for C-Corps.',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'Form 1120 Instructions', url: 'https://www.irs.gov/forms-pubs/about-form-1120' },
+      { label: 'IRS e-File', url: 'https://www.irs.gov/e-file-providers/e-file-for-business-and-self-employed-taxpayers' }
+    ],
     tips: ['Due 15th day of 4th month after fiscal year end', 'Extensions available'],
     documentHints: ['Filed Form 1120', 'Extension if applicable']
   },
@@ -192,6 +201,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Quarterly payroll tax return. Required if you have employees.',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'Form 941 Instructions', url: 'https://www.irs.gov/forms-pubs/about-form-941' },
+      { label: 'EFTPS (Payment)', url: 'https://www.eftps.gov/' }
+    ],
     tips: ['Due last day of month following quarter', 'Payroll services usually handle this'],
     documentHints: ['Filed Form 941s']
   },
@@ -201,6 +214,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Annual federal unemployment tax return.',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'Form 940 Instructions', url: 'https://www.irs.gov/forms-pubs/about-form-940' }
+    ],
     documentHints: ['Filed Form 940']
   },
   {
@@ -209,6 +225,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Issue W-2s to employees by January 31st annually.',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'SSA Business Services', url: 'https://www.ssa.gov/employer/' },
+      { label: 'Form W-2 Instructions', url: 'https://www.irs.gov/forms-pubs/about-form-w-2' }
+    ],
     documentHints: ['W-2 copies', 'W-3 transmittal']
   },
   {
@@ -217,6 +237,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Issue 1099-NEC to contractors paid $600+ annually.',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'Form 1099-NEC', url: 'https://www.irs.gov/forms-pubs/about-form-1099-nec' },
+      { label: 'FIRE System (e-File)', url: 'https://fire.irs.gov/' }
+    ],
     tips: ['Collect W-9s from all contractors', 'Due January 31st'],
     documentHints: ['1099-NEC copies', '1096 transmittal']
   },
@@ -226,6 +250,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Applicable Large Employer health coverage reporting (50+ full-time employees).',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'ACA Information Returns', url: 'https://www.irs.gov/affordable-care-act/employers/information-reporting-by-applicable-large-employers' }
+    ],
     documentHints: ['Forms 1094-C and 1095-C']
   },
   {
@@ -257,6 +284,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Required if dealing with defense articles or services.',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'DDTC Registration', url: 'https://www.pmddtc.state.gov/ddtc_public/ddtc_public?id=ddtc_public_portal_homepage' }
+    ],
     documentHints: ['ITAR registration confirmation']
   },
   {
@@ -265,6 +295,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Export Administration Regulations compliance for controlled items/technology.',
     category: 'Federal Requirements',
     priority: 'trigger',
+    links: [
+      { label: 'BIS Export Administration', url: 'https://www.bis.doc.gov/index.php/regulations/export-administration-regulations-ear' }
+    ],
     documentHints: ['Export compliance policy', 'License if applicable']
   },
 
@@ -287,6 +320,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Unique Entity ID assigned through SAM.gov (replaced DUNS for federal contracting).',
     category: 'Government Contracting',
     priority: 'recommended',
+    links: [
+      { label: 'SAM.gov (Get UEI)', url: 'https://sam.gov/content/entity-registration' }
+    ],
     documentHints: ['UEI confirmation']
   },
   {
@@ -295,6 +331,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Commercial and Government Entity code for defense contracts.',
     category: 'Government Contracting',
     priority: 'optional',
+    links: [
+      { label: 'CAGE Code Request', url: 'https://cage.dla.mil/' }
+    ],
     documentHints: ['CAGE code assignment']
   },
   {
@@ -325,6 +364,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Required for handling Controlled Unclassified Information (CUI) in federal contracts.',
     category: 'Government Contracting',
     priority: 'trigger',
+    links: [
+      { label: 'NIST 800-171', url: 'https://csrc.nist.gov/publications/detail/sp/800-171/rev-2/final' },
+      { label: 'NIST Self-Assessment', url: 'https://www.nist.gov/cyberframework' }
+    ],
     documentHints: ['System Security Plan', 'POA&M']
   },
   {
@@ -333,6 +376,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Cybersecurity Maturity Model Certification for DoD contracts.',
     category: 'Government Contracting',
     priority: 'trigger',
+    links: [
+      { label: 'CMMC Official Site', url: 'https://dodcio.defense.gov/CMMC/' },
+      { label: 'Cyber AB (Accreditation)', url: 'https://cyberab.org/' }
+    ],
     documentHints: ['CMMC assessment', 'Certification']
   },
 
@@ -354,6 +401,10 @@ const checklistData: ChecklistItem[] = [
     description: 'File and pay NM Gross Receipts Tax (monthly, quarterly, or annually based on volume).',
     category: 'State & Local',
     priority: 'required',
+    links: [
+      { label: 'NM Taxpayer Access Point', url: 'https://tap.state.nm.us/' },
+      { label: 'GRT Rate Schedule', url: 'https://www.tax.newmexico.gov/governments/gross-receipts-tax-rate-schedule/' }
+    ],
     tips: ['Rate varies by location', 'Due 25th of following month'],
     documentHints: ['GRT filing records']
   },
@@ -363,6 +414,10 @@ const checklistData: ChecklistItem[] = [
     description: 'File NM corporate income tax return annually.',
     category: 'State & Local',
     priority: 'required',
+    links: [
+      { label: 'NM Tax & Revenue', url: 'https://www.tax.newmexico.gov/' },
+      { label: 'NM Taxpayer Access Point', url: 'https://tap.state.nm.us/' }
+    ],
     documentHints: ['Filed NM corporate return']
   },
   {
@@ -371,6 +426,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Register for state withholding if you have employees.',
     category: 'State & Local',
     priority: 'trigger',
+    links: [
+      { label: 'NM Taxpayer Access Point', url: 'https://tap.state.nm.us/' }
+    ],
     documentHints: ['Withholding account number']
   },
   {
@@ -390,6 +448,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Obtain workers compensation coverage (required with employees in NM).',
     category: 'State & Local',
     priority: 'trigger',
+    links: [
+      { label: 'NM Workers Comp Admin', url: 'https://workerscomp.nm.gov/' }
+    ],
     documentHints: ['Workers comp policy', 'Certificate of insurance']
   },
   {
@@ -398,6 +459,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Obtain city/county business license if required in your jurisdiction.',
     category: 'State & Local',
     priority: 'recommended',
+    links: [
+      { label: 'Albuquerque Business Registration', url: 'https://www.cabq.gov/clerk/business-registration' },
+      { label: 'Santa Fe Business License', url: 'https://www.santafenm.gov/business_license' }
+    ],
     documentHints: ['Business license certificate']
   },
   {
@@ -452,6 +517,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Maintain stock ledger tracking all share issuances and transfers.',
     category: 'Corporate Governance',
     priority: 'required',
+    links: [
+      { label: 'Carta', url: 'https://carta.com/' },
+      { label: 'Pulley', url: 'https://pulley.com/' }
+    ],
     documentHints: ['Stock ledger', 'Cap table']
   },
   {
@@ -460,6 +529,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Issue stock certificates to shareholders (or use uncertificated shares).',
     category: 'Corporate Governance',
     priority: 'recommended',
+    links: [
+      { label: 'Carta', url: 'https://carta.com/' }
+    ],
     documentHints: ['Stock certificates', 'Notice of uncertificated shares']
   },
   {
@@ -591,6 +663,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Set up system for paying quarterly estimated taxes.',
     category: 'Banking & Finance',
     priority: 'required',
+    links: [
+      { label: 'EFTPS (Enroll)', url: 'https://www.eftps.gov/eftps/' },
+      { label: 'IRS Estimated Tax', url: 'https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes' }
+    ],
     tips: ['Due 15th of Apr, Jun, Sep, Jan', 'Avoid underpayment penalties'],
     documentHints: ['Payment records', 'EFTPS enrollment']
   },
@@ -613,6 +689,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Get business credit card to build credit and track expenses.',
     category: 'Banking & Finance',
     priority: 'recommended',
+    links: [
+      { label: 'Brex', url: 'https://www.brex.com/' },
+      { label: 'Ramp', url: 'https://ramp.com/' }
+    ],
     documentHints: ['Card account info']
   },
   {
@@ -637,6 +717,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Track qualifying R&D activities for tax credits.',
     category: 'Banking & Finance',
     priority: 'optional',
+    links: [
+      { label: 'IRS R&D Tax Credit', url: 'https://www.irs.gov/businesses/small-businesses-self-employed/research-credit-claim-and-form-6765' }
+    ],
     tips: ['Can offset payroll taxes for startups', 'Document time and expenses'],
     documentHints: ['R&D activity logs', 'Time tracking']
   },
@@ -812,6 +895,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Complete I-9 employment eligibility verification for all employees.',
     category: 'Employment & HR',
     priority: 'trigger',
+    links: [
+      { label: 'USCIS I-9 Form', url: 'https://www.uscis.gov/i-9' },
+      { label: 'I-9 Central', url: 'https://www.uscis.gov/i-9-central' }
+    ],
     documentHints: ['Completed I-9 forms']
   },
   {
@@ -839,6 +926,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Create employee handbook covering policies and procedures.',
     category: 'Employment & HR',
     priority: 'trigger',
+    links: [
+      { label: 'SHRM Templates', url: 'https://www.shrm.org/resourcesandtools/tools-and-samples/policies/pages/default.aspx' }
+    ],
     documentHints: ['Employee handbook', 'Acknowledgment forms']
   },
   {
@@ -847,6 +937,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Set up health insurance and benefits if offering.',
     category: 'Employment & HR',
     priority: 'trigger',
+    links: [
+      { label: 'HealthCare.gov SHOP', url: 'https://www.healthcare.gov/small-businesses/' },
+      { label: 'Gusto Benefits', url: 'https://gusto.com/product/benefits' }
+    ],
     documentHints: ['Benefits enrollment', 'Plan documents']
   },
   {
@@ -855,6 +949,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Ensure OSHA compliance for workplace safety.',
     category: 'Employment & HR',
     priority: 'trigger',
+    links: [
+      { label: 'OSHA Small Business', url: 'https://www.osha.gov/smallbusiness' },
+      { label: 'OSHA Publications', url: 'https://www.osha.gov/publications' }
+    ],
     documentHints: ['OSHA 300 log if required']
   },
   {
@@ -948,6 +1046,9 @@ const checklistData: ChecklistItem[] = [
     description: 'BBB accreditation for consumer trust.',
     category: 'Optional & Strategic',
     priority: 'optional',
+    links: [
+      { label: 'BBB Accreditation', url: 'https://www.bbb.org/get-accredited' }
+    ],
     documentHints: ['BBB accreditation']
   },
   {
@@ -978,6 +1079,9 @@ const checklistData: ChecklistItem[] = [
     description: 'Build business credit profile with D&B.',
     category: 'Optional & Strategic',
     priority: 'optional',
+    links: [
+      { label: 'D&B Credit Builder', url: 'https://www.dnb.com/products/finance-credit-risk/creditbuilder.html' }
+    ],
     documentHints: ['D&B credit report']
   },
   {
@@ -986,6 +1090,11 @@ const checklistData: ChecklistItem[] = [
     description: 'Join incubator or accelerator for resources and network.',
     category: 'Optional & Strategic',
     priority: 'optional',
+    links: [
+      { label: 'Y Combinator', url: 'https://www.ycombinator.com/apply' },
+      { label: 'Techstars', url: 'https://www.techstars.com/' },
+      { label: 'NM STC.UNM', url: 'https://stc.unm.edu/' }
+    ],
     documentHints: ['Membership agreement']
   },
   {
@@ -994,6 +1103,10 @@ const checklistData: ChecklistItem[] = [
     description: 'Join local chamber for networking and credibility.',
     category: 'Optional & Strategic',
     priority: 'optional',
+    links: [
+      { label: 'US Chamber', url: 'https://www.uschamber.com/' },
+      { label: 'ABQ Hispano Chamber', url: 'https://www.ahcnm.org/' }
+    ],
     documentHints: ['Membership certificate']
   },
   {

@@ -12,8 +12,16 @@ import {
   Check,
   X,
   Shield,
-  Hash
+  Hash,
+  Settings,
+  Trophy,
+  Gamepad2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
+import { useBusiness } from '../context/BusinessContext';
+import { updateBusiness } from '../lib/api';
+import { isSoundMuted, setSoundMuted, getSoundVolume, setSoundVolume, playNotificationSound } from '../lib/sounds';
 
 const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
 
@@ -65,6 +73,7 @@ const IDENTIFIER_TYPES = [
 ];
 
 export default function Library() {
+  const { currentBusiness, refreshBusinesses } = useBusiness();
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
   const [identifiers, setIdentifiers] = useState<BusinessIdentifier[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -75,6 +84,9 @@ export default function Library() {
   const [revealedValues, setRevealedValues] = useState<Record<number, string>>({});
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [showAddIdentifier, setShowAddIdentifier] = useState(false);
+  const [savingGamification, setSavingGamification] = useState(false);
+  const [soundMuted, setSoundMutedState] = useState(() => isSoundMuted());
+  const [soundVolume, setSoundVolumeState] = useState(() => Math.round(getSoundVolume() * 100));
   const [newIdentifier, setNewIdentifier] = useState({
     identifier_type: 'ein',
     label: '',
@@ -86,6 +98,48 @@ export default function Library() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const toggleGamification = async () => {
+    if (!currentBusiness) return;
+    setSavingGamification(true);
+    try {
+      await updateBusiness(currentBusiness.id, {
+        gamification_enabled: !currentBusiness.gamification_enabled
+      });
+      await refreshBusinesses();
+    } catch (error) {
+      console.error('Failed to toggle gamification:', error);
+    } finally {
+      setSavingGamification(false);
+    }
+  };
+
+  const toggleSoundMute = () => {
+    const newMuted = !soundMuted;
+    setSoundMuted(newMuted);
+    setSoundMutedState(newMuted);
+    // Play a preview sound when unmuting
+    if (!newMuted) {
+      setTimeout(() => playNotificationSound(), 100);
+    }
+  };
+
+  const handleVolumeChange = (newVolume: number) => {
+    setSoundVolumeState(newVolume);
+    setSoundVolume(newVolume / 100);
+    // Unmute if adjusting volume
+    if (soundMuted && newVolume > 0) {
+      setSoundMuted(false);
+      setSoundMutedState(false);
+    }
+  };
+
+  const handleVolumeChangeEnd = () => {
+    // Play preview sound when user releases slider
+    if (!soundMuted && soundVolume > 0) {
+      playNotificationSound();
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -582,7 +636,7 @@ export default function Library() {
       </div>
 
       {/* Formation Documents */}
-      <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">
+      <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6 mb-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-500/10 flex items-center justify-center">
@@ -632,6 +686,158 @@ export default function Library() {
           </div>
         )}
       </div>
+
+      {/* Business Settings */}
+      {currentBusiness && (
+        <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Business Settings</h2>
+              <p className="text-sm text-gray-500">Preferences for {currentBusiness.name}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Gamification Toggle */}
+            <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  currentBusiness.gamification_enabled
+                    ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20'
+                    : 'bg-white/5'
+                }`}>
+                  {currentBusiness.gamification_enabled ? (
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                  ) : (
+                    <Gamepad2 className="w-5 h-5 text-gray-500" />
+                  )}
+                </div>
+                <div>
+                  <div className="font-medium text-white">Gamification</div>
+                  <div className="text-sm text-gray-400">
+                    {currentBusiness.gamification_enabled
+                      ? 'XP, levels, streaks, and quests are enabled'
+                      : 'Gamification features are disabled'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={toggleGamification}
+                disabled={savingGamification}
+                className={`relative w-14 h-8 rounded-full transition-colors ${
+                  currentBusiness.gamification_enabled
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                    : 'bg-white/10'
+                } ${savingGamification ? 'opacity-50' : ''}`}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                    currentBusiness.gamification_enabled ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Sound Effects with Volume Control */}
+            <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={toggleSoundMute}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                      !soundMuted && soundVolume > 0
+                        ? 'bg-gradient-to-br from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30'
+                        : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    {!soundMuted && soundVolume > 0 ? (
+                      <Volume2 className="w-5 h-5 text-cyan-400" />
+                    ) : (
+                      <VolumeX className="w-5 h-5 text-gray-500" />
+                    )}
+                  </button>
+                  <div>
+                    <div className="font-medium text-white">Sound Effects</div>
+                    <div className="text-sm text-gray-400">
+                      {soundMuted || soundVolume === 0
+                        ? 'Muted'
+                        : `Volume: ${soundVolume}%`}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Max 45%
+                </div>
+              </div>
+
+              {/* Volume Slider */}
+              <div className="flex items-center gap-3">
+                <VolumeX className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <input
+                  type="range"
+                  min="0"
+                  max="45"
+                  value={soundMuted ? 0 : soundVolume}
+                  onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
+                  onMouseUp={handleVolumeChangeEnd}
+                  onTouchEnd={handleVolumeChangeEnd}
+                  className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer
+                    [&::-webkit-slider-thumb]:appearance-none
+                    [&::-webkit-slider-thumb]:w-4
+                    [&::-webkit-slider-thumb]:h-4
+                    [&::-webkit-slider-thumb]:rounded-full
+                    [&::-webkit-slider-thumb]:bg-gradient-to-r
+                    [&::-webkit-slider-thumb]:from-cyan-400
+                    [&::-webkit-slider-thumb]:to-blue-400
+                    [&::-webkit-slider-thumb]:shadow-lg
+                    [&::-webkit-slider-thumb]:cursor-pointer
+                    [&::-moz-range-thumb]:w-4
+                    [&::-moz-range-thumb]:h-4
+                    [&::-moz-range-thumb]:rounded-full
+                    [&::-moz-range-thumb]:bg-gradient-to-r
+                    [&::-moz-range-thumb]:from-cyan-400
+                    [&::-moz-range-thumb]:to-blue-400
+                    [&::-moz-range-thumb]:border-0
+                    [&::-moz-range-thumb]:cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, rgb(34, 211, 238) 0%, rgb(59, 130, 246) ${((soundMuted ? 0 : soundVolume) / 45) * 100}%, rgba(255,255,255,0.1) ${((soundMuted ? 0 : soundVolume) / 45) * 100}%)`
+                  }}
+                />
+                <Volume2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Non-intrusive sounds for victories, achievements, level-ups, and task completions
+              </p>
+            </div>
+
+            {/* Current Gamification Stats (when enabled) */}
+            {currentBusiness.gamification_enabled && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-amber-400">{currentBusiness.level}</div>
+                  <div className="text-xs text-gray-500">Level</div>
+                </div>
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-cyan-400">{currentBusiness.xp.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500">Total XP</div>
+                </div>
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-orange-400">{currentBusiness.current_streak}</div>
+                  <div className="text-xs text-gray-500">Day Streak</div>
+                </div>
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-violet-400">{currentBusiness.longest_streak}</div>
+                  <div className="text-xs text-gray-500">Best Streak</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

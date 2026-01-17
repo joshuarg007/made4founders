@@ -19,11 +19,8 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-shadow">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
-              <span className="text-xl font-bold text-white">Made4Founders</span>
+            <Link to="/" className="flex items-center gap-2 group">
+              <img src="/logo.png" alt="Made4Founders" className="h-9 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -119,11 +116,8 @@ export default function PublicLayout() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
-              <Link to="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">M</span>
-                </div>
-                <span className="text-xl font-bold text-white">Made4Founders</span>
+              <Link to="/" className="flex items-center gap-2">
+                <img src="/logo.png" alt="Made4Founders" className="h-9 w-auto" />
               </Link>
               <p className="mt-4 text-sm text-gray-500">
                 The command center for ambitious founders.

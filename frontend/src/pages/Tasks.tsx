@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, Link2, Copy, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { playXPSound } from '../lib/sounds';
 import {
   getBoards, getTasks, createTask, updateTask, deleteTask, completeTask,
   moveTask, assignTask, getUsersList, getTaskComments,
@@ -230,6 +231,7 @@ export default function Tasks() {
 
     try {
       await completeTask(taskId);
+      playXPSound(); // Play XP gain sound
       loadTasks();
       if (selectedTask?.id === taskId) {
         const updated = await getTasks({ board_id: currentBoard!.id, include_completed: true });

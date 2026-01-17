@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
+import { useBusiness } from '../context/BusinessContext';
+import { playLevelUpSound, playQuestCompleteSound, playXPSound } from '../lib/sounds';
 import {
   AlertTriangle,
   Calendar,
@@ -17,6 +20,11 @@ import {
   Sparkles,
   User,
   ArrowRight,
+  Trophy,
+  Flame,
+  Gift,
+  Star,
+  Zap,
 } from 'lucide-react';
 import {
   getDailyBrief,
@@ -24,8 +32,10 @@ import {
   completeTaskFromBrief,
   recordContactTouch,
   getChecklistBulk,
+  getBusinessQuests,
+  claimQuestReward,
 } from '../lib/api';
-import type { DailyBrief as DailyBriefType, DailyBriefItem, ChecklistProgress } from '../lib/api';
+import type { DailyBrief as DailyBriefType, DailyBriefItem, ChecklistProgress, BusinessQuest } from '../lib/api';
 
 // Key required checklist items to show when daily brief is empty
 // Urgency: 'critical' = must do first, 'high' = important, 'medium' = should do soon
@@ -66,10 +76,56 @@ const getChecklistUrgencyLabel = (urgency: 'critical' | 'high' | 'medium') => {
 
 export default function DailyBrief() {
   const { user } = useAuth();
+  const { currentBusiness, refreshBusinesses } = useBusiness();
   const [brief, setBrief] = useState<DailyBriefType | null>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<number | null>(null);
   const [checklistProgress, setChecklistProgress] = useState<Record<string, ChecklistProgress>>({});
+  const [quests, setQuests] = useState<BusinessQuest[]>([]);
+  const [claimingQuest, setClaimingQuest] = useState<number | null>(null);
+  const [questCelebration, setQuestCelebration] = useState<{ xp: number; message: string } | null>(null);
+  const [levelUpCelebration, setLevelUpCelebration] = useState<{ level: number } | null>(null);
+  const previousLevelRef = useRef<number | null>(null);
+
+  // Detect level up
+  useEffect(() => {
+    if (!currentBusiness) return;
+
+    const currentLevel = currentBusiness.level;
+    const previousLevel = previousLevelRef.current;
+
+    // Only trigger if we had a previous level and it increased
+    if (previousLevel !== null && currentLevel > previousLevel) {
+      // Level up!
+      setLevelUpCelebration({ level: currentLevel });
+      playLevelUpSound();
+
+      // Fire celebratory confetti
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          return;
+        }
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: Math.random(), y: Math.random() - 0.2 },
+          colors: ['#ffd700', '#ffb700', '#ff8c00', '#00ff88', '#00d4ff', '#a855f7'],
+        });
+      }, 250);
+
+      // Hide celebration after 4 seconds
+      setTimeout(() => setLevelUpCelebration(null), 4000);
+    }
+
+    previousLevelRef.current = currentLevel;
+  }, [currentBusiness?.level]);
 
   const loadBrief = async () => {
     setLoading(true);
@@ -87,9 +143,41 @@ export default function DailyBrief() {
     }
   };
 
+  const loadQuests = async () => {
+    if (!currentBusiness) return;
+    try {
+      const questsData = await getBusinessQuests(currentBusiness.id);
+      setQuests(questsData);
+    } catch (err) {
+      console.error('Failed to load quests:', err);
+    }
+  };
+
   useEffect(() => {
     loadBrief();
   }, []);
+
+  useEffect(() => {
+    loadQuests();
+  }, [currentBusiness?.id]);
+
+  const handleClaimQuest = async (questId: number) => {
+    if (!currentBusiness) return;
+    setClaimingQuest(questId);
+    try {
+      const result = await claimQuestReward(currentBusiness.id, questId);
+      setQuestCelebration({ xp: result.xp_awarded, message: result.message });
+      playQuestCompleteSound(); // Play quest complete sound
+      await loadQuests();
+      await refreshBusinesses();
+      // Auto-hide celebration after 3 seconds
+      setTimeout(() => setQuestCelebration(null), 3000);
+    } catch (err) {
+      console.error('Failed to claim quest:', err);
+    } finally {
+      setClaimingQuest(null);
+    }
+  };
 
   const handleCompleteDeadline = async (id: number) => {
     setCompleting(id);
@@ -107,6 +195,7 @@ export default function DailyBrief() {
     setCompleting(id);
     try {
       await completeTaskFromBrief(id);
+      playXPSound(); // Play XP gain sound
       await loadBrief();
     } catch (err) {
       console.error('Failed to complete task:', err);
@@ -350,6 +439,193 @@ export default function DailyBrief() {
           <RefreshCw className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Quest Celebration Toast */}
+      {questCelebration && (
+        <div className="fixed top-4 right-4 z-50 animate-bounce">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-2xl">
+            <Star className="w-6 h-6" />
+            <div>
+              <p className="font-bold">+{questCelebration.xp} XP</p>
+              <p className="text-sm opacity-90">{questCelebration.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Level Up Celebration Modal */}
+      {levelUpCelebration && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="relative">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 blur-3xl opacity-40 animate-pulse" />
+
+            <div className="relative bg-gradient-to-b from-[#1a1d24] to-[#0f1115] rounded-2xl border border-purple-500/50 w-full max-w-sm overflow-hidden shadow-2xl shadow-purple-500/20">
+              {/* Animated sparkles */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-4 left-8 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+                <div className="absolute top-12 right-12 w-1.5 h-1.5 bg-purple-400 rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
+                <div className="absolute bottom-16 left-16 w-1 h-1 bg-cyan-400 rounded-full animate-ping" style={{ animationDelay: '0.6s' }} />
+                <div className="absolute bottom-8 right-8 w-2 h-2 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: '0.9s' }} />
+              </div>
+
+              <div className="relative p-8 text-center">
+                {/* Level badge with glow */}
+                <div className="relative inline-block mb-4">
+                  <div className="absolute inset-0 bg-purple-400 rounded-full blur-xl opacity-50 animate-pulse" />
+                  <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/50">
+                    <div className="text-center">
+                      <div className="text-3xl font-black text-white">{levelUpCelebration.level}</div>
+                      <div className="text-[10px] font-bold text-white/80 uppercase tracking-wider">Level</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Level up text */}
+                <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-pink-400 mb-2">
+                  LEVEL UP!
+                </h2>
+                <p className="text-gray-400 mb-6">You've reached a new milestone!</p>
+
+                {/* Close button */}
+                <button
+                  onClick={() => setLevelUpCelebration(null)}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
+                >
+                  Awesome!
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Daily Quests Section */}
+      {currentBusiness && quests.length > 0 && (
+        <section className="rounded-2xl bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-500/20 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Daily Quests</h2>
+                <p className="text-sm text-gray-400">Complete quests to earn bonus XP</p>
+              </div>
+            </div>
+            {currentBusiness && (
+              <div className="flex items-center gap-2 text-sm">
+                <Flame className="w-4 h-4 text-orange-400" />
+                <span className="text-orange-400 font-medium">{currentBusiness.current_streak} day streak</span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {quests.map((bq) => {
+              const progress = Math.min(100, (bq.current_count / bq.target_count) * 100);
+              const isComplete = bq.is_completed;
+              const isClaimed = bq.is_claimed;
+
+              const getDifficultyColor = (difficulty: string) => {
+                switch (difficulty) {
+                  case 'easy': return 'text-emerald-400 bg-emerald-500/20';
+                  case 'medium': return 'text-amber-400 bg-amber-500/20';
+                  case 'hard': return 'text-red-400 bg-red-500/20';
+                  default: return 'text-gray-400 bg-gray-500/20';
+                }
+              };
+
+              const getQuestTypeColor = (type: string) => {
+                switch (type) {
+                  case 'daily': return 'border-cyan-500/30 bg-cyan-500/10';
+                  case 'weekly': return 'border-violet-500/30 bg-violet-500/10';
+                  case 'achievement': return 'border-amber-500/30 bg-amber-500/10';
+                  default: return 'border-white/10 bg-white/5';
+                }
+              };
+
+              return (
+                <div
+                  key={bq.id}
+                  className={`relative p-4 rounded-xl border transition ${
+                    isClaimed
+                      ? 'border-white/5 bg-white/5 opacity-60'
+                      : isComplete
+                      ? 'border-emerald-500/30 bg-emerald-500/10'
+                      : getQuestTypeColor(bq.quest.quest_type)
+                  }`}
+                >
+                  {/* Quest Type Badge */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${getDifficultyColor(bq.quest.difficulty)}`}>
+                      {bq.quest.quest_type}
+                    </span>
+                    <span className="text-xs text-amber-400 font-medium">+{bq.xp_reward} XP</span>
+                  </div>
+
+                  {/* Quest Icon & Name */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <span className="text-2xl">{bq.quest.icon || '🎯'}</span>
+                    <div>
+                      <h3 className="font-medium text-white">{bq.quest.name}</h3>
+                      <p className="text-xs text-gray-400">{bq.quest.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-gray-400">Progress</span>
+                      <span className={isComplete ? 'text-emerald-400' : 'text-gray-400'}>
+                        {bq.current_count}/{bq.target_count}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${
+                          isComplete
+                            ? 'bg-gradient-to-r from-emerald-500 to-cyan-500'
+                            : 'bg-gradient-to-r from-amber-500 to-orange-500'
+                        }`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Claim Button */}
+                  {isComplete && !isClaimed ? (
+                    <button
+                      onClick={() => handleClaimQuest(bq.id)}
+                      disabled={claimingQuest === bq.id}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium text-sm hover:from-amber-600 hover:to-orange-600 transition disabled:opacity-50"
+                    >
+                      {claimingQuest === bq.id ? (
+                        'Claiming...'
+                      ) : (
+                        <>
+                          <Gift className="w-4 h-4" />
+                          Claim Reward
+                        </>
+                      )}
+                    </button>
+                  ) : isClaimed ? (
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Claimed
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <Zap className="w-4 h-4" />
+                      In Progress
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* All Clear State - Show incomplete checklist items or truly all caught up */}
       {hasNothing && (

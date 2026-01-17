@@ -3,6 +3,333 @@ from typing import Optional, List, Literal
 from datetime import datetime, date
 
 
+# ============ Business Schemas (Fractal Hierarchy) ============
+
+class BusinessBase(BaseModel):
+    name: str
+    slug: Optional[str] = None
+    business_type: str = "other"
+    description: Optional[str] = None
+    color: Optional[str] = None
+    emoji: Optional[str] = None
+    parent_id: Optional[int] = None
+    is_active: bool = True
+
+
+class BusinessCreate(BusinessBase):
+    pass
+
+
+class BusinessUpdate(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    business_type: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+    emoji: Optional[str] = None
+    parent_id: Optional[int] = None
+    is_active: Optional[bool] = None
+    is_archived: Optional[bool] = None
+    gamification_enabled: Optional[bool] = None
+
+
+class BusinessResponse(BusinessBase):
+    id: int
+    organization_id: int
+    is_archived: bool
+    # Gamification
+    xp: int
+    level: int
+    current_streak: int
+    longest_streak: int
+    health_score: int
+    health_compliance: int
+    health_financial: int
+    health_operations: int
+    health_growth: int
+    achievements: Optional[List[str]] = None
+    gamification_enabled: bool = True
+    # Challenge stats
+    challenge_wins: int = 0
+    challenge_losses: int = 0
+    challenge_draws: int = 0
+    challenge_win_streak: int = 0
+    best_challenge_win_streak: int = 0
+    titles: Optional[List[str]] = None
+    active_title: Optional[str] = None
+    # Timestamps
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BusinessWithChildren(BusinessResponse):
+    """Business with nested children for tree view"""
+    children: List["BusinessWithChildren"] = []
+
+
+class BusinessSwitchRequest(BaseModel):
+    """Request to switch current business context"""
+    business_id: Optional[int] = None  # None = org-wide view
+
+
+# ============ Quest Schemas ============
+
+class QuestBase(BaseModel):
+    slug: str
+    name: str
+    description: Optional[str] = None
+    quest_type: str = "daily"
+    category: str = "general"
+    target_count: int = 1
+    action_type: str
+    xp_reward: int = 25
+    icon: Optional[str] = None
+    difficulty: str = "easy"
+    min_level: int = 1
+
+
+class QuestCreate(QuestBase):
+    pass
+
+
+class QuestResponse(QuestBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BusinessQuestResponse(BaseModel):
+    """Quest instance assigned to a business"""
+    id: int
+    business_id: int
+    quest_id: int
+    current_count: int
+    target_count: int
+    is_completed: bool
+    is_claimed: bool
+    assigned_date: date
+    expires_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    claimed_at: Optional[datetime] = None
+    xp_reward: int
+    created_at: datetime
+
+    # Nested quest details
+    quest: QuestResponse
+
+    class Config:
+        from_attributes = True
+
+
+class QuestProgressUpdate(BaseModel):
+    """Update quest progress"""
+    increment: int = 1  # How much to increment progress
+
+
+class QuestClaimResponse(BaseModel):
+    """Response when claiming a quest reward"""
+    success: bool
+    xp_awarded: int
+    new_xp: int
+    new_level: int
+    message: str
+
+
+# ============ Achievement Schemas ============
+
+class AchievementBase(BaseModel):
+    slug: str
+    name: str
+    description: Optional[str] = None
+    category: str = "milestones"
+    rarity: str = "common"
+    requirement_type: str
+    requirement_count: int = 1
+    xp_reward: int = 50
+    icon: Optional[str] = None
+    badge_color: Optional[str] = None
+    sort_order: int = 0
+    is_secret: bool = False
+
+
+class AchievementCreate(AchievementBase):
+    pass
+
+
+class AchievementResponse(AchievementBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BusinessAchievementResponse(BaseModel):
+    """Achievement instance for a business"""
+    id: int
+    business_id: int
+    achievement_id: int
+    current_count: int
+    target_count: int
+    is_unlocked: bool
+    unlocked_at: Optional[datetime] = None
+    xp_claimed: bool
+    xp_reward: int
+    created_at: datetime
+    updated_at: datetime
+
+    # Nested achievement details
+    achievement: AchievementResponse
+
+    class Config:
+        from_attributes = True
+
+
+class AchievementClaimResponse(BaseModel):
+    """Response when claiming an achievement reward"""
+    success: bool
+    xp_awarded: int
+    new_xp: int
+    new_level: int
+    message: str
+
+
+# ============ Leaderboard Schemas ============
+
+class LeaderboardEntry(BaseModel):
+    """Single entry in the leaderboard"""
+    rank: int
+    business_id: int
+    business_name: str
+    business_emoji: Optional[str] = None
+    business_color: Optional[str] = None
+    organization_name: str
+    xp: int
+    level: int
+    current_streak: int
+    longest_streak: int
+    achievements_count: int
+
+
+class LeaderboardResponse(BaseModel):
+    """Full leaderboard response"""
+    entries: List[LeaderboardEntry]
+    total_count: int
+    user_rank: Optional[int] = None  # Current user's rank if they're on the list
+
+
+# ============ Challenge Schemas ============
+
+class ChallengeParticipantBrief(BaseModel):
+    """Brief participant info for challenge display"""
+    id: int
+    business_id: int
+    business_name: str
+    business_emoji: Optional[str] = None
+    business_color: Optional[str] = None
+    business_level: int
+    is_creator: bool
+    has_accepted: bool
+    progress: int
+    adjusted_progress: int
+    handicap_percent: int
+    xp_wagered: int
+    final_rank: Optional[int] = None
+    xp_won: int
+    xp_lost: int
+
+
+class ChallengeCreate(BaseModel):
+    """Create a new challenge"""
+    name: str
+    description: Optional[str] = None
+    challenge_type: str  # task_sprint, xp_race, etc.
+    duration: str  # 3_days, 1_week, 2_weeks, 1_month
+    target_count: Optional[int] = None  # Optional: first to reach X wins
+    xp_wager: int = 0  # XP to bet
+    handicap_enabled: bool = True
+    is_public: bool = False
+    max_participants: int = 2  # 2 = head-to-head
+
+
+class ChallengeResponse(BaseModel):
+    """Full challenge response"""
+    id: int
+    name: str
+    description: Optional[str] = None
+    challenge_type: str
+    invite_code: str
+    is_public: bool
+    duration: str
+    status: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    target_count: Optional[int] = None
+    xp_wager: int
+    winner_bonus_xp: int
+    handicap_enabled: bool
+    created_by_id: int
+    winner_id: Optional[int] = None
+    participant_count: int
+    max_participants: int
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+
+    # Nested participants
+    participants: List[ChallengeParticipantBrief] = []
+
+    # Computed fields
+    time_remaining: Optional[str] = None  # "2d 5h 30m"
+    your_progress: Optional[int] = None
+    opponent_progress: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChallengeAcceptRequest(BaseModel):
+    """Accept a challenge invitation"""
+    xp_wager: int = 0  # How much XP to wager
+
+
+class ChallengeJoinByCodeRequest(BaseModel):
+    """Join a challenge using invite code"""
+    invite_code: str
+    xp_wager: int = 0
+
+
+class ChallengeListResponse(BaseModel):
+    """List of challenges"""
+    active: List[ChallengeResponse]
+    pending: List[ChallengeResponse]
+    completed: List[ChallengeResponse]
+    invitations: List[ChallengeResponse]  # Challenges you've been invited to
+
+
+class ChallengeResultResponse(BaseModel):
+    """Result when a challenge completes"""
+    challenge_id: int
+    challenge_name: str
+    winner_id: Optional[int]
+    winner_name: Optional[str]
+    your_rank: int
+    your_progress: int
+    xp_won: int
+    xp_lost: int
+    net_xp: int
+    new_title: Optional[str] = None  # If you earned a new title
+    message: str
+
+
+# ============ Service schemas ============
+
 # Service schemas
 class ServiceBase(BaseModel):
     name: str

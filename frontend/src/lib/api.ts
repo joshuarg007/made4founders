@@ -73,6 +73,340 @@ export interface DashboardStats {
 
 export const getDashboardStats = () => fetchApi<DashboardStats>('/dashboard/stats');
 
+// ============ Businesses (Fractal Hierarchy) ============
+
+export interface Business {
+  id: number;
+  organization_id: number;
+  parent_id: number | null;
+  name: string;
+  slug: string | null;
+  business_type: string;
+  description: string | null;
+  color: string | null;
+  emoji: string | null;
+  is_active: boolean;
+  is_archived: boolean;
+  // Gamification
+  xp: number;
+  level: number;
+  current_streak: number;
+  longest_streak: number;
+  health_score: number;
+  health_compliance: number;
+  health_financial: number;
+  health_operations: number;
+  health_growth: number;
+  achievements: string[] | null;
+  gamification_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessWithChildren extends Business {
+  children: BusinessWithChildren[];
+}
+
+export interface BusinessCreate {
+  name: string;
+  slug?: string;
+  business_type?: string;
+  description?: string;
+  color?: string;
+  emoji?: string;
+  parent_id?: number | null;
+  is_active?: boolean;
+}
+
+export interface BusinessUpdate {
+  name?: string;
+  slug?: string;
+  business_type?: string;
+  description?: string;
+  color?: string;
+  emoji?: string;
+  parent_id?: number | null;
+  is_active?: boolean;
+  is_archived?: boolean;
+}
+
+export const getBusinesses = (includeArchived = false) =>
+  fetchApi<Business[]>(`/businesses?include_archived=${includeArchived}`);
+
+export const getBusinessesTree = (includeArchived = false) =>
+  fetchApi<BusinessWithChildren[]>(`/businesses/tree?include_archived=${includeArchived}`);
+
+export const getCurrentBusiness = () =>
+  fetchApi<Business>('/businesses/current');
+
+export const switchBusiness = (businessId: number | null) =>
+  fetchApi<{ message: string; business_id: number | null }>('/businesses/switch', {
+    method: 'POST',
+    body: JSON.stringify({ business_id: businessId }),
+  });
+
+export const createBusiness = (business: BusinessCreate) =>
+  fetchApi<Business>('/businesses', {
+    method: 'POST',
+    body: JSON.stringify(business),
+  });
+
+export const getBusiness = (id: number) =>
+  fetchApi<Business>(`/businesses/${id}`);
+
+export const updateBusiness = (id: number, business: BusinessUpdate) =>
+  fetchApi<Business>(`/businesses/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(business),
+  });
+
+export const deleteBusiness = (id: number) =>
+  fetchApi<{ message: string; archived?: boolean }>(`/businesses/${id}`, {
+    method: 'DELETE',
+  });
+
+export const addBusinessXP = (id: number, xpAmount: number) =>
+  fetchApi<{ xp: number; level: number; current_streak: number; longest_streak: number }>(
+    `/businesses/${id}/xp?xp_amount=${xpAmount}`,
+    { method: 'POST' }
+  );
+
+// Quests
+export interface Quest {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  quest_type: 'daily' | 'weekly' | 'achievement';
+  category: string;
+  target_count: number;
+  action_type: string;
+  xp_reward: number;
+  icon: string | null;
+  difficulty: 'easy' | 'medium' | 'hard';
+  min_level: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface BusinessQuest {
+  id: number;
+  business_id: number;
+  quest_id: number;
+  current_count: number;
+  target_count: number;
+  is_completed: boolean;
+  is_claimed: boolean;
+  assigned_date: string;
+  expires_at: string | null;
+  completed_at: string | null;
+  claimed_at: string | null;
+  xp_reward: number;
+  created_at: string;
+  quest: Quest;
+}
+
+export interface QuestClaimResponse {
+  success: boolean;
+  xp_awarded: number;
+  new_xp: number;
+  new_level: number;
+  message: string;
+}
+
+export const getBusinessQuests = (businessId: number, includeCompleted = false) =>
+  fetchApi<BusinessQuest[]>(`/businesses/${businessId}/quests?include_completed=${includeCompleted}`);
+
+export const claimQuestReward = (businessId: number, questId: number) =>
+  fetchApi<QuestClaimResponse>(`/businesses/${businessId}/quests/${questId}/claim`, {
+    method: 'POST',
+  });
+
+export const getQuestTemplates = () =>
+  fetchApi<Quest[]>('/quests/templates');
+
+// Achievements
+export interface Achievement {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  requirement_type: string;
+  requirement_count: number;
+  xp_reward: number;
+  icon: string | null;
+  badge_color: string | null;
+  sort_order: number;
+  is_secret: boolean;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface BusinessAchievement {
+  id: number;
+  business_id: number;
+  achievement_id: number;
+  current_count: number;
+  target_count: number;
+  is_unlocked: boolean;
+  unlocked_at: string | null;
+  xp_claimed: boolean;
+  xp_reward: number;
+  created_at: string;
+  updated_at: string;
+  achievement: Achievement;
+}
+
+export interface AchievementClaimResponse {
+  success: boolean;
+  xp_awarded: number;
+  new_xp: number;
+  new_level: number;
+  message: string;
+}
+
+export const getAchievementTemplates = () =>
+  fetchApi<Achievement[]>('/achievements');
+
+export const getBusinessAchievements = (businessId: number) =>
+  fetchApi<BusinessAchievement[]>(`/businesses/${businessId}/achievements`);
+
+export const claimAchievementReward = (businessId: number, achievementId: number) =>
+  fetchApi<AchievementClaimResponse>(`/businesses/${businessId}/achievements/${achievementId}/claim`, {
+    method: 'POST',
+  });
+
+// Leaderboard
+export interface LeaderboardEntry {
+  rank: number;
+  business_id: number;
+  business_name: string;
+  business_emoji: string | null;
+  business_color: string | null;
+  organization_name: string;
+  xp: number;
+  level: number;
+  current_streak: number;
+  longest_streak: number;
+  achievements_count: number;
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  total_count: number;
+  user_rank: number | null;
+}
+
+export const getLeaderboard = (limit = 25) =>
+  fetchApi<LeaderboardResponse>(`/leaderboard?limit=${limit}`);
+
+// Challenges
+export interface ChallengeParticipant {
+  id: number;
+  business_id: number;
+  business_name: string;
+  business_emoji: string | null;
+  business_color: string | null;
+  business_level: number;
+  is_creator: boolean;
+  has_accepted: boolean;
+  progress: number;
+  adjusted_progress: number;
+  handicap_percent: number;
+  xp_wagered: number;
+  final_rank: number | null;
+  xp_won: number;
+  xp_lost: number;
+}
+
+export interface Challenge {
+  id: number;
+  name: string;
+  description: string | null;
+  challenge_type: string;
+  invite_code: string;
+  is_public: boolean;
+  duration: string;
+  status: 'pending' | 'active' | 'completed' | 'cancelled' | 'declined';
+  starts_at: string | null;
+  ends_at: string | null;
+  target_count: number | null;
+  xp_wager: number;
+  winner_bonus_xp: number;
+  handicap_enabled: boolean;
+  created_by_id: number;
+  winner_id: number | null;
+  participant_count: number;
+  max_participants: number;
+  created_at: string;
+  completed_at: string | null;
+  participants: ChallengeParticipant[];
+  time_remaining: string | null;
+  your_progress: number | null;
+  opponent_progress: number | null;
+}
+
+export interface ChallengeListResponse {
+  active: Challenge[];
+  pending: Challenge[];
+  completed: Challenge[];
+  invitations: Challenge[];
+}
+
+export interface ChallengeCreate {
+  name: string;
+  description?: string;
+  challenge_type: string;
+  duration: string;
+  target_count?: number;
+  xp_wager?: number;
+  handicap_enabled?: boolean;
+  is_public?: boolean;
+  max_participants?: number;
+}
+
+export const getChallenges = () =>
+  fetchApi<ChallengeListResponse>('/challenges');
+
+export const getPublicChallenges = () =>
+  fetchApi<Challenge[]>('/challenges/public');
+
+export const getChallenge = (challengeId: number) =>
+  fetchApi<Challenge>(`/challenges/${challengeId}`);
+
+export const getChallengeProgress = (challengeId: number) =>
+  fetchApi<Challenge>(`/challenges/${challengeId}/progress`);
+
+export const createChallenge = (data: ChallengeCreate) =>
+  fetchApi<Challenge>('/challenges', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const joinChallengeByCode = (inviteCode: string, xpWager = 0) =>
+  fetchApi<Challenge>('/challenges/join', {
+    method: 'POST',
+    body: JSON.stringify({ invite_code: inviteCode, xp_wager: xpWager }),
+  });
+
+export const acceptChallenge = (challengeId: number, xpWager = 0) =>
+  fetchApi<Challenge>(`/challenges/${challengeId}/accept`, {
+    method: 'POST',
+    body: JSON.stringify({ xp_wager: xpWager }),
+  });
+
+export const declineChallenge = (challengeId: number) =>
+  fetchApi<{ success: boolean; message: string }>(`/challenges/${challengeId}/decline`, {
+    method: 'POST',
+  });
+
+export const cancelChallenge = (challengeId: number) =>
+  fetchApi<{ success: boolean; message: string }>(`/challenges/${challengeId}`, {
+    method: 'DELETE',
+  });
+
 // OAuth
 export interface OAuthLoginResponse {
   url: string;

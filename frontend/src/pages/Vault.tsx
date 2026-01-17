@@ -18,6 +18,11 @@ import {
   Star,
   List,
   LayoutGrid,
+  ChevronDown,
+  ChevronRight,
+  Globe,
+  StickyNote,
+  KeyRound,
 } from 'lucide-react';
 import {
   getVaultStatus,
@@ -48,6 +53,169 @@ const categories = [
   { value: 'tools', label: 'Tools', icon: '🔧', color: 'violet', border: 'border-l-violet-500', bg: 'bg-violet-500/10', text: 'text-violet-400' },
   { value: 'other', label: 'Other', icon: '📁', color: 'gray', border: 'border-l-gray-500', bg: 'bg-gray-500/10', text: 'text-gray-400' },
 ];
+
+// Brand colors for known services (hex colors)
+const brandColors: Record<string, { bg: string; border: string; text: string; icon?: string }> = {
+  // Cloud & Infrastructure
+  aws: { bg: '#FF9900', border: '#FF9900', text: '#FF9900', icon: 'AWS' },
+  amazon: { bg: '#FF9900', border: '#FF9900', text: '#FF9900', icon: 'AWS' },
+  azure: { bg: '#0078D4', border: '#0078D4', text: '#0078D4', icon: 'Azure' },
+  microsoft: { bg: '#0078D4', border: '#0078D4', text: '#0078D4', icon: 'MS' },
+  google: { bg: '#4285F4', border: '#4285F4', text: '#4285F4', icon: 'G' },
+  gcp: { bg: '#4285F4', border: '#4285F4', text: '#4285F4', icon: 'GCP' },
+  digitalocean: { bg: '#0080FF', border: '#0080FF', text: '#0080FF', icon: 'DO' },
+  cloudflare: { bg: '#F38020', border: '#F38020', text: '#F38020', icon: 'CF' },
+  vercel: { bg: '#000000', border: '#FFFFFF', text: '#FFFFFF', icon: 'V' },
+  netlify: { bg: '#00C7B7', border: '#00C7B7', text: '#00C7B7', icon: 'N' },
+  heroku: { bg: '#430098', border: '#430098', text: '#430098', icon: 'H' },
+
+  // CRM & Marketing
+  hubspot: { bg: '#FF7A59', border: '#FF7A59', text: '#FF7A59', icon: 'HS' },
+  salesforce: { bg: '#00A1E0', border: '#00A1E0', text: '#00A1E0', icon: 'SF' },
+  mailchimp: { bg: '#FFE01B', border: '#FFE01B', text: '#FFE01B', icon: 'MC' },
+  sendgrid: { bg: '#1A82E2', border: '#1A82E2', text: '#1A82E2', icon: 'SG' },
+  mailgun: { bg: '#F06B66', border: '#F06B66', text: '#F06B66', icon: 'MG' },
+  intercom: { bg: '#1F8DED', border: '#1F8DED', text: '#1F8DED', icon: 'IC' },
+  zendesk: { bg: '#03363D', border: '#03363D', text: '#03363D', icon: 'ZD' },
+
+  // Development & Code
+  github: { bg: '#181717', border: '#FFFFFF', text: '#FFFFFF', icon: 'GH' },
+  gitlab: { bg: '#FC6D26', border: '#FC6D26', text: '#FC6D26', icon: 'GL' },
+  bitbucket: { bg: '#0052CC', border: '#0052CC', text: '#0052CC', icon: 'BB' },
+  jira: { bg: '#0052CC', border: '#0052CC', text: '#0052CC', icon: 'J' },
+  atlassian: { bg: '#0052CC', border: '#0052CC', text: '#0052CC', icon: 'A' },
+  npm: { bg: '#CB3837', border: '#CB3837', text: '#CB3837', icon: 'npm' },
+  docker: { bg: '#2496ED', border: '#2496ED', text: '#2496ED', icon: 'D' },
+
+  // Payments & Finance
+  stripe: { bg: '#635BFF', border: '#635BFF', text: '#635BFF', icon: 'S' },
+  paypal: { bg: '#003087', border: '#003087', text: '#003087', icon: 'PP' },
+  square: { bg: '#006AFF', border: '#006AFF', text: '#006AFF', icon: 'Sq' },
+  plaid: { bg: '#111111', border: '#FFFFFF', text: '#FFFFFF', icon: 'P' },
+  quickbooks: { bg: '#2CA01C', border: '#2CA01C', text: '#2CA01C', icon: 'QB' },
+  intuit: { bg: '#2CA01C', border: '#2CA01C', text: '#2CA01C', icon: 'QB' },
+  xero: { bg: '#13B5EA', border: '#13B5EA', text: '#13B5EA', icon: 'X' },
+  freshbooks: { bg: '#0075DD', border: '#0075DD', text: '#0075DD', icon: 'FB' },
+  wave: { bg: '#1C3664', border: '#1C3664', text: '#1C3664', icon: 'W' },
+
+  // Social & Communication
+  slack: { bg: '#4A154B', border: '#4A154B', text: '#4A154B', icon: 'Sl' },
+  discord: { bg: '#5865F2', border: '#5865F2', text: '#5865F2', icon: 'D' },
+  twitter: { bg: '#1DA1F2', border: '#1DA1F2', text: '#1DA1F2', icon: 'X' },
+  x: { bg: '#000000', border: '#FFFFFF', text: '#FFFFFF', icon: 'X' },
+  linkedin: { bg: '#0A66C2', border: '#0A66C2', text: '#0A66C2', icon: 'in' },
+  facebook: { bg: '#1877F2', border: '#1877F2', text: '#1877F2', icon: 'f' },
+  instagram: { bg: '#E4405F', border: '#E4405F', text: '#E4405F', icon: 'IG' },
+  tiktok: { bg: '#000000', border: '#FFFFFF', text: '#FFFFFF', icon: 'TT' },
+  youtube: { bg: '#FF0000', border: '#FF0000', text: '#FF0000', icon: 'YT' },
+  zoom: { bg: '#2D8CFF', border: '#2D8CFF', text: '#2D8CFF', icon: 'Z' },
+  teams: { bg: '#6264A7', border: '#6264A7', text: '#6264A7', icon: 'T' },
+
+  // Productivity & Tools
+  notion: { bg: '#000000', border: '#FFFFFF', text: '#FFFFFF', icon: 'N' },
+  airtable: { bg: '#18BFFF', border: '#18BFFF', text: '#18BFFF', icon: 'AT' },
+  asana: { bg: '#F06A6A', border: '#F06A6A', text: '#F06A6A', icon: 'A' },
+  trello: { bg: '#0052CC', border: '#0052CC', text: '#0052CC', icon: 'T' },
+  monday: { bg: '#FF3D57', border: '#FF3D57', text: '#FF3D57', icon: 'M' },
+  figma: { bg: '#F24E1E', border: '#F24E1E', text: '#F24E1E', icon: 'F' },
+  canva: { bg: '#00C4CC', border: '#00C4CC', text: '#00C4CC', icon: 'C' },
+  dropbox: { bg: '#0061FF', border: '#0061FF', text: '#0061FF', icon: 'DB' },
+
+  // Analytics & Data
+  mixpanel: { bg: '#7856FF', border: '#7856FF', text: '#7856FF', icon: 'MP' },
+  amplitude: { bg: '#1E61CD', border: '#1E61CD', text: '#1E61CD', icon: 'A' },
+  segment: { bg: '#52BD95', border: '#52BD95', text: '#52BD95', icon: 'S' },
+  datadog: { bg: '#632CA6', border: '#632CA6', text: '#632CA6', icon: 'DD' },
+  newrelic: { bg: '#008C99', border: '#008C99', text: '#008C99', icon: 'NR' },
+  sentry: { bg: '#362D59', border: '#362D59', text: '#362D59', icon: 'S' },
+
+  // AI & ML
+  openai: { bg: '#412991', border: '#412991', text: '#412991', icon: 'AI' },
+  anthropic: { bg: '#D4A574', border: '#D4A574', text: '#D4A574', icon: 'A' },
+  claude: { bg: '#D4A574', border: '#D4A574', text: '#D4A574', icon: 'C' },
+
+  // Databases
+  mongodb: { bg: '#47A248', border: '#47A248', text: '#47A248', icon: 'M' },
+  postgres: { bg: '#336791', border: '#336791', text: '#336791', icon: 'PG' },
+  mysql: { bg: '#4479A1', border: '#4479A1', text: '#4479A1', icon: 'My' },
+  redis: { bg: '#DC382D', border: '#DC382D', text: '#DC382D', icon: 'R' },
+  supabase: { bg: '#3ECF8E', border: '#3ECF8E', text: '#3ECF8E', icon: 'SB' },
+  firebase: { bg: '#FFCA28', border: '#FFCA28', text: '#FFCA28', icon: 'F' },
+
+  // Other common services
+  twilio: { bg: '#F22F46', border: '#F22F46', text: '#F22F46', icon: 'T' },
+  auth0: { bg: '#EB5424', border: '#EB5424', text: '#EB5424', icon: 'A0' },
+  okta: { bg: '#007DC1', border: '#007DC1', text: '#007DC1', icon: 'O' },
+  '1password': { bg: '#0094F5', border: '#0094F5', text: '#0094F5', icon: '1P' },
+  lastpass: { bg: '#D32D27', border: '#D32D27', text: '#D32D27', icon: 'LP' },
+  bitwarden: { bg: '#175DDC', border: '#175DDC', text: '#175DDC', icon: 'BW' },
+  godaddy: { bg: '#1BDBDB', border: '#1BDBDB', text: '#1BDBDB', icon: 'GD' },
+  namecheap: { bg: '#DE3723', border: '#DE3723', text: '#DE3723', icon: 'NC' },
+  shopify: { bg: '#7AB55C', border: '#7AB55C', text: '#7AB55C', icon: 'S' },
+  wordpress: { bg: '#21759B', border: '#21759B', text: '#21759B', icon: 'WP' },
+  wix: { bg: '#0C6EFC', border: '#0C6EFC', text: '#0C6EFC', icon: 'W' },
+  webflow: { bg: '#4353FF', border: '#4353FF', text: '#4353FF', icon: 'WF' },
+};
+
+// Fallback contrasting colors for non-branded credentials (rotates through these)
+const contrastColors = [
+  { bg: '#3B82F6', border: '#3B82F6', text: '#3B82F6' },   // Blue
+  { bg: '#10B981', border: '#10B981', text: '#10B981' },   // Emerald
+  { bg: '#8B5CF6', border: '#8B5CF6', text: '#8B5CF6' },   // Violet
+  { bg: '#F59E0B', border: '#F59E0B', text: '#F59E0B' },   // Amber
+  { bg: '#EC4899', border: '#EC4899', text: '#EC4899' },   // Pink
+  { bg: '#06B6D4', border: '#06B6D4', text: '#06B6D4' },   // Cyan
+  { bg: '#EF4444', border: '#EF4444', text: '#EF4444' },   // Red
+  { bg: '#84CC16', border: '#84CC16', text: '#84CC16' },   // Lime
+  { bg: '#F97316', border: '#F97316', text: '#F97316' },   // Orange
+  { bg: '#A855F7', border: '#A855F7', text: '#A855F7' },   // Purple
+  { bg: '#14B8A6', border: '#14B8A6', text: '#14B8A6' },   // Teal
+  { bg: '#6366F1', border: '#6366F1', text: '#6366F1' },   // Indigo
+];
+
+// Detect brand from name or URL
+const detectBrand = (name: string, url?: string | null): { color: typeof brandColors[string]; icon?: string } | null => {
+  const searchText = `${name} ${url || ''}`.toLowerCase();
+
+  for (const [brand, colors] of Object.entries(brandColors)) {
+    if (searchText.includes(brand)) {
+      return { color: colors, icon: colors.icon };
+    }
+  }
+  return null;
+};
+
+// Generate consistent color based on string hash
+const getHashColor = (str: string): typeof contrastColors[0] => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return contrastColors[Math.abs(hash) % contrastColors.length];
+};
+
+// Get credential styling (brand or fallback)
+const getCredentialStyle = (name: string, url?: string | null) => {
+  const brand = detectBrand(name, url);
+  if (brand) {
+    return {
+      borderColor: brand.color.border,
+      bgColor: brand.color.bg,
+      textColor: brand.color.text,
+      icon: brand.icon,
+      isBranded: true,
+    };
+  }
+  const fallback = getHashColor(name);
+  return {
+    borderColor: fallback.border,
+    bgColor: fallback.bg,
+    textColor: fallback.text,
+    icon: null,
+    isBranded: false,
+  };
+};
 
 // Predefined field types for quick adding
 const predefinedFieldTypes = [
@@ -126,6 +294,14 @@ export default function Vault() {
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem('vault-favorites');
     return saved ? JSON.parse(saved) : [];
+  });
+
+  // Collapsible sections in credential details (all collapsed by default for demo safety)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    credentials: false,
+    notes: false,
+    security: false,
+    additional: false,
   });
 
   useEffect(() => {
@@ -248,9 +424,21 @@ export default function Vault() {
     try {
       const credential = await getCredential(id);
       setViewingCredential(credential);
+      setShowPassword(false); // Reset to hidden when viewing a new credential
+      // Reset all sections to collapsed for demo safety
+      setExpandedSections({
+        credentials: false,
+        notes: false,
+        security: false,
+        additional: false,
+      });
     } catch (err) {
       setError('Failed to load credential details');
     }
+  };
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handleEdit = async (id: number) => {
@@ -548,32 +736,47 @@ export default function Vault() {
               <div className="space-y-1">
                 {favoriteCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
+                  const style = getCredentialStyle(cred.name, cred.service_url);
                   return (
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className={`flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group`}
+                      className="flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
+                      style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
-                      <span className="text-xl">{cat.icon}</span>
+                      {/* Brand icon or category icon */}
+                      {style.isBranded && style.icon ? (
+                        <div
+                          className="w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{ backgroundColor: `${style.bgColor}20`, color: style.textColor }}
+                        >
+                          {style.icon}
+                        </div>
+                      ) : (
+                        <span className="text-xl flex-shrink-0">{cat.icon}</span>
+                      )}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-white truncate">{cred.name}</h3>
                         {cred.service_url && (
                           <span className="text-xs text-gray-500 truncate block">
-                            {new URL(cred.service_url).hostname}
+                            {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
                           </span>
                         )}
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${cat.bg} ${cat.text}`}>
+                      <span
+                        className="px-2 py-0.5 rounded text-xs font-medium flex-shrink-0"
+                        style={{ backgroundColor: `${style.bgColor}15`, color: style.textColor }}
+                      >
                         {cat.label}
                       </span>
                       {/* Indicators */}
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
                         {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
                         {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
                         {cred.has_notes && <span title="Has notes"><FileText className="w-3.5 h-3.5 text-gray-500" /></span>}
                       </div>
                       {/* Hover Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
                           className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
@@ -608,28 +811,62 @@ export default function Vault() {
                 })}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {favoriteCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
+                  const style = getCredentialStyle(cred.name, cred.service_url);
                   return (
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className={`p-4 rounded-xl bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group text-center`}
+                      className="p-4 rounded-xl bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group relative overflow-hidden"
+                      style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-2xl">{cat.icon}</span>
-                        <button
-                          onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1 rounded text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
-                        >
-                          <Star className="w-4 h-4 fill-amber-400" />
-                        </button>
+                      {/* Subtle brand gradient overlay */}
+                      <div
+                        className="absolute inset-0 opacity-5 pointer-events-none"
+                        style={{ background: `linear-gradient(135deg, ${style.bgColor} 0%, transparent 50%)` }}
+                      />
+                      <div className="relative">
+                        <div className="flex justify-between items-start mb-3">
+                          {/* Brand icon or category icon */}
+                          {style.isBranded && style.icon ? (
+                            <div
+                              className="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold"
+                              style={{ backgroundColor: `${style.bgColor}20`, color: style.textColor }}
+                            >
+                              {style.icon}
+                            </div>
+                          ) : (
+                            <span className="text-2xl">{cat.icon}</span>
+                          )}
+                          <button
+                            onClick={(e) => toggleFavorite(cred.id, e)}
+                            className="p-1 rounded text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <Star className="w-4 h-4 fill-amber-400" />
+                          </button>
+                        </div>
+                        <h3 className="font-semibold text-white truncate mb-1">{cred.name}</h3>
+                        {cred.service_url && (
+                          <span className="text-xs text-gray-500 truncate block mb-2">
+                            {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
+                          </span>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span
+                            className="px-2 py-0.5 rounded text-xs font-medium"
+                            style={{ backgroundColor: `${style.bgColor}15`, color: style.textColor }}
+                          >
+                            {cat.label}
+                          </span>
+                          {/* Indicators */}
+                          <div className="flex items-center gap-1">
+                            {cred.has_totp && <Shield className="w-3.5 h-3.5 text-violet-400" title="2FA" />}
+                            {cred.has_custom_fields && <Key className="w-3.5 h-3.5 text-cyan-400" title={`${cred.custom_field_count} fields`} />}
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="font-medium text-white text-sm truncate">{cred.name}</h3>
-                      <span className={`inline-block mt-2 px-2 py-0.5 rounded text-xs ${cat.bg} ${cat.text}`}>
-                        {cat.label}
-                      </span>
                     </div>
                   );
                 })}
@@ -651,32 +888,47 @@ export default function Vault() {
               <div className="space-y-1">
                 {regularCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
+                  const style = getCredentialStyle(cred.name, cred.service_url);
                   return (
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className={`flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group`}
+                      className="flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
+                      style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
-                      <span className="text-xl">{cat.icon}</span>
+                      {/* Brand icon or category icon */}
+                      {style.isBranded && style.icon ? (
+                        <div
+                          className="w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{ backgroundColor: `${style.bgColor}20`, color: style.textColor }}
+                        >
+                          {style.icon}
+                        </div>
+                      ) : (
+                        <span className="text-xl flex-shrink-0">{cat.icon}</span>
+                      )}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-white truncate">{cred.name}</h3>
                         {cred.service_url && (
                           <span className="text-xs text-gray-500 truncate block">
-                            {new URL(cred.service_url).hostname}
+                            {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
                           </span>
                         )}
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${cat.bg} ${cat.text}`}>
+                      <span
+                        className="px-2 py-0.5 rounded text-xs font-medium flex-shrink-0"
+                        style={{ backgroundColor: `${style.bgColor}15`, color: style.textColor }}
+                      >
                         {cat.label}
                       </span>
                       {/* Indicators */}
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
                         {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
                         {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
                         {cred.has_notes && <span title="Has notes"><FileText className="w-3.5 h-3.5 text-gray-500" /></span>}
                       </div>
                       {/* Hover Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
                           className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
@@ -711,28 +963,62 @@ export default function Vault() {
                 })}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {regularCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
+                  const style = getCredentialStyle(cred.name, cred.service_url);
                   return (
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className={`p-4 rounded-xl bg-[#1a1d24] border-l-4 ${cat.border} border border-white/5 hover:border-white/20 cursor-pointer transition group text-center`}
+                      className="p-4 rounded-xl bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group relative overflow-hidden"
+                      style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-2xl">{cat.icon}</span>
-                        <button
-                          onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
-                        >
-                          <Star className="w-4 h-4" />
-                        </button>
+                      {/* Subtle brand gradient overlay */}
+                      <div
+                        className="absolute inset-0 opacity-5 pointer-events-none"
+                        style={{ background: `linear-gradient(135deg, ${style.bgColor} 0%, transparent 50%)` }}
+                      />
+                      <div className="relative">
+                        <div className="flex justify-between items-start mb-3">
+                          {/* Brand icon or category icon */}
+                          {style.isBranded && style.icon ? (
+                            <div
+                              className="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold"
+                              style={{ backgroundColor: `${style.bgColor}20`, color: style.textColor }}
+                            >
+                              {style.icon}
+                            </div>
+                          ) : (
+                            <span className="text-2xl">{cat.icon}</span>
+                          )}
+                          <button
+                            onClick={(e) => toggleFavorite(cred.id, e)}
+                            className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <Star className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <h3 className="font-semibold text-white truncate mb-1">{cred.name}</h3>
+                        {cred.service_url && (
+                          <span className="text-xs text-gray-500 truncate block mb-2">
+                            {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
+                          </span>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span
+                            className="px-2 py-0.5 rounded text-xs font-medium"
+                            style={{ backgroundColor: `${style.bgColor}15`, color: style.textColor }}
+                          >
+                            {cat.label}
+                          </span>
+                          {/* Indicators */}
+                          <div className="flex items-center gap-1">
+                            {cred.has_totp && <Shield className="w-3.5 h-3.5 text-violet-400" title="2FA" />}
+                            {cred.has_custom_fields && <Key className="w-3.5 h-3.5 text-cyan-400" title={`${cred.custom_field_count} fields`} />}
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="font-medium text-white text-sm truncate">{cred.name}</h3>
-                      <span className={`inline-block mt-2 px-2 py-0.5 rounded text-xs ${cat.bg} ${cat.text}`}>
-                        {cat.label}
-                      </span>
                     </div>
                   );
                 })}
@@ -785,9 +1071,22 @@ export default function Vault() {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-4">
+              {/* Header - Always visible */}
               <div className="flex items-center gap-4">
-                <span className="text-4xl">{getCategoryIcon(viewingCredential.category)}</span>
+                {(() => {
+                  const style = getCredentialStyle(viewingCredential.name, viewingCredential.service_url);
+                  return style.isBranded && style.icon ? (
+                    <div
+                      className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-bold"
+                      style={{ backgroundColor: `${style.bgColor}20`, color: style.textColor }}
+                    >
+                      {style.icon}
+                    </div>
+                  ) : (
+                    <span className="text-4xl">{getCategoryIcon(viewingCredential.category)}</span>
+                  );
+                })()}
                 <div>
                   <h3 className="text-xl font-bold text-white">{viewingCredential.name}</h3>
                   <span className="text-sm text-gray-500 capitalize">{viewingCredential.category}</span>
@@ -795,140 +1094,220 @@ export default function Vault() {
               </div>
 
               {viewingCredential.service_url && (
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">URL</label>
+                <div className="flex items-center gap-2 text-sm">
+                  <Globe className="w-4 h-4 text-gray-500" />
                   <a
                     href={viewingCredential.service_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-cyan-400 hover:underline"
+                    className="text-cyan-400 hover:underline truncate"
                   >
-                    {viewingCredential.service_url}
+                    {(() => { try { return new URL(viewingCredential.service_url).hostname; } catch { return viewingCredential.service_url; } })()}
                   </a>
                 </div>
               )}
 
-              {viewingCredential.username && (
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Username</label>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono">
-                      {viewingCredential.username}
-                    </code>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(viewingCredential.username!);
-                        setCopiedField('view-username');
-                        setTimeout(() => setCopiedField(null), 2000);
-                      }}
-                      className={`p-2 rounded-lg ${
-                        copiedField === 'view-username' ? 'text-emerald-400' : 'text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {viewingCredential.password && (
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Password</label>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono">
-                      {showPassword ? viewingCredential.password : '••••••••••••'}
-                    </code>
-                    <button
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="p-2 rounded-lg text-gray-400 hover:text-white"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(viewingCredential.password!);
-                        setCopiedField('view-password');
-                        setTimeout(() => setCopiedField(null), 2000);
-                      }}
-                      className={`p-2 rounded-lg ${
-                        copiedField === 'view-password' ? 'text-emerald-400' : 'text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {viewingCredential.notes && (
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Notes</label>
-                  <div className="px-3 py-2 rounded-lg bg-white/5 text-gray-300 whitespace-pre-wrap">
-                    {viewingCredential.notes}
-                  </div>
-                </div>
-              )}
-
-              {viewingCredential.totp_secret && (
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">2FA Secret</label>
-                  <code className="block px-3 py-2 rounded-lg bg-white/5 text-violet-400 font-mono text-sm break-all">
-                    {viewingCredential.totp_secret}
-                  </code>
-                </div>
-              )}
-
-              {/* Custom Fields Display */}
-              {viewingCredential.custom_fields && viewingCredential.custom_fields.length > 0 && (
-                <div className="pt-4 border-t border-white/10">
-                  <label className="block text-xs text-gray-500 mb-3">Additional Fields</label>
-                  <div className="space-y-3">
-                    {viewingCredential.custom_fields.map((field, index) => (
-                      <div key={index}>
-                        <label className="block text-xs text-gray-500 mb-1">{field.name}</label>
-                        <div className="flex items-center gap-2">
-                          {field.type === 'secret' ? (
-                            <>
-                              <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm break-all">
-                                {showPassword ? field.value : '••••••••••••'}
-                              </code>
-                              <button
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="p-2 rounded-lg text-gray-400 hover:text-white"
-                              >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                              </button>
-                            </>
-                          ) : field.type === 'url' ? (
-                            <a
-                              href={field.value}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-cyan-400 hover:underline break-all"
-                            >
-                              {field.value}
-                            </a>
-                          ) : (
-                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm break-all">
-                              {field.value}
+              {/* Login Credentials Section */}
+              {(viewingCredential.username || viewingCredential.password) && (
+                <div className="border border-white/10 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('credentials')}
+                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-400" />
+                      <span className="font-medium text-white text-sm">Login Credentials</span>
+                    </div>
+                    {expandedSections.credentials ? (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                  {expandedSections.credentials && (
+                    <div className="p-3 space-y-3 bg-white/[0.02]">
+                      {viewingCredential.username && (
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Username</label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm">
+                              {showPassword ? viewingCredential.username : '••••••••••••'}
                             </code>
-                          )}
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(field.value);
-                              setCopiedField(`view-custom-${index}`);
-                              setTimeout(() => setCopiedField(null), 2000);
-                            }}
-                            className={`p-2 rounded-lg ${
-                              copiedField === `view-custom-${index}` ? 'text-emerald-400' : 'text-gray-400 hover:text-white'
-                            }`}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
+                            <button
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="p-2 rounded-lg text-gray-400 hover:text-white"
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(viewingCredential.username!);
+                                setCopiedField('view-username');
+                                setTimeout(() => setCopiedField(null), 2000);
+                              }}
+                              className={`p-2 rounded-lg ${
+                                copiedField === 'view-username' ? 'text-emerald-400' : 'text-gray-400 hover:text-white'
+                              }`}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
+                      )}
+                      {viewingCredential.password && (
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Password</label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm">
+                              {showPassword ? viewingCredential.password : '••••••••••••'}
+                            </code>
+                            <button
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="p-2 rounded-lg text-gray-400 hover:text-white"
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(viewingCredential.password!);
+                                setCopiedField('view-password');
+                                setTimeout(() => setCopiedField(null), 2000);
+                              }}
+                              className={`p-2 rounded-lg ${
+                                copiedField === 'view-password' ? 'text-emerald-400' : 'text-gray-400 hover:text-white'
+                              }`}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notes Section */}
+              {viewingCredential.notes && (
+                <div className="border border-white/10 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('notes')}
+                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                  >
+                    <div className="flex items-center gap-2">
+                      <StickyNote className="w-4 h-4 text-amber-400" />
+                      <span className="font-medium text-white text-sm">Notes</span>
+                    </div>
+                    {expandedSections.notes ? (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                  {expandedSections.notes && (
+                    <div className="p-3 bg-white/[0.02]">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-gray-300 whitespace-pre-wrap text-sm">
+                          {showPassword ? viewingCredential.notes : '••••••••••••'}
+                        </div>
+                        <button
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="p-2 rounded-lg text-gray-400 hover:text-white"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Security Section (2FA) */}
+              {viewingCredential.totp_secret && (
+                <div className="border border-white/10 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('security')}
+                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-violet-400" />
+                      <span className="font-medium text-white text-sm">2FA / Security</span>
+                    </div>
+                    {expandedSections.security ? (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                  {expandedSections.security && (
+                    <div className="p-3 bg-white/[0.02]">
+                      <label className="block text-xs text-gray-500 mb-1">TOTP Secret</label>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-violet-400 font-mono text-sm break-all">
+                          {showPassword ? viewingCredential.totp_secret : '••••••••••••'}
+                        </code>
+                        <button
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="p-2 rounded-lg text-gray-400 hover:text-white"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Additional Fields Section */}
+              {viewingCredential.custom_fields && viewingCredential.custom_fields.length > 0 && (
+                <div className="border border-white/10 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('additional')}
+                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                  >
+                    <div className="flex items-center gap-2">
+                      <KeyRound className="w-4 h-4 text-cyan-400" />
+                      <span className="font-medium text-white text-sm">Additional Fields</span>
+                      <span className="text-xs text-gray-500">({viewingCredential.custom_fields.length})</span>
+                    </div>
+                    {expandedSections.additional ? (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                  {expandedSections.additional && (
+                    <div className="p-3 space-y-3 bg-white/[0.02]">
+                      {viewingCredential.custom_fields.map((field, index) => (
+                        <div key={index}>
+                          <label className="block text-xs text-gray-500 mb-1">{field.name}</label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm break-all">
+                              {showPassword ? field.value : '••••••••••••'}
+                            </code>
+                            <button
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="p-2 rounded-lg text-gray-400 hover:text-white"
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(field.value);
+                                setCopiedField(`view-custom-${index}`);
+                                setTimeout(() => setCopiedField(null), 2000);
+                              }}
+                              className={`p-2 rounded-lg ${
+                                copiedField === `view-custom-${index}` ? 'text-emerald-400' : 'text-gray-400 hover:text-white'
+                              }`}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
