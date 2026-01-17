@@ -9,7 +9,17 @@ services:
     environment:
       - DATABASE_URL=sqlite:///./data/made4founders.db
       - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
+      - APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-changeme-in-production}
       - CORS_ORIGINS=https://made4founders.com
+      - FRONTEND_URL=https://made4founders.com
+      # Google OAuth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=https://made4founders.com/api/auth/google/callback
+      # GitHub OAuth
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_REDIRECT_URI=https://made4founders.com/api/auth/github/callback
     volumes:
       - backend-data:/app/data
       - uploads-data:/app/uploads
