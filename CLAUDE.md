@@ -5,14 +5,17 @@
 ---
 
 ## SESSION STATE (Update before ending each session)
-**Last Updated:** 2026-01-16
+**Last Updated:** 2026-01-17
 
 ### Where We Left Off:
-- Deployed to made4founders.com (AWS Lightsail)
-- Added Social Publisher with mock post previews (Twitter, LinkedIn, Facebook, Instagram)
-- Added ResizableModal component for better UX
-- Fixed drag & drop file upload in Documents page
-- Added accounting OAuth integrations with retry logic and Intuit discovery document
+- Reorganized sidebar into 4 color-coded sections (Command Center, Business, Growth Hub, Operations)
+- Created merged pages (SocialHub, Insights, Finance, Offerings)
+- Enhanced Contacts with additional fields (phone, location, social, birthday, tags)
+- Separated Credential Vault from Finance into its own page
+- Login page improvements: email/password first, OAuth below, password visibility toggle
+- Created Privacy, Terms, and Security legal pages
+- Fixed credential vault custom_fields update bug
+- Added robust .env protection in GitHub Actions deploy workflow
 
 ### Immediate Next Steps:
 - Complete Intuit/QuickBooks app review process
@@ -77,7 +80,7 @@ ssh -i ~/.ssh/LightsailDefaultKey-us-east-2.pem ubuntu@3.150.255.144 "docker cp 
 | Business Library | Knowledge base for business info | Complete |
 | Documents | Secure upload/download, missing file detection | Complete |
 | Services | Track external services and logins | Complete |
-| Contacts | Business contacts management | Complete |
+| Contacts | Business contacts with extended fields (phone, location, social, tags) | Complete |
 | Deadlines | Track important dates with reminders | Complete |
 | Credential Vault | Encrypted password storage (AES-256-GCM) | Complete |
 | Products Offered | Track products/services you sell | Complete |
@@ -126,10 +129,14 @@ ssh -i ~/.ssh/LightsailDefaultKey-us-east-2.pem ubuntu@3.150.255.144 "docker cp 
 ## API Endpoints Summary
 
 ### Auth
-- `POST /api/auth/login` - Login
+- `POST /api/auth/login` - Login with email/password
 - `POST /api/auth/logout` - Logout
 - `POST /api/auth/refresh` - Refresh token
 - `GET /api/auth/me` - Get current user
+- `GET /api/auth/google/login` - Get Google OAuth URL
+- `GET /api/auth/google/callback` - Google OAuth callback
+- `GET /api/auth/github/login` - Get GitHub OAuth URL
+- `GET /api/auth/github/callback` - GitHub OAuth callback
 
 ### Documents (Secure)
 - `GET /api/documents` - List (includes file_exists status)
@@ -163,12 +170,25 @@ COOKIE_SAMESITE=strict
 CORS_ORIGINS=https://made4founders.com
 ```
 
+### OAuth (Required for social login)
+```bash
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+```
+
 ### Optional
 ```bash
 ACCESS_TOKEN_EXPIRE_MINUTES=15
 REFRESH_TOKEN_EXPIRE_DAYS=7
 COOKIE_DOMAIN=.made4founders.com
 ```
+
+### OAuth Callback URLs
+Configure these in your OAuth provider settings:
+- **Google**: `https://made4founders.com/api/auth/google/callback`
+- **GitHub**: `https://made4founders.com/api/auth/github/callback`
 
 ---
 
@@ -195,6 +215,7 @@ made4founders/
 │   ├── app/
 │   │   ├── main.py           # FastAPI app + all routes
 │   │   ├── auth.py           # Auth routes and dependencies
+│   │   ├── oauth.py          # OAuth provider integrations
 │   │   ├── security.py       # JWT, password hashing
 │   │   ├── vault.py          # AES-256-GCM encryption
 │   │   ├── security_middleware.py  # Headers, rate limiting
@@ -205,13 +226,26 @@ made4founders/
 │   └── uploads/              # Uploaded files (not in git)
 ├── frontend/
 │   ├── src/
-│   │   ├── pages/            # React pages
-│   │   ├── components/       # Shared components
+│   │   ├── pages/
+│   │   │   ├── DailyBrief.tsx
+│   │   │   ├── SocialHub.tsx      # Marketing + Branding
+│   │   │   ├── Insights.tsx       # Analytics + Metrics
+│   │   │   ├── Finance.tsx        # Banking wrapper
+│   │   │   ├── Offerings.tsx      # Products + Services
+│   │   │   ├── Vault.tsx          # Credential Vault
+│   │   │   ├── Login.tsx          # Login with OAuth
+│   │   │   └── public/            # Public pages (Privacy, Terms, Security)
+│   │   ├── components/
+│   │   │   ├── Layout.tsx         # Sidebar with 4 sections
+│   │   │   ├── PublicLayout.tsx   # Marketing site layout
+│   │   │   ├── SocialPostMockups.tsx  # Social post previews
+│   │   │   └── ResizableModal.tsx
 │   │   ├── context/          # Auth context
 │   │   └── lib/api.ts        # API client
 │   └── package.json
 ├── docker-compose.yml
-├── .github/workflows/        # CI/CD
+├── .github/workflows/
+│   └── deploy.yml            # CI/CD with .env protection
 └── CLAUDE.md                 # This file
 ```
 
@@ -261,6 +295,48 @@ Features:
 ---
 
 ## Recent Changes Log
+
+### 2026-01-17
+- **Sidebar Reorganization**
+  - 4 color-coded sections: Command Center (cyan), Business (blue), Growth Hub (purple), Operations (emerald)
+  - Collapsible sections with state persistence in localStorage
+  - Section header colors always visible, menu hover matches section color
+
+- **Page Consolidation**
+  - Created SocialHub.tsx (merged Marketing + Branding)
+  - Created Insights.tsx (merged Analytics + Metrics views)
+  - Created Finance.tsx (Banking page wrapper)
+  - Created Offerings.tsx (merged Products Offered/Used + Services)
+  - Separated Credential Vault into its own page in Business section
+
+- **Login Page Improvements**
+  - Email/password form first, OAuth buttons below
+  - Password visibility toggle (eye icon)
+  - Proper autocomplete attributes for browser password save
+  - Fixed: browsers now prompt to save passwords
+
+- **Legal Pages**
+  - Created Privacy.tsx (/privacy)
+  - Created Terms.tsx (/terms)
+  - Created Security.tsx (/security)
+  - Updated PublicLayout footer with links
+
+- **Contacts Enhancement**
+  - Added fields: secondary_email, mobile_phone, city, state, country, timezone
+  - Added fields: linkedin_url, twitter_handle, birthday, tags
+  - Auto-migration adds columns to existing database
+
+- **CI/CD Improvements**
+  - Robust .env protection in deploy.yml
+  - Backup to ~/.env.made4founders.backup before deploy
+  - Auto-restore from backup if .env missing
+  - Validation of critical OAuth vars (GOOGLE_CLIENT_ID, GITHUB_CLIENT_ID)
+  - Abort deploy on missing env vars
+
+- **Bug Fixes**
+  - Fixed credential vault update: custom_fields already dicts after model_dump()
+  - Fixed NameError: added Date import to SQLAlchemy models
+  - Created organizations for existing users without one
 
 ### 2025-12-17
 - **Security Overhaul**

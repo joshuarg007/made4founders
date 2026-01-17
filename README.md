@@ -19,7 +19,7 @@ Made4Founders is a self-hosted business operations dashboard that consolidates c
 | **Business Library** | Knowledge base for storing business information |
 | **Documents** | Secure file upload/download with missing file detection and re-upload capability |
 | **Services** | Track external services, subscriptions, and logins |
-| **Contacts** | Business contacts management |
+| **Contacts** | Business contacts with extended fields (phone, location, social, birthday, tags) |
 | **Deadlines** | Track important dates with reminders |
 | **Credential Vault** | Encrypted password storage (AES-256-GCM) |
 | **Products Offered** | Track products and services you sell |
@@ -28,6 +28,25 @@ Made4Founders is a self-hosted business operations dashboard that consolidates c
 | **Tasks** | Kanban board with drag-and-drop and time tracking |
 | **Metrics** | Business KPI tracking dashboard |
 | **User Management** | Admin-only user CRUD with role-based access |
+
+### Authentication
+
+- **Email/Password**: Traditional login with password visibility toggle
+- **Google OAuth**: Sign in with Google account
+- **GitHub OAuth**: Sign in with GitHub account
+- **Browser Integration**: Proper autocomplete attributes for password managers
+
+### Public Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Home | `/` | Marketing landing page |
+| Features | `/features` | Feature showcase |
+| Pricing | `/pricing` | Pricing tiers (Starter, Professional, Enterprise) |
+| About | `/about` | Company information |
+| Privacy | `/privacy` | Privacy policy |
+| Terms | `/terms` | Terms of service |
+| Security | `/security` | Security practices |
 
 ### Security Features
 
@@ -147,10 +166,22 @@ COOKIE_DOMAIN=.yourdomain.com
 # CORS
 CORS_ORIGINS=https://yourdomain.com
 
+# OAuth (for social login)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
 # Optional
 ACCESS_TOKEN_EXPIRE_MINUTES=15
 REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
+
+### OAuth Callback URLs
+
+Configure these URLs in your OAuth provider settings:
+- **Google Cloud Console**: `https://yourdomain.com/api/auth/google/callback`
+- **GitHub Developer Settings**: `https://yourdomain.com/api/auth/github/callback`
 
 ### Generate Secure Keys
 
@@ -222,6 +253,10 @@ made4founders/
 | `/api/auth/logout` | POST | Logout and invalidate tokens |
 | `/api/auth/refresh` | POST | Refresh access token |
 | `/api/auth/me` | GET | Get current user info |
+| `/api/auth/google/login` | GET | Initiate Google OAuth flow |
+| `/api/auth/google/callback` | GET | Google OAuth callback |
+| `/api/auth/github/login` | GET | Initiate GitHub OAuth flow |
+| `/api/auth/github/callback` | GET | GitHub OAuth callback |
 
 ### Documents
 
@@ -382,14 +417,22 @@ SQLite database located at `backend/made4founders.db`
 
 ## Roadmap
 
+### Completed
+- [x] OAuth authentication (Google, GitHub)
+- [x] Public marketing pages (Privacy, Terms, Security)
+- [x] Extended contact fields
+- [x] Color-coded navigation sections
+- [x] Browser password manager integration
+
+### Planned
 - [ ] Email notifications for deadlines
 - [ ] Calendar integration
 - [ ] Mobile responsive improvements
 - [ ] Export data (PDF/CSV)
 - [ ] Two-factor authentication (TOTP)
 - [ ] Team collaboration features
-- [ ] API rate limiting dashboard
-- [ ] Backup/restore functionality
+- [ ] Social media OAuth (Twitter, LinkedIn, Facebook)
+- [ ] Stripe payment integration
 
 ---
 

@@ -1,6 +1,6 @@
 # Made4Founders Development Roadmap
 
-> Last Updated: 2026-01-16
+> Last Updated: 2026-01-17
 
 ## Overview
 
@@ -72,22 +72,25 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 - [x] Public/protected route separation (`/` vs `/app`)
 
 ### OAuth Authentication
-- [x] Google OAuth integration (backend)
-- [x] GitHub OAuth integration (backend)
+- [x] Google OAuth integration (backend + frontend)
+- [x] GitHub OAuth integration (backend + frontend)
 - [x] OAuth credentials configured
+- [x] Login page with OAuth buttons
+- [x] Password visibility toggle
+- [x] Browser password manager integration (autocomplete attributes)
 
 ### Business Management
 - [x] Dashboard with daily brief
 - [x] Business Library (company info, identifiers)
 - [x] Getting Started checklist (98 items, 11 categories)
 - [x] Documents with secure upload/download
-- [x] Contacts management
+- [x] Contacts management (extended fields: phone, location, social, birthday, tags)
 - [x] Deadlines tracking
-- [x] Credential Vault (encrypted)
+- [x] Credential Vault (encrypted, standalone page)
 - [x] Services/Products tracking
 - [x] Web Links bookmarks
 - [x] Web Presence management
-- [x] Banking information
+- [x] Banking information (Finance page)
 - [x] Tasks/Kanban board
 
 ### Analytics & Metrics
@@ -110,6 +113,22 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 - [x] Metadata stripping
 - [x] Responsive image sizing
 
+### UI/UX Improvements (2026-01-17)
+- [x] Sidebar reorganization (4 color-coded sections)
+- [x] Collapsible navigation sections with localStorage persistence
+- [x] Section hover colors matching section theme
+- [x] Privacy policy page (/privacy)
+- [x] Terms of service page (/terms)
+- [x] Security practices page (/security)
+- [x] Login page reorganization (email/password first, OAuth below)
+
+### CI/CD Improvements (2026-01-17)
+- [x] Robust .env protection in GitHub Actions
+- [x] Automatic .env backup to ~/.env.made4founders.backup
+- [x] Auto-restore from backup on deploy failure
+- [x] Critical OAuth env var validation before deploy
+- [x] Deploy abort on missing environment variables
+
 ---
 
 ## In Progress
@@ -121,11 +140,11 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 - [ ] Move vault sessions to Redis
 - [ ] Move rate limiting to Redis
 
-### Phase 1: OAuth Frontend Integration
-- [ ] Add Google/GitHub login buttons to Login page
-- [ ] Add Google/GitHub signup buttons to Signup page
-- [ ] OAuth error handling and loading states
-- [ ] "Continue with" social buttons styling
+### Phase 1: OAuth Frontend Integration - COMPLETED
+- [x] Add Google/GitHub login buttons to Login page
+- [x] Add Google/GitHub signup buttons to Signup page
+- [x] OAuth error handling and loading states
+- [x] "Continue with" social buttons styling
 
 ### Phase 2: Stripe Checkout Integration
 - [ ] Wire up Stripe checkout on Pricing page
@@ -167,6 +186,17 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 - [ ] API key management for integrations
 - [ ] Custom domain support
 - [ ] White-label options
+
+---
+
+## Bugs Fixed (2026-01-17)
+
+- [x] Credential vault custom_fields update error (dict vs model_dump)
+- [x] SQLAlchemy Date import missing in models.py
+- [x] OAuth env vars lost on Docker restart (now uses --env-file)
+- [x] Users without organizations causing 403 on marketing endpoints
+- [x] Browser not prompting to save passwords (added autocomplete attributes)
+- [x] Dynamic Tailwind hover classes not working (using explicit class names)
 
 ---
 
