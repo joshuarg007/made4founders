@@ -1,16 +1,31 @@
 from typing import Optional, List
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from .database import get_db
 from .models import User
 from .schemas import Token, UserCreate, UserResponse, UserMe, UserAdminCreate, UserAdminUpdate
 from . import security
+from .mfa import verify_mfa_code_or_backup
+from .captcha import verify_captcha, get_captcha_config
 
 router = APIRouter()
+
+
+class MFALoginRequest(BaseModel):
+    mfa_token: str
+    code: str
+
+
+class LoginWithCaptchaRequest(BaseModel):
+    username: str
+    password: str
+    captcha_token: Optional[str] = None
 
 # Bearer fallback
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token", auto_error=False)
@@ -72,8 +87,14 @@ def get_current_user_optional(
     return user
 
 
-@router.post("/token", response_model=Token)
-def login(
+@router.get("/captcha-config")
+def captcha_config():
+    """Get captcha configuration for the frontend."""
+    return get_captcha_config()
+
+
+@router.post("/token")
+async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
@@ -85,6 +106,105 @@ def login(
             detail="Incorrect email or password"
         )
 
+    # Check if MFA is enabled
+    if user.mfa_enabled and user.mfa_secret:
+        # Create a temporary MFA token (short-lived, 5 minutes)
+        mfa_token = jwt.encode(
+            {
+                "sub": user.email,
+                "typ": "mfa",
+                "exp": datetime.utcnow() + timedelta(minutes=5),
+            },
+            security.SECRET_KEY,
+            algorithm=security.ALGORITHM,
+        )
+        return {
+            "mfa_required": True,
+            "mfa_token": mfa_token,
+            "message": "MFA verification required"
+        }
+
+    access = security.create_access_token(user.email)
+    refresh = security.create_refresh_token(user.email)
+    security.set_auth_cookies(response, access, refresh)
+    return {"access_token": access, "token_type": "bearer"}
+
+
+@router.post("/login")
+async def login_with_captcha(
+    response: Response,
+    request: LoginWithCaptchaRequest,
+    db: Session = Depends(get_db),
+):
+    """Login endpoint with captcha support."""
+    # Verify captcha if enabled
+    if not await verify_captcha(request.captcha_token or ""):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Captcha verification failed"
+        )
+
+    user = authenticate_user(db, request.username, request.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+
+    # Check if MFA is enabled
+    if user.mfa_enabled and user.mfa_secret:
+        mfa_token = jwt.encode(
+            {
+                "sub": user.email,
+                "typ": "mfa",
+                "exp": datetime.utcnow() + timedelta(minutes=5),
+            },
+            security.SECRET_KEY,
+            algorithm=security.ALGORITHM,
+        )
+        return {
+            "mfa_required": True,
+            "mfa_token": mfa_token,
+            "message": "MFA verification required"
+        }
+
+    access = security.create_access_token(user.email)
+    refresh = security.create_refresh_token(user.email)
+    security.set_auth_cookies(response, access, refresh)
+    return {"access_token": access, "token_type": "bearer"}
+
+
+@router.post("/token/mfa")
+def login_with_mfa(
+    response: Response,
+    request: MFALoginRequest,
+    db: Session = Depends(get_db),
+):
+    """Complete login with MFA verification."""
+    # Verify the MFA token
+    try:
+        payload = jwt.decode(
+            request.mfa_token,
+            security.SECRET_KEY,
+            algorithms=[security.ALGORITHM]
+        )
+        if payload.get("typ") != "mfa":
+            raise HTTPException(status_code=401, detail="Invalid MFA token")
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid MFA token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired MFA token")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    # Verify MFA code (TOTP or backup code)
+    if not verify_mfa_code_or_backup(user, request.code, db):
+        raise HTTPException(status_code=401, detail="Invalid MFA code")
+
+    # MFA verified - issue tokens
     access = security.create_access_token(user.email)
     refresh = security.create_refresh_token(user.email)
     security.set_auth_cookies(response, access, refresh)

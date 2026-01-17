@@ -42,6 +42,7 @@ from .social_oauth import router as social_oauth_router
 from .accounting_oauth import router as accounting_router
 from .mailchimp_api import mailchimp_router
 from .templates import router as templates_router
+from .mfa import router as mfa_router
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
     DocumentCreate, DocumentUpdate, DocumentResponse,
@@ -165,6 +166,7 @@ app.include_router(mailchimp_router, prefix="/api/mailchimp", tags=["mailchimp"]
 app.include_router(templates_router, prefix="/api/templates", tags=["templates"])
 app.include_router(social_oauth_router, prefix="/api/social", tags=["social"])
 app.include_router(accounting_router, prefix="/api/accounting", tags=["accounting"])
+app.include_router(mfa_router, prefix="/api/mfa", tags=["mfa"])
 
 # Startup validation
 @app.on_event("startup")
@@ -186,7 +188,7 @@ async def startup_validation():
 
 # ============ Dashboard ============
 @app.get("/api/dashboard/stats", response_model=DashboardStats)
-def get_dashboard_stats(db: Session = Depends(get_db)):
+def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     now = datetime.utcnow()
     thirty_days = now + timedelta(days=30)
 
@@ -212,7 +214,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
 
 # ============ Services ============
 @app.get("/api/services", response_model=List[ServiceResponse])
-def get_services(category: str = None, db: Session = Depends(get_db)):
+def get_services(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(Service)
     if category:
         query = query.filter(Service.category == category)
@@ -220,7 +222,7 @@ def get_services(category: str = None, db: Session = Depends(get_db)):
 
 
 @app.post("/api/services", response_model=ServiceResponse)
-def create_service(service: ServiceCreate, db: Session = Depends(get_db)):
+def create_service(service: ServiceCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_service = Service(**service.model_dump())
     db.add(db_service)
     db.commit()
@@ -229,7 +231,7 @@ def create_service(service: ServiceCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/api/services/{service_id}", response_model=ServiceResponse)
-def get_service(service_id: int, db: Session = Depends(get_db)):
+def get_service(service_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -237,7 +239,7 @@ def get_service(service_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/services/{service_id}", response_model=ServiceResponse)
-def update_service(service_id: int, service: ServiceUpdate, db: Session = Depends(get_db)):
+def update_service(service_id: int, service: ServiceUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_service = db.query(Service).filter(Service.id == service_id).first()
     if not db_service:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -251,7 +253,7 @@ def update_service(service_id: int, service: ServiceUpdate, db: Session = Depend
 
 
 @app.delete("/api/services/{service_id}")
-def delete_service(service_id: int, db: Session = Depends(get_db)):
+def delete_service(service_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -261,7 +263,7 @@ def delete_service(service_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/api/services/{service_id}/visit")
-def record_service_visit(service_id: int, db: Session = Depends(get_db)):
+def record_service_visit(service_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -292,7 +294,7 @@ def check_file_exists(file_path: str) -> bool:
 
 
 @app.get("/api/documents")
-def get_documents(category: str = None, db: Session = Depends(get_db)):
+def get_documents(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(Document)
     if category:
         query = query.filter(Document.category == category)
@@ -320,7 +322,7 @@ def get_documents(category: str = None, db: Session = Depends(get_db)):
 
 
 @app.post("/api/documents", response_model=DocumentResponse)
-def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
+def create_document(document: DocumentCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_document = Document(**document.model_dump())
     db.add(db_document)
     db.commit()
@@ -564,7 +566,7 @@ async def reupload_document_file(
 
 
 @app.get("/api/documents/{document_id}", response_model=DocumentResponse)
-def get_document(document_id: int, db: Session = Depends(get_db)):
+def get_document(document_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     document = db.query(Document).filter(Document.id == document_id).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -572,7 +574,7 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/documents/{document_id}", response_model=DocumentResponse)
-def update_document(document_id: int, document: DocumentUpdate, db: Session = Depends(get_db)):
+def update_document(document_id: int, document: DocumentUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_document = db.query(Document).filter(Document.id == document_id).first()
     if not db_document:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -586,7 +588,7 @@ def update_document(document_id: int, document: DocumentUpdate, db: Session = De
 
 
 @app.delete("/api/documents/{document_id}")
-def delete_document(document_id: int, db: Session = Depends(get_db)):
+def delete_document(document_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     document = db.query(Document).filter(Document.id == document_id).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -597,7 +599,7 @@ def delete_document(document_id: int, db: Session = Depends(get_db)):
 
 # ============ Contacts ============
 @app.get("/api/contacts", response_model=List[ContactResponse])
-def get_contacts(contact_type: str = None, db: Session = Depends(get_db)):
+def get_contacts(contact_type: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(Contact)
     if contact_type:
         query = query.filter(Contact.contact_type == contact_type)
@@ -605,7 +607,7 @@ def get_contacts(contact_type: str = None, db: Session = Depends(get_db)):
 
 
 @app.post("/api/contacts", response_model=ContactResponse)
-def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
+def create_contact(contact: ContactCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_contact = Contact(**contact.model_dump())
     db.add(db_contact)
     db.commit()
@@ -614,7 +616,7 @@ def create_contact(contact: ContactCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/api/contacts/{contact_id}", response_model=ContactResponse)
-def get_contact(contact_id: int, db: Session = Depends(get_db)):
+def get_contact(contact_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
@@ -622,7 +624,7 @@ def get_contact(contact_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/contacts/{contact_id}", response_model=ContactResponse)
-def update_contact(contact_id: int, contact: ContactUpdate, db: Session = Depends(get_db)):
+def update_contact(contact_id: int, contact: ContactUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not db_contact:
         raise HTTPException(status_code=404, detail="Contact not found")
@@ -636,7 +638,7 @@ def update_contact(contact_id: int, contact: ContactUpdate, db: Session = Depend
 
 
 @app.delete("/api/contacts/{contact_id}")
-def delete_contact(contact_id: int, db: Session = Depends(get_db)):
+def delete_contact(contact_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
@@ -650,6 +652,7 @@ def delete_contact(contact_id: int, db: Session = Depends(get_db)):
 def get_deadlines(
     deadline_type: str = None,
     include_completed: bool = False,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     query = db.query(Deadline)
@@ -661,7 +664,7 @@ def get_deadlines(
 
 
 @app.post("/api/deadlines", response_model=DeadlineResponse)
-def create_deadline(deadline: DeadlineCreate, db: Session = Depends(get_db)):
+def create_deadline(deadline: DeadlineCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_deadline = Deadline(**deadline.model_dump())
     db.add(db_deadline)
     db.commit()
@@ -670,7 +673,7 @@ def create_deadline(deadline: DeadlineCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/api/deadlines/{deadline_id}", response_model=DeadlineResponse)
-def get_deadline(deadline_id: int, db: Session = Depends(get_db)):
+def get_deadline(deadline_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
     if not deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
@@ -678,7 +681,7 @@ def get_deadline(deadline_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/deadlines/{deadline_id}", response_model=DeadlineResponse)
-def update_deadline(deadline_id: int, deadline: DeadlineUpdate, db: Session = Depends(get_db)):
+def update_deadline(deadline_id: int, deadline: DeadlineUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
     if not db_deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
@@ -698,7 +701,7 @@ def update_deadline(deadline_id: int, deadline: DeadlineUpdate, db: Session = De
 
 
 @app.delete("/api/deadlines/{deadline_id}")
-def delete_deadline(deadline_id: int, db: Session = Depends(get_db)):
+def delete_deadline(deadline_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
     if not deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
@@ -708,7 +711,7 @@ def delete_deadline(deadline_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/api/deadlines/{deadline_id}/complete")
-def complete_deadline(deadline_id: int, db: Session = Depends(get_db)):
+def complete_deadline(deadline_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
     if not deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
@@ -742,7 +745,7 @@ def health_check():
 
 # ============ Daily Brief ============
 @app.get("/api/daily-brief")
-def get_daily_brief(db: Session = Depends(get_db)):
+def get_daily_brief(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     The Daily Brief - everything a founder needs to know today.
     Categorized by urgency: overdue, today, this_week, heads_up
@@ -921,7 +924,7 @@ def get_daily_brief(db: Session = Depends(get_db)):
 
 # ============ Business Info ============
 @app.get("/api/business-info", response_model=BusinessInfoResponse)
-def get_business_info(db: Session = Depends(get_db)):
+def get_business_info(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     info = db.query(BusinessInfo).first()
     if not info:
         # Create default record if none exists
@@ -933,7 +936,7 @@ def get_business_info(db: Session = Depends(get_db)):
 
 
 @app.put("/api/business-info", response_model=BusinessInfoResponse)
-def update_business_info(info: BusinessInfoUpdate, db: Session = Depends(get_db)):
+def update_business_info(info: BusinessInfoUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_info = db.query(BusinessInfo).first()
     if not db_info:
         db_info = BusinessInfo()
@@ -1188,19 +1191,19 @@ def delete_business_identifier(
 
 # ============ Checklist Progress ============
 @app.get("/api/checklist", response_model=List[ChecklistProgressResponse])
-def get_checklist_progress(db: Session = Depends(get_db)):
+def get_checklist_progress(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.query(ChecklistProgress).all()
 
 
 @app.get("/api/checklist/bulk")
-def get_checklist_progress_bulk(db: Session = Depends(get_db)):
+def get_checklist_progress_bulk(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get all checklist items as a dict keyed by item_id"""
     items = db.query(ChecklistProgress).all()
     return {"items": {item.item_id: ChecklistProgressResponse.model_validate(item).model_dump() for item in items}}
 
 
 @app.get("/api/checklist/{item_id}", response_model=ChecklistProgressResponse)
-def get_checklist_item(item_id: str, db: Session = Depends(get_db)):
+def get_checklist_item(item_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     item = db.query(ChecklistProgress).filter(ChecklistProgress.item_id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Checklist item not found")
@@ -1208,7 +1211,7 @@ def get_checklist_item(item_id: str, db: Session = Depends(get_db)):
 
 
 @app.post("/api/checklist", response_model=ChecklistProgressResponse)
-def create_or_update_checklist_item(progress: ChecklistProgressCreate, db: Session = Depends(get_db)):
+def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Check if item already exists
     existing = db.query(ChecklistProgress).filter(ChecklistProgress.item_id == progress.item_id).first()
 
@@ -1235,7 +1238,7 @@ def create_or_update_checklist_item(progress: ChecklistProgressCreate, db: Sessi
 
 
 @app.patch("/api/checklist/{item_id}", response_model=ChecklistProgressResponse)
-def update_checklist_item(item_id: str, progress: ChecklistProgressUpdate, db: Session = Depends(get_db)):
+def update_checklist_item(item_id: str, progress: ChecklistProgressUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_item = db.query(ChecklistProgress).filter(ChecklistProgress.item_id == item_id).first()
     if not db_item:
         raise HTTPException(status_code=404, detail="Checklist item not found")
@@ -1256,7 +1259,7 @@ def update_checklist_item(item_id: str, progress: ChecklistProgressUpdate, db: S
 
 
 @app.delete("/api/checklist/{item_id}")
-def delete_checklist_item(item_id: str, db: Session = Depends(get_db)):
+def delete_checklist_item(item_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     item = db.query(ChecklistProgress).filter(ChecklistProgress.item_id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Checklist item not found")
@@ -1273,7 +1276,7 @@ def get_session_id():
 
 
 @app.get("/api/vault/status", response_model=VaultStatus)
-def get_vault_status(db: Session = Depends(get_db)):
+def get_vault_status(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Check if vault is set up and unlocked."""
     config = db.query(VaultConfig).first()
     session_id = get_session_id()
@@ -1284,7 +1287,7 @@ def get_vault_status(db: Session = Depends(get_db)):
 
 
 @app.post("/api/vault/setup", response_model=VaultStatus)
-def setup_vault(setup: VaultSetup, db: Session = Depends(get_db)):
+def setup_vault(setup: VaultSetup, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Set up the vault with a master password."""
     existing = db.query(VaultConfig).first()
     if existing:
@@ -1313,7 +1316,7 @@ def setup_vault(setup: VaultSetup, db: Session = Depends(get_db)):
 
 
 @app.post("/api/vault/unlock", response_model=VaultStatus)
-def unlock_vault(unlock: VaultUnlock, db: Session = Depends(get_db)):
+def unlock_vault(unlock: VaultUnlock, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Unlock the vault with the master password."""
     config = db.query(VaultConfig).first()
     if not config:
@@ -1330,7 +1333,7 @@ def unlock_vault(unlock: VaultUnlock, db: Session = Depends(get_db)):
 
 
 @app.post("/api/vault/lock", response_model=VaultStatus)
-def lock_vault(db: Session = Depends(get_db)):
+def lock_vault(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Lock the vault."""
     session_id = get_session_id()
     VaultSession.lock(session_id)
@@ -1339,7 +1342,7 @@ def lock_vault(db: Session = Depends(get_db)):
 
 
 @app.delete("/api/vault/reset")
-def reset_vault(db: Session = Depends(get_db)):
+def reset_vault(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Reset the vault - deletes all credentials and master password. USE WITH CAUTION."""
     # Lock first
     session_id = get_session_id()
@@ -1365,7 +1368,7 @@ def require_vault_unlocked():
 
 
 @app.get("/api/credentials", response_model=List[CredentialMasked])
-def get_credentials(db: Session = Depends(get_db)):
+def get_credentials(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get all credentials (masked - doesn't require unlock)."""
     credentials = db.query(Credential).order_by(Credential.name).all()
     result = []
@@ -1586,7 +1589,7 @@ def copy_credential_field(credential_id: int, field: str, index: int = None, key
 
 # ============ Products Offered ============
 @app.get("/api/products-offered", response_model=List[ProductOfferedResponse])
-def get_products_offered(category: str = None, db: Session = Depends(get_db)):
+def get_products_offered(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(ProductOffered)
     if category:
         query = query.filter(ProductOffered.category == category)
@@ -1594,7 +1597,7 @@ def get_products_offered(category: str = None, db: Session = Depends(get_db)):
 
 
 @app.post("/api/products-offered", response_model=ProductOfferedResponse)
-def create_product_offered(product: ProductOfferedCreate, db: Session = Depends(get_db)):
+def create_product_offered(product: ProductOfferedCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_product = ProductOffered(**product.model_dump())
     db.add(db_product)
     db.commit()
@@ -1603,7 +1606,7 @@ def create_product_offered(product: ProductOfferedCreate, db: Session = Depends(
 
 
 @app.get("/api/products-offered/{product_id}", response_model=ProductOfferedResponse)
-def get_product_offered(product_id: int, db: Session = Depends(get_db)):
+def get_product_offered(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1611,7 +1614,7 @@ def get_product_offered(product_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/products-offered/{product_id}", response_model=ProductOfferedResponse)
-def update_product_offered(product_id: int, product: ProductOfferedUpdate, db: Session = Depends(get_db)):
+def update_product_offered(product_id: int, product: ProductOfferedUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1625,7 +1628,7 @@ def update_product_offered(product_id: int, product: ProductOfferedUpdate, db: S
 
 
 @app.delete("/api/products-offered/{product_id}")
-def delete_product_offered(product_id: int, db: Session = Depends(get_db)):
+def delete_product_offered(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1636,7 +1639,7 @@ def delete_product_offered(product_id: int, db: Session = Depends(get_db)):
 
 # ============ Products Used ============
 @app.get("/api/products-used", response_model=List[ProductUsedResponse])
-def get_products_used(category: str = None, is_paid: bool = None, db: Session = Depends(get_db)):
+def get_products_used(category: str = None, is_paid: bool = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(ProductUsed)
     if category:
         query = query.filter(ProductUsed.category == category)
@@ -1646,7 +1649,7 @@ def get_products_used(category: str = None, is_paid: bool = None, db: Session = 
 
 
 @app.post("/api/products-used", response_model=ProductUsedResponse)
-def create_product_used(product: ProductUsedCreate, db: Session = Depends(get_db)):
+def create_product_used(product: ProductUsedCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_product = ProductUsed(**product.model_dump())
     db.add(db_product)
     db.commit()
@@ -1655,7 +1658,7 @@ def create_product_used(product: ProductUsedCreate, db: Session = Depends(get_db
 
 
 @app.get("/api/products-used/{product_id}", response_model=ProductUsedResponse)
-def get_product_used(product_id: int, db: Session = Depends(get_db)):
+def get_product_used(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1663,7 +1666,7 @@ def get_product_used(product_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/products-used/{product_id}", response_model=ProductUsedResponse)
-def update_product_used(product_id: int, product: ProductUsedUpdate, db: Session = Depends(get_db)):
+def update_product_used(product_id: int, product: ProductUsedUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1677,7 +1680,7 @@ def update_product_used(product_id: int, product: ProductUsedUpdate, db: Session
 
 
 @app.delete("/api/products-used/{product_id}")
-def delete_product_used(product_id: int, db: Session = Depends(get_db)):
+def delete_product_used(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1688,7 +1691,7 @@ def delete_product_used(product_id: int, db: Session = Depends(get_db)):
 
 # ============ Web Links ============
 @app.get("/api/web-links", response_model=List[WebLinkResponse])
-def get_web_links(category: str = None, db: Session = Depends(get_db)):
+def get_web_links(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(WebLink)
     if category:
         query = query.filter(WebLink.category == category)
@@ -1696,7 +1699,7 @@ def get_web_links(category: str = None, db: Session = Depends(get_db)):
 
 
 @app.post("/api/web-links", response_model=WebLinkResponse)
-def create_web_link(link: WebLinkCreate, db: Session = Depends(get_db)):
+def create_web_link(link: WebLinkCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_link = WebLink(**link.model_dump())
     db.add(db_link)
     db.commit()
@@ -1705,7 +1708,7 @@ def create_web_link(link: WebLinkCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/api/web-links/{link_id}", response_model=WebLinkResponse)
-def get_web_link(link_id: int, db: Session = Depends(get_db)):
+def get_web_link(link_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     link = db.query(WebLink).filter(WebLink.id == link_id).first()
     if not link:
         raise HTTPException(status_code=404, detail="Web link not found")
@@ -1713,7 +1716,7 @@ def get_web_link(link_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/web-links/{link_id}", response_model=WebLinkResponse)
-def update_web_link(link_id: int, link: WebLinkUpdate, db: Session = Depends(get_db)):
+def update_web_link(link_id: int, link: WebLinkUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_link = db.query(WebLink).filter(WebLink.id == link_id).first()
     if not db_link:
         raise HTTPException(status_code=404, detail="Web link not found")
@@ -1727,7 +1730,7 @@ def update_web_link(link_id: int, link: WebLinkUpdate, db: Session = Depends(get
 
 
 @app.delete("/api/web-links/{link_id}")
-def delete_web_link(link_id: int, db: Session = Depends(get_db)):
+def delete_web_link(link_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     link = db.query(WebLink).filter(WebLink.id == link_id).first()
     if not link:
         raise HTTPException(status_code=404, detail="Web link not found")
@@ -1737,7 +1740,7 @@ def delete_web_link(link_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/api/web-links/{link_id}/visit")
-def record_web_link_visit(link_id: int, db: Session = Depends(get_db)):
+def record_web_link_visit(link_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     link = db.query(WebLink).filter(WebLink.id == link_id).first()
     if not link:
         raise HTTPException(status_code=404, detail="Web link not found")

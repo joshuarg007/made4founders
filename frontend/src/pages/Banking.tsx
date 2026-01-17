@@ -4,16 +4,17 @@ import {
   Building2,
   Pencil,
   Trash2,
-  X,
   Star,
   ExternalLink,
   Loader2,
   Calculator,
   Check,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import { getBankAccounts, createBankAccount, updateBankAccount, deleteBankAccount, type BankAccount } from '../lib/api';
 import api from '../lib/api';
+import ResizableModal from '../components/ResizableModal';
 
 // Accounting Software Providers
 const ACCOUNTING_PROVIDERS = [
@@ -514,18 +515,16 @@ export default function Banking() {
       )}
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <h2 className="text-lg font-semibold text-white">
-                {editingAccount ? 'Edit Account' : 'Add Account'}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+      <ResizableModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingAccount ? 'Edit Account' : 'Add Account'}
+        initialWidth={520}
+        initialHeight={650}
+        minWidth={400}
+        minHeight={400}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Account Type *</label>
                 <select
@@ -651,9 +650,7 @@ export default function Banking() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </ResizableModal>
     </div>
   );
 }

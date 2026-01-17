@@ -7,6 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user for security
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
 # Copy requirements first for caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -14,12 +17,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create data and uploads directories
-RUN mkdir -p /app/data /app/uploads
+# Create data and uploads directories with proper ownership
+RUN mkdir -p /app/data /app/uploads && chown -R appuser:appgroup /app
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV DATABASE_URL=sqlite:///./data/made4founders.db
+
+# Switch to non-root user
+USER appuser
 
 EXPOSE 8000
 

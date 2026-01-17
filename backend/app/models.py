@@ -782,6 +782,11 @@ class User(Base):
     # Stripe
     stripe_customer_id = Column(String(255), nullable=True)
 
+    # MFA (Two-Factor Authentication)
+    mfa_enabled = Column(Boolean, default=False)
+    mfa_secret = Column(String(255), nullable=True)  # Encrypted TOTP secret
+    mfa_backup_codes = Column(Text, nullable=True)  # JSON array of hashed backup codes
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

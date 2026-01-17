@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Rocket, Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, Shield } from 'lucide-react';
 import { getGoogleLoginUrl, getGitHubLoginUrl } from '../lib/api';
 
 // SVG Icons for OAuth providers
@@ -69,14 +69,23 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center p-4 relative">
+      {/* Back to Home */}
+      <Link
+        to="/"
+        className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-white transition text-sm"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Home
+      </Link>
+
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
-          <Rocket className="w-6 h-6 text-white" />
+          <Shield className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
+          <h1 className="text-2xl font-bold text-white">FounderOS</h1>
           <p className="text-sm text-gray-500">Command Center</p>
         </div>
       </div>
@@ -207,7 +216,7 @@ export default function Login() {
       </div>
 
       <p className="mt-8 text-xs text-gray-500">
-        Your startup command center
+        FounderOS — Your startup command center
       </p>
     </div>
   );

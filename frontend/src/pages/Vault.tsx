@@ -47,6 +47,40 @@ const categories = [
   { value: 'other', label: 'Other', icon: '📁' },
 ];
 
+// Predefined field types for quick adding
+const predefinedFieldTypes = [
+  { value: 'api_key', label: 'API Key', type: 'secret' as const },
+  { value: 'client_id', label: 'Client ID', type: 'text' as const },
+  { value: 'client_secret', label: 'Client Secret', type: 'secret' as const },
+  { value: 'access_key', label: 'Access Key', type: 'secret' as const },
+  { value: 'secret_key', label: 'Secret Access Key', type: 'secret' as const },
+  { value: 'bearer_token', label: 'Bearer Token', type: 'secret' as const },
+  { value: 'oauth_token', label: 'OAuth Token', type: 'secret' as const },
+  { value: 'refresh_token', label: 'Refresh Token', type: 'secret' as const },
+  { value: 'ssh_key', label: 'SSH Private Key', type: 'secret' as const },
+  { value: 'ssh_public', label: 'SSH Public Key', type: 'text' as const },
+  { value: 'webhook_secret', label: 'Webhook Secret', type: 'secret' as const },
+  { value: 'encryption_key', label: 'Encryption Key', type: 'secret' as const },
+  { value: 'signing_key', label: 'Signing Key', type: 'secret' as const },
+  { value: 'private_key', label: 'Private Key', type: 'secret' as const },
+  { value: 'public_key', label: 'Public Key', type: 'text' as const },
+  { value: 'account_id', label: 'Account ID', type: 'text' as const },
+  { value: 'tenant_id', label: 'Tenant ID', type: 'text' as const },
+  { value: 'project_id', label: 'Project ID', type: 'text' as const },
+  { value: 'app_id', label: 'App ID', type: 'text' as const },
+  { value: 'merchant_id', label: 'Merchant ID', type: 'text' as const },
+  { value: 'publishable_key', label: 'Publishable Key', type: 'text' as const },
+  { value: 'secret_api_key', label: 'Secret API Key', type: 'secret' as const },
+  { value: 'test_key', label: 'Test Key', type: 'secret' as const },
+  { value: 'live_key', label: 'Live Key', type: 'secret' as const },
+  { value: 'pin', label: 'PIN', type: 'secret' as const },
+  { value: 'security_question', label: 'Security Question', type: 'text' as const },
+  { value: 'security_answer', label: 'Security Answer', type: 'secret' as const },
+  { value: 'recovery_code', label: 'Recovery Code', type: 'secret' as const },
+  { value: 'backup_code', label: 'Backup Code', type: 'secret' as const },
+  { value: 'custom', label: 'Custom Field', type: 'text' as const },
+];
+
 export default function Vault() {
   const [vaultStatus, setVaultStatus] = useState<VaultStatus | null>(null);
   const [credentials, setCredentials] = useState<CredentialMasked[]>([]);
@@ -546,7 +580,7 @@ export default function Vault() {
             </div>
 
             {/* Indicators */}
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center flex-wrap gap-2 mt-3">
               {cred.has_notes && (
                 <span className="text-xs text-gray-500 flex items-center gap-1">
                   <FileText className="w-3 h-3" />
@@ -557,6 +591,12 @@ export default function Vault() {
                 <span className="text-xs text-violet-400 flex items-center gap-1">
                   <Shield className="w-3 h-3" />
                   2FA
+                </span>
+              )}
+              {cred.has_custom_fields && cred.custom_field_count > 0 && (
+                <span className="text-xs text-cyan-400 flex items-center gap-1">
+                  <Key className="w-3 h-3" />
+                  {cred.custom_field_count} extra field{cred.custom_field_count !== 1 ? 's' : ''}
                 </span>
               )}
             </div>
@@ -684,6 +724,60 @@ export default function Vault() {
                   <code className="block px-3 py-2 rounded-lg bg-white/5 text-violet-400 font-mono text-sm break-all">
                     {viewingCredential.totp_secret}
                   </code>
+                </div>
+              )}
+
+              {/* Custom Fields Display */}
+              {viewingCredential.custom_fields && viewingCredential.custom_fields.length > 0 && (
+                <div className="pt-4 border-t border-white/10">
+                  <label className="block text-xs text-gray-500 mb-3">Additional Fields</label>
+                  <div className="space-y-3">
+                    {viewingCredential.custom_fields.map((field, index) => (
+                      <div key={index}>
+                        <label className="block text-xs text-gray-500 mb-1">{field.name}</label>
+                        <div className="flex items-center gap-2">
+                          {field.type === 'secret' ? (
+                            <>
+                              <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm break-all">
+                                {showPassword ? field.value : '••••••••••••'}
+                              </code>
+                              <button
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="p-2 rounded-lg text-gray-400 hover:text-white"
+                              >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </>
+                          ) : field.type === 'url' ? (
+                            <a
+                              href={field.value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-cyan-400 hover:underline break-all"
+                            >
+                              {field.value}
+                            </a>
+                          ) : (
+                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm break-all">
+                              {field.value}
+                            </code>
+                          )}
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(field.value);
+                              setCopiedField(`view-custom-${index}`);
+                              setTimeout(() => setCopiedField(null), 2000);
+                            }}
+                            className={`p-2 rounded-lg ${
+                              copiedField === `view-custom-${index}` ? 'text-emerald-400' : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -824,20 +918,72 @@ export default function Vault() {
               {/* Custom Fields */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm text-gray-400">Custom Fields</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newField: CustomField = { name: '', value: '', type: 'text' };
-                      setFormData({
-                        ...formData,
-                        custom_fields: [...(formData.custom_fields || []), newField]
-                      });
-                    }}
-                    className="text-xs px-2 py-1 rounded bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" /> Add Field
-                  </button>
+                  <label className="text-sm text-gray-400">Additional Fields</label>
+                  <div className="relative">
+                    <select
+                      className="text-xs px-2 py-1.5 pr-6 rounded bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 appearance-none cursor-pointer border-none focus:outline-none focus:ring-1 focus:ring-violet-500"
+                      value=""
+                      onChange={(e) => {
+                        const fieldType = predefinedFieldTypes.find(f => f.value === e.target.value);
+                        if (fieldType) {
+                          const newField: CustomField = {
+                            name: fieldType.value === 'custom' ? '' : fieldType.label,
+                            value: '',
+                            type: fieldType.type
+                          };
+                          setFormData({
+                            ...formData,
+                            custom_fields: [...(formData.custom_fields || []), newField]
+                          });
+                        }
+                      }}
+                    >
+                      <option value="" className="bg-[#1a1d24] text-white">+ Add Field</option>
+                      <optgroup label="API & Authentication" className="bg-[#1a1d24] text-gray-400">
+                        <option value="api_key" className="bg-[#1a1d24] text-white">API Key</option>
+                        <option value="client_id" className="bg-[#1a1d24] text-white">Client ID</option>
+                        <option value="client_secret" className="bg-[#1a1d24] text-white">Client Secret</option>
+                        <option value="bearer_token" className="bg-[#1a1d24] text-white">Bearer Token</option>
+                        <option value="oauth_token" className="bg-[#1a1d24] text-white">OAuth Token</option>
+                        <option value="refresh_token" className="bg-[#1a1d24] text-white">Refresh Token</option>
+                      </optgroup>
+                      <optgroup label="AWS / Cloud" className="bg-[#1a1d24] text-gray-400">
+                        <option value="access_key" className="bg-[#1a1d24] text-white">Access Key</option>
+                        <option value="secret_key" className="bg-[#1a1d24] text-white">Secret Access Key</option>
+                        <option value="account_id" className="bg-[#1a1d24] text-white">Account ID</option>
+                        <option value="tenant_id" className="bg-[#1a1d24] text-white">Tenant ID</option>
+                        <option value="project_id" className="bg-[#1a1d24] text-white">Project ID</option>
+                      </optgroup>
+                      <optgroup label="Keys & Encryption" className="bg-[#1a1d24] text-gray-400">
+                        <option value="ssh_key" className="bg-[#1a1d24] text-white">SSH Private Key</option>
+                        <option value="ssh_public" className="bg-[#1a1d24] text-white">SSH Public Key</option>
+                        <option value="private_key" className="bg-[#1a1d24] text-white">Private Key</option>
+                        <option value="public_key" className="bg-[#1a1d24] text-white">Public Key</option>
+                        <option value="encryption_key" className="bg-[#1a1d24] text-white">Encryption Key</option>
+                        <option value="signing_key" className="bg-[#1a1d24] text-white">Signing Key</option>
+                      </optgroup>
+                      <optgroup label="Payment / Stripe" className="bg-[#1a1d24] text-gray-400">
+                        <option value="publishable_key" className="bg-[#1a1d24] text-white">Publishable Key</option>
+                        <option value="secret_api_key" className="bg-[#1a1d24] text-white">Secret API Key</option>
+                        <option value="test_key" className="bg-[#1a1d24] text-white">Test Key</option>
+                        <option value="live_key" className="bg-[#1a1d24] text-white">Live Key</option>
+                        <option value="merchant_id" className="bg-[#1a1d24] text-white">Merchant ID</option>
+                        <option value="webhook_secret" className="bg-[#1a1d24] text-white">Webhook Secret</option>
+                      </optgroup>
+                      <optgroup label="Security / Recovery" className="bg-[#1a1d24] text-gray-400">
+                        <option value="pin" className="bg-[#1a1d24] text-white">PIN</option>
+                        <option value="security_question" className="bg-[#1a1d24] text-white">Security Question</option>
+                        <option value="security_answer" className="bg-[#1a1d24] text-white">Security Answer</option>
+                        <option value="recovery_code" className="bg-[#1a1d24] text-white">Recovery Code</option>
+                        <option value="backup_code" className="bg-[#1a1d24] text-white">Backup Code</option>
+                      </optgroup>
+                      <optgroup label="Other" className="bg-[#1a1d24] text-gray-400">
+                        <option value="app_id" className="bg-[#1a1d24] text-white">App ID</option>
+                        <option value="custom" className="bg-[#1a1d24] text-white">Custom Field...</option>
+                      </optgroup>
+                    </select>
+                    <Plus className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-violet-300 pointer-events-none" />
+                  </div>
                 </div>
 
                 {formData.custom_fields && formData.custom_fields.length > 0 && (

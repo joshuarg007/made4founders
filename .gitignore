@@ -1,42 +1,151 @@
+# ===================
 # Dependencies
+# ===================
 node_modules/
 venv/
+.venv/
+env/
+.env/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
 
+# ===================
 # Build outputs
+# ===================
 dist/
 build/
 *.egg-info/
+*.egg
+*.whl
+.eggs/
+*.manifest
+*.spec
 
-# Environment files
+# ===================
+# Environment & Secrets
+# ===================
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+credentials.json
+service-account*.json
 
+# ===================
 # Database
+# ===================
 *.db
+*.db-journal
 *.sqlite
+*.sqlite3
 data/
+*.sql.gz
 
-# IDE
+# ===================
+# Uploaded files
+# ===================
+uploads/
+backend/uploads/
+static/uploads/
+
+# ===================
+# Backups
+# ===================
+backups/
+*.bak
+*.backup
+*.tar.gz
+*.zip
+
+# ===================
+# IDE & Editors
+# ===================
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+.project
+.pydevproject
+.settings/
+*.tmproj
+*.tmproject
+.tm_properties
 
-# OS
+# ===================
+# OS files
+# ===================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
+# ===================
 # Logs
+# ===================
 *.log
 logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# SSL certs (generated)
+# ===================
+# SSL/TLS certs
+# ===================
 nginx/ssl/
+certs/
+*.csr
 
-# Testing
+# ===================
+# Testing & Coverage
+# ===================
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+nosetests.xml
+test-results/
+junit.xml
+
+# ===================
+# Docker
+# ===================
+docker-compose.override.yml
+.docker/
+
+# ===================
+# Misc
+# ===================
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+*.pid
+*.seed
+*.pid.lock
+.eslintcache
+.node_repl_history
+.npm
+.yarn-integrity

@@ -11,13 +11,121 @@ Supports:
 import os
 import secrets
 import httpx
+import asyncio
 from datetime import datetime, timedelta
-from typing import Optional, Any
+from typing import Optional, Any, Callable, TypeVar
 from urllib.parse import urlencode
 import base64
 import json
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+
+logger = logging.getLogger(__name__)
+
+T = TypeVar('T')
+
+
+def log_intuit_tid(response: httpx.Response, context: str = ""):
+    """
+    Extract and log the intuit_tid from Intuit API response headers.
+    This transaction ID helps Intuit support troubleshoot issues.
+    """
+    intuit_tid = response.headers.get("intuit_tid")
+    if intuit_tid:
+        logger.info(f"Intuit TID [{context}]: {intuit_tid}")
+        if response.status_code >= 400:
+            logger.error(f"Intuit API error - TID: {intuit_tid}, Status: {response.status_code}, Context: {context}")
+    return intuit_tid
+
+
+# Intuit Discovery Document cache
+_intuit_discovery_cache: dict = {}
+_intuit_discovery_cache_time: datetime = None
+INTUIT_DISCOVERY_URL = "https://developer.intuit.com/.well-known/openid_configuration"
+DISCOVERY_CACHE_TTL = 3600  # Cache for 1 hour
+
+
+async def get_intuit_discovery() -> dict:
+    """
+    Fetch Intuit's OpenID Connect discovery document.
+    Caches the result for 1 hour to avoid repeated requests.
+    """
+    global _intuit_discovery_cache, _intuit_discovery_cache_time
+
+    # Check if cache is valid
+    if _intuit_discovery_cache and _intuit_discovery_cache_time:
+        cache_age = (datetime.utcnow() - _intuit_discovery_cache_time).total_seconds()
+        if cache_age < DISCOVERY_CACHE_TTL:
+            return _intuit_discovery_cache
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(INTUIT_DISCOVERY_URL)
+            response.raise_for_status()
+            _intuit_discovery_cache = response.json()
+            _intuit_discovery_cache_time = datetime.utcnow()
+            logger.info("Fetched Intuit discovery document successfully")
+            return _intuit_discovery_cache
+    except Exception as e:
+        logger.warning(f"Failed to fetch Intuit discovery document: {e}. Using fallback endpoints.")
+        # Return fallback endpoints if discovery fails
+        return {
+            "authorization_endpoint": "https://appcenter.intuit.com/connect/oauth2",
+            "token_endpoint": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+            "revocation_endpoint": "https://developer.api.intuit.com/v2/oauth2/tokens/revoke",
+            "userinfo_endpoint": "https://accounts.platform.intuit.com/v1/openid_connect/userinfo",
+        }
+
+
+async def retry_with_backoff(
+    func: Callable[..., T],
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+    max_delay: float = 10.0,
+    retryable_status_codes: tuple = (408, 429, 500, 502, 503, 504),
+) -> T:
+    """
+    Retry an async function with exponential backoff.
+
+    Args:
+        func: Async function to retry
+        max_retries: Maximum number of retry attempts (default: 3)
+        base_delay: Initial delay in seconds (default: 1.0)
+        max_delay: Maximum delay in seconds (default: 10.0)
+        retryable_status_codes: HTTP status codes that trigger a retry
+
+    Returns:
+        Result of the function call
+
+    Raises:
+        The last exception if all retries fail
+    """
+    last_exception = None
+
+    for attempt in range(max_retries + 1):
+        try:
+            return await func()
+        except httpx.HTTPStatusError as e:
+            last_exception = e
+            if e.response.status_code not in retryable_status_codes:
+                raise
+            if attempt == max_retries:
+                logger.error(f"Max retries ({max_retries}) exceeded. Last error: {e}")
+                raise
+            delay = min(base_delay * (2 ** attempt), max_delay)
+            logger.warning(f"Request failed with status {e.response.status_code}. Retrying in {delay}s (attempt {attempt + 1}/{max_retries})")
+            await asyncio.sleep(delay)
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout) as e:
+            last_exception = e
+            if attempt == max_retries:
+                logger.error(f"Max retries ({max_retries}) exceeded. Last error: {e}")
+                raise
+            delay = min(base_delay * (2 ** attempt), max_delay)
+            logger.warning(f"Connection error: {e}. Retrying in {delay}s (attempt {attempt + 1}/{max_retries})")
+            await asyncio.sleep(delay)
+
+    raise last_exception
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -174,14 +282,16 @@ async def disconnect_account(
 async def quickbooks_connect(
     current_user: User = Depends(get_current_user),
 ):
-    """Initiate QuickBooks OAuth flow."""
+    """Initiate QuickBooks OAuth flow using Intuit discovery document."""
     if not QUICKBOOKS_CLIENT_ID:
         raise HTTPException(status_code=400, detail="QuickBooks not configured")
 
     state = generate_state(current_user.id, "quickbooks")
 
-    # QuickBooks OAuth 2.0 authorization URL
-    base_url = "https://appcenter.intuit.com/connect/oauth2"
+    # Get authorization endpoint from discovery document
+    discovery = await get_intuit_discovery()
+    auth_endpoint = discovery.get("authorization_endpoint", "https://appcenter.intuit.com/connect/oauth2")
+
     params = {
         "client_id": QUICKBOOKS_CLIENT_ID,
         "response_type": "code",
@@ -190,7 +300,7 @@ async def quickbooks_connect(
         "state": state,
     }
 
-    return {"url": f"{base_url}?{urlencode(params)}"}
+    return {"url": f"{auth_endpoint}?{urlencode(params)}"}
 
 
 @router.get("/quickbooks/callback")
@@ -210,27 +320,33 @@ async def quickbooks_callback(
         return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=User+not+found")
 
     try:
-        # Exchange code for tokens
-        token_url = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
+        # Get token endpoint from discovery document
+        discovery = await get_intuit_discovery()
+        token_url = discovery.get("token_endpoint", "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer")
+
         auth_header = base64.b64encode(
             f"{QUICKBOOKS_CLIENT_ID}:{QUICKBOOKS_CLIENT_SECRET}".encode()
         ).decode()
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                token_url,
-                headers={
-                    "Authorization": f"Basic {auth_header}",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": QUICKBOOKS_REDIRECT_URI,
-                },
-            )
-            response.raise_for_status()
-            tokens = response.json()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            async def exchange_token():
+                response = await client.post(
+                    token_url,
+                    headers={
+                        "Authorization": f"Basic {auth_header}",
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    data={
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "redirect_uri": QUICKBOOKS_REDIRECT_URI,
+                    },
+                )
+                log_intuit_tid(response, "token_exchange")
+                response.raise_for_status()
+                return response.json()
+
+            tokens = await retry_with_backoff(exchange_token)
 
             # Get company info
             base_api = "https://sandbox-quickbooks.api.intuit.com" if QUICKBOOKS_ENVIRONMENT == "sandbox" else "https://quickbooks.api.intuit.com"
@@ -238,6 +354,7 @@ async def quickbooks_callback(
                 f"{base_api}/v3/company/{realmId}/companyinfo/{realmId}",
                 headers={"Authorization": f"Bearer {tokens['access_token']}"},
             )
+            log_intuit_tid(company_response, "company_info")
             company_info = company_response.json().get("CompanyInfo", {}) if company_response.status_code == 200 else {}
 
         # Save or update connection
@@ -314,21 +431,24 @@ async def xero_callback(
         return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=User+not+found")
 
     try:
-        async with httpx.AsyncClient() as client:
-            # Exchange code for tokens
-            response = await client.post(
-                "https://identity.xero.com/connect/token",
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": XERO_REDIRECT_URI,
-                    "client_id": XERO_CLIENT_ID,
-                    "client_secret": XERO_CLIENT_SECRET,
-                },
-            )
-            response.raise_for_status()
-            tokens = response.json()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Exchange code for tokens with retry
+            async def exchange_token():
+                response = await client.post(
+                    "https://identity.xero.com/connect/token",
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    data={
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "redirect_uri": XERO_REDIRECT_URI,
+                        "client_id": XERO_CLIENT_ID,
+                        "client_secret": XERO_CLIENT_SECRET,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+
+            tokens = await retry_with_backoff(exchange_token)
 
             # Get tenant (organization) info
             connections_response = await client.get(
@@ -411,21 +531,24 @@ async def freshbooks_callback(
         return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=User+not+found")
 
     try:
-        async with httpx.AsyncClient() as client:
-            # Exchange code for tokens
-            response = await client.post(
-                "https://api.freshbooks.com/auth/oauth/token",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": FRESHBOOKS_REDIRECT_URI,
-                    "client_id": FRESHBOOKS_CLIENT_ID,
-                    "client_secret": FRESHBOOKS_CLIENT_SECRET,
-                },
-            )
-            response.raise_for_status()
-            tokens = response.json()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Exchange code for tokens with retry
+            async def exchange_token():
+                response = await client.post(
+                    "https://api.freshbooks.com/auth/oauth/token",
+                    headers={"Content-Type": "application/json"},
+                    json={
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "redirect_uri": FRESHBOOKS_REDIRECT_URI,
+                        "client_id": FRESHBOOKS_CLIENT_ID,
+                        "client_secret": FRESHBOOKS_CLIENT_SECRET,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+
+            tokens = await retry_with_backoff(exchange_token)
 
             # Get user/business info
             me_response = await client.get(
@@ -509,20 +632,23 @@ async def wave_callback(
         return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=User+not+found")
 
     try:
-        async with httpx.AsyncClient() as client:
-            # Exchange code for tokens
-            response = await client.post(
-                "https://api.waveapps.com/oauth2/token/",
-                data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": WAVE_REDIRECT_URI,
-                    "client_id": WAVE_CLIENT_ID,
-                    "client_secret": WAVE_CLIENT_SECRET,
-                },
-            )
-            response.raise_for_status()
-            tokens = response.json()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Exchange code for tokens with retry
+            async def exchange_token():
+                response = await client.post(
+                    "https://api.waveapps.com/oauth2/token/",
+                    data={
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "redirect_uri": WAVE_REDIRECT_URI,
+                        "client_id": WAVE_CLIENT_ID,
+                        "client_secret": WAVE_CLIENT_SECRET,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+
+            tokens = await retry_with_backoff(exchange_token)
 
             # Get business info via GraphQL
             graphql_query = """
@@ -625,20 +751,23 @@ async def zoho_callback(
         return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=User+not+found")
 
     try:
-        async with httpx.AsyncClient() as client:
-            # Exchange code for tokens
-            response = await client.post(
-                f"{ZOHO_ACCOUNTS_URL}/oauth/v2/token",
-                data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": ZOHO_REDIRECT_URI,
-                    "client_id": ZOHO_CLIENT_ID,
-                    "client_secret": ZOHO_CLIENT_SECRET,
-                },
-            )
-            response.raise_for_status()
-            tokens = response.json()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Exchange code for tokens with retry
+            async def exchange_token():
+                response = await client.post(
+                    f"{ZOHO_ACCOUNTS_URL}/oauth/v2/token",
+                    data={
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "redirect_uri": ZOHO_REDIRECT_URI,
+                        "client_id": ZOHO_CLIENT_ID,
+                        "client_secret": ZOHO_CLIENT_SECRET,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+
+            tokens = await retry_with_backoff(exchange_token)
 
             # Get organizations
             org_response = await client.get(
@@ -743,67 +872,83 @@ async def get_financial_summary(
 
 
 async def refresh_token(connection: AccountingConnection, db: Session):
-    """Refresh an expired OAuth token."""
+    """Refresh an expired OAuth token with retry logic."""
     if not connection.refresh_token:
         connection.is_active = False
         db.commit()
         raise HTTPException(status_code=401, detail="Token expired and no refresh token available")
 
-    try:
-        async with httpx.AsyncClient() as client:
-            if connection.provider == "quickbooks":
-                auth_header = base64.b64encode(
-                    f"{QUICKBOOKS_CLIENT_ID}:{QUICKBOOKS_CLIENT_SECRET}".encode()
-                ).decode()
-                response = await client.post(
-                    "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
-                    headers={
-                        "Authorization": f"Basic {auth_header}",
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    data={
-                        "grant_type": "refresh_token",
-                        "refresh_token": connection.refresh_token,
-                    },
-                )
-            elif connection.provider == "xero":
-                response = await client.post(
-                    "https://identity.xero.com/connect/token",
-                    headers={"Content-Type": "application/x-www-form-urlencoded"},
-                    data={
-                        "grant_type": "refresh_token",
-                        "refresh_token": connection.refresh_token,
-                        "client_id": XERO_CLIENT_ID,
-                        "client_secret": XERO_CLIENT_SECRET,
-                    },
-                )
-            elif connection.provider == "freshbooks":
-                response = await client.post(
-                    "https://api.freshbooks.com/auth/oauth/token",
-                    headers={"Content-Type": "application/json"},
-                    json={
-                        "grant_type": "refresh_token",
-                        "refresh_token": connection.refresh_token,
-                        "client_id": FRESHBOOKS_CLIENT_ID,
-                        "client_secret": FRESHBOOKS_CLIENT_SECRET,
-                    },
-                )
-            elif connection.provider == "zoho":
-                response = await client.post(
-                    f"{ZOHO_ACCOUNTS_URL}/oauth/v2/token",
-                    data={
-                        "grant_type": "refresh_token",
-                        "refresh_token": connection.refresh_token,
-                        "client_id": ZOHO_CLIENT_ID,
-                        "client_secret": ZOHO_CLIENT_SECRET,
-                    },
-                )
-            else:
-                # Wave tokens are long-lived, typically don't need refresh
-                return
+    # Get Intuit token endpoint from discovery document for QuickBooks
+    intuit_token_url = None
+    if connection.provider == "quickbooks":
+        discovery = await get_intuit_discovery()
+        intuit_token_url = discovery.get("token_endpoint", "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer")
 
-            response.raise_for_status()
-            tokens = response.json()
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            async def do_refresh():
+                if connection.provider == "quickbooks":
+                    auth_header = base64.b64encode(
+                        f"{QUICKBOOKS_CLIENT_ID}:{QUICKBOOKS_CLIENT_SECRET}".encode()
+                    ).decode()
+                    response = await client.post(
+                        intuit_token_url,
+                        headers={
+                            "Authorization": f"Basic {auth_header}",
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        data={
+                            "grant_type": "refresh_token",
+                            "refresh_token": connection.refresh_token,
+                        },
+                    )
+                elif connection.provider == "xero":
+                    response = await client.post(
+                        "https://identity.xero.com/connect/token",
+                        headers={"Content-Type": "application/x-www-form-urlencoded"},
+                        data={
+                            "grant_type": "refresh_token",
+                            "refresh_token": connection.refresh_token,
+                            "client_id": XERO_CLIENT_ID,
+                            "client_secret": XERO_CLIENT_SECRET,
+                        },
+                    )
+                elif connection.provider == "freshbooks":
+                    response = await client.post(
+                        "https://api.freshbooks.com/auth/oauth/token",
+                        headers={"Content-Type": "application/json"},
+                        json={
+                            "grant_type": "refresh_token",
+                            "refresh_token": connection.refresh_token,
+                            "client_id": FRESHBOOKS_CLIENT_ID,
+                            "client_secret": FRESHBOOKS_CLIENT_SECRET,
+                        },
+                    )
+                elif connection.provider == "zoho":
+                    response = await client.post(
+                        f"{ZOHO_ACCOUNTS_URL}/oauth/v2/token",
+                        data={
+                            "grant_type": "refresh_token",
+                            "refresh_token": connection.refresh_token,
+                            "client_id": ZOHO_CLIENT_ID,
+                            "client_secret": ZOHO_CLIENT_SECRET,
+                        },
+                    )
+                else:
+                    # Wave tokens are long-lived, typically don't need refresh
+                    return None
+
+                # Capture intuit_tid for QuickBooks troubleshooting
+                if connection.provider == "quickbooks":
+                    log_intuit_tid(response, "token_refresh")
+
+                response.raise_for_status()
+                return response.json()
+
+            tokens = await retry_with_backoff(do_refresh)
+
+            if tokens is None:
+                return
 
             connection.access_token = tokens["access_token"]
             if tokens.get("refresh_token"):
@@ -812,7 +957,7 @@ async def refresh_token(connection: AccountingConnection, db: Session):
             db.commit()
 
     except Exception as e:
-        print(f"Token refresh error for {connection.provider}: {e}")
+        logger.error(f"Token refresh error for {connection.provider}: {e}")
         connection.is_active = False
         db.commit()
         raise HTTPException(status_code=401, detail="Failed to refresh token")
@@ -853,6 +998,8 @@ async def fetch_quickbooks_summary(client: httpx.AsyncClient, connection: Accoun
         f"{base_url}/v3/company/{connection.company_id}/reports/ProfitAndLoss?date_macro=This+Month",
         headers=headers,
     )
+    # Capture intuit_tid for troubleshooting
+    log_intuit_tid(pnl_response, f"pnl_report_{connection.company_id}")
 
     summary = FinancialSummary(
         period_start=datetime.utcnow().replace(day=1),

@@ -1,10 +1,55 @@
 # Made4Founders Development Roadmap
 
-> Last Updated: 2025-01-11
+> Last Updated: 2026-01-16
 
 ## Overview
 
 Made4Founders is a comprehensive command center for startup founders, providing tools for business management, compliance tracking, document storage, analytics, and marketing automation.
+
+---
+
+## CRITICAL: Production Readiness Issues
+
+> **These issues MUST be fixed before production deployment**
+
+### Security Audit Findings (2026-01-16)
+
+#### P0: CRITICAL - Missing Authentication
+
+**~40+ API endpoints lack authentication**, allowing anyone to read/write business data:
+
+| Resource | Endpoints Missing Auth | Status |
+|----------|----------------------|--------|
+| Services | GET, POST, PATCH, DELETE `/api/services/*` | FIX REQUIRED |
+| Documents | GET, POST, PATCH, DELETE `/api/documents/*` (list/create/get/update/delete) | FIX REQUIRED |
+| Contacts | GET, POST, PATCH, DELETE `/api/contacts/*` | FIX REQUIRED |
+| Deadlines | GET, POST, PATCH, DELETE `/api/deadlines/*` | FIX REQUIRED |
+| Checklist | GET, POST, PATCH, DELETE `/api/checklist/*` | FIX REQUIRED |
+| Products Offered | GET, POST, PATCH, DELETE `/api/products-offered/*` | FIX REQUIRED |
+| Products Used | GET, POST, PATCH, DELETE `/api/products-used/*` | FIX REQUIRED |
+| Web Links | GET, POST, PATCH, DELETE `/api/web-links/*` | FIX REQUIRED |
+| Dashboard Stats | GET `/api/dashboard/stats` | FIX REQUIRED |
+| Daily Brief | GET `/api/daily-brief` | FIX REQUIRED |
+| Business Info | GET, PUT `/api/business-info` | FIX REQUIRED |
+| Vault Status/Credentials | GET `/api/vault/status`, `/api/credentials` | FIX REQUIRED |
+
+#### P1: HIGH - Infrastructure Issues
+
+| Issue | Impact | Fix |
+|-------|--------|-----|
+| In-memory vault sessions | Won't work with multiple workers | Move to Redis |
+| In-memory rate limiting | Resets on restart | Move to Redis |
+| Docker runs as root | Security risk | Add non-root user |
+| No database backups | Data loss risk | Implement automated backups |
+
+#### P2: MEDIUM - Code Quality
+
+| Issue | Impact |
+|-------|--------|
+| POST returns 200 | Should return 201 Created |
+| Inconsistent error handling | Some use alert(), some GlobalErrorToast |
+| Missing ARIA labels | Accessibility issues |
+| Missing input validation | Potential for bad data |
 
 ---
 
@@ -69,7 +114,14 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 
 ## In Progress
 
-### Phase 1: OAuth Frontend Integration (Current)
+### Phase 0: Security Fixes (BLOCKING)
+- [ ] Add authentication to all unprotected endpoints (40+)
+- [ ] Add non-root user to Dockerfiles
+- [ ] Implement database backup strategy
+- [ ] Move vault sessions to Redis
+- [ ] Move rate limiting to Redis
+
+### Phase 1: OAuth Frontend Integration
 - [ ] Add Google/GitHub login buttons to Login page
 - [ ] Add Google/GitHub signup buttons to Signup page
 - [ ] OAuth error handling and loading states
@@ -124,6 +176,16 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 - [ ] API documentation (OpenAPI/Swagger)
 - [ ] Performance optimization audit
 - [ ] Database migration system
+- [ ] Standardize frontend error handling
+- [ ] Add ARIA labels for accessibility
+- [ ] Fix HTTP status codes (POST -> 201, DELETE -> 204)
+
+---
+
+## Email Configuration Required
+
+- [ ] `support@made4founders.com` - Customer support
+- [ ] `notifications@made4founders.com` - System notifications
 
 ---
 

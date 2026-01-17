@@ -5,18 +5,19 @@
 ---
 
 ## SESSION STATE (Update before ending each session)
-**Last Updated:** 2025-12-17
+**Last Updated:** 2026-01-16
 
 ### Where We Left Off:
-- Major security overhaul completed
-- Checklist redesigned with 98 items across 11 categories
-- Documents page: secure download-only, missing file detection, re-upload feature
-- All changes pushed and deployed via GitHub Actions
+- Deployed to made4founders.com (AWS Lightsail)
+- Added Social Publisher with mock post previews (Twitter, LinkedIn, Facebook, Instagram)
+- Added ResizableModal component for better UX
+- Fixed drag & drop file upload in Documents page
+- Added accounting OAuth integrations with retry logic and Intuit discovery document
 
 ### Immediate Next Steps:
-- Test the re-upload functionality for missing documents
-- Consider adding Tasks/Kanban board improvements
-- Metrics dashboard enhancements
+- Complete Intuit/QuickBooks app review process
+- Test accounting integrations end-to-end
+- Continue marketing page enhancements
 
 ### Current Blockers:
 - None
@@ -48,14 +49,20 @@ cd frontend && npm install && npm run dev
 ```
 
 ## Deployment
-- **URL**: https://founders.axiondeep.com
+- **URL**: https://made4founders.com
 - **Server**: AWS Lightsail 3.150.255.144
 - **CI/CD**: GitHub Actions (auto-deploys on push to main)
 - **SSH Key**: ~/.ssh/LightsailDefaultKey-us-east-2.pem
 
 ### Manual Deploy (if needed)
 ```bash
-ssh -i ~/.ssh/LightsailDefaultKey-us-east-2.pem ubuntu@3.150.255.144 "cd ~/made4founders && git pull && sudo docker compose up -d --build"
+ssh -i ~/.ssh/LightsailDefaultKey-us-east-2.pem ubuntu@3.150.255.144 "cd ~/made4founders && git pull && docker compose up -d --build"
+```
+
+### Sync Local Database to Production
+```bash
+scp -i ~/.ssh/LightsailDefaultKey-us-east-2.pem backend/made4founders.db ubuntu@3.150.255.144:~/made4founders.db
+ssh -i ~/.ssh/LightsailDefaultKey-us-east-2.pem ubuntu@3.150.255.144 "docker cp ~/made4founders.db made4founders-backend:/app/data/made4founders.db && docker restart made4founders-backend"
 ```
 
 ---
@@ -207,6 +214,49 @@ made4founders/
 ├── .github/workflows/        # CI/CD
 └── CLAUDE.md                 # This file
 ```
+
+---
+
+## Reusable Components
+
+### ResizableModal
+Location: `frontend/src/components/ResizableModal.tsx`
+
+Resizable modal component with drag-to-resize and maximize/minimize.
+
+```tsx
+import ResizableModal from '../components/ResizableModal';
+
+<ResizableModal
+  isOpen={showModal}
+  onClose={() => setShowModal(false)}
+  title="Modal Title"
+  initialWidth={520}
+  initialHeight={600}
+  minWidth={400}
+  minHeight={400}
+>
+  {/* content */}
+</ResizableModal>
+```
+
+### SocialPostMockups
+Location: `frontend/src/components/SocialPostMockups.tsx`
+
+Mock preview components for social media posts (Twitter, LinkedIn, Facebook, Instagram).
+
+---
+
+## Accounting OAuth Integrations
+Location: `backend/app/accounting_oauth.py`
+
+Supports: QuickBooks, Xero, FreshBooks, Wave, Zoho Books
+
+Features:
+- **Retry logic**: 3 retries with exponential backoff (1s, 2s, 4s)
+- **Intuit discovery document**: Fetches OAuth endpoints dynamically with 1-hour cache
+- **Token refresh**: Auto-refreshes expired tokens before API calls
+- **Error handling**: Marks connections inactive on auth failures, prompts reconnection
 
 ---
 

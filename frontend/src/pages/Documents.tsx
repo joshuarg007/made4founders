@@ -5,17 +5,18 @@ import {
   Download,
   Pencil,
   Trash2,
-  X,
   Search,
   CloudUpload,
   Loader2,
   AlertTriangle,
   Upload,
-  Lock
+  Lock,
+  X
 } from 'lucide-react';
 import { getDocuments, createDocument, updateDocument, deleteDocument, type Document } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { format, isBefore, addDays } from 'date-fns';
+import ResizableModal from '../components/ResizableModal';
 
 const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
 
@@ -82,20 +83,43 @@ export default function Documents() {
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      files.forEach(file => uploadFile(file));
+      setUploading(true);
+      try {
+        for (const file of files) {
+          const formDataUpload = new FormData();
+          formDataUpload.append('file', file);
+          const res = await fetch(`${API_BASE}/documents/upload`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formDataUpload
+          });
+          if (!res.ok) {
+            console.error('Upload failed for:', file.name);
+          }
+        }
+        loadDocuments();
+      } catch (error) {
+        console.error('Upload failed:', error);
+      } finally {
+        setUploading(false);
+      }
     }
   }, []);
 
@@ -499,18 +523,16 @@ export default function Documents() {
       )}
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <h2 className="text-lg font-semibold text-white">
-                {editingDocument ? 'Edit Document' : 'Add Document'}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+      <ResizableModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingDocument ? 'Edit Document' : 'Add Document'}
+        initialWidth={520}
+        initialHeight={600}
+        minWidth={400}
+        minHeight={400}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Name *</label>
                 <input
@@ -667,9 +689,7 @@ export default function Documents() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </ResizableModal>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Plus,
   ExternalLink,
@@ -8,9 +8,13 @@ import {
   Search,
   Package,
   CheckCircle,
-  XCircle
+  XCircle,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
 import { getProductsOffered, createProductOffered, updateProductOffered, deleteProductOffered, type ProductOffered } from '../lib/api';
+import { offeredProductTemplates, searchOfferedTemplates, type OfferedProductTemplate } from '../lib/offeredProductTemplates';
+import EmojiPicker from '../components/EmojiPicker';
 
 const categories = [
   { value: 'all', label: 'All', icon: '📦' },
@@ -52,6 +56,48 @@ export default function ProductsOffered() {
     is_active: true,
     notes: ''
   });
+
+  // Template selector state
+  const [templateSearch, setTemplateSearch] = useState('');
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const [filteredTemplates, setFilteredTemplates] = useState<OfferedProductTemplate[]>([]);
+  const templateDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Filter templates when search changes
+  useEffect(() => {
+    if (templateSearch.length > 0) {
+      setFilteredTemplates(searchOfferedTemplates(templateSearch).slice(0, 10));
+      setShowTemplateDropdown(true);
+    } else {
+      setFilteredTemplates(offeredProductTemplates.slice(0, 10));
+    }
+  }, [templateSearch]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
+        setShowTemplateDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Apply template to form
+  const applyTemplate = (template: OfferedProductTemplate) => {
+    setFormData({
+      ...formData,
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      icon: template.icon,
+      pricing_model: template.pricing_model,
+      price: template.price_example,
+    });
+    setTemplateSearch('');
+    setShowTemplateDropdown(false);
+  };
 
   const loadProducts = async () => {
     const data = await getProductsOffered(selectedCategory === 'all' ? undefined : selectedCategory);
@@ -171,77 +217,78 @@ export default function ProductsOffered() {
           </button>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
           {filteredProducts.map((product) => (
             <div
               key={product.id}
               onClick={() => handleEdit(product)}
-              className={`p-4 rounded-xl bg-[#1a1d24] border transition group cursor-pointer ${
-                product.is_active ? 'border-white/10 hover:border-white/20' : 'border-white/5 opacity-60'
+              className={`group relative p-3 rounded-lg bg-[#13151a] border transition-all cursor-pointer ${
+                product.is_active ? 'border-white/5 hover:border-white/10 hover:bg-[#1a1d24]' : 'border-white/5 opacity-50'
               }`}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{product.icon || '📦'}</span>
-                  <div>
-                    <h3 className="font-semibold text-white">{product.name}</h3>
-                    <span className="text-xs text-gray-500 capitalize">{product.category}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleToggleActive(product); }}
-                  className={`p-1 rounded ${product.is_active ? 'text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                  title={product.is_active ? 'Active' : 'Inactive'}
-                >
-                  {product.is_active ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {product.description && (
-                <p className="text-sm text-gray-400 mb-3 line-clamp-2">{product.description}</p>
+              {/* Active indicator */}
+              {product.is_active && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400" />
               )}
 
-              <div className="flex flex-wrap gap-2 mb-3">
-                {product.pricing_model && (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-violet-500/20 text-violet-300">
-                    {product.pricing_model}
-                  </span>
-                )}
-                {product.price && (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/20 text-cyan-300">
-                    {product.price}
-                  </span>
-                )}
-              </div>
+              <div className="flex items-center gap-3">
+                {/* Icon */}
+                <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-lg shrink-0 group-hover:bg-white/10 transition">
+                  {product.icon || '📦'}
+                </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                <div className="flex gap-2">
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-white text-sm truncate">{product.name}</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {product.price && (
+                      <span className="text-xs text-cyan-400">{product.price}</span>
+                    )}
+                    {product.pricing_model && (
+                      <span className="text-xs text-gray-500">· {product.pricing_model}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions - show on hover */}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleToggleActive(product); }}
+                    className={`p-1.5 rounded-md transition ${product.is_active ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-gray-500 hover:text-emerald-400 hover:bg-white/5'}`}
+                    title={product.is_active ? 'Active' : 'Inactive'}
+                  >
+                    {product.is_active ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleEdit(product); }}
-                    className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                    className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/5 transition"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }}
-                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                    className="p-1.5 rounded-md text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
+                  {product.url && (
+                    <a
+                      href={product.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/5 transition"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
                 </div>
-                {product.url && (
-                  <a
-                    href={product.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
-                  >
-                    View
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
               </div>
+
+              {/* Description - only if exists */}
+              {product.description && (
+                <p className="mt-2 ml-12 text-xs text-gray-500 line-clamp-1">{product.description}</p>
+              )}
             </div>
           ))}
         </div>
@@ -260,6 +307,57 @@ export default function ProductsOffered() {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              {/* Template Selector - Only show when adding new product */}
+              {!editingProduct && (
+                <div className="relative" ref={templateDropdownRef}>
+                  <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                    Quick Fill from Template
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input
+                      type="text"
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      onFocus={() => setShowTemplateDropdown(true)}
+                      placeholder="Search SaaS, Consulting, API..."
+                      className="w-full pl-10 pr-10 py-2 rounded-lg bg-gradient-to-r from-yellow-500/10 to-cyan-500/10 border border-yellow-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500/50"
+                    />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  </div>
+
+                  {showTemplateDropdown && (
+                    <div className="absolute z-10 w-full mt-1 max-h-64 overflow-y-auto rounded-lg bg-[#1a1d24] border border-white/20 shadow-xl">
+                      {filteredTemplates.length === 0 ? (
+                        <div className="p-3 text-gray-500 text-sm">No templates found</div>
+                      ) : (
+                        filteredTemplates.map((template, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => applyTemplate(template)}
+                            className="w-full px-3 py-2 flex items-center gap-3 hover:bg-white/10 transition text-left"
+                          >
+                            <span className="text-xl">{template.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white font-medium truncate">{template.name}</div>
+                              <div className="text-xs text-gray-500 truncate">{template.category} · {template.pricing_model}</div>
+                            </div>
+                            <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300">
+                              {template.price_example}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                      <div className="p-2 border-t border-white/10 text-xs text-gray-500 text-center">
+                        {offeredProductTemplates.length} templates available · Type to search
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Name *</label>
@@ -284,13 +382,11 @@ export default function ProductsOffered() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Icon (emoji)</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm text-gray-400 mb-1">Icon</label>
+                  <EmojiPicker
                     value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                    onChange={(emoji) => setFormData({ ...formData, icon: emoji })}
                     placeholder="📦"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
