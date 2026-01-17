@@ -36,6 +36,7 @@ interface NavSection {
     text: string;
     activeBg: string;
     border: string;
+    hoverText: string;
   };
 }
 
@@ -49,6 +50,7 @@ const navSections: NavSection[] = [
       text: 'text-cyan-400',
       activeBg: 'bg-cyan-500/20',
       border: 'border-cyan-500/30',
+      hoverText: 'hover:text-cyan-400',
     },
     items: [
       { to: '/app', icon: Sparkles, label: 'Daily Brief' },
@@ -65,6 +67,7 @@ const navSections: NavSection[] = [
       text: 'text-blue-400',
       activeBg: 'bg-blue-500/20',
       border: 'border-blue-500/30',
+      hoverText: 'hover:text-blue-400',
     },
     items: [
       { to: '/app/library', icon: Building2, label: 'Business Library' },
@@ -82,6 +85,7 @@ const navSections: NavSection[] = [
       text: 'text-purple-400',
       activeBg: 'bg-purple-500/20',
       border: 'border-purple-500/30',
+      hoverText: 'hover:text-purple-400',
     },
     items: [
       { to: '/app/social-hub', icon: Megaphone, label: 'Social Hub' },
@@ -97,6 +101,7 @@ const navSections: NavSection[] = [
       text: 'text-emerald-400',
       activeBg: 'bg-emerald-500/20',
       border: 'border-emerald-500/30',
+      hoverText: 'hover:text-emerald-400',
     },
     items: [
       { to: '/app/offerings', icon: Package, label: 'Offerings' },
@@ -196,7 +201,7 @@ export default function Layout() {
                           `flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
                             itemActive
                               ? `${section.color.activeBg} ${section.color.text} font-medium`
-                              : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                              : `text-gray-400 hover:bg-white/5 ${section.color.hoverText}`
                           }`
                         }
                       >
