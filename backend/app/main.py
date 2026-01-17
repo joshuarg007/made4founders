@@ -1538,7 +1538,8 @@ def update_credential(credential_id: int, credential: CredentialUpdate, key: byt
         db_credential.encrypted_purpose = encrypt_value(update_data['purpose'], key) if update_data['purpose'] else None
     if 'custom_fields' in update_data:
         if update_data['custom_fields']:
-            custom_fields_json = json.dumps([cf.model_dump() for cf in update_data['custom_fields']])
+            # custom_fields are already dicts after model_dump()
+            custom_fields_json = json.dumps(update_data['custom_fields'])
             db_credential.encrypted_custom_fields = encrypt_value(custom_fields_json, key)
         else:
             db_credential.encrypted_custom_fields = None

@@ -105,12 +105,15 @@ export default function Login() {
         )}
 
         {/* Email/Password Form First */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
           {isRegister && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Name</label>
+              <label htmlFor="name" className="block text-sm text-gray-400 mb-1">Name</label>
               <input
+                id="name"
+                name="name"
                 type="text"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
@@ -120,9 +123,12 @@ export default function Login() {
           )}
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
+            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
             <input
+              id="email"
+              name="email"
               type="email"
+              autoComplete={isRegister ? "email" : "username"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -132,10 +138,13 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
+            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">Password</label>
             <div className="relative">
               <input
+                id="password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete={isRegister ? "new-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
