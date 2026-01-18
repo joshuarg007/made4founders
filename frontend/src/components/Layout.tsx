@@ -19,6 +19,7 @@ import {
   Rocket,
   Shield,
   Trophy,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BusinessSwitcher from './BusinessSwitcher';
@@ -73,7 +74,8 @@ const navSections: NavSection[] = [
       hoverText: 'hover:text-blue-400',
     },
     items: [
-      { to: '/app/library', icon: Building2, label: 'Business Library' },
+      { to: '/app/businesses', icon: Building2, label: 'Businesses' },
+      { to: '/app/library', icon: BookOpen, label: 'Business Library' },
       { to: '/app/documents', icon: FileText, label: 'Documents' },
       { to: '/app/contacts', icon: Users, label: 'Contacts' },
       { to: '/app/deadlines', icon: Calendar, label: 'Deadlines' },
@@ -159,6 +161,7 @@ export default function Layout() {
         <div className="p-4 border-b border-white/10">
           <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <img src="/logo.png" alt="Made4Founders" className="h-10 w-auto" />
+            <span className="text-lg font-bold text-white">Made4Founders</span>
           </Link>
         </div>
 

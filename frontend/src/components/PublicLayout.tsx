@@ -20,7 +20,7 @@ export default function PublicLayout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
-              <img src="/logo.png" alt="Made4Founders" className="h-9 w-auto" />
+              <img src="/logo.png" alt="Made4Founders" className="h-12 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -117,7 +117,7 @@ export default function PublicLayout() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <Link to="/" className="flex items-center gap-2">
-                <img src="/logo.png" alt="Made4Founders" className="h-9 w-auto" />
+                <img src="/logo.png" alt="Made4Founders" className="h-12 w-auto" />
               </Link>
               <p className="mt-4 text-sm text-gray-500">
                 Built by founders, for founders. Secure. Profitable. Fun.

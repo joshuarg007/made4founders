@@ -2482,6 +2482,86 @@ def validate_file_extension(filename: str) -> bool:
     return True
 
 
+def detect_document_category(filename: str) -> str:
+    """
+    Smart detection of document category based on filename keywords.
+    Returns the most likely category or 'other' if no match.
+    """
+    name_lower = filename.lower()
+
+    # Formation documents - legal entity setup
+    formation_keywords = [
+        'articles of incorporation', 'certificate of incorporation', 'articles of organization',
+        'bylaws', 'by-laws', 'by laws', 'operating agreement', 'partnership agreement',
+        'stock certificate', 'share certificate', 'share ledger', 'stock ledger',
+        'corporate resolution', 'board resolution', 'organizational minutes',
+        'initial minutes', 'incorporator', 'registered agent', 'formation',
+        'certificate of good standing', 'ein confirmation', 'ss-4', 'capital contribution',
+        'membership certificate', 'llc agreement', 'shareholder agreement',
+    ]
+
+    # Tax documents
+    tax_keywords = [
+        'tax return', 'w-9', 'w-2', 'w-4', '1099', '1040', '1065', '1120',
+        'schedule c', 'schedule k', 'quarterly tax', 'estimated tax', 'tax receipt',
+        'irs', 'state tax', 'sales tax', 'payroll tax',
+    ]
+
+    # Insurance documents
+    insurance_keywords = [
+        'insurance', 'policy', 'certificate of insurance', 'coi', 'liability',
+        'workers comp', 'general liability', 'professional liability', 'e&o',
+        'd&o', 'cyber insurance', 'coverage',
+    ]
+
+    # Contracts
+    contract_keywords = [
+        'contract', 'agreement', 'sow', 'statement of work', 'msa',
+        'master service', 'vendor agreement', 'client agreement', 'nda',
+        'non-disclosure', 'confidentiality', 'employment agreement',
+    ]
+
+    # Licenses
+    license_keywords = [
+        'license', 'permit', 'registration', 'certificate of authority',
+        'business license', 'professional license', 'dba', 'fictitious name',
+    ]
+
+    # Financial
+    financial_keywords = [
+        'invoice', 'receipt', 'bank statement', 'financial statement',
+        'balance sheet', 'income statement', 'p&l', 'profit and loss',
+        'budget', 'forecast', 'cap table', 'valuation',
+    ]
+
+    # Check each category
+    for keyword in formation_keywords:
+        if keyword in name_lower:
+            return 'formation'
+
+    for keyword in tax_keywords:
+        if keyword in name_lower:
+            return 'tax'
+
+    for keyword in insurance_keywords:
+        if keyword in name_lower:
+            return 'insurance'
+
+    for keyword in contract_keywords:
+        if keyword in name_lower:
+            return 'contracts'
+
+    for keyword in license_keywords:
+        if keyword in name_lower:
+            return 'licenses'
+
+    for keyword in financial_keywords:
+        if keyword in name_lower:
+            return 'financial'
+
+    return 'other'
+
+
 @app.post("/api/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
@@ -2495,6 +2575,7 @@ async def upload_document(
     - File extension whitelist
     - Filename sanitization
     - Unique storage name to prevent overwrites
+    - Smart category detection based on filename
     """
     # Require editor or admin
     if current_user.role not in ["admin", "editor"]:
@@ -2518,11 +2599,15 @@ async def upload_document(
     # Determine business_id: use provided, fall back to user's current business
     doc_business_id = business_id or current_user.current_business_id
 
+    # Smart category detection based on filename
+    detected_category = detect_document_category(file.filename)
+
     # Create document record (store original name for display, storage name for retrieval)
     db_document = Document(
         name=file.filename,
         file_path=storage_name,  # Now stores just the filename, not a URL path
-        category="other",
+        category=detected_category,
+        organization_id=current_user.organization_id,
         business_id=doc_business_id
     )
     db.add(db_document)
@@ -2729,6 +2814,41 @@ def delete_document(document_id: int, current_user: User = Depends(get_current_u
     db.delete(document)
     db.commit()
     return {"ok": True}
+
+
+@app.post("/api/documents/recategorize")
+def recategorize_documents(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Admin-only: Re-categorize all documents using smart detection.
+    Only affects documents in the current user's organization.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    documents = db.query(Document).filter(
+        Document.organization_id == current_user.organization_id
+    ).all()
+
+    updated = []
+    for doc in documents:
+        old_category = doc.category
+        new_category = detect_document_category(doc.name)
+        if old_category != new_category:
+            doc.category = new_category
+            updated.append({
+                "id": doc.id,
+                "name": doc.name,
+                "old_category": old_category,
+                "new_category": new_category
+            })
+
+    db.commit()
+
+    return {
+        "total_documents": len(documents),
+        "updated_count": len(updated),
+        "updated": updated
+    }
 
 
 # ============ Contacts ============
