@@ -7,80 +7,61 @@ type PriceKey = 'starter_monthly' | 'starter_yearly' | 'pro_monthly' | 'pro_year
 
 const plans = [
   {
-    name: 'Free',
-    slug: 'free',
-    description: 'For solo founders just getting started',
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    monthlyPriceKey: null as PriceKey | null,
-    yearlyPriceKey: null as PriceKey | null,
-    features: [
-      { name: '1 user', included: true },
-      { name: 'Business checklist', included: true },
-      { name: 'Document storage (1GB)', included: true },
-      { name: 'Basic dashboard', included: true },
-      { name: 'Credential vault', included: false },
-      { name: 'Marketing tools', included: false },
-      { name: 'Email integrations', included: false },
-      { name: 'Social media posting', included: false },
-      { name: 'Analytics dashboard', included: false },
-      { name: 'Priority support', included: false },
-    ],
-    cta: 'Get Started',
-    popular: false,
-  },
-  {
     name: 'Starter',
     slug: 'starter',
-    description: 'For growing teams with compliance needs',
-    monthlyPrice: 29,
-    yearlyPrice: 290,
+    description: 'Everything you need to run your startup',
+    monthlyPrice: 7,
+    yearlyPrice: 70,
     monthlyPriceKey: 'starter_monthly' as PriceKey,
     yearlyPriceKey: 'starter_yearly' as PriceKey,
     features: [
-      { name: '3 users', included: true },
-      { name: 'Business checklist', included: true },
-      { name: 'Document storage (10GB)', included: true },
+      { name: '1 user', included: true },
+      { name: 'Business checklist (98 items)', included: true },
+      { name: 'Document storage (5GB)', included: true },
       { name: 'Full dashboard', included: true },
       { name: 'Credential vault', included: true },
-      { name: 'Marketing tools', included: true },
-      { name: 'Email integration (1)', included: true },
-      { name: 'Social media posting', included: false },
-      { name: 'Analytics dashboard', included: true },
+      { name: 'Contacts & deadlines', included: true },
+      { name: 'Basic analytics', included: true },
+      { name: 'Email integration (1)', included: false },
+      { name: 'Marketing tools', included: false },
       { name: 'Priority support', included: false },
     ],
-    cta: 'Start Free Trial',
+    cta: 'Start 14-Day Free Trial',
     popular: true,
   },
   {
     name: 'Pro',
     slug: 'pro',
-    description: 'For scaling startups with full needs',
-    monthlyPrice: 79,
-    yearlyPrice: 790,
+    description: 'For growing teams with advanced needs',
+    monthlyPrice: 29,
+    yearlyPrice: 290,
     monthlyPriceKey: 'pro_monthly' as PriceKey,
     yearlyPriceKey: 'pro_yearly' as PriceKey,
     features: [
-      { name: '10 users', included: true },
-      { name: 'Business checklist', included: true },
-      { name: 'Document storage (100GB)', included: true },
+      { name: '5 users', included: true },
+      { name: 'Business checklist (98 items)', included: true },
+      { name: 'Document storage (50GB)', included: true },
       { name: 'Full dashboard', included: true },
       { name: 'Credential vault', included: true },
-      { name: 'Marketing tools', included: true },
-      { name: 'Unlimited email integrations', included: true },
-      { name: 'Social media posting', included: true },
+      { name: 'Contacts & deadlines', included: true },
       { name: 'Advanced analytics', included: true },
+      { name: 'Email integrations', included: true },
+      { name: 'Marketing tools', included: true },
       { name: 'Priority support', included: true },
     ],
-    cta: 'Start Free Trial',
+    cta: 'Start 14-Day Free Trial',
     popular: false,
   },
 ];
 
 const faqs = [
   {
+    question: 'How does the free trial work?',
+    answer: "Every plan includes a 14-day free trial. Enter your card to start — you won't be charged until day 15. Cancel anytime during the trial at no cost.",
+  },
+  {
     question: 'What happens after my trial ends?',
-    answer: "Your trial lasts 14 days. After that, you'll be moved to the Free plan unless you upgrade. Your data is never deleted - you can upgrade anytime to restore full access.",
+    answer: "After 14 days, you'll be automatically charged for your selected plan. We'll send a reminder email before your trial ends so there are no surprises.",
   },
   {
     question: 'Can I change plans later?',
@@ -95,12 +76,8 @@ const faqs = [
     answer: "Yes, we offer a 30-day money-back guarantee. If you're not satisfied, contact support for a full refund.",
   },
   {
-    question: 'What payment methods do you accept?',
-    answer: 'We accept all major credit cards (Visa, Mastercard, Amex, Discover) through Stripe. Enterprise customers can pay by invoice.',
-  },
-  {
     question: 'Can I cancel anytime?',
-    answer: "Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.",
+    answer: "Yes, you can cancel your subscription at any time from your account settings. You'll continue to have access until the end of your billing period.",
   },
 ];
 
@@ -112,12 +89,6 @@ export default function Pricing() {
 
   const handlePlanSelect = async (plan: typeof plans[0]) => {
     setError(null);
-
-    // Free plan goes to signup
-    if (plan.slug === 'free') {
-      navigate('/signup');
-      return;
-    }
 
     const priceKey = billingCycle === 'monthly' ? plan.monthlyPriceKey : plan.yearlyPriceKey;
     if (!priceKey) {
@@ -150,8 +121,11 @@ export default function Pricing() {
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
-            Start free, upgrade when you're ready. All plans include a 14-day free trial.
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-2">
+            14-day free trial on all plans. No charge until day 15.
+          </p>
+          <p className="text-sm text-gray-500 mb-8">
+            Credit card required to start trial. Cancel anytime.
           </p>
 
           {/* Billing toggle */}
@@ -190,7 +164,7 @@ export default function Pricing() {
         </div>
 
         {/* Pricing cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-16 sm:mb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto mb-16 sm:mb-24">
           {plans.map((plan) => (
             <div
               key={plan.name}

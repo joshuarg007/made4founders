@@ -275,7 +275,7 @@ export default function Features() {
             Ready to Get Started?
           </h2>
           <p className="text-gray-400 mb-8">
-            Start your 14-day free trial today. No credit card required.
+            Start your 14-day free trial today. No charge until day 15.
           </p>
           <Link
             to="/signup"

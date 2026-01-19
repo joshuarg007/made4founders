@@ -70,7 +70,7 @@ export default function Signup() {
 
   const benefits = [
     '14-day free trial',
-    'No credit card required',
+    'No charge until day 15',
     'Cancel anytime',
     '98-item compliance checklist',
     'Encrypted credential vault',

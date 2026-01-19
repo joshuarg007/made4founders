@@ -104,7 +104,7 @@ export default function Home() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
             <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span className="text-sm text-gray-300">14-day free trial. No credit card required.</span>
+            <span className="text-sm text-gray-300">14-day free trial. Cancel anytime.</span>
           </div>
 
           {/* Headline */}
@@ -282,7 +282,7 @@ export default function Home() {
             Ready to Take Control?
           </h2>
           <p className="text-lg text-gray-400 mb-10">
-            Start your 14-day free trial. No credit card required. Cancel anytime.
+            Start your 14-day free trial. No charge until day 15.
           </p>
           <Link
             to="/signup"
