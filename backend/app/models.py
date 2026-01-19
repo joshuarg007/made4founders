@@ -9,9 +9,9 @@ from .database import Base
 # ============ MULTI-TENANCY & SUBSCRIPTION ENUMS ============
 
 class SubscriptionTier(str, enum.Enum):
-    FREE = "free"
     STARTER = "starter"
-    PRO = "pro"
+    GROWTH = "growth"
+    SCALE = "scale"
     ENTERPRISE = "enterprise"
 
 

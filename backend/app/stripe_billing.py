@@ -33,8 +33,10 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 PRICE_IDS = {
     "starter_monthly": os.getenv("STRIPE_PRICE_STARTER_MONTHLY", ""),
     "starter_yearly": os.getenv("STRIPE_PRICE_STARTER_YEARLY", ""),
-    "pro_monthly": os.getenv("STRIPE_PRICE_PRO_MONTHLY", ""),
-    "pro_yearly": os.getenv("STRIPE_PRICE_PRO_YEARLY", ""),
+    "growth_monthly": os.getenv("STRIPE_PRICE_GROWTH_MONTHLY", ""),
+    "growth_yearly": os.getenv("STRIPE_PRICE_GROWTH_YEARLY", ""),
+    "scale_monthly": os.getenv("STRIPE_PRICE_SCALE_MONTHLY", ""),
+    "scale_yearly": os.getenv("STRIPE_PRICE_SCALE_YEARLY", ""),
 }
 
 # Initialize Stripe
@@ -85,11 +87,13 @@ def tier_from_price_key(price_key: str) -> str:
     """Get subscription tier from price key."""
     if price_key.startswith("starter"):
         return SubscriptionTier.STARTER.value
-    elif price_key.startswith("pro"):
-        return SubscriptionTier.PRO.value
+    elif price_key.startswith("growth"):
+        return SubscriptionTier.GROWTH.value
+    elif price_key.startswith("scale"):
+        return SubscriptionTier.SCALE.value
     elif price_key.startswith("enterprise"):
         return SubscriptionTier.ENTERPRISE.value
-    return SubscriptionTier.FREE.value
+    return SubscriptionTier.STARTER.value
 
 
 # ============ ROUTES ============

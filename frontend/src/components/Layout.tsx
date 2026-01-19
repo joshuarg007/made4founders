@@ -21,6 +21,7 @@ import {
   Trophy,
   BookOpen,
   Store,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BusinessSwitcher from './BusinessSwitcher';
@@ -251,6 +252,19 @@ export default function Layout() {
           {user && (
             <>
               <div className="text-xs text-gray-400 truncate text-center px-2">{user.email}</div>
+              <NavLink
+                to="/app/settings"
+                className={({ isActive }) =>
+                  `w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition text-sm font-medium ${
+                    isActive
+                      ? 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10'
+                      : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`
+                }
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </NavLink>
               <button
                 onClick={logout}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition text-sm font-medium"

@@ -3,13 +3,13 @@ import { Check, X, Sparkles, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { createCheckoutSession } from '../../lib/api';
 
-type PriceKey = 'starter_monthly' | 'starter_yearly' | 'pro_monthly' | 'pro_yearly';
+type PriceKey = 'starter_monthly' | 'starter_yearly' | 'growth_monthly' | 'growth_yearly' | 'scale_monthly' | 'scale_yearly';
 
 const plans = [
   {
     name: 'Starter',
     slug: 'starter',
-    description: 'Everything you need to run your startup',
+    description: 'For solo founders getting organized',
     monthlyPrice: 7,
     yearlyPrice: 70,
     monthlyPriceKey: 'starter_monthly' as PriceKey,
@@ -21,8 +21,31 @@ const plans = [
       { name: 'Full dashboard', included: true },
       { name: 'Credential vault', included: true },
       { name: 'Contacts & deadlines', included: true },
-      { name: 'Basic analytics', included: true },
-      { name: 'Email integration (1)', included: false },
+      { name: 'Basic analytics', included: false },
+      { name: 'Email integrations', included: false },
+      { name: 'Marketing tools', included: false },
+      { name: 'Priority support', included: false },
+    ],
+    cta: 'Start 14-Day Free Trial',
+    popular: false,
+  },
+  {
+    name: 'Growth',
+    slug: 'growth',
+    description: 'For growing startups with more needs',
+    monthlyPrice: 29,
+    yearlyPrice: 290,
+    monthlyPriceKey: 'growth_monthly' as PriceKey,
+    yearlyPriceKey: 'growth_yearly' as PriceKey,
+    features: [
+      { name: '3 users', included: true },
+      { name: 'Business checklist (98 items)', included: true },
+      { name: 'Document storage (25GB)', included: true },
+      { name: 'Full dashboard', included: true },
+      { name: 'Credential vault', included: true },
+      { name: 'Contacts & deadlines', included: true },
+      { name: 'Advanced analytics', included: true },
+      { name: 'Email integration (1)', included: true },
       { name: 'Marketing tools', included: false },
       { name: 'Priority support', included: false },
     ],
@@ -30,22 +53,22 @@ const plans = [
     popular: true,
   },
   {
-    name: 'Pro',
-    slug: 'pro',
-    description: 'For growing teams with advanced needs',
-    monthlyPrice: 29,
-    yearlyPrice: 290,
-    monthlyPriceKey: 'pro_monthly' as PriceKey,
-    yearlyPriceKey: 'pro_yearly' as PriceKey,
+    name: 'Scale',
+    slug: 'scale',
+    description: 'For teams ready to scale',
+    monthlyPrice: 79,
+    yearlyPrice: 790,
+    monthlyPriceKey: 'scale_monthly' as PriceKey,
+    yearlyPriceKey: 'scale_yearly' as PriceKey,
     features: [
-      { name: '5 users', included: true },
+      { name: '10 users', included: true },
       { name: 'Business checklist (98 items)', included: true },
-      { name: 'Document storage (50GB)', included: true },
+      { name: 'Document storage (100GB)', included: true },
       { name: 'Full dashboard', included: true },
       { name: 'Credential vault', included: true },
       { name: 'Contacts & deadlines', included: true },
       { name: 'Advanced analytics', included: true },
-      { name: 'Email integrations', included: true },
+      { name: 'Unlimited email integrations', included: true },
       { name: 'Marketing tools', included: true },
       { name: 'Priority support', included: true },
     ],
@@ -164,7 +187,7 @@ export default function Pricing() {
         </div>
 
         {/* Pricing cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto mb-16 sm:mb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16 sm:mb-24">
           {plans.map((plan) => (
             <div
               key={plan.name}
