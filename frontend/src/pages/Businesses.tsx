@@ -13,7 +13,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
-import { Business } from '../lib/api';
+import type { Business } from '../lib/api';
 
 interface BusinessNode extends Business {
   children?: BusinessNode[];
@@ -128,7 +128,7 @@ export default function Businesses() {
     }
   };
 
-  const handleDelete = async (business: Business) => {
+  const handleDelete = async (business: BusinessNode) => {
     if (!confirm(`Are you sure you want to ${business.children?.length ? 'archive' : 'delete'} "${business.name}"?`)) {
       return;
     }
