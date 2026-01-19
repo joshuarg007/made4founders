@@ -811,7 +811,7 @@ export default function Vault() {
                 })}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                 {favoriteCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
                   const style = getCredentialStyle(cred.name, cred.service_url);
@@ -963,7 +963,7 @@ export default function Vault() {
                 })}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                 {regularCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
                   const style = getCredentialStyle(cred.name, cred.service_url);
