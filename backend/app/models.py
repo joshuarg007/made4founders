@@ -1026,6 +1026,43 @@ class WebLinkCategory(str, enum.Enum):
     OTHER = "other"
 
 
+class MarketplaceCategory(str, enum.Enum):
+    ECOMMERCE = "ecommerce"        # Amazon, eBay, Etsy
+    SOFTWARE = "software"          # Capterra, G2, GetApp
+    APPSTORE = "appstore"          # App Store, Google Play
+    B2B = "b2b"                    # Alibaba, ThomasNet
+    FREELANCE = "freelance"        # Upwork, Fiverr
+    SOCIAL = "social"             # Facebook Marketplace, Instagram Shop
+    OTHER = "other"
+
+
+class Marketplace(Base):
+    """Marketplaces where you sell products/services (Amazon, eBay, Capterra, G2, etc.)"""
+    __tablename__ = "marketplaces"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
+
+    name = Column(String(255), nullable=False)  # "Amazon", "Capterra"
+    category = Column(String(50), default=MarketplaceCategory.OTHER.value)
+    url = Column(String(500), nullable=True)                    # Main marketplace URL
+    store_url = Column(String(500), nullable=True)              # Your store/listing URL
+
+    account_id = Column(String(255), nullable=True)             # Seller ID, username
+    status = Column(String(50), default="active")               # active, pending, suspended
+
+    commission_rate = Column(String(50), nullable=True)         # "15%", "$0.99/sale"
+    monthly_fee = Column(String(50), nullable=True)             # "$39.99/mo"
+
+    icon = Column(String(100), nullable=True)                   # Emoji or icon
+    notes = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class Service(Base):
     __tablename__ = "services"
 

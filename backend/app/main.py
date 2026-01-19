@@ -32,7 +32,7 @@ from .models import (
     BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
-    Challenge, ChallengeParticipant
+    Challenge, ChallengeParticipant, Marketplace
 )
 from .auth import router as auth_router, get_current_user
 from .oauth import router as oauth_router
@@ -72,7 +72,8 @@ from .schemas import (
     AchievementCreate, AchievementResponse, BusinessAchievementResponse, AchievementClaimResponse,
     LeaderboardEntry, LeaderboardResponse,
     ChallengeCreate, ChallengeResponse, ChallengeParticipantBrief, ChallengeAcceptRequest,
-    ChallengeJoinByCodeRequest, ChallengeListResponse, ChallengeResultResponse
+    ChallengeJoinByCodeRequest, ChallengeListResponse, ChallengeResultResponse,
+    MarketplaceCreate, MarketplaceUpdate, MarketplaceResponse
 )
 from .vault import (
     generate_salt, derive_key, hash_master_password, verify_master_password,
@@ -3924,6 +3925,56 @@ def delete_product_offered(product_id: int, current_user: User = Depends(get_cur
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     db.delete(product)
+    db.commit()
+    return {"ok": True}
+
+
+# ============ Marketplaces ============
+@app.get("/api/marketplaces", response_model=List[MarketplaceResponse])
+def get_marketplaces(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    query = db.query(Marketplace).filter(Marketplace.organization_id == current_user.organization_id)
+    if category:
+        query = query.filter(Marketplace.category == category)
+    return query.order_by(Marketplace.name).all()
+
+
+@app.post("/api/marketplaces", response_model=MarketplaceResponse)
+def create_marketplace(marketplace: MarketplaceCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db_marketplace = Marketplace(**marketplace.model_dump(), organization_id=current_user.organization_id)
+    db.add(db_marketplace)
+    db.commit()
+    db.refresh(db_marketplace)
+    return db_marketplace
+
+
+@app.get("/api/marketplaces/{marketplace_id}", response_model=MarketplaceResponse)
+def get_marketplace(marketplace_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    marketplace = db.query(Marketplace).filter(Marketplace.id == marketplace_id).first()
+    if not marketplace:
+        raise HTTPException(status_code=404, detail="Marketplace not found")
+    return marketplace
+
+
+@app.patch("/api/marketplaces/{marketplace_id}", response_model=MarketplaceResponse)
+def update_marketplace(marketplace_id: int, marketplace: MarketplaceUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db_marketplace = db.query(Marketplace).filter(Marketplace.id == marketplace_id).first()
+    if not db_marketplace:
+        raise HTTPException(status_code=404, detail="Marketplace not found")
+
+    for key, value in marketplace.model_dump(exclude_unset=True).items():
+        setattr(db_marketplace, key, value)
+
+    db.commit()
+    db.refresh(db_marketplace)
+    return db_marketplace
+
+
+@app.delete("/api/marketplaces/{marketplace_id}")
+def delete_marketplace(marketplace_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    marketplace = db.query(Marketplace).filter(Marketplace.id == marketplace_id).first()
+    if not marketplace:
+        raise HTTPException(status_code=404, detail="Marketplace not found")
+    db.delete(marketplace)
     db.commit()
     return {"ok": True}
 

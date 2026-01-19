@@ -35,6 +35,7 @@ import Finance from './pages/Finance'
 import Vault from './pages/Vault'
 import Leaderboard from './pages/Leaderboard'
 import Businesses from './pages/Businesses'
+import Marketplaces from './pages/Marketplaces'
 
 function App() {
   return (
@@ -84,6 +85,7 @@ function App() {
         <Route path="vault" element={<Vault />} />
         <Route path="leaderboard" element={<Leaderboard />} />
         <Route path="businesses" element={<Businesses />} />
+        <Route path="marketplaces" element={<Marketplaces />} />
       </Route>
 
       {/* Redirect old routes to new structure */}

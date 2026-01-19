@@ -799,6 +799,36 @@ export const updateProductOffered = (id: number, data: Partial<ProductOffered>) 
 export const deleteProductOffered = (id: number) =>
   fetchApi<{ ok: boolean }>(`/products-offered/${id}`, { method: 'DELETE' });
 
+// Marketplaces
+export interface Marketplace {
+  id: number;
+  name: string;
+  category: string;
+  url: string | null;
+  store_url: string | null;
+  account_id: string | null;
+  status: string;
+  commission_rate: string | null;
+  monthly_fee: string | null;
+  icon: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getMarketplaces = (category?: string) =>
+  fetchApi<Marketplace[]>(`/marketplaces${category ? `?category=${category}` : ''}`);
+
+export const createMarketplace = (data: Partial<Marketplace>) =>
+  fetchApi<Marketplace>('/marketplaces', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateMarketplace = (id: number, data: Partial<Marketplace>) =>
+  fetchApi<Marketplace>(`/marketplaces/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteMarketplace = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/marketplaces/${id}`, { method: 'DELETE' });
+
 // Products Used
 export interface ProductUsed {
   id: number;

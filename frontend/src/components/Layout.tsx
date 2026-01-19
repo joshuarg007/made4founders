@@ -20,6 +20,7 @@ import {
   Shield,
   Trophy,
   BookOpen,
+  Store,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BusinessSwitcher from './BusinessSwitcher';
@@ -96,6 +97,7 @@ const navSections: NavSection[] = [
     items: [
       { to: '/app/social-hub', icon: Megaphone, label: 'Social Hub' },
       { to: '/app/insights', icon: BarChart3, label: 'Insights' },
+      { to: '/app/marketplaces', icon: Store, label: 'Marketplaces' },
       { to: '/app/leaderboard', icon: Trophy, label: 'Leaderboard' },
     ],
   },

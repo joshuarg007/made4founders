@@ -917,6 +917,49 @@ class WebLinkResponse(WebLinkBase):
         from_attributes = True
 
 
+# ============ Marketplace Schemas ============
+
+class MarketplaceBase(BaseModel):
+    name: str
+    category: str = "other"
+    url: Optional[str] = None
+    store_url: Optional[str] = None
+    account_id: Optional[str] = None
+    status: str = "active"
+    commission_rate: Optional[str] = None
+    monthly_fee: Optional[str] = None
+    icon: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: bool = True
+
+
+class MarketplaceCreate(MarketplaceBase):
+    pass
+
+
+class MarketplaceUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    url: Optional[str] = None
+    store_url: Optional[str] = None
+    account_id: Optional[str] = None
+    status: Optional[str] = None
+    commission_rate: Optional[str] = None
+    monthly_fee: Optional[str] = None
+    icon: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class MarketplaceResponse(MarketplaceBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # ============ Task Management Schemas ============
 
 # Helper schema for user info in responses

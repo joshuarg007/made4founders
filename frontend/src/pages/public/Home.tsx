@@ -195,7 +195,7 @@ export default function Home() {
                 className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 hover:border-white/10 transition-all"
               >
                 <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-600/10 flex items-center justify-center mb-6 group-hover:from-cyan-500/20 group-hover:to-blue-600/20 transition-colors overflow-hidden">
-                  <img src={feature.image} alt={feature.title} className="w-12 h-12 object-contain" />
+                  <img src={feature.image} alt={feature.title} className="w-14 h-14 object-contain" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
                 <p className="text-gray-400">{feature.description}</p>
