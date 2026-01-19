@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   Plus,
   ExternalLink,
-  Pencil,
   Trash2,
   X,
   Search,
