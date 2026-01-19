@@ -13,23 +13,10 @@ import {
   Check,
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
+import { Business } from '../lib/api';
 
-interface Business {
-  id: number;
-  name: string;
-  slug: string;
-  business_type: string;
-  description: string | null;
-  color: string | null;
-  emoji: string | null;
-  parent_id: number | null;
-  is_active: boolean;
-  is_archived: boolean;
-  xp: number;
-  level: number;
-  current_streak: number;
-  gamification_enabled: boolean;
-  children?: Business[];
+interface BusinessNode extends Business {
+  children?: BusinessNode[];
 }
 
 const BUSINESS_TYPES = [
@@ -177,7 +164,7 @@ export default function Businesses() {
     }
   };
 
-  const renderBusinessRow = (business: Business, depth = 0) => {
+  const renderBusinessRow = (business: BusinessNode, depth = 0) => {
     const hasChildren = business.children && business.children.length > 0;
     const isExpanded = expandedIds.has(business.id);
 
@@ -273,9 +260,9 @@ export default function Businesses() {
   };
 
   // Build tree structure
-  const buildTree = (items: Business[]): Business[] => {
-    const map = new Map<number, Business>();
-    const roots: Business[] = [];
+  const buildTree = (items: Business[]): BusinessNode[] => {
+    const map = new Map<number, BusinessNode>();
+    const roots: BusinessNode[] = [];
 
     items.forEach(item => map.set(item.id, { ...item, children: [] }));
 
