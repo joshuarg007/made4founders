@@ -816,7 +816,7 @@ export default function Vault() {
               <span className="text-xs text-gray-500">({favoriteCredentials.length})</span>
             </div>
             {viewMode === 'list' ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {favoriteCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
                   const style = getCredentialStyle(cred.name, cred.service_url);
@@ -947,7 +947,7 @@ export default function Vault() {
               </div>
             )}
             {viewMode === 'list' ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {regularCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
                   const style = getCredentialStyle(cred.name, cred.service_url);
