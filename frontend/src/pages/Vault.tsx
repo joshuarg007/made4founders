@@ -12,7 +12,6 @@ import {
   X,
   Key,
   User,
-  FileText,
   Search,
   AlertTriangle,
   Star,

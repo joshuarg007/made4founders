@@ -189,7 +189,7 @@ export default function Settings() {
             <div>
               <div className="flex items-center gap-3">
                 <span className="text-xl font-semibold text-white">
-                  {currentPlan?.name || subscription?.tier?.charAt(0).toUpperCase() + subscription?.tier?.slice(1) || 'Free'}
+                  {currentPlan?.name || (subscription?.tier ? subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1) : 'Free')}
                 </span>
                 {status && (
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${status.color}`}>
