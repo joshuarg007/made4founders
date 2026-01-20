@@ -23,6 +23,9 @@ import {
   Globe,
   StickyNote,
   KeyRound,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import {
   getVaultStatus,
@@ -296,6 +299,19 @@ export default function Vault() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Sorting (persisted in localStorage)
+  type SortField = 'name' | 'category' | 'created_at';
+  type SortOrder = 'asc' | 'desc';
+  const [sortBy, setSortBy] = useState<SortField>(() => {
+    const saved = localStorage.getItem('vault-sort-by');
+    return (saved as SortField) || 'name';
+  });
+  const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
+    const saved = localStorage.getItem('vault-sort-order');
+    return (saved as SortOrder) || 'asc';
+  });
+  const [showSortMenu, setShowSortMenu] = useState(false);
+
   // Collapsible sections in credential details (all collapsed by default for demo safety)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     credentials: false,
@@ -314,7 +330,7 @@ export default function Vault() {
     }
   }, [vaultStatus?.is_unlocked]);
 
-  // Persist view mode and favorites
+  // Persist view mode, favorites, and sorting
   useEffect(() => {
     localStorage.setItem('vault-view-mode', viewMode);
   }, [viewMode]);
@@ -322,6 +338,14 @@ export default function Vault() {
   useEffect(() => {
     localStorage.setItem('vault-favorites', JSON.stringify(favorites));
   }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('vault-sort-by', sortBy);
+  }, [sortBy]);
+
+  useEffect(() => {
+    localStorage.setItem('vault-sort-order', sortOrder);
+  }, [sortOrder]);
 
   const loadVaultStatus = async () => {
     try {
@@ -490,13 +514,25 @@ export default function Vault() {
     setShowFormPassword(false);
   };
 
-  const filteredCredentials = credentials.filter(cred => {
-    const matchesSearch = !searchQuery ||
-      cred.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (cred.service_url?.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = !selectedCategory || cred.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredCredentials = credentials
+    .filter(cred => {
+      const matchesSearch = !searchQuery ||
+        cred.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (cred.service_url?.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCategory = !selectedCategory || cred.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'name') {
+        comparison = a.name.localeCompare(b.name);
+      } else if (sortBy === 'category') {
+        comparison = a.category.localeCompare(b.category);
+      } else if (sortBy === 'created_at') {
+        comparison = (a.created_at || '').localeCompare(b.created_at || '');
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
 
   const getCategoryInfo = (category: string) => {
     return categories.find(c => c.value === category) || categories[categories.length - 1];
@@ -646,6 +682,54 @@ export default function Vault() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSortMenu(!showSortMenu)}
+              className="px-3 py-2 rounded-lg bg-[#1a1d24] border border-white/10 text-gray-300 hover:text-white hover:border-white/20 transition flex items-center gap-2 text-sm"
+            >
+              <ArrowUpDown className="w-4 h-4" />
+              <span className="hidden sm:inline">Sort</span>
+              {sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+            </button>
+            {showSortMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                <div className="absolute right-0 mt-2 w-48 bg-[#1a1d24] border border-white/10 rounded-lg shadow-xl z-20 overflow-hidden">
+                  <div className="p-2 border-b border-white/10">
+                    <span className="text-xs text-gray-500 uppercase">Sort by</span>
+                  </div>
+                  {[
+                    { value: 'name', label: 'Name' },
+                    { value: 'category', label: 'Category' },
+                    { value: 'created_at', label: 'Date Created' },
+                  ].map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        if (sortBy === option.value) {
+                          setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setSortBy(option.value as SortField);
+                          setSortOrder('asc');
+                        }
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-white/5 transition ${
+                        sortBy === option.value ? 'text-violet-400' : 'text-gray-300'
+                      }`}
+                    >
+                      {option.label}
+                      {sortBy === option.value && (
+                        sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           {/* View Toggle */}
           <div className="flex items-center bg-[#1a1d24] rounded-lg border border-white/10 p-1">
             <button
@@ -733,7 +817,7 @@ export default function Vault() {
               <span className="text-xs text-gray-500">({favoriteCredentials.length})</span>
             </div>
             {viewMode === 'list' ? (
-              <div className="space-y-1">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                 {favoriteCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
                   const style = getCredentialStyle(cred.name, cred.service_url);
@@ -741,7 +825,7 @@ export default function Vault() {
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
                       style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
                       {/* Brand icon or category icon */}
@@ -753,57 +837,36 @@ export default function Vault() {
                           {style.icon}
                         </div>
                       ) : (
-                        <span className="text-xl flex-shrink-0">{cat.icon}</span>
+                        <span className="text-lg flex-shrink-0">{cat.icon}</span>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white truncate">{cred.name}</h3>
+                        <h3 className="font-medium text-white truncate text-sm">{cred.name}</h3>
                         {cred.service_url && (
                           <span className="text-xs text-gray-500 truncate block">
                             {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
                           </span>
                         )}
                       </div>
-                      <span
-                        className="px-2 py-0.5 rounded text-xs font-medium flex-shrink-0"
-                        style={{ backgroundColor: `${style.bgColor}15`, color: style.textColor }}
-                      >
-                        {cat.label}
-                      </span>
                       {/* Indicators */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
-                        {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
-                        {cred.has_notes && <span title="Has notes"><FileText className="w-3.5 h-3.5 text-gray-500" /></span>}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {cred.has_totp && <span title="2FA"><Shield className="w-3 h-3 text-violet-400" /></span>}
+                        {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3 h-3 text-cyan-400" /></span>}
                       </div>
                       {/* Hover Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
-                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
-                          title="Copy username"
-                        >
-                          <User className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
-                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                          className={`p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
                           title="Copy password"
                         >
-                          <Key className="w-4 h-4" />
+                          <Key className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1.5 rounded text-amber-400 hover:bg-white/10"
+                          className="p-1 rounded text-amber-400 hover:bg-white/10"
                           title="Remove from favorites"
                         >
-                          <Star className="w-4 h-4 fill-amber-400" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
-                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
-                          title="Edit"
-                        >
-                          <Edit3 className="w-4 h-4" />
+                          <Star className="w-3.5 h-3.5 fill-amber-400" />
                         </button>
                       </div>
                     </div>
@@ -885,7 +948,7 @@ export default function Vault() {
               </div>
             )}
             {viewMode === 'list' ? (
-              <div className="space-y-1">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                 {regularCredentials.map(cred => {
                   const cat = getCategoryInfo(cred.category);
                   const style = getCredentialStyle(cred.name, cred.service_url);
@@ -893,7 +956,7 @@ export default function Vault() {
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className="flex items-center gap-4 px-4 py-3 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
                       style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
                       {/* Brand icon or category icon */}
@@ -905,57 +968,36 @@ export default function Vault() {
                           {style.icon}
                         </div>
                       ) : (
-                        <span className="text-xl flex-shrink-0">{cat.icon}</span>
+                        <span className="text-lg flex-shrink-0">{cat.icon}</span>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white truncate">{cred.name}</h3>
+                        <h3 className="font-medium text-white truncate text-sm">{cred.name}</h3>
                         {cred.service_url && (
                           <span className="text-xs text-gray-500 truncate block">
                             {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
                           </span>
                         )}
                       </div>
-                      <span
-                        className="px-2 py-0.5 rounded text-xs font-medium flex-shrink-0"
-                        style={{ backgroundColor: `${style.bgColor}15`, color: style.textColor }}
-                      >
-                        {cat.label}
-                      </span>
                       {/* Indicators */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {cred.has_totp && <span title="2FA"><Shield className="w-3.5 h-3.5 text-violet-400" /></span>}
-                        {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3.5 h-3.5 text-cyan-400" /></span>}
-                        {cred.has_notes && <span title="Has notes"><FileText className="w-3.5 h-3.5 text-gray-500" /></span>}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {cred.has_totp && <span title="2FA"><Shield className="w-3 h-3 text-violet-400" /></span>}
+                        {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3 h-3 text-cyan-400" /></span>}
                       </div>
                       {/* Hover Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
-                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
-                          title="Copy username"
-                        >
-                          <User className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
-                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                          className={`p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
                           title="Copy password"
                         >
-                          <Key className="w-4 h-4" />
+                          <Key className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1.5 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10"
+                          className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10"
                           title="Add to favorites"
                         >
-                          <Star className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
-                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
-                          title="Edit"
-                        >
-                          <Edit3 className="w-4 h-4" />
+                          <Star className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
