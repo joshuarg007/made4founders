@@ -891,6 +891,13 @@ function SocialPublisherTab() {
                         placeholder={`Write your ${platform.label} post...`}
                       />
 
+                      {/* Image Preview in Edit Mode */}
+                      {imagePreview && (
+                        <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
+                          <img src={imagePreview} alt="Attached" className="w-full max-h-40 object-cover" />
+                        </div>
+                      )}
+
                       {/* Platform Tips */}
                       <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-white/5 rounded-lg px-3 py-2">
                         <ImageIcon className="w-3.5 h-3.5 text-gray-400" />
