@@ -1,4 +1,5 @@
 import { FileText, CheckCircle, AlertTriangle, Scale, CreditCard, XCircle, RefreshCw, Mail } from 'lucide-react';
+import SEO, { pageSEO } from '../../components/SEO';
 
 export default function Terms() {
   const lastUpdated = 'January 2026';
@@ -94,6 +95,7 @@ Upon termination, your right to use the Service will immediately cease. You may 
 
   return (
     <div className="min-h-screen bg-[#0a0d14]">
+      <SEO {...pageSEO.terms} />
       {/* Hero */}
       <div className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent" />

@@ -17,14 +17,39 @@ import {
   ListChecks,
   Palette,
 } from 'lucide-react';
+import SEO, { pageSEO } from '../../components/SEO';
+import {
+  SiMailchimp,
+  SiX,
+  SiLinkedin,
+  SiFacebook,
+  SiInstagram,
+  SiGooglecalendar,
+  SiApple,
+  SiQuickbooks,
+  SiXero,
+  SiZoho,
+} from 'react-icons/si';
+import { FreshBooksIcon } from '../../components/BrandIcons';
 
 // Feature images
 import checklistIcon from '../../assets/checklist-icon.webp';
-import vaultIcon from '../../assets/vault-icon.webp';
-import analyticsIcon from '../../assets/analytics-icon.webp';
-import dashboardIcon from '../../assets/dashboard-icon.webp';
+import deadlineIcon from '../../assets/deadline-icon.webp';
 import documentsIcon from '../../assets/documents-icon.webp';
+import contactsIcon from '../../assets/contacts-icon.webp';
+import vaultIcon from '../../assets/vault-icon.webp';
+import bankingIcon from '../../assets/banking-icon.webp';
+import analyticsIcon from '../../assets/analytics-icon.webp';
+import identifiersIcon from '../../assets/identifiers-icon.webp';
+import brandingIcon from '../../assets/branding-icon.webp';
+import emailIcon from '../../assets/email-icon.webp';
 import marketingIcon from '../../assets/marketing-icon.webp';
+import webpresenceIcon from '../../assets/webpresence-icon.webp';
+import tasksIcon from '../../assets/tasks-icon.webp';
+import dashboardIcon from '../../assets/dashboard-icon.webp';
+import teamIcon from '../../assets/team-icon.webp';
+import templatesIcon from '../../assets/templates-icon.webp';
+import securityIcon from '../../assets/security-icon.webp';
 
 const featureCategories = [
   {
@@ -39,6 +64,7 @@ const featureCategories = [
       },
       {
         icon: Calendar,
+        image: deadlineIcon,
         title: 'Deadline Tracker',
         description: 'Track all your important dates with smart reminders. Integrates with your calendar via iCal feed.',
       },
@@ -50,6 +76,7 @@ const featureCategories = [
       },
       {
         icon: Users,
+        image: contactsIcon,
         title: 'Contact Manager',
         description: 'Keep track of lawyers, accountants, investors, vendors, and advisors. Track when you last contacted them.',
       },
@@ -67,6 +94,7 @@ const featureCategories = [
       },
       {
         icon: CreditCard,
+        image: bankingIcon,
         title: 'Banking Dashboard',
         description: 'Track all your bank accounts, payment processors, and financial services in one place.',
       },
@@ -78,6 +106,7 @@ const featureCategories = [
       },
       {
         icon: Building2,
+        image: identifiersIcon,
         title: 'Business Identifiers',
         description: 'Securely store your EIN, DUNS, state IDs, and other business identifiers with encryption.',
       },
@@ -89,11 +118,13 @@ const featureCategories = [
     features: [
       {
         icon: Palette,
+        image: brandingIcon,
         title: 'Brand Asset Manager',
         description: 'Store your logos, colors, fonts, and brand guidelines. Export brand kits for designers.',
       },
       {
         icon: Mail,
+        image: emailIcon,
         title: 'Email Marketing',
         description: 'Create beautiful email templates. Connect Mailchimp for campaigns with full analytics.',
       },
@@ -105,6 +136,7 @@ const featureCategories = [
       },
       {
         icon: Globe,
+        image: webpresenceIcon,
         title: 'Web Presence Tracker',
         description: 'Track your domains, SSL certificates, social profiles, and business listings.',
       },
@@ -116,6 +148,7 @@ const featureCategories = [
     features: [
       {
         icon: CheckCircle,
+        image: tasksIcon,
         title: 'Task Management',
         description: 'Kanban boards with time tracking, comments, and deadline integration. Assign tasks to team members.',
       },
@@ -127,11 +160,13 @@ const featureCategories = [
       },
       {
         icon: Users,
+        image: teamIcon,
         title: 'Team Management',
         description: 'Invite team members with role-based access. Admin, editor, and viewer roles available.',
       },
       {
         icon: FileText,
+        image: templatesIcon,
         title: 'Document Templates',
         description: 'Ready-to-use templates for NDAs, operating agreements, board resolutions, and more.',
       },
@@ -140,18 +175,23 @@ const featureCategories = [
 ];
 
 const integrations = [
-  { name: 'Mailchimp', category: 'Email' },
-  { name: 'Twitter/X', category: 'Social' },
-  { name: 'LinkedIn', category: 'Social' },
-  { name: 'Facebook', category: 'Social' },
-  { name: 'Instagram', category: 'Social' },
-  { name: 'Google Calendar', category: 'Calendar' },
-  { name: 'Apple Calendar', category: 'Calendar' },
+  { name: 'Mailchimp', category: 'Email', icon: SiMailchimp, color: '#FFE01B' },
+  { name: 'X / Twitter', category: 'Social', icon: SiX, color: '#FFFFFF' },
+  { name: 'LinkedIn', category: 'Social', icon: SiLinkedin, color: '#0A66C2' },
+  { name: 'Facebook', category: 'Social', icon: SiFacebook, color: '#1877F2' },
+  { name: 'Instagram', category: 'Social', icon: SiInstagram, color: '#E4405F' },
+  { name: 'Google Calendar', category: 'Calendar', icon: SiGooglecalendar, color: '#4285F4' },
+  { name: 'Apple Calendar', category: 'Calendar', icon: SiApple, color: '#FFFFFF' },
+  { name: 'QuickBooks', category: 'Accounting', icon: SiQuickbooks, color: '#2CA01C' },
+  { name: 'Xero', category: 'Accounting', icon: SiXero, color: '#13B5EA' },
+  { name: 'FreshBooks', category: 'Accounting', icon: FreshBooksIcon, color: '#0075DD' },
+  { name: 'Zoho Books', category: 'Accounting', icon: SiZoho, color: '#C8202B' },
 ];
 
 export default function Features() {
   return (
     <div className="py-20 px-4 sm:px-6 lg:px-8">
+      <SEO {...pageSEO.features} />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-20">
@@ -178,34 +218,27 @@ export default function Features() {
               <p className="text-gray-400">{category.description}</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {category.features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="group p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all hover:bg-white/[0.07]"
+                  className="group rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all hover:bg-white/[0.07] overflow-hidden"
                 >
-                  {feature.image ? (
-                    <div className="mb-6 -mx-2 -mt-2">
-                      <img
-                        src={feature.image}
-                        alt={feature.title}
-                        className="w-full h-40 object-cover rounded-xl opacity-90 group-hover:opacity-100 transition-opacity"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center mb-6">
-                      <feature.icon className="w-6 h-6 text-cyan-400" />
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 mb-3">
-                    {feature.image && (
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
-                        <feature.icon className="w-4 h-4 text-cyan-400" />
-                      </div>
-                    )}
-                    <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
+                  <div className="h-36 bg-gradient-to-br from-slate-800/50 to-slate-900/50 flex items-center justify-center p-3">
+                    <img
+                      src={feature.image}
+                      alt={`${feature.title} - Made4Founders feature`}
+                      loading="lazy"
+                      decoding="async"
+                      width={450}
+                      height={320}
+                      className="max-h-full max-w-full object-contain opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all"
+                    />
                   </div>
-                  <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                  <div className="p-4">
+                    <h3 className="text-base font-semibold text-white mb-2">{feature.title}</h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">{feature.description}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -225,10 +258,15 @@ export default function Features() {
             {integrations.map((integration) => (
               <div
                 key={integration.name}
-                className="px-6 py-3 rounded-xl bg-white/5 border border-white/10"
+                className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.05] transition-all cursor-default"
               >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: `${integration.color}15` }}
+                >
+                  <integration.icon className="w-5 h-5" style={{ color: integration.color }} />
+                </div>
                 <span className="text-white font-medium">{integration.name}</span>
-                <span className="text-gray-500 text-sm ml-2">({integration.category})</span>
               </div>
             ))}
           </div>
@@ -262,9 +300,12 @@ export default function Features() {
               </ul>
             </div>
             <div className="flex-shrink-0">
-              <div className="w-48 h-48 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
-                <Lock className="w-20 h-20 text-cyan-400" />
-              </div>
+              <img
+                src={securityIcon}
+                alt="Enterprise-grade security - Made4Founders"
+                loading="lazy"
+                className="w-72 h-auto"
+              />
             </div>
           </div>
         </section>

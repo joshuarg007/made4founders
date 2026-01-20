@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle, Loader2 } from 'lucide-react';
+import SEO, { pageSEO } from '../../components/SEO';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
@@ -78,6 +79,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex">
+      <SEO {...pageSEO.signup} />
       {/* Left side - Form */}
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md">

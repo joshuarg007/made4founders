@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Check, X, Sparkles, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { createCheckoutSession } from '../../lib/api';
+import SEO, { pageSEO } from '../../components/SEO';
 
 type PriceKey = 'starter_monthly' | 'starter_yearly' | 'growth_monthly' | 'growth_yearly' | 'scale_monthly' | 'scale_yearly';
 
@@ -138,6 +139,7 @@ export default function Pricing() {
 
   return (
     <div className="py-20 px-4 sm:px-6 lg:px-8">
+      <SEO {...pageSEO.pricing} />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">

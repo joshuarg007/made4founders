@@ -10,6 +10,7 @@ import {
   Lock,
   Globe,
 } from 'lucide-react';
+import SEO, { pageSEO } from '../../components/SEO';
 
 // Marketing images
 import heroImage from '../../assets/hero-section-holographic.webp';
@@ -91,6 +92,7 @@ const testimonials = [
 export default function Home() {
   return (
     <div className="relative overflow-hidden">
+      <SEO {...pageSEO.home} />
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">
         {/* Background effects */}

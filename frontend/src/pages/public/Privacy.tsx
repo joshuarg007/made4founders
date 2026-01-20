@@ -1,4 +1,5 @@
 import { Shield, Lock, Eye, Database, UserCheck, Globe, Mail } from 'lucide-react';
+import SEO, { pageSEO } from '../../components/SEO';
 
 export default function Privacy() {
   const lastUpdated = 'January 2026';
@@ -98,6 +99,7 @@ export default function Privacy() {
 
   return (
     <div className="min-h-screen bg-[#0a0d14]">
+      <SEO {...pageSEO.privacy} />
       {/* Hero */}
       <div className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent" />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Heart, Target, Shield, Zap } from 'lucide-react';
+import SEO, { pageSEO } from '../../components/SEO';
 
 const values = [
   {
@@ -45,6 +46,7 @@ const timeline = [
 export default function About() {
   return (
     <div className="py-20 px-4 sm:px-6 lg:px-8">
+      <SEO {...pageSEO.about} />
       <div className="max-w-7xl mx-auto">
         {/* Hero */}
         <div className="text-center mb-20">

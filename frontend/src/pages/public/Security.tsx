@@ -1,4 +1,5 @@
 import { Shield, Lock, Key, Server, Eye, AlertTriangle, CheckCircle, Mail, FileCheck } from 'lucide-react';
+import SEO, { pageSEO } from '../../components/SEO';
 
 export default function Security() {
   const securityFeatures = [
@@ -78,6 +79,7 @@ export default function Security() {
 
   return (
     <div className="min-h-screen bg-[#0a0d14]">
+      <SEO {...pageSEO.security} />
       {/* Hero */}
       <div className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-green-500/5 to-transparent" />

@@ -1,0 +1,26 @@
+# Made4Founders robots.txt
+# https://made4founders.com
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://made4founders.com/sitemap.xml
+
+# Block authenticated app routes from indexing
+Disallow: /app/
+Disallow: /api/
+
+# Allow all public pages
+Allow: /
+Allow: /features
+Allow: /pricing
+Allow: /about
+Allow: /signup
+Allow: /login
+Allow: /privacy
+Allow: /terms
+Allow: /security
+
+# Crawl delay (optional, be nice to servers)
+Crawl-delay: 1

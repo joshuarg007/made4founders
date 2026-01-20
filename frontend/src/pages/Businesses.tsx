@@ -357,7 +357,7 @@ export default function Businesses() {
                   className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                 >
                   {BUSINESS_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
+                    <option key={type.value} value={type.value} className="bg-gray-800 text-white">{type.label}</option>
                   ))}
                 </select>
               </div>
@@ -382,11 +382,11 @@ export default function Businesses() {
                   onChange={e => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : null })}
                   className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                 >
-                  <option value="">None (Top-level)</option>
+                  <option value="" className="bg-gray-800 text-white">None (Top-level)</option>
                   {businesses
                     .filter(b => b.id !== editingBusiness?.id)
                     .map(b => (
-                      <option key={b.id} value={b.id}>{b.emoji} {b.name}</option>
+                      <option key={b.id} value={b.id} className="bg-gray-800 text-white">{b.emoji} {b.name}</option>
                     ))}
                 </select>
               </div>

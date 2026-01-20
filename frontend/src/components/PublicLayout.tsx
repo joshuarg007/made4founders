@@ -155,6 +155,30 @@ export default function PublicLayout() {
             </div>
           </div>
 
+          {/* Partner Sites */}
+          <div className="mt-8 pt-8 border-t border-white/5">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+              <span>Also by our team:</span>
+              <a
+                href="https://site2crm.io"
+                target="_blank"
+                rel="noopener"
+                className="hover:text-cyan-400 transition-colors"
+              >
+                Site2CRM
+              </a>
+              <span className="text-gray-700">•</span>
+              <a
+                href="https://axiondeep.com"
+                target="_blank"
+                rel="noopener"
+                className="hover:text-cyan-400 transition-colors"
+              >
+                Axion Deep
+              </a>
+            </div>
+          </div>
+
           <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
               &copy; {new Date().getFullYear()} Made4Founders. All rights reserved.
