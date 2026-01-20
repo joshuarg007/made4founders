@@ -9,7 +9,6 @@ import {
   Edit3,
   Copy,
   Eye,
-  EyeOff,
   Loader2,
   Check,
   X,
@@ -537,7 +536,7 @@ function SocialPublisherTab() {
   const [posting, setPosting] = useState<string | null>(null);
   const [postSuccess, setPostSuccess] = useState<string | null>(null);
   const [postError, setPostError] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<string>('twitter');
 
   // Load connected accounts
   useEffect(() => {
@@ -807,99 +806,143 @@ function SocialPublisherTab() {
           </div>
         </div>
 
-        {/* Platform-Specific Editors */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          {PLATFORMS.filter(p => platformPosts[p.id]?.enabled).map((platform) => {
-            const post = platformPosts[platform.id];
-            const charCount = getCharCount(platform.id);
-            const overLimit = isOverLimit(platform.id);
-            const isConnected = connectedAccounts[platform.id];
-            const isPreview = previewMode[platform.id] || false;
-            const MockupComponent = SocialMockups[platform.id as keyof typeof SocialMockups];
-            const charPercent = Math.min((charCount / platform.charLimit) * 100, 100);
-
-            return (
-              <div key={platform.id} className="bg-gradient-to-br from-white/5 to-transparent rounded-2xl border border-white/10 overflow-hidden hover:border-white/20 transition group">
-                {/* Platform Header */}
-                <div className={`${platform.color} px-5 py-4 flex items-center justify-between`}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                      <platform.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <span className="font-semibold text-white block">{platform.label}</span>
-                      <span className="text-xs text-white/60">{isConnected ? 'Connected' : 'Not connected'}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {/* Preview Toggle */}
-                    <button
-                      onClick={() => setPreviewMode(prev => ({ ...prev, [platform.id]: !prev[platform.id] }))}
-                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition ${
-                        isPreview ? 'bg-white text-gray-900' : 'bg-white/20 text-white hover:bg-white/30'
-                      }`}
-                      title={isPreview ? 'Switch to Edit' : 'Preview Post'}
-                    >
-                      {isPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      {isPreview ? 'Edit' : 'Preview'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Character Progress Bar */}
-                <div className="h-1 bg-black/20">
-                  <div
-                    className={`h-full transition-all duration-300 ${
-                      charPercent > 90 ? 'bg-red-500' : charPercent > 70 ? 'bg-amber-500' : 'bg-green-500'
+        {/* Platform Tabs */}
+        {PLATFORMS.filter(p => platformPosts[p.id]?.enabled).length > 0 && (
+          <div className="mb-8">
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              {PLATFORMS.filter(p => platformPosts[p.id]?.enabled).map((platform) => {
+                const isActive = activeTab === platform.id;
+                const isConnected = connectedAccounts[platform.id];
+                return (
+                  <button
+                    key={platform.id}
+                    onClick={() => setActiveTab(platform.id)}
+                    className={`flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
+                      isActive
+                        ? `${platform.color} text-white shadow-lg`
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
                     }`}
-                    style={{ width: `${charPercent}%` }}
-                  />
-                </div>
+                  >
+                    <platform.icon className="w-5 h-5" />
+                    <span>{platform.label}</span>
+                    {isConnected && (
+                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-                {/* Content Area - Edit or Preview */}
-                <div className="p-5">
-                  {/* Character Count Badge */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-gray-500">
-                      {isPreview ? 'Preview Mode' : 'Edit Mode'}
-                    </span>
-                    <span className={`text-xs font-mono px-2 py-0.5 rounded ${
-                      overLimit ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-gray-400'
-                    }`}>
-                      {charCount.toLocaleString()} / {platform.charLimit.toLocaleString()}
-                    </span>
+            {/* Active Platform Panel */}
+            {PLATFORMS.filter(p => platformPosts[p.id]?.enabled).map((platform) => {
+              if (activeTab !== platform.id) return null;
+
+              const post = platformPosts[platform.id];
+              const charCount = getCharCount(platform.id);
+              const overLimit = isOverLimit(platform.id);
+              const isConnected = connectedAccounts[platform.id];
+              const MockupComponent = SocialMockups[platform.id as keyof typeof SocialMockups];
+              const charPercent = Math.min((charCount / platform.charLimit) * 100, 100);
+
+              return (
+                <div key={platform.id} className="bg-gradient-to-br from-white/5 to-transparent rounded-2xl border border-white/10 overflow-hidden">
+                  {/* Platform Header */}
+                  <div className={`${platform.color} px-6 py-4 flex items-center justify-between`}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                        <platform.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-white text-lg block">{platform.label}</span>
+                        <span className="text-sm text-white/70">
+                          {isConnected ? 'Connected & Ready' : 'Not connected'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className={`text-sm font-mono px-3 py-1 rounded-lg ${
+                        overLimit ? 'bg-red-500/30 text-red-200' : 'bg-white/20 text-white'
+                      }`}>
+                        {charCount.toLocaleString()} / {platform.charLimit.toLocaleString()}
+                      </span>
+                      {isConnected ? (
+                        <button
+                          onClick={() => handlePost(platform.id)}
+                          disabled={!post.content.trim() || overLimit || posting === platform.id}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-gray-900 font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {posting === platform.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                          Post Now
+                        </button>
+                      ) : (
+                        <span className="text-sm text-white/60 bg-white/10 px-4 py-2 rounded-lg">
+                          Connect to post
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {isPreview ? (
-                    /* Preview Mode - Show Mockup */
-                    <MockupComponent
-                      content={post.content}
-                      imageUrl={imagePreview}
-                      userName={user?.name || user?.email || 'User'}
+                  {/* Character Progress Bar */}
+                  <div className="h-1.5 bg-black/30">
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        charPercent > 90 ? 'bg-red-500' : charPercent > 70 ? 'bg-amber-500' : 'bg-green-500'
+                      }`}
+                      style={{ width: `${charPercent}%` }}
                     />
-                  ) : (
-                    /* Edit Mode */
-                    <>
+                  </div>
+
+                  {/* Content Area - Two Column Layout */}
+                  <div className="grid lg:grid-cols-2 gap-0 divide-x divide-white/10">
+                    {/* Left: Preview Mockup */}
+                    <div className="p-6 bg-gradient-to-br from-gray-900/50 to-transparent">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Eye className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-400">Live Preview</span>
+                      </div>
+                      <div className="flex justify-center">
+                        <div className="w-full max-w-md">
+                          <MockupComponent
+                            content={post.content}
+                            imageUrl={imagePreview}
+                            userName={user?.name || user?.email || 'User'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Editor */}
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Edit3 className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-400">Edit Content</span>
+                      </div>
+
                       <textarea
                         value={post.content}
                         onChange={(e) => updatePlatformContent(platform.id, e.target.value)}
                         maxLength={platform.charLimit}
-                        rows={platform.id === 'twitter' ? 4 : 6}
+                        rows={8}
                         className={`w-full px-4 py-3 rounded-xl bg-[#0a0c10] border-2 text-white placeholder-gray-600 focus:outline-none transition resize-none text-sm leading-relaxed ${
-                          overLimit ? 'border-red-500/50 focus:border-red-500' : 'border-white/5 focus:border-cyan-500/50'
+                          overLimit ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-cyan-500/50'
                         }`}
                         placeholder={`Write your ${platform.label} post...`}
                       />
 
-                      {/* Image Preview in Edit Mode */}
+                      {/* Image Preview */}
                       {imagePreview && (
-                        <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
-                          <img src={imagePreview} alt="Attached" className="w-full max-h-40 object-cover" />
+                        <div className="mt-4 rounded-xl overflow-hidden border border-white/10">
+                          <img src={imagePreview} alt="Attached" className="w-full max-h-48 object-cover" />
                         </div>
                       )}
 
                       {/* Platform Tips */}
-                      <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-white/5 rounded-lg px-3 py-2">
+                      <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 bg-white/5 rounded-lg px-3 py-2">
                         <ImageIcon className="w-3.5 h-3.5 text-gray-400" />
                         <span>{platform.imageNote}</span>
                       </div>
@@ -910,43 +953,24 @@ function SocialPublisherTab() {
                           <span>Content exceeds {platform.label}'s character limit</span>
                         </div>
                       )}
-                    </>
-                  )}
 
-                  {/* Actions - Always visible */}
-                  <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-between">
-                    <button
-                      onClick={() => navigator.clipboard.writeText(post.content)}
-                      className="text-xs text-gray-500 hover:text-white transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      Copy text
-                    </button>
-
-                    {isConnected ? (
-                      <button
-                        onClick={() => handlePost(platform.id)}
-                        disabled={!post.content.trim() || overLimit || posting === platform.id}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium hover:from-cyan-400 hover:to-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
-                      >
-                        {posting === platform.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
-                        Post Now
-                      </button>
-                    ) : (
-                      <span className="text-xs text-amber-500/80 bg-amber-500/10 px-3 py-1.5 rounded-lg">
-                        Connect account to post
-                      </span>
-                    )}
+                      {/* Copy Button */}
+                      <div className="mt-4 pt-4 border-t border-white/5">
+                        <button
+                          onClick={() => navigator.clipboard.writeText(post.content)}
+                          className="text-sm text-gray-400 hover:text-white transition flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/5"
+                        >
+                          <Copy className="w-4 h-4" />
+                          Copy to clipboard
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Post All Button */}
         {PLATFORMS.some(p => platformPosts[p.id]?.enabled && connectedAccounts[p.id]) && (
