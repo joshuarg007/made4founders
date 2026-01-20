@@ -824,7 +824,7 @@ export default function Vault() {
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
+                      className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/30 hover:bg-[#1f2229] cursor-pointer transition-all duration-200 group"
                       style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
                       {/* Brand icon or category icon */}
@@ -839,30 +839,47 @@ export default function Vault() {
                         <span className="text-lg flex-shrink-0">{cat.icon}</span>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white truncate text-sm">{cred.name}</h3>
-                        {cred.service_url && (
-                          <span className="text-xs text-gray-500 truncate block">
-                            {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
-                          </span>
-                        )}
+                        <h3 className="font-medium text-white truncate group-hover:whitespace-normal group-hover:overflow-visible text-sm">{cred.name}</h3>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          {cred.username && <span className="truncate group-hover:text-gray-400">{cred.username}</span>}
+                          {!cred.username && cred.service_url && (
+                            <span className="truncate">
+                              {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {/* Indicators */}
-                      <div className="flex items-center gap-1 flex-shrink-0">
+                      {/* Indicators - hide on hover */}
+                      <div className="flex items-center gap-1 flex-shrink-0 group-hover:hidden">
                         {cred.has_totp && <span title="2FA"><Shield className="w-3 h-3 text-violet-400" /></span>}
                         {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3 h-3 text-cyan-400" /></span>}
                       </div>
                       {/* Hover Actions */}
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                      <div className="hidden group-hover:flex items-center gap-0.5 flex-shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
+                          title="Copy username"
+                        >
+                          <User className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
-                          className={`p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
                           title="Copy password"
                         >
                           <Key className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
+                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1 rounded text-amber-400 hover:bg-white/10"
+                          className="p-1.5 rounded text-amber-400 hover:bg-white/10"
                           title="Remove from favorites"
                         >
                           <Star className="w-3.5 h-3.5 fill-amber-400" />
@@ -955,7 +972,7 @@ export default function Vault() {
                     <div
                       key={cred.id}
                       onClick={() => handleView(cred.id)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/20 cursor-pointer transition group"
+                      className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#1a1d24] border border-white/5 hover:border-white/30 hover:bg-[#1f2229] cursor-pointer transition-all duration-200 group"
                       style={{ borderLeftWidth: '4px', borderLeftColor: style.borderColor }}
                     >
                       {/* Brand icon or category icon */}
@@ -970,30 +987,47 @@ export default function Vault() {
                         <span className="text-lg flex-shrink-0">{cat.icon}</span>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white truncate text-sm">{cred.name}</h3>
-                        {cred.service_url && (
-                          <span className="text-xs text-gray-500 truncate block">
-                            {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
-                          </span>
-                        )}
+                        <h3 className="font-medium text-white truncate group-hover:whitespace-normal group-hover:overflow-visible text-sm">{cred.name}</h3>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          {cred.username && <span className="truncate group-hover:text-gray-400">{cred.username}</span>}
+                          {!cred.username && cred.service_url && (
+                            <span className="truncate">
+                              {(() => { try { return new URL(cred.service_url).hostname; } catch { return cred.service_url; } })()}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {/* Indicators */}
-                      <div className="flex items-center gap-1 flex-shrink-0">
+                      {/* Indicators - hide on hover */}
+                      <div className="flex items-center gap-1 flex-shrink-0 group-hover:hidden">
                         {cred.has_totp && <span title="2FA"><Shield className="w-3 h-3 text-violet-400" /></span>}
                         {cred.has_custom_fields && <span title={`${cred.custom_field_count} fields`}><Key className="w-3 h-3 text-cyan-400" /></span>}
                       </div>
                       {/* Hover Actions */}
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                      <div className="hidden group-hover:flex items-center gap-0.5 flex-shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
+                          title="Copy username"
+                        >
+                          <User className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
-                          className={`p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                          className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
                           title="Copy password"
                         >
                           <Key className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
+                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10"
+                          className="p-1.5 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10"
                           title="Add to favorites"
                         >
                           <Star className="w-3.5 h-3.5" />
