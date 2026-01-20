@@ -43,14 +43,6 @@ const ACCOUNTING_PROVIDERS = [
     logo: '/logos/freshbooks.svg',
   },
   {
-    id: 'wave',
-    name: 'Wave',
-    description: 'Free accounting software',
-    color: 'bg-[#094D92]',
-    hoverColor: 'hover:bg-[#073a6e]',
-    logo: '/logos/wave.svg',
-  },
-  {
     id: 'zoho',
     name: 'Zoho Books',
     description: 'Online accounting software',
@@ -74,7 +66,6 @@ interface ConnectedAccounting {
   quickbooks: AccountingAccount | null;
   xero: AccountingAccount | null;
   freshbooks: AccountingAccount | null;
-  wave: AccountingAccount | null;
   zoho: AccountingAccount | null;
 }
 
@@ -119,7 +110,6 @@ export default function Banking() {
     quickbooks: null,
     xero: null,
     freshbooks: null,
-    wave: null,
     zoho: null,
   });
   const [accountingLoading, setAccountingLoading] = useState<string | null>(null);

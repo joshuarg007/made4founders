@@ -608,7 +608,7 @@ class AccountingConnection(Base):
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
-    provider = Column(String(50), nullable=False)  # quickbooks, xero, freshbooks, wave, zoho
+    provider = Column(String(50), nullable=False)  # quickbooks, xero, freshbooks, zoho
     company_id = Column(String(255), nullable=True)  # Provider's company/org ID
     company_name = Column(String(255), nullable=True)
 

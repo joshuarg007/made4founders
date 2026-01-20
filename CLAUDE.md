@@ -296,7 +296,7 @@ Mock preview components for social media posts (Twitter, LinkedIn, Facebook, Ins
 ## Accounting OAuth Integrations
 Location: `backend/app/accounting_oauth.py`
 
-Supports: QuickBooks, Xero, FreshBooks, Wave, Zoho Books
+Supports: QuickBooks, Xero, FreshBooks, Zoho Books
 
 Features:
 - **Retry logic**: 3 retries with exponential backoff (1s, 2s, 4s)

@@ -157,11 +157,6 @@ FRESHBOOKS_CLIENT_ID = os.getenv("FRESHBOOKS_CLIENT_ID", "")
 FRESHBOOKS_CLIENT_SECRET = os.getenv("FRESHBOOKS_CLIENT_SECRET", "")
 FRESHBOOKS_REDIRECT_URI = f"{BACKEND_URL}/api/accounting/freshbooks/callback"
 
-# Wave (GraphQL API)
-WAVE_CLIENT_ID = os.getenv("WAVE_CLIENT_ID", "")
-WAVE_CLIENT_SECRET = os.getenv("WAVE_CLIENT_SECRET", "")
-WAVE_REDIRECT_URI = f"{BACKEND_URL}/api/accounting/wave/callback"
-
 # Zoho Books OAuth 2.0
 ZOHO_CLIENT_ID = os.getenv("ZOHO_CLIENT_ID", "")
 ZOHO_CLIENT_SECRET = os.getenv("ZOHO_CLIENT_SECRET", "")
@@ -217,7 +212,6 @@ class ConnectedAccountingResponse(BaseModel):
     quickbooks: Optional[AccountingAccountResponse] = None
     xero: Optional[AccountingAccountResponse] = None
     freshbooks: Optional[AccountingAccountResponse] = None
-    wave: Optional[AccountingAccountResponse] = None
     zoho: Optional[AccountingAccountResponse] = None
 
 
@@ -593,123 +587,6 @@ async def freshbooks_callback(
         return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=FreshBooks+connection+failed")
 
 
-# ============ WAVE ============
-
-@router.get("/wave/connect")
-async def wave_connect(
-    current_user: User = Depends(get_current_user),
-):
-    """Initiate Wave OAuth flow."""
-    if not WAVE_CLIENT_ID:
-        raise HTTPException(status_code=400, detail="Wave not configured")
-
-    state = generate_state(current_user.id, "wave")
-
-    params = {
-        "client_id": WAVE_CLIENT_ID,
-        "response_type": "code",
-        "redirect_uri": WAVE_REDIRECT_URI,
-        "scope": "business:read account:read transaction:read invoice:read",
-        "state": state,
-    }
-
-    return {"url": f"https://api.waveapps.com/oauth2/authorize/?{urlencode(params)}"}
-
-
-@router.get("/wave/callback")
-async def wave_callback(
-    code: str = Query(...),
-    state: str = Query(...),
-    db: Session = Depends(get_db),
-):
-    """Handle Wave OAuth callback."""
-    user_id = validate_state(state, "wave")
-    if not user_id:
-        return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=Invalid+state")
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=User+not+found")
-
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            # Exchange code for tokens with retry
-            async def exchange_token():
-                response = await client.post(
-                    "https://api.waveapps.com/oauth2/token/",
-                    data={
-                        "grant_type": "authorization_code",
-                        "code": code,
-                        "redirect_uri": WAVE_REDIRECT_URI,
-                        "client_id": WAVE_CLIENT_ID,
-                        "client_secret": WAVE_CLIENT_SECRET,
-                    },
-                )
-                response.raise_for_status()
-                return response.json()
-
-            tokens = await retry_with_backoff(exchange_token)
-
-            # Get business info via GraphQL
-            graphql_query = """
-            query {
-                businesses {
-                    edges {
-                        node {
-                            id
-                            name
-                        }
-                    }
-                }
-            }
-            """
-            business_response = await client.post(
-                "https://gql.waveapps.com/graphql/public",
-                headers={
-                    "Authorization": f"Bearer {tokens['access_token']}",
-                    "Content-Type": "application/json",
-                },
-                json={"query": graphql_query},
-            )
-            business_data = business_response.json() if business_response.status_code == 200 else {}
-            businesses = business_data.get("data", {}).get("businesses", {}).get("edges", [])
-            business = businesses[0].get("node", {}) if businesses else {}
-
-        # Save connection
-        existing = db.query(AccountingConnection).filter(
-            AccountingConnection.organization_id == user.organization_id,
-            AccountingConnection.provider == "wave",
-        ).first()
-
-        if existing:
-            existing.access_token = tokens["access_token"]
-            existing.refresh_token = tokens.get("refresh_token")
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 31536000))
-            existing.company_id = business.get("id", "")
-            existing.company_name = business.get("name", "Wave Business")
-            existing.is_active = True
-        else:
-            connection = AccountingConnection(
-                organization_id=user.organization_id,
-                user_id=user.id,
-                provider="wave",
-                company_id=business.get("id", ""),
-                company_name=business.get("name", "Wave Business"),
-                access_token=tokens["access_token"],
-                refresh_token=tokens.get("refresh_token"),
-                token_expires_at=datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 31536000)),
-                is_active=True,
-            )
-            db.add(connection)
-
-        db.commit()
-        return RedirectResponse(f"{FRONTEND_URL}/app/banking?connected=Wave")
-
-    except Exception as e:
-        print(f"Wave OAuth error: {e}")
-        return RedirectResponse(f"{FRONTEND_URL}/app/banking?error=Wave+connection+failed")
-
-
 # ============ ZOHO BOOKS ============
 
 @router.get("/zoho/connect")
@@ -978,8 +855,6 @@ async def fetch_financial_summary(connection: AccountingConnection) -> Financial
                 summary = await fetch_xero_summary(client, connection)
             elif connection.provider == "freshbooks":
                 summary = await fetch_freshbooks_summary(client, connection)
-            elif connection.provider == "wave":
-                summary = await fetch_wave_summary(client, connection)
             elif connection.provider == "zoho":
                 summary = await fetch_zoho_summary(client, connection)
     except Exception as e:
@@ -1067,55 +942,6 @@ async def fetch_freshbooks_summary(client: httpx.AsyncClient, connection: Accoun
         for inv in invoices:
             outstanding = float(inv.get("outstanding", {}).get("amount", 0))
             summary.outstanding_invoices += outstanding
-
-    return summary
-
-
-async def fetch_wave_summary(client: httpx.AsyncClient, connection: AccountingConnection) -> FinancialSummary:
-    """Fetch financial data from Wave via GraphQL."""
-    headers = {
-        "Authorization": f"Bearer {connection.access_token}",
-        "Content-Type": "application/json",
-    }
-
-    query = """
-    query($businessId: ID!) {
-        business(id: $businessId) {
-            invoices {
-                edges {
-                    node {
-                        status
-                        amountDue {
-                            value
-                        }
-                    }
-                }
-            }
-        }
-    }
-    """
-
-    summary = FinancialSummary(
-        period_start=datetime.utcnow().replace(day=1),
-        period_end=datetime.utcnow(),
-    )
-
-    response = await client.post(
-        "https://gql.waveapps.com/graphql/public",
-        headers=headers,
-        json={"query": query, "variables": {"businessId": connection.company_id}},
-    )
-
-    if response.status_code == 200:
-        data = response.json().get("data", {}).get("business", {})
-        invoices = data.get("invoices", {}).get("edges", [])
-        for inv in invoices:
-            node = inv.get("node", {})
-            if node.get("status") in ["SENT", "PARTIAL", "OVERDUE"]:
-                amount = float(node.get("amountDue", {}).get("value", 0))
-                summary.outstanding_invoices += amount
-                if node.get("status") == "OVERDUE":
-                    summary.overdue_invoices += amount
 
     return summary
 
