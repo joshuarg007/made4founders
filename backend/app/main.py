@@ -3726,7 +3726,7 @@ def get_credential(credential_id: int, key: bytes = Depends(require_vault_unlock
 
 
 @app.post("/api/credentials", response_model=CredentialMasked)
-def create_credential(credential: CredentialCreate, key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
+def create_credential(credential: CredentialCreate, current_user: User = Depends(get_current_user), key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
     """Create a new credential (requires unlock)."""
     # Encrypt custom fields if present
     encrypted_custom_fields = None
@@ -3735,6 +3735,7 @@ def create_credential(credential: CredentialCreate, key: bytes = Depends(require
         encrypted_custom_fields = encrypt_value(custom_fields_json, key)
 
     db_credential = Credential(
+        organization_id=current_user.organization_id,
         name=credential.name,
         service_url=credential.service_url,
         category=credential.category,
