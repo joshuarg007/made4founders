@@ -157,7 +157,7 @@ async def google_callback(
         org = Organization(
             name=org_name,
             slug=slug,
-            subscription_tier=SubscriptionTier.FREE.value,
+            subscription_tier=SubscriptionTier.STARTER.value,
             subscription_status=SubscriptionStatus.TRIALING.value,
             trial_ends_at=datetime.utcnow() + timedelta(days=14),
         )
@@ -314,7 +314,7 @@ async def github_callback(
         org = Organization(
             name=org_name,
             slug=slug,
-            subscription_tier=SubscriptionTier.FREE.value,
+            subscription_tier=SubscriptionTier.STARTER.value,
             subscription_status=SubscriptionStatus.TRIALING.value,
             trial_ends_at=datetime.utcnow() + timedelta(days=14),
         )

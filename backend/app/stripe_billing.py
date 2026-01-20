@@ -118,7 +118,7 @@ async def get_subscription(
         raise HTTPException(status_code=404, detail="Organization not found")
 
     return SubscriptionResponse(
-        tier=org.subscription_tier or SubscriptionTier.FREE.value,
+        tier=org.subscription_tier or SubscriptionTier.STARTER.value,
         status=org.subscription_status or SubscriptionStatus.TRIALING.value,
         trial_ends_at=org.trial_ends_at,
         subscription_ends_at=org.subscription_ends_at,
@@ -355,14 +355,14 @@ async def handle_subscription_deleted(data: dict, db: Session):
         return
 
     org.subscription_status = SubscriptionStatus.CANCELED.value
-    org.subscription_tier = SubscriptionTier.FREE.value
+    org.subscription_tier = SubscriptionTier.STARTER.value
     org.stripe_subscription_id = None
 
     # Log history
     history = SubscriptionHistory(
         organization_id=org.id,
         event_type="canceled",
-        tier=SubscriptionTier.FREE.value,
+        tier=SubscriptionTier.STARTER.value,
     )
     db.add(history)
     db.commit()

@@ -128,7 +128,7 @@ class Organization(Base):
     # Subscription
     stripe_customer_id = Column(String(255), nullable=True, unique=True)
     stripe_subscription_id = Column(String(255), nullable=True)
-    subscription_tier = Column(String(50), default=SubscriptionTier.FREE.value)
+    subscription_tier = Column(String(50), default=SubscriptionTier.STARTER.value)
     subscription_status = Column(String(50), default=SubscriptionStatus.TRIALING.value)
     trial_ends_at = Column(DateTime, nullable=True)
     subscription_ends_at = Column(DateTime, nullable=True)
