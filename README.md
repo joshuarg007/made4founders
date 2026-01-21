@@ -445,3 +445,4 @@ Private - All rights reserved.
 ## Support
 
 For issues and feature requests, please create an issue in the repository.
+<!-- Pair Extraordinaire -->
