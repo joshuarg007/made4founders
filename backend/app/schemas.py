@@ -1459,3 +1459,14 @@ class BankAccountResponse(BankAccountBase):
 
     class Config:
         from_attributes = True
+
+
+# ============ Contact Submissions ============
+
+class ContactSubmissionCreate(BaseModel):
+    name: str
+    email: str
+    company: Optional[str] = None
+    subject: Optional[str] = None
+    message: str
+    source: Optional[str] = None

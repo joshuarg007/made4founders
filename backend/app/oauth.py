@@ -94,15 +94,29 @@ async def google_login():
 
 @router.get("/google/callback")
 async def google_callback(
-    code: str,
-    state: str,
     response: Response,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     """Handle Google OAuth callback."""
+    # Handle user cancellation or errors
+    if error:
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_cancelled"
+        return response
+
+    if not code or not state:
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
+        return response
+
     # Verify state
     if state not in oauth_states or oauth_states[state]["provider"] != "google":
-        raise HTTPException(status_code=400, detail="Invalid state parameter")
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
+        return response
 
     del oauth_states[state]  # Clean up
 
@@ -227,15 +241,29 @@ async def github_login():
 
 @router.get("/github/callback")
 async def github_callback(
-    code: str,
-    state: str,
     response: Response,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     """Handle GitHub OAuth callback."""
+    # Handle user cancellation or errors
+    if error:
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_cancelled"
+        return response
+
+    if not code or not state:
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
+        return response
+
     # Verify state
     if state not in oauth_states or oauth_states[state]["provider"] != "github":
-        raise HTTPException(status_code=400, detail="Invalid state parameter")
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
+        return response
 
     del oauth_states[state]  # Clean up
 

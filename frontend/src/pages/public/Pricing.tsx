@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { Check, X, Sparkles, Loader2 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Check, X, Sparkles, Loader2, ArrowRight, Shield, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import { createCheckoutSession } from '../../lib/api';
 import SEO, { pageSEO } from '../../components/SEO';
@@ -265,34 +265,62 @@ export default function Pricing() {
         </div>
 
         {/* Enterprise */}
-        <div className="mb-24 p-8 rounded-2xl bg-gradient-to-r from-cyan-500/10 to-blue-600/10 border border-white/10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-2">Enterprise</h3>
-              <p className="text-gray-400 max-w-xl">
-                Need unlimited users, dedicated support, SLA guarantees, or custom features?
-                Let's talk about a plan that fits your organization.
-              </p>
+        <div className="mb-24 p-8 sm:p-10 rounded-2xl bg-gradient-to-br from-purple-500/10 via-cyan-500/10 to-blue-600/10 border border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/20 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="flex items-start gap-6">
+              <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 items-center justify-center flex-shrink-0">
+                <Building2 className="w-8 h-8 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">Enterprise</h3>
+                <p className="text-gray-400 max-w-xl mb-4">
+                  Need unlimited users, dedicated support, SLA guarantees, or custom features?
+                  Let's build a plan that fits your organization.
+                </p>
+                <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-400">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Unlimited users
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Dedicated support
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Custom integrations
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    SLA guarantees
+                  </li>
+                </ul>
+              </div>
             </div>
-            <a
-              href="mailto:enterprise@made4founders.com"
-              className="flex-shrink-0 px-6 py-3 rounded-lg bg-white/10 text-white font-medium hover:bg-white/20 transition-all"
+            <Link
+              to="/contact"
+              className="flex-shrink-0 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-semibold hover:from-purple-400 hover:to-cyan-400 transition-all shadow-lg shadow-purple-500/25 flex items-center gap-2 group"
             >
               Contact Sales
-            </a>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
         </div>
 
         {/* FAQs */}
-        <div>
-          <h2 className="text-2xl font-bold text-white text-center mb-12">
+        <div className="p-8 sm:p-12 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10">
+          <h2 className="text-3xl font-bold text-white text-center mb-4">
             Frequently Asked Questions
           </h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <p className="text-gray-400 text-center mb-12 max-w-xl mx-auto">
+            Everything you need to know about Made4Founders pricing and plans
+          </p>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {faqs.map((faq) => (
-              <div key={faq.question}>
-                <h3 className="text-lg font-semibold text-white mb-2">{faq.question}</h3>
-                <p className="text-gray-400">{faq.answer}</p>
+              <div key={faq.question} className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
+                <h3 className="text-lg font-semibold text-white mb-3">{faq.question}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{faq.answer}</p>
               </div>
             ))}
           </div>

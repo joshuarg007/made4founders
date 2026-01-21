@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from uuid import uuid4
@@ -32,7 +32,7 @@ from .models import (
     BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
-    Challenge, ChallengeParticipant, Marketplace
+    Challenge, ChallengeParticipant, Marketplace, ContactSubmission
 )
 from .auth import router as auth_router, get_current_user
 from .oauth import router as oauth_router
@@ -73,7 +73,8 @@ from .schemas import (
     LeaderboardEntry, LeaderboardResponse,
     ChallengeCreate, ChallengeResponse, ChallengeParticipantBrief, ChallengeAcceptRequest,
     ChallengeJoinByCodeRequest, ChallengeListResponse, ChallengeResultResponse,
-    MarketplaceCreate, MarketplaceUpdate, MarketplaceResponse
+    MarketplaceCreate, MarketplaceUpdate, MarketplaceResponse,
+    ContactSubmissionCreate
 )
 from .vault import (
     generate_salt, derive_key, hash_master_password, verify_master_password,
@@ -5768,3 +5769,34 @@ def get_calendar_feed(
             'Content-Disposition': 'attachment; filename="made4founders-calendar.ics"'
         }
     )
+
+
+# ============ Public Contact Form ============
+@app.post("/api/contact")
+def submit_contact_form(
+    submission: ContactSubmissionCreate,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Public endpoint for contact form submissions.
+    No authentication required.
+    """
+    # Basic rate limiting by IP (simple in-memory for now)
+    client_ip = request.client.host if request.client else None
+
+    # Create submission
+    db_submission = ContactSubmission(
+        name=submission.name,
+        email=submission.email,
+        company=submission.company,
+        subject=submission.subject,
+        message=submission.message,
+        source=submission.source,
+        ip_address=client_ip,
+        user_agent=request.headers.get("user-agent", "")[:500] if request.headers.get("user-agent") else None,
+    )
+    db.add(db_submission)
+    db.commit()
+
+    return {"ok": True, "message": "Your message has been received. We'll get back to you soon."}

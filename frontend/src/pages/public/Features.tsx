@@ -246,22 +246,26 @@ export default function Features() {
         ))}
 
         {/* Integrations */}
-        <section className="mb-24">
+        <section className="mb-24 p-8 sm:p-12 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10">
           <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-              Integrations
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-4">
+              <Zap className="w-4 h-4" />
+              Connect & Automate
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+              Powerful Integrations
             </h2>
-            <p className="text-gray-400">Connect with your favorite tools</p>
+            <p className="text-gray-400 max-w-xl mx-auto">Connect Made4Founders with the tools you already use</p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-4">
             {integrations.map((integration) => (
               <div
                 key={integration.name}
-                className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.05] transition-all cursor-default"
+                className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all cursor-default"
               >
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
                   style={{ backgroundColor: `${integration.color}15` }}
                 >
                   <integration.icon className="w-5 h-5" style={{ color: integration.color }} />
@@ -273,17 +277,22 @@ export default function Features() {
         </section>
 
         {/* Security */}
-        <section className="mb-24 p-8 sm:p-12 rounded-2xl bg-gradient-to-r from-cyan-500/10 to-blue-600/10 border border-white/10">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
+        <section className="mb-24 p-8 sm:p-12 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-cyan-500/10 to-blue-600/10 border border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
+          <div className="relative flex flex-col lg:flex-row items-center gap-12">
             <div className="flex-1">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-4">
+                <Shield className="w-4 h-4" />
+                Bank-Level Protection
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
                 Enterprise-Grade Security
               </h2>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-400 mb-8 text-lg">
                 Your data security is our top priority. We use the same encryption
                 standards trusted by banks and governments worldwide.
               </p>
-              <ul className="space-y-3">
+              <ul className="grid sm:grid-cols-2 gap-4">
                 {[
                   'AES-256-GCM encryption at rest',
                   'Argon2id key derivation',
@@ -292,39 +301,54 @@ export default function Features() {
                   'GDPR compliant',
                   'Regular security audits',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-gray-300">
-                    <Shield className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <li key={item} className="flex items-center gap-3 text-gray-300 bg-white/5 rounded-lg px-4 py-3">
+                    <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="flex-shrink-0">
-              <img
-                src={securityIcon}
-                alt="Enterprise-grade security - Made4Founders"
-                loading="lazy"
-                className="w-72 h-auto"
-              />
+            <div className="flex-shrink-0 lg:w-[400px]">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-2xl" />
+                <img
+                  src={securityIcon}
+                  alt="Enterprise-grade security - Made4Founders vault protection"
+                  loading="lazy"
+                  className="relative w-full h-auto max-w-[400px] mx-auto"
+                />
+              </div>
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            Ready to Get Started?
-          </h2>
-          <p className="text-gray-400 mb-8">
-            Start your 14-day free trial today. No charge until day 15.
-          </p>
-          <Link
-            to="/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all shadow-lg shadow-cyan-500/25"
-          >
-            Start Free Trial
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+        <section className="text-center p-8 sm:p-16 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-white/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-20" />
+          <div className="relative">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Ready to Get Started?
+            </h2>
+            <p className="text-gray-400 mb-8 text-lg max-w-xl mx-auto">
+              Join thousands of founders who've simplified their operations.
+              Start your 14-day free trial today.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/signup"
+                className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all shadow-lg shadow-cyan-500/25 group"
+              >
+                Start Free Trial
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-gray-300 hover:text-white border border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all"
+              >
+                Contact Sales
+              </Link>
+            </div>
+          </div>
         </section>
       </div>
     </div>

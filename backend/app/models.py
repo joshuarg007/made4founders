@@ -1707,3 +1707,22 @@ class MetricGoal(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     created_by = relationship("User", backref="metric_goals")
+
+
+class ContactSubmission(Base):
+    """Public contact form submissions"""
+    __tablename__ = "contact_submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False)
+    company = Column(String(255), nullable=True)
+    subject = Column(String(100), nullable=True)
+    message = Column(Text, nullable=False)
+    source = Column(String(100), nullable=True)  # e.g., 'contact_page', 'pricing', etc.
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    is_read = Column(Boolean, default=False)
+    is_replied = Column(Boolean, default=False)
+    replied_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

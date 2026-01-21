@@ -14,6 +14,7 @@ import Signup from './pages/public/Signup'
 import Privacy from './pages/public/Privacy'
 import Terms from './pages/public/Terms'
 import Security from './pages/public/Security'
+import Contact from './pages/public/Contact'
 
 // Protected pages
 import DailyBrief from './pages/DailyBrief'
@@ -54,6 +55,7 @@ function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/security" element={<Security />} />
+        <Route path="/contact" element={<Contact />} />
       </Route>
 
       {/* Login page (separate from public layout for cleaner UX) */}
