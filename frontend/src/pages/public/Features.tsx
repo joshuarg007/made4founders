@@ -230,8 +230,8 @@ export default function Features() {
                       alt={`${feature.title} - Made4Founders feature`}
                       loading="lazy"
                       decoding="async"
-                      width={450}
-                      height={320}
+                      width={200}
+                      height={140}
                       className="max-h-full max-w-full object-contain opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all"
                     />
                   </div>
@@ -315,6 +315,8 @@ export default function Features() {
                   src={securityIcon}
                   alt="Enterprise-grade security - Made4Founders vault protection"
                   loading="lazy"
+                  width={200}
+                  height={135}
                   className="relative w-full h-auto max-w-[400px] mx-auto"
                 />
               </div>

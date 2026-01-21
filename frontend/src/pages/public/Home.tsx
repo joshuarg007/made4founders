@@ -159,8 +159,8 @@ export default function Home() {
               src={heroImage}
               alt="Made4Founders Dashboard - Comprehensive startup management platform"
               className="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl shadow-cyan-500/10 border border-white/10"
-              width={1200}
-              height={800}
+              width={900}
+              height={600}
             />
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function Home() {
                 className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 hover:border-white/10 transition-all"
               >
                 <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-600/10 flex items-center justify-center mb-6 group-hover:from-cyan-500/20 group-hover:to-blue-600/20 transition-colors overflow-hidden">
-                  <img src={feature.image} alt={feature.title} className="w-14 h-14 object-contain" />
+                  <img src={feature.image} alt={feature.title} className="w-14 h-14 object-contain" loading="lazy" width={56} height={56} />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
                 <p className="text-gray-400">{feature.description}</p>
@@ -272,8 +272,9 @@ export default function Home() {
                   src={trustSection}
                   alt="Bank-level security - AES-256 encryption protects your data"
                   className="w-full h-auto"
-                  width={1200}
-                  height={800}
+                  width={900}
+                  height={600}
+                  loading="lazy"
                 />
               </div>
             </div>
