@@ -193,17 +193,27 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="group p-8 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 hover:border-white/10 transition-all"
+                className="group rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all hover:bg-white/[0.07] overflow-hidden"
               >
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-600/10 flex items-center justify-center mb-6 group-hover:from-cyan-500/20 group-hover:to-blue-600/20 transition-colors overflow-hidden">
-                  <img src={feature.image} alt={feature.title} className="w-14 h-14 object-contain" loading="lazy" width={56} height={56} />
+                <div className="h-36 bg-gradient-to-br from-slate-800/50 to-slate-900/50 flex items-center justify-center p-3">
+                  <img
+                    src={feature.image}
+                    alt={`${feature.title} - Made4Founders feature`}
+                    loading="lazy"
+                    decoding="async"
+                    width={200}
+                    height={140}
+                    className="max-h-full max-w-full object-contain opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all"
+                  />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-gray-400">{feature.description}</p>
+                <div className="p-4">
+                  <h3 className="text-base font-semibold text-white mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{feature.description}</p>
+                </div>
               </div>
             ))}
           </div>

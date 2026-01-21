@@ -22,6 +22,8 @@ import {
   BookOpen,
   Store,
   Settings,
+  LayoutDashboard,
+  ListTodo,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BusinessSwitcher from './BusinessSwitcher';
@@ -59,7 +61,8 @@ const navSections: NavSection[] = [
       hoverText: 'hover:text-cyan-400',
     },
     items: [
-      { to: '/app', icon: Sparkles, label: 'Daily Brief' },
+      { to: '/app', icon: LayoutDashboard, label: 'Dashboard' },
+      { to: '/app/daily-brief', icon: ListTodo, label: 'Daily Brief' },
       { to: '/app/tasks', icon: CheckSquare, label: 'Tasks' },
       { to: '/app/getting-started', icon: ClipboardCheck, label: 'Setup Checklist' },
     ],

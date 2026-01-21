@@ -105,6 +105,20 @@ const faqs = [
   },
 ];
 
+// FAQ Schema for SEO
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(faq => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer,
+    },
+  })),
+};
+
 export default function Pricing() {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -139,7 +153,7 @@ export default function Pricing() {
 
   return (
     <div className="py-20 px-4 sm:px-6 lg:px-8">
-      <SEO {...pageSEO.pricing} />
+      <SEO {...pageSEO.pricing} structuredData={faqSchema} />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">

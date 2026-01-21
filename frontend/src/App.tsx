@@ -79,8 +79,8 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<DailyBrief />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route index element={<Dashboard />} />
+          <Route path="daily-brief" element={<DailyBrief />} />
           <Route path="getting-started" element={<GettingStarted />} />
           <Route path="library" element={<Library />} />
           <Route path="documents" element={<Documents />} />
