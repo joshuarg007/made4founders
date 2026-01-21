@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Pre-push hook: Run frontend build to catch TypeScript errors before pushing
+
+echo "Running frontend build check..."
+
+cd "$(git rev-parse --show-toplevel)/frontend"
+
+# Run the build
+if npm run build > /dev/null 2>&1; then
+    echo "✓ Build passed"
+    exit 0
+else
+    echo ""
+    echo "✗ Build failed! Fix errors before pushing:"
+    echo ""
+    npm run build 2>&1 | grep -E "(error TS|Error:)" | head -20
+    echo ""
+    echo "Run 'cd frontend && npm run build' to see full output."
+    exit 1
+fi
