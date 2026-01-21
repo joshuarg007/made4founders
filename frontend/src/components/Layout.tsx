@@ -165,7 +165,7 @@ export default function Layout() {
         {/* Logo */}
         <div className="p-4 border-b border-white/10">
           <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src="/logo.webp" alt="Made4Founders" className="h-10 w-auto" width={32} height={40} />
+            <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
             <span className="text-lg font-bold text-white">Made4Founders</span>
           </Link>
         </div>
