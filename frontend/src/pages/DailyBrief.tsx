@@ -18,7 +18,6 @@ import {
   Phone,
   FileText,
   RefreshCw,
-  Sparkles,
   User,
   ArrowRight,
   Target,
@@ -251,12 +250,6 @@ export default function DailyBrief() {
     }
   };
 
-  const formatDueDate = (item: DailyBriefItem) => {
-    const date = item.due_date || item.expiration_date;
-    if (!date) return '';
-    return format(new Date(date), 'EEE, MMM d');
-  };
-
   const getUrgencyLabel = (days: number | undefined) => {
     if (days === undefined) return '';
     if (days < 0) return `${Math.abs(days)}d overdue`;
@@ -480,7 +473,7 @@ export default function DailyBrief() {
   const hasIncompleteChecklist = incompleteChecklist.length > 0;
 
   const hour = new Date().getHours();
-  const greeting = getGreetingWithEmoji(hour, user?.name);
+  const greeting = getGreetingWithEmoji(hour, user?.name ?? undefined);
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todaysTip = DAILY_TIPS[dayOfYear % DAILY_TIPS.length];
 
