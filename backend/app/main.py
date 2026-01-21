@@ -3269,9 +3269,10 @@ def mask_identifier(value: str, identifier_type: str) -> str:
             return "XX-XXX-" + decrypted[-4:]
         return "X" * len(decrypted)
     else:
-        # Generic masking - show last 4 if long enough
+        # Generic masking - max 7 X's + last 4 characters
         if len(decrypted) > 4:
-            return "X" * (len(decrypted) - 4) + decrypted[-4:]
+            num_x = min(7, len(decrypted) - 4)
+            return "X" * num_x + "-" + decrypted[-4:]
         return "X" * len(decrypted)
 
 
