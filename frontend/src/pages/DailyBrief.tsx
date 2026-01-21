@@ -21,12 +21,6 @@ import {
   Sparkles,
   User,
   ArrowRight,
-  X,
-  ExternalLink,
-  MoreHorizontal,
-  Filter,
-  SortAsc,
-  Zap,
   Target,
   Award,
 } from 'lucide-react';
@@ -96,7 +90,6 @@ export default function DailyBrief() {
 
   // Filter state
   const [filterType, setFilterType] = useState<'all' | 'deadline' | 'task' | 'document'>('all');
-  const [showCompleted, setShowCompleted] = useState(false);
   const [completedItems, setCompletedItems] = useState<string[]>([]);
 
   const toggleSection = (section: string) => {
@@ -159,7 +152,7 @@ export default function DailyBrief() {
     loadBrief();
   }, []);
 
-  const handleCompleteDeadline = async (id: number, title: string) => {
+  const handleCompleteDeadline = async (id: number) => {
     setCompleting(id);
     try {
       await completeDeadlineAction(id);
@@ -683,7 +676,7 @@ export default function DailyBrief() {
                   key={`${item.type}-${item.id}`}
                   item={item}
                   onComplete={
-                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id, item.title || '') :
+                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id) :
                     item.type === 'task' ? () => handleCompleteTask(item.id) :
                     undefined
                   }
@@ -712,7 +705,7 @@ export default function DailyBrief() {
                   key={`${item.type}-${item.id}`}
                   item={item}
                   onComplete={
-                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id, item.title || '') :
+                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id) :
                     item.type === 'task' ? () => handleCompleteTask(item.id) :
                     undefined
                   }
@@ -741,7 +734,7 @@ export default function DailyBrief() {
                   key={`${item.type}-${item.id}`}
                   item={item}
                   onComplete={
-                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id, item.title || '') :
+                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id) :
                     item.type === 'task' ? () => handleCompleteTask(item.id) :
                     undefined
                   }
@@ -770,7 +763,7 @@ export default function DailyBrief() {
                   key={`${item.type}-${item.id}`}
                   item={item}
                   onComplete={
-                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id, item.title || '') :
+                    item.type === 'deadline' ? () => handleCompleteDeadline(item.id) :
                     item.type === 'task' ? () => handleCompleteTask(item.id) :
                     undefined
                   }

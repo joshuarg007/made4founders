@@ -1,10 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { format, formatDistanceToNow, differenceInDays, isToday, isTomorrow, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Sparkles,
-  TrendingUp,
-  TrendingDown,
   Calendar,
   CheckSquare,
   FileText,
@@ -13,19 +11,14 @@ import {
   Target,
   Zap,
   Shield,
-  ArrowRight,
   AlertTriangle,
   CheckCircle2,
-  Circle,
   Flame,
-  Trophy,
-  Star,
   Activity,
   BarChart3,
   RefreshCw,
   ChevronRight,
   Rocket,
-  Gift,
   Crown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -65,7 +58,7 @@ const getXPForLevel = (level: number): number => {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { currentBusiness, refreshBusiness } = useBusiness();
+  const { currentBusiness, refreshBusinesses } = useBusiness();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [brief, setBrief] = useState<DailyBrief | null>(null);
   const [quests, setQuests] = useState<BusinessQuest[]>([]);
@@ -82,7 +75,7 @@ export default function Dashboard() {
       const [statsData, briefData, questsData, metricsData, tasksData] = await Promise.all([
         getDashboardStats(),
         getDailyBrief(),
-        getBusinessQuests().catch(() => []),
+        currentBusiness ? getBusinessQuests(currentBusiness.id).catch(() => []) : Promise.resolve([]),
         getMetrics().catch(() => []),
         getTasks().catch(() => []),
       ]);
@@ -92,7 +85,7 @@ export default function Dashboard() {
       setQuests(questsData);
       setMetrics(metricsData);
       setTasks(tasksData);
-      if (isRefresh) refreshBusiness();
+      if (isRefresh) refreshBusinesses();
     } catch (err) {
       console.error('Failed to load dashboard:', err);
     } finally {
@@ -147,10 +140,10 @@ export default function Dashboard() {
   // Key metrics with trends
   const keyMetrics = useMemo(() => {
     const metricTypes = ['mrr', 'arr', 'customers', 'revenue'];
-    return metricTypes.map(type => {
-      const metric = metrics.find(m => m.key?.toLowerCase() === type);
-      return metric || null;
-    }).filter(Boolean).slice(0, 4);
+    return metricTypes
+      .map(type => metrics.find(m => m.metric_type?.toLowerCase() === type))
+      .filter((m): m is Metric => m !== undefined)
+      .slice(0, 4);
   }, [metrics]);
 
   // Health score color
@@ -477,13 +470,13 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {keyMetrics.map((metric: Metric) => (
+                {keyMetrics.map((metric) => (
                   <div key={metric.id} className="p-3 rounded-xl bg-white/5">
-                    <div className="text-xs text-gray-400 uppercase mb-1">{metric.key}</div>
+                    <div className="text-xs text-gray-400 uppercase mb-1">{metric.name || metric.metric_type}</div>
                     <div className="text-xl font-bold text-white">
-                      {metric.value_type === 'currency' ? '$' : ''}
-                      {typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}
-                      {metric.value_type === 'percentage' ? '%' : ''}
+                      {metric.unit === '$' || metric.unit === 'USD' ? '$' : ''}
+                      {metric.value}
+                      {metric.unit === '%' ? '%' : ''}
                     </div>
                   </div>
                 ))}

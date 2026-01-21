@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   Building2,
   LogOut,
-  Sparkles,
   Package,
   UserCog,
   CheckSquare,
