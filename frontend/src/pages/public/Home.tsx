@@ -161,6 +161,7 @@ export default function Home() {
               className="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl shadow-cyan-500/10 border border-white/10"
               width={900}
               height={600}
+              fetchPriority="high"
             />
           </div>
         </div>
