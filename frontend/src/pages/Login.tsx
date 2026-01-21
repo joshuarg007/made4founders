@@ -82,10 +82,10 @@ export default function Login() {
 
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8">
-        <img src="/logo.png" alt="Made4Founders" className="h-16 w-auto" />
+        <img src="/logo.webp" alt="Made4Founders" className="h-16 w-auto" width={52} height={64} />
         <div>
           <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
-          <p className="text-sm text-gray-500">By Founders, For Founders</p>
+          <p className="text-sm text-gray-400">By Founders, For Founders</p>
         </div>
       </div>
 

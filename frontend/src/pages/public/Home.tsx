@@ -142,7 +142,7 @@ export default function Home() {
           </div>
 
           {/* Social proof */}
-          <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4 sm:gap-8 text-sm text-gray-500">
+          <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4 sm:gap-8 text-sm text-gray-400">
             <span>Trusted by founders at</span>
             <div className="flex items-center gap-4 sm:gap-8 opacity-60">
               <span className="font-semibold text-gray-400">YC</span>
@@ -157,8 +157,10 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d14] via-transparent to-transparent z-10" />
             <img
               src={heroImage}
-              alt="Made4Founders Dashboard"
+              alt="Made4Founders Dashboard - Comprehensive startup management platform"
               className="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl shadow-cyan-500/10 border border-white/10"
+              width={1200}
+              height={800}
             />
           </div>
         </div>
@@ -171,7 +173,7 @@ export default function Home() {
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-3xl sm:text-4xl font-bold text-white mb-2">{stat.value}</div>
-                <div className="text-sm text-gray-500">{stat.label}</div>
+                <div className="text-sm text-gray-400">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -228,7 +230,7 @@ export default function Home() {
                 <p className="text-lg text-gray-300 mb-6">"{testimonial.quote}"</p>
                 <div>
                   <div className="font-semibold text-white">{testimonial.author}</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-400">
                     {testimonial.role}, {testimonial.company}
                   </div>
                 </div>
@@ -268,8 +270,10 @@ export default function Home() {
               <div className="rounded-2xl overflow-hidden border border-white/10">
                 <img
                   src={trustSection}
-                  alt="Bank-level security"
+                  alt="Bank-level security - AES-256 encryption protects your data"
                   className="w-full h-auto"
+                  width={1200}
+                  height={800}
                 />
               </div>
             </div>

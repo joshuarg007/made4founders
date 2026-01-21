@@ -20,7 +20,7 @@ export default function PublicLayout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
-              <img src="/logo.png" alt="Made4Founders" className="h-12 w-auto" />
+              <img src="/logo.webp" alt="Made4Founders" className="h-12 w-auto" width={39} height={48} />
             </Link>
 
             {/* Desktop Navigation */}
@@ -60,6 +60,8 @@ export default function PublicLayout() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 text-gray-400 hover:text-white"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -117,9 +119,9 @@ export default function PublicLayout() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <Link to="/" className="flex items-center gap-2">
-                <img src="/logo.png" alt="Made4Founders" className="h-12 w-auto" />
+                <img src="/logo.webp" alt="Made4Founders" className="h-12 w-auto" width={39} height={48} />
               </Link>
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-4 text-sm text-gray-400">
                 Built by founders, for founders. Secure. Profitable. Fun.
               </p>
             </div>
@@ -157,7 +159,7 @@ export default function PublicLayout() {
 
           {/* Partner Sites */}
           <div className="mt-8 pt-8 border-t border-white/5">
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400">
               <span>Also by our team:</span>
               <a
                 href="https://site2crm.io"
@@ -167,7 +169,7 @@ export default function PublicLayout() {
               >
                 Site2CRM
               </a>
-              <span className="text-gray-700">•</span>
+              <span className="text-gray-600">•</span>
               <a
                 href="https://axiondeep.com"
                 target="_blank"
@@ -180,11 +182,11 @@ export default function PublicLayout() {
           </div>
 
           <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-400">
               &copy; {new Date().getFullYear()} Made4Founders. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="flex items-center gap-2 text-xs text-gray-400">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
                 All systems operational
               </span>
