@@ -96,10 +96,21 @@ logger = logging.getLogger(__name__)
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-# Auto-migrate: Add missing columns if they don't exist
+# Auto-migrate: Add missing columns and tables if they don't exist
 try:
     from sqlalchemy import text, inspect
     inspector = inspect(engine)
+    existing_tables = inspector.get_table_names()
+
+    # Create missing tables explicitly (for tables added after initial deployment)
+    tables_to_check = ['bank_accounts', 'achievements', 'business_achievements']
+    for table_name in tables_to_check:
+        if table_name not in existing_tables:
+            # Get the table from metadata and create it
+            table = Base.metadata.tables.get(table_name)
+            if table is not None:
+                table.create(bind=engine, checkfirst=True)
+                logger.info(f"Created missing table: {table_name}")
 
     # Users table migrations
     user_columns = [col['name'] for col in inspector.get_columns('users')]

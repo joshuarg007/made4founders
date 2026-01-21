@@ -20,6 +20,8 @@ import {
   ChevronRight,
   Rocket,
   Crown,
+  HelpCircle,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
@@ -66,6 +68,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showHealthHelp, setShowHealthHelp] = useState(false);
 
   const loadData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -276,6 +279,13 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <Activity className="w-5 h-5 text-gray-400" />
                 <span className="text-sm font-medium text-gray-400">Business Health</span>
+                <button
+                  onClick={() => setShowHealthHelp(true)}
+                  className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                  title="How is this calculated?"
+                >
+                  <span className="text-xs text-gray-400 font-medium">?</span>
+                </button>
               </div>
               <Link to="/app/insights" className="text-xs text-gray-500 hover:text-white transition">
                 Details →
@@ -311,6 +321,53 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+
+            {/* Health Help Modal */}
+            {showHealthHelp && (
+              <div className="absolute inset-0 bg-[#12141a]/95 backdrop-blur-sm rounded-2xl p-5 z-10 overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-white flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-cyan-400" />
+                    How Health Score Works
+                  </h4>
+                  <button
+                    onClick={() => setShowHealthHelp(false)}
+                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                  >
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                    <div className="font-medium text-cyan-400 mb-1">Compliance</div>
+                    <p className="text-gray-400 text-xs leading-relaxed">
+                      Tracks legal deadlines, regulatory filings, and document expirations. Missing deadlines or expired docs lower this score.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="font-medium text-emerald-400 mb-1">Financial</div>
+                    <p className="text-gray-400 text-xs leading-relaxed">
+                      Based on tracked metrics (MRR, ARR, revenue) and their trends. Add metrics and keep them updated to improve this score.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                    <div className="font-medium text-violet-400 mb-1">Operations</div>
+                    <p className="text-gray-400 text-xs leading-relaxed">
+                      Measures task completion rates and overdue items. Complete tasks on time and maintain organized workflows.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <div className="font-medium text-amber-400 mb-1">Growth</div>
+                    <p className="text-gray-400 text-xs leading-relaxed">
+                      Evaluates quest completion, XP gains, and engagement streaks. Stay active and complete quests to boost this score.
+                    </p>
+                  </div>
+                  <p className="text-gray-500 text-xs pt-2 border-t border-white/10">
+                    Overall score = weighted average of all four categories.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Active Quests */}
