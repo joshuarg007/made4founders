@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { Check, X, Sparkles, Loader2, ArrowRight, Shield, Building2 } from 'lucide-react';
+import { Check, X, Sparkles, Loader2, ArrowRight, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import { createCheckoutSession } from '../../lib/api';
 import SEO, { pageSEO } from '../../components/SEO';
