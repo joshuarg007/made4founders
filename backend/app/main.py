@@ -3473,7 +3473,10 @@ def get_checklist_progress_bulk(current_user: User = Depends(get_current_user), 
 
 @app.get("/api/checklist/{item_id}", response_model=ChecklistProgressResponse)
 def get_checklist_item(item_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = db.query(ChecklistProgress).filter(ChecklistProgress.item_id == item_id).first()
+    item = db.query(ChecklistProgress).filter(
+        ChecklistProgress.item_id == item_id,
+        ChecklistProgress.organization_id == current_user.organization_id
+    ).first()
     if not item:
         raise HTTPException(status_code=404, detail="Checklist item not found")
     return item
@@ -3481,8 +3484,11 @@ def get_checklist_item(item_id: str, current_user: User = Depends(get_current_us
 
 @app.post("/api/checklist", response_model=ChecklistProgressResponse)
 def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Check if item already exists
-    existing = db.query(ChecklistProgress).filter(ChecklistProgress.item_id == progress.item_id).first()
+    # Check if item already exists for this organization
+    existing = db.query(ChecklistProgress).filter(
+        ChecklistProgress.item_id == progress.item_id,
+        ChecklistProgress.organization_id == current_user.organization_id
+    ).first()
 
     if existing:
         # Update existing
@@ -3503,8 +3509,10 @@ def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_u
         db.refresh(existing)
         return existing
     else:
-        # Create new
-        db_item = ChecklistProgress(**progress.model_dump())
+        # Create new with organization_id
+        item_data = progress.model_dump()
+        item_data["organization_id"] = current_user.organization_id
+        db_item = ChecklistProgress(**item_data)
         if progress.is_completed:
             db_item.completed_at = datetime.utcnow()
         db.add(db_item)
@@ -3522,7 +3530,10 @@ def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_u
 
 @app.patch("/api/checklist/{item_id}", response_model=ChecklistProgressResponse)
 def update_checklist_item(item_id: str, progress: ChecklistProgressUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_item = db.query(ChecklistProgress).filter(ChecklistProgress.item_id == item_id).first()
+    db_item = db.query(ChecklistProgress).filter(
+        ChecklistProgress.item_id == item_id,
+        ChecklistProgress.organization_id == current_user.organization_id
+    ).first()
     if not db_item:
         raise HTTPException(status_code=404, detail="Checklist item not found")
 
