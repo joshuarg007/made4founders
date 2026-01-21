@@ -518,9 +518,7 @@ export interface Contact {
   company: string | null;
   contact_type: string;
   email: string | null;
-  secondary_email: string | null;
   phone: string | null;
-  mobile_phone: string | null;
   address: string | null;
   city: string | null;
   state: string | null;
@@ -530,6 +528,8 @@ export interface Contact {
   linkedin_url: string | null;
   twitter_handle: string | null;
   birthday: string | null;
+  additional_emails: string[];
+  additional_phones: string[];
   tags: string | null;
   responsibilities: string | null;
   notes: string | null;

@@ -141,6 +141,8 @@ try:
         ('twitter_handle', 'ALTER TABLE contacts ADD COLUMN twitter_handle VARCHAR(100)'),
         ('birthday', 'ALTER TABLE contacts ADD COLUMN birthday DATE'),
         ('tags', 'ALTER TABLE contacts ADD COLUMN tags TEXT'),
+        ('additional_emails', 'ALTER TABLE contacts ADD COLUMN additional_emails TEXT'),
+        ('additional_phones', 'ALTER TABLE contacts ADD COLUMN additional_phones TEXT'),
     ]
 
     with engine.connect() as conn:
@@ -2865,17 +2867,58 @@ def recategorize_documents(current_user: User = Depends(get_current_user), db: S
 
 
 # ============ Contacts ============
-@app.get("/api/contacts", response_model=List[ContactResponse])
+def _serialize_contact(contact: Contact) -> dict:
+    """Serialize contact with JSON fields parsed."""
+    data = {
+        "id": contact.id,
+        "name": contact.name,
+        "title": contact.title,
+        "company": contact.company,
+        "contact_type": contact.contact_type,
+        "email": contact.email,
+        "secondary_email": contact.secondary_email,
+        "phone": contact.phone,
+        "mobile_phone": contact.mobile_phone,
+        "address": contact.address,
+        "city": contact.city,
+        "state": contact.state,
+        "country": contact.country,
+        "timezone": contact.timezone,
+        "website": contact.website,
+        "linkedin_url": contact.linkedin_url,
+        "twitter_handle": contact.twitter_handle,
+        "birthday": contact.birthday,
+        "additional_emails": json.loads(contact.additional_emails) if contact.additional_emails else [],
+        "additional_phones": json.loads(contact.additional_phones) if contact.additional_phones else [],
+        "tags": contact.tags,
+        "responsibilities": contact.responsibilities,
+        "notes": contact.notes,
+        "last_contacted": contact.last_contacted,
+        "created_at": contact.created_at,
+        "updated_at": contact.updated_at,
+    }
+    return data
+
+
+@app.get("/api/contacts")
 def get_contacts(contact_type: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(Contact).filter(Contact.organization_id == current_user.organization_id)
     if contact_type:
         query = query.filter(Contact.contact_type == contact_type)
-    return query.order_by(Contact.name).all()
+    contacts = query.order_by(Contact.name).all()
+    return [_serialize_contact(c) for c in contacts]
 
 
-@app.post("/api/contacts", response_model=ContactResponse)
+@app.post("/api/contacts")
 def create_contact(contact: ContactCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_contact = Contact(**contact.model_dump(), organization_id=current_user.organization_id)
+    contact_data = contact.model_dump()
+    # Serialize list fields to JSON
+    if contact_data.get('additional_emails'):
+        contact_data['additional_emails'] = json.dumps(contact_data['additional_emails'])
+    if contact_data.get('additional_phones'):
+        contact_data['additional_phones'] = json.dumps(contact_data['additional_phones'])
+
+    db_contact = Contact(**contact_data, organization_id=current_user.organization_id)
     db.add(db_contact)
     db.commit()
     db.refresh(db_contact)
@@ -2889,29 +2932,32 @@ def create_contact(contact: ContactCreate, current_user: User = Depends(get_curr
         _update_achievement_progress_internal(db, business_id, "contact_create")
         db.commit()
 
-    return db_contact
+    return _serialize_contact(db_contact)
 
 
-@app.get("/api/contacts/{contact_id}", response_model=ContactResponse)
+@app.get("/api/contacts/{contact_id}")
 def get_contact(contact_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    return contact
+    return _serialize_contact(contact)
 
 
-@app.patch("/api/contacts/{contact_id}", response_model=ContactResponse)
+@app.patch("/api/contacts/{contact_id}")
 def update_contact(contact_id: int, contact: ContactUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not db_contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
     for key, value in contact.model_dump(exclude_unset=True).items():
+        # Serialize list fields to JSON
+        if key in ('additional_emails', 'additional_phones') and value is not None:
+            value = json.dumps(value)
         setattr(db_contact, key, value)
 
     db.commit()
     db.refresh(db_contact)
-    return db_contact
+    return _serialize_contact(db_contact)
 
 
 @app.delete("/api/contacts/{contact_id}")

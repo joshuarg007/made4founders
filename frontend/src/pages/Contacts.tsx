@@ -604,9 +604,7 @@ export default function Contacts() {
     company: '',
     contact_type: 'other',
     email: '',
-    secondary_email: '',
     phone: '',
-    mobile_phone: '',
     address: '',
     city: '',
     state: '',
@@ -615,11 +613,17 @@ export default function Contacts() {
     website: '',
     linkedin_url: '',
     twitter_handle: '',
-    birthday: '',
+    birthday_year: '',
+    birthday_month: '',
+    birthday_day: '',
     tags: '',
     responsibilities: '',
     notes: ''
   });
+
+  // Additional emails and phones
+  const [additionalEmails, setAdditionalEmails] = useState<string[]>([]);
+  const [additionalPhones, setAdditionalPhones] = useState<string[]>([]);
 
   // Title dropdown state
   const [showTitleDropdown, setShowTitleDropdown] = useState(false);
@@ -706,22 +710,51 @@ export default function Contacts() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Build birthday from parts
+      let birthday: string | null = null;
+      if (formData.birthday_year && formData.birthday_month && formData.birthday_day) {
+        birthday = `${formData.birthday_year}-${formData.birthday_month.padStart(2, '0')}-${formData.birthday_day.padStart(2, '0')}`;
+      }
+
+      const submitData = {
+        name: formData.name,
+        title: formData.title,
+        company: formData.company,
+        contact_type: formData.contact_type,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        timezone: formData.timezone,
+        website: formData.website,
+        linkedin_url: formData.linkedin_url,
+        twitter_handle: formData.twitter_handle,
+        birthday,
+        additional_emails: additionalEmails.filter(e => e.trim()),
+        additional_phones: additionalPhones.filter(p => p.trim()),
+        tags: formData.tags,
+        responsibilities: formData.responsibilities,
+        notes: formData.notes,
+      };
+
       if (editingContact) {
-        await updateContact(editingContact.id, formData);
+        await updateContact(editingContact.id, submitData);
       } else {
-        await createContact(formData);
-        // Reset filter to 'all' so user can see their new contact
+        await createContact(submitData);
         setSelectedType('all');
       }
       setShowModal(false);
       setEditingContact(null);
-      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', secondary_email: '', phone: '', mobile_phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday: '', tags: '', responsibilities: '', notes: '' });
+      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' });
+      setAdditionalEmails([]);
+      setAdditionalPhones([]);
       setShowResponsibilitiesDropdown(false);
       setResponsibilitySearch('');
       setShowTitleDropdown(false);
       setTitleSearch('');
       setShowCustomTitle(false);
-      // Manually load contacts with no filter after creating
       const data = await getContacts();
       setContacts(data);
     } catch {
@@ -731,15 +764,23 @@ export default function Contacts() {
 
   const handleEdit = (contact: Contact) => {
     setEditingContact(contact);
+    // Parse birthday into parts
+    let birthday_year = '', birthday_month = '', birthday_day = '';
+    if (contact.birthday) {
+      const parts = contact.birthday.split('-');
+      if (parts.length === 3) {
+        birthday_year = parts[0];
+        birthday_month = parts[1].replace(/^0/, '');
+        birthday_day = parts[2].replace(/^0/, '');
+      }
+    }
     setFormData({
       name: contact.name,
       title: contact.title || '',
       company: contact.company || '',
       contact_type: contact.contact_type,
       email: contact.email || '',
-      secondary_email: contact.secondary_email || '',
       phone: contact.phone || '',
-      mobile_phone: contact.mobile_phone || '',
       address: contact.address || '',
       city: contact.city || '',
       state: contact.state || '',
@@ -748,16 +789,19 @@ export default function Contacts() {
       website: contact.website || '',
       linkedin_url: contact.linkedin_url || '',
       twitter_handle: contact.twitter_handle || '',
-      birthday: contact.birthday || '',
+      birthday_year,
+      birthday_month,
+      birthday_day,
       tags: contact.tags || '',
       responsibilities: contact.responsibilities || '',
       notes: contact.notes || ''
     });
+    setAdditionalEmails(contact.additional_emails || []);
+    setAdditionalPhones(contact.additional_phones || []);
     setShowResponsibilitiesDropdown(false);
     setResponsibilitySearch('');
     setShowTitleDropdown(false);
     setTitleSearch('');
-    // Check if the title is a custom one (not in the predefined list)
     const typeTitles = titlesByType[contact.contact_type] || titlesByType.other;
     setShowCustomTitle(contact.title ? !typeTitles.includes(contact.title) : false);
     setShowModal(true);
@@ -783,7 +827,7 @@ export default function Contacts() {
           <p className="text-gray-400 mt-1">Your business rolodex</p>
         </div>
         <button
-          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', secondary_email: '', phone: '', mobile_phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday: '', tags: '', responsibilities: '', notes: '' }); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
+          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' }); setAdditionalEmails([]); setAdditionalPhones([]); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
         >
           <Plus className="w-4 h-4" />
@@ -885,12 +929,12 @@ export default function Contacts() {
                     {contact.phone}
                   </a>
                 )}
-                {contact.mobile_phone && (
-                  <a href={`tel:${contact.mobile_phone}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
+                {contact.additional_phones?.map((phone, idx) => (
+                  <a key={idx} href={`tel:${phone}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
                     <Smartphone className="w-4 h-4 flex-shrink-0" />
-                    {contact.mobile_phone}
+                    {phone}
                   </a>
-                )}
+                ))}
                 {contact.website && (
                   <a href={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
                     <Globe className="w-4 h-4 flex-shrink-0" />
@@ -1103,43 +1147,83 @@ export default function Contacts() {
                 <div className="col-span-2 pt-2 border-t border-white/10">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Contact Information</p>
                 </div>
-                <div>
+                <div className="col-span-2 space-y-2">
                   <label className="block text-sm text-gray-400 mb-1">Email</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    placeholder="Primary email"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
+                  {additionalEmails.map((email, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => {
+                          const updated = [...additionalEmails];
+                          updated[idx] = e.target.value;
+                          setAdditionalEmails(updated);
+                        }}
+                        placeholder="Additional email"
+                        className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setAdditionalEmails(additionalEmails.filter((_, i) => i !== idx))}
+                        className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setAdditionalEmails([...additionalEmails, ''])}
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition"
+                  >
+                    + Add another email
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Secondary Email</label>
-                  <input
-                    type="email"
-                    value={formData.secondary_email}
-                    onChange={(e) => setFormData({ ...formData, secondary_email: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  />
-                </div>
-                <div>
+                <div className="col-span-2 space-y-2">
                   <label className="block text-sm text-gray-400 mb-1">Phone</label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Office/work phone"
+                    placeholder="Primary phone"
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Mobile Phone</label>
-                  <input
-                    type="tel"
-                    value={formData.mobile_phone}
-                    onChange={(e) => setFormData({ ...formData, mobile_phone: e.target.value })}
-                    placeholder="Cell/mobile"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                  />
+                  {additionalPhones.map((phone, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => {
+                          const updated = [...additionalPhones];
+                          updated[idx] = e.target.value;
+                          setAdditionalPhones(updated);
+                        }}
+                        placeholder="Additional phone"
+                        className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setAdditionalPhones(additionalPhones.filter((_, i) => i !== idx))}
+                        className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setAdditionalPhones([...additionalPhones, ''])}
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition"
+                  >
+                    + Add another phone
+                  </button>
                 </div>
 
                 {/* Online Presence Section */}
@@ -1247,14 +1331,40 @@ export default function Contacts() {
                 <div className="col-span-2 pt-2 border-t border-white/10">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Additional Info</p>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Birthday</label>
-                  <input
-                    type="date"
-                    value={formData.birthday}
-                    onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <select
+                      value={formData.birthday_month}
+                      onChange={(e) => setFormData({ ...formData, birthday_month: e.target.value })}
+                      className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    >
+                      <option value="" className="bg-[#1a1d24]">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
+                        <option key={i} value={String(i + 1)} className="bg-[#1a1d24]">{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={formData.birthday_day}
+                      onChange={(e) => setFormData({ ...formData, birthday_day: e.target.value })}
+                      className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    >
+                      <option value="" className="bg-[#1a1d24]">Day</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={String(d)} className="bg-[#1a1d24]">{d}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={formData.birthday_year}
+                      onChange={(e) => setFormData({ ...formData, birthday_year: e.target.value })}
+                      className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    >
+                      <option value="" className="bg-[#1a1d24]">Year</option>
+                      {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                        <option key={y} value={String(y)} className="bg-[#1a1d24]">{y}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Tags</label>

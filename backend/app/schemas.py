@@ -434,6 +434,8 @@ class ContactBase(BaseModel):
     linkedin_url: Optional[str] = None
     twitter_handle: Optional[str] = None
     birthday: Optional[date] = None
+    additional_emails: Optional[List[str]] = None
+    additional_phones: Optional[List[str]] = None
     tags: Optional[str] = None
     responsibilities: Optional[str] = None  # What this contact handles for you
     notes: Optional[str] = None
@@ -461,6 +463,8 @@ class ContactUpdate(BaseModel):
     linkedin_url: Optional[str] = None
     twitter_handle: Optional[str] = None
     birthday: Optional[date] = None
+    additional_emails: Optional[List[str]] = None
+    additional_phones: Optional[List[str]] = None
     tags: Optional[str] = None
     responsibilities: Optional[str] = None
     notes: Optional[str] = None
@@ -469,6 +473,8 @@ class ContactUpdate(BaseModel):
 
 class ContactResponse(ContactBase):
     id: int
+    additional_emails: Optional[List[str]] = None
+    additional_phones: Optional[List[str]] = None
     last_contacted: Optional[datetime]
     created_at: datetime
     updated_at: datetime

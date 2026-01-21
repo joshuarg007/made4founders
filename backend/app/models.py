@@ -1123,6 +1123,8 @@ class Contact(Base):
     linkedin_url = Column(String(500), nullable=True)
     twitter_handle = Column(String(100), nullable=True)
     birthday = Column(Date, nullable=True)
+    additional_emails = Column(Text, nullable=True)  # JSON array of strings
+    additional_phones = Column(Text, nullable=True)  # JSON array of strings
     tags = Column(Text, nullable=True)  # Comma-separated tags
     responsibilities = Column(Text, nullable=True)  # What this contact handles for you
     notes = Column(Text, nullable=True)
