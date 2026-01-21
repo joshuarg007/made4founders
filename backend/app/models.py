@@ -1133,6 +1133,32 @@ class Contact(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class Meeting(Base):
+    """Meeting notes and records"""
+    __tablename__ = "meetings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
+    title = Column(String(255), nullable=False)
+    meeting_date = Column(DateTime, nullable=False)
+    duration_minutes = Column(Integer, nullable=True)  # Duration in minutes
+    location = Column(String(500), nullable=True)  # Physical location or video link
+    meeting_type = Column(String(50), default="general")  # general, board, team, client, investor, etc.
+    attendees = Column(Text, nullable=True)  # JSON array of attendee names/emails
+    agenda = Column(Text, nullable=True)  # Meeting agenda
+    minutes = Column(Text, nullable=True)  # Meeting minutes/notes
+    decisions = Column(Text, nullable=True)  # Key decisions made
+    action_items = Column(Text, nullable=True)  # JSON array of action items
+    audio_file_url = Column(String(500), nullable=True)  # Link to audio recording
+    document_ids = Column(Text, nullable=True)  # JSON array of linked document IDs
+    tags = Column(Text, nullable=True)  # Comma-separated tags
+    is_recurring = Column(Boolean, default=False)
+    recurrence_pattern = Column(String(100), nullable=True)  # weekly, monthly, etc.
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class Deadline(Base):
     __tablename__ = "deadlines"
 

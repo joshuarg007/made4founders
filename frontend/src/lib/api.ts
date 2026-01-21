@@ -550,6 +550,43 @@ export const updateContact = (id: number, data: Partial<Contact>) =>
 export const deleteContact = (id: number) =>
   fetchApi<{ ok: boolean }>(`/contacts/${id}`, { method: 'DELETE' });
 
+// Meetings
+export interface Meeting {
+  id: number;
+  title: string;
+  meeting_date: string;
+  duration_minutes: number | null;
+  location: string | null;
+  meeting_type: string;
+  attendees: string[];
+  agenda: string | null;
+  minutes: string | null;
+  decisions: string | null;
+  action_items: { task: string; assignee: string; due_date: string | null }[];
+  audio_file_url: string | null;
+  document_ids: number[];
+  tags: string | null;
+  is_recurring: boolean;
+  recurrence_pattern: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getMeetings = (meetingType?: string) =>
+  fetchApi<Meeting[]>(`/meetings${meetingType ? `?meeting_type=${meetingType}` : ''}`);
+
+export const getMeeting = (id: number) =>
+  fetchApi<Meeting>(`/meetings/${id}`);
+
+export const createMeeting = (data: Partial<Meeting>) =>
+  fetchApi<Meeting>('/meetings', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateMeeting = (id: number, data: Partial<Meeting>) =>
+  fetchApi<Meeting>(`/meetings/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
+export const deleteMeeting = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/meetings/${id}`, { method: 'DELETE' });
+
 // Deadlines
 export interface Deadline {
   id: number;

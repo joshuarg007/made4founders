@@ -32,6 +32,7 @@ const DailyBrief = lazy(() => import('./pages/DailyBrief'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const GettingStarted = lazy(() => import('./pages/GettingStarted'))
 const Documents = lazy(() => import('./pages/Documents'))
+const Meetings = lazy(() => import('./pages/Meetings'))
 const Contacts = lazy(() => import('./pages/Contacts'))
 const Deadlines = lazy(() => import('./pages/Deadlines'))
 const Library = lazy(() => import('./pages/Library'))
@@ -84,6 +85,7 @@ function App() {
           <Route path="getting-started" element={<GettingStarted />} />
           <Route path="library" element={<Library />} />
           <Route path="documents" element={<Documents />} />
+          <Route path="meetings" element={<Meetings />} />
           <Route path="contacts" element={<Contacts />} />
           <Route path="deadlines" element={<Deadlines />} />
           <Route path="tasks" element={<Tasks />} />

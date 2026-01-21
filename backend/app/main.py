@@ -32,7 +32,7 @@ from .models import (
     BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
-    Challenge, ChallengeParticipant, Marketplace, ContactSubmission
+    Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting
 )
 from .auth import router as auth_router, get_current_user
 from .oauth import router as oauth_router
@@ -74,7 +74,8 @@ from .schemas import (
     ChallengeCreate, ChallengeResponse, ChallengeParticipantBrief, ChallengeAcceptRequest,
     ChallengeJoinByCodeRequest, ChallengeListResponse, ChallengeResultResponse,
     MarketplaceCreate, MarketplaceUpdate, MarketplaceResponse,
-    ContactSubmissionCreate
+    ContactSubmissionCreate,
+    MeetingCreate, MeetingUpdate, MeetingResponse
 )
 from .vault import (
     generate_salt, derive_key, hash_master_password, verify_master_password,
@@ -103,7 +104,7 @@ try:
     existing_tables = inspector.get_table_names()
 
     # Create missing tables explicitly (for tables added after initial deployment)
-    tables_to_check = ['bank_accounts', 'achievements', 'business_achievements']
+    tables_to_check = ['bank_accounts', 'achievements', 'business_achievements', 'meetings']
     for table_name in tables_to_check:
         if table_name not in existing_tables:
             # Get the table from metadata and create it
@@ -2966,6 +2967,128 @@ def delete_contact(contact_id: int, current_user: User = Depends(get_current_use
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     db.delete(contact)
+    db.commit()
+    return {"ok": True}
+
+
+# ============ Meetings ============
+def _serialize_meeting(meeting: Meeting) -> dict:
+    """Serialize meeting with JSON fields parsed."""
+    return {
+        "id": meeting.id,
+        "title": meeting.title,
+        "meeting_date": meeting.meeting_date,
+        "duration_minutes": meeting.duration_minutes,
+        "location": meeting.location,
+        "meeting_type": meeting.meeting_type,
+        "attendees": json.loads(meeting.attendees) if meeting.attendees else [],
+        "agenda": meeting.agenda,
+        "minutes": meeting.minutes,
+        "decisions": meeting.decisions,
+        "action_items": json.loads(meeting.action_items) if meeting.action_items else [],
+        "audio_file_url": meeting.audio_file_url,
+        "document_ids": json.loads(meeting.document_ids) if meeting.document_ids else [],
+        "tags": meeting.tags,
+        "is_recurring": meeting.is_recurring,
+        "recurrence_pattern": meeting.recurrence_pattern,
+        "created_at": meeting.created_at,
+        "updated_at": meeting.updated_at,
+    }
+
+
+@app.get("/api/meetings")
+def get_meetings(
+    meeting_type: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all meetings for the organization."""
+    query = db.query(Meeting).filter(Meeting.organization_id == current_user.organization_id)
+    if meeting_type:
+        query = query.filter(Meeting.meeting_type == meeting_type)
+    meetings = query.order_by(Meeting.meeting_date.desc()).all()
+    return [_serialize_meeting(m) for m in meetings]
+
+
+@app.post("/api/meetings")
+def create_meeting(
+    meeting: MeetingCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new meeting."""
+    meeting_data = meeting.model_dump()
+    # Serialize list fields to JSON
+    if meeting_data.get('attendees'):
+        meeting_data['attendees'] = json.dumps(meeting_data['attendees'])
+    if meeting_data.get('action_items'):
+        meeting_data['action_items'] = json.dumps(meeting_data['action_items'])
+    if meeting_data.get('document_ids'):
+        meeting_data['document_ids'] = json.dumps(meeting_data['document_ids'])
+
+    db_meeting = Meeting(**meeting_data, organization_id=current_user.organization_id)
+    db.add(db_meeting)
+    db.commit()
+    db.refresh(db_meeting)
+    return _serialize_meeting(db_meeting)
+
+
+@app.get("/api/meetings/{meeting_id}")
+def get_meeting(
+    meeting_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific meeting."""
+    meeting = db.query(Meeting).filter(
+        Meeting.id == meeting_id,
+        Meeting.organization_id == current_user.organization_id
+    ).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    return _serialize_meeting(meeting)
+
+
+@app.patch("/api/meetings/{meeting_id}")
+def update_meeting(
+    meeting_id: int,
+    meeting: MeetingUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a meeting."""
+    db_meeting = db.query(Meeting).filter(
+        Meeting.id == meeting_id,
+        Meeting.organization_id == current_user.organization_id
+    ).first()
+    if not db_meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    for key, value in meeting.model_dump(exclude_unset=True).items():
+        # Serialize list fields to JSON
+        if key in ('attendees', 'action_items', 'document_ids') and value is not None:
+            value = json.dumps(value)
+        setattr(db_meeting, key, value)
+
+    db.commit()
+    db.refresh(db_meeting)
+    return _serialize_meeting(db_meeting)
+
+
+@app.delete("/api/meetings/{meeting_id}")
+def delete_meeting(
+    meeting_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a meeting."""
+    meeting = db.query(Meeting).filter(
+        Meeting.id == meeting_id,
+        Meeting.organization_id == current_user.organization_id
+    ).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    db.delete(meeting)
     db.commit()
     return {"ok": True}
 

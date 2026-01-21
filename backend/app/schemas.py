@@ -483,6 +483,56 @@ class ContactResponse(ContactBase):
         from_attributes = True
 
 
+# Meeting schemas
+class MeetingBase(BaseModel):
+    title: str
+    meeting_date: datetime
+    duration_minutes: Optional[int] = None
+    location: Optional[str] = None
+    meeting_type: str = "general"
+    attendees: Optional[List[str]] = None
+    agenda: Optional[str] = None
+    minutes: Optional[str] = None
+    decisions: Optional[str] = None
+    action_items: Optional[List[dict]] = None  # [{task, assignee, due_date}]
+    audio_file_url: Optional[str] = None
+    document_ids: Optional[List[int]] = None
+    tags: Optional[str] = None
+    is_recurring: bool = False
+    recurrence_pattern: Optional[str] = None
+
+
+class MeetingCreate(MeetingBase):
+    pass
+
+
+class MeetingUpdate(BaseModel):
+    title: Optional[str] = None
+    meeting_date: Optional[datetime] = None
+    duration_minutes: Optional[int] = None
+    location: Optional[str] = None
+    meeting_type: Optional[str] = None
+    attendees: Optional[List[str]] = None
+    agenda: Optional[str] = None
+    minutes: Optional[str] = None
+    decisions: Optional[str] = None
+    action_items: Optional[List[dict]] = None
+    audio_file_url: Optional[str] = None
+    document_ids: Optional[List[int]] = None
+    tags: Optional[str] = None
+    is_recurring: Optional[bool] = None
+    recurrence_pattern: Optional[str] = None
+
+
+class MeetingResponse(MeetingBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # Deadline schemas
 class DeadlineBase(BaseModel):
     title: str

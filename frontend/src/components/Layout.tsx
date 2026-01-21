@@ -23,6 +23,7 @@ import {
   Settings,
   LayoutDashboard,
   ListTodo,
+  Video,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BusinessSwitcher from './BusinessSwitcher';
@@ -61,9 +62,9 @@ const navSections: NavSection[] = [
     },
     items: [
       { to: '/app', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/app/daily-brief', icon: ListTodo, label: 'Daily Brief' },
-      { to: '/app/tasks', icon: CheckSquare, label: 'Tasks' },
       { to: '/app/getting-started', icon: ClipboardCheck, label: 'Setup Checklist' },
+      { to: '/app/daily-brief', icon: ListTodo, label: 'Daily Brief' },
+      { to: '/app/tasks', icon: CheckSquare, label: 'Tasks / Todo' },
     ],
   },
   {
@@ -81,6 +82,7 @@ const navSections: NavSection[] = [
       { to: '/app/businesses', icon: Building2, label: 'Businesses' },
       { to: '/app/library', icon: BookOpen, label: 'Business Library' },
       { to: '/app/documents', icon: FileText, label: 'Documents' },
+      { to: '/app/meetings', icon: Video, label: 'Meetings' },
       { to: '/app/contacts', icon: Users, label: 'Contacts' },
       { to: '/app/deadlines', icon: Calendar, label: 'Deadlines' },
       { to: '/app/vault', icon: Shield, label: 'Credential Vault' },
