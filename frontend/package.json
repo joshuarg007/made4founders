@@ -13,6 +13,7 @@
     "@hello-pangea/dnd": "^18.0.1",
     "canvas-confetti": "^1.9.3",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.28.1",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

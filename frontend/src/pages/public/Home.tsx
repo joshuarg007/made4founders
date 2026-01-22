@@ -11,6 +11,7 @@ import {
   Globe,
 } from 'lucide-react';
 import SEO, { pageSEO } from '../../components/SEO';
+import ScrollSection from '../../components/ScrollSection';
 
 // Marketing images
 import heroImage from '../../assets/hero-section-holographic.webp';
@@ -91,10 +92,11 @@ const testimonials = [
 
 export default function Home() {
   return (
-    <div className="relative overflow-hidden">
+    <div className="snap-page">
       <SEO {...pageSEO.home} />
+
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">
+      <ScrollSection className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8" id="hero">
         {/* Background effects */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl" />
@@ -165,10 +167,10 @@ export default function Home() {
             />
           </div>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Stats Section */}
-      <section className="py-12 sm:py-16 border-y border-white/5 bg-[#0c0f16]">
+      <ScrollSection className="py-12 sm:py-16 border-y border-white/5 bg-[#0c0f16]" id="stats" fullHeight={false}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {stats.map((stat) => (
@@ -179,10 +181,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Features Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
+      <ScrollSection className="py-24 px-4 sm:px-6 lg:px-8" id="features">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
@@ -218,10 +220,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Testimonials Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#0c0f16]">
+      <ScrollSection className="py-24 px-4 sm:px-6 lg:px-8 bg-[#0c0f16]" id="testimonials">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
@@ -249,10 +251,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* Security Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
+      <ScrollSection className="py-24 px-4 sm:px-6 lg:px-8" id="security">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1">
@@ -291,10 +293,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </ScrollSection>
 
       {/* CTA Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
+      <ScrollSection className="py-24 px-4 sm:px-6 lg:px-8" id="cta">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
             Ready to Take Control?
@@ -310,7 +312,7 @@ export default function Home() {
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
-      </section>
+      </ScrollSection>
     </div>
   );
 }

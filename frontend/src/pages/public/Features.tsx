@@ -49,7 +49,7 @@ import tasksIcon from '../../assets/tasks-icon.webp';
 import dashboardIcon from '../../assets/dashboard-icon.webp';
 import teamIcon from '../../assets/team-icon.webp';
 import templatesIcon from '../../assets/templates-icon.webp';
-import securityIcon from '../../assets/security-icon.webp';
+import securityIcon from '../../assets/security-icon-large.webp';
 
 const featureCategories = [
   {
@@ -315,8 +315,8 @@ export default function Features() {
                   src={securityIcon}
                   alt="Enterprise-grade security - Made4Founders vault protection"
                   loading="lazy"
-                  width={200}
-                  height={135}
+                  width={400}
+                  height={400}
                   className="relative w-full h-auto max-w-[400px] mx-auto"
                 />
               </div>

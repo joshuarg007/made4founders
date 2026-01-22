@@ -42,3 +42,51 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #374151;
 }
+
+/* Hide scrollbar for scroll-snap containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scroll snap - desktop only */
+@media (min-width: 768px) {
+  .snap-container {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: 64px; /* Account for fixed navbar */
+    overflow-y: scroll;
+    height: 100vh;
+  }
+
+  /* Pass through snap behavior */
+  .snap-container > main {
+    display: contents;
+  }
+
+  .snap-page {
+    display: contents;
+  }
+
+  .snap-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Sections that don't need full height */
+  .snap-section-auto {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+
+  .snap-start {
+    scroll-snap-align: start;
+  }
+}
