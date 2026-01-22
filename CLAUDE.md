@@ -5,25 +5,24 @@
 ---
 
 ## SESSION STATE (Update before ending each session)
-**Last Updated:** 2026-01-17
+**Last Updated:** 2026-01-22
 
 ### Where We Left Off:
-- Reorganized sidebar into 4 color-coded sections (Command Center, Business, Growth Hub, Operations)
-- Created merged pages (SocialHub, Insights, Finance, Offerings)
-- Enhanced Contacts with additional fields (phone, location, social, birthday, tags)
-- Separated Credential Vault from Finance into its own page
-- Login page improvements: email/password first, OAuth below, password visibility toggle
-- Created Privacy, Terms, and Security legal pages
-- Fixed credential vault custom_fields update bug
-- Added robust .env protection in GitHub Actions deploy workflow
+- Added LinkedIn OAuth for sign-in and social posting
+- Added Twitter/X OAuth for sign-in and social posting
+- Added Facebook OAuth for sign-in and social posting
+- All three platforms have posting endpoints: `/api/social/{platform}/post`
+- Login page now has 5 OAuth options: Google, GitHub, LinkedIn, X, Facebook
+- Fixed production deployment issues (redirect URIs, env vars in docker-compose)
 
 ### Immediate Next Steps:
+- **Tutorial/Onboarding for new users** - Interactive walkthrough
+- **OAuth account linking** - Allow linking OAuth to existing accounts
 - Complete Intuit/QuickBooks app review process
 - Test accounting integrations end-to-end
-- Continue marketing page enhancements
 
 ### Current Blockers:
-- None
+- OAuth creates new accounts instead of offering to link to existing accounts
 
 ---
 
@@ -386,7 +385,19 @@ Features:
 ---
 
 ## Known Issues
-- None currently documented
+- **OAuth creates new accounts** - When logging in with OAuth (LinkedIn, Twitter, Facebook) for the first time, creates a new account instead of offering to link to existing account
+
+---
+
+## Still Needed (High Priority)
+- [ ] **Tutorial/Onboarding for New Users** - Interactive walkthrough for first-time users
+  - Welcome modal explaining key features
+  - Step-by-step guided tour of the dashboard
+  - Checklist of recommended first actions
+  - Skip option for experienced users
+- [ ] **OAuth Account Linking** - Allow linking new OAuth provider to existing account
+  - Prompt: "Link to existing account?" vs "Create new account"
+  - Support multiple OAuth providers per account
 
 ---
 

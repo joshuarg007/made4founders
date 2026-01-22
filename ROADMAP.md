@@ -153,11 +153,27 @@ Made4Founders is a comprehensive command center for startup founders, providing 
 - [ ] Subscription status display in app
 
 ### Phase 3: Social Media OAuth
-- [ ] Twitter/X OAuth integration
-- [ ] Facebook OAuth integration
+- [x] Twitter/X OAuth integration (login + posting)
+- [x] Facebook OAuth integration (login + posting)
 - [ ] Instagram OAuth integration
-- [ ] LinkedIn OAuth integration
+- [x] LinkedIn OAuth integration (login + posting)
 - [ ] Social account connection UI in Marketing page
+- [ ] OAuth account linking (allow linking new OAuth to existing account)
+
+---
+
+## Still Needed
+
+### High Priority
+- [ ] **Tutorial/Onboarding for New Users** - Interactive walkthrough for first-time users
+  - Welcome modal explaining key features
+  - Step-by-step guided tour of the dashboard
+  - Checklist of recommended first actions
+  - Skip option for experienced users
+- [ ] **OAuth Account Linking** - When user logs in with OAuth for first time:
+  - Option to link to existing account (if email doesn't match)
+  - Prompt: "Link to existing account?" vs "Create new account"
+  - Support linking multiple OAuth providers to one account
 
 ---
 

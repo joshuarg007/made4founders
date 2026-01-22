@@ -425,13 +425,15 @@ SQLite database located at `backend/made4founders.db`
 - [x] Browser password manager integration
 
 ### Planned
+- [ ] **Tutorial/Onboarding for new users** - Interactive walkthrough for first-time users
+- [ ] OAuth account linking (link new OAuth to existing account)
 - [ ] Email notifications for deadlines
 - [ ] Calendar integration
 - [ ] Mobile responsive improvements
 - [ ] Export data (PDF/CSV)
 - [ ] Two-factor authentication (TOTP)
 - [ ] Team collaboration features
-- [ ] Social media OAuth (Twitter, LinkedIn, Facebook)
+- [x] Social media OAuth (Twitter, LinkedIn, Facebook) - Completed
 - [ ] Stripe payment integration
 
 ---
