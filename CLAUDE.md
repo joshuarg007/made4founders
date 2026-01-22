@@ -188,6 +188,8 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
+LINKEDIN_CLIENT_ID=your-linkedin-client-id
+LINKEDIN_CLIENT_SECRET=your-linkedin-client-secret
 ```
 
 ### Optional
@@ -201,6 +203,7 @@ COOKIE_DOMAIN=.made4founders.com
 Configure these in your OAuth provider settings:
 - **Google**: `https://made4founders.com/api/auth/google/callback`
 - **GitHub**: `https://made4founders.com/api/auth/github/callback`
+- **LinkedIn**: `https://made4founders.com/api/auth/linkedin/callback`
 
 ---
 

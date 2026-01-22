@@ -415,6 +415,7 @@ export interface OAuthLoginResponse {
 
 export const getGoogleLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/google/login');
 export const getGitHubLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/github/login');
+export const getLinkedInLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/linkedin/login');
 
 // Stripe Billing
 export interface StripeConfig {

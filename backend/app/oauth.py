@@ -35,6 +35,11 @@ GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI", "http://localhost:8001/api/auth/github/callback")
 
+# LinkedIn OAuth
+LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "")
+LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "")
+LINKEDIN_REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI", "http://localhost:8001/api/auth/linkedin/callback")
+
 # Frontend URL for redirects
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
@@ -375,6 +380,201 @@ async def github_callback(
         if not user.email_verified:
             user.email_verified = True
             user.email_verified_at = datetime.utcnow()
+        db.commit()
+
+    # Create auth tokens
+    access = security.create_access_token(user.email)
+    refresh = security.create_refresh_token(user.email)
+    security.set_auth_cookies(response, access, refresh)
+
+    # Redirect to frontend
+    response.status_code = 302
+    response.headers["Location"] = f"{FRONTEND_URL}/app"
+    return response
+
+
+# ============ LINKEDIN OAUTH ============
+
+@router.get("/linkedin/login")
+async def linkedin_login():
+    """Initiate LinkedIn OAuth flow."""
+    if not LINKEDIN_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="LinkedIn OAuth not configured")
+
+    state = generate_state()
+    oauth_states[state] = {"provider": "linkedin", "created_at": datetime.utcnow()}
+
+    # LinkedIn OAuth 2.0 with OpenID Connect
+    params = {
+        "response_type": "code",
+        "client_id": LINKEDIN_CLIENT_ID,
+        "redirect_uri": LINKEDIN_REDIRECT_URI,
+        "state": state,
+        "scope": "openid profile email w_member_social",  # w_member_social for posting
+    }
+
+    url = f"https://www.linkedin.com/oauth/v2/authorization?{urlencode(params)}"
+    return {"url": url}
+
+
+@router.get("/linkedin/callback")
+async def linkedin_callback(
+    response: Response,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+    error_description: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Handle LinkedIn OAuth callback."""
+    # Handle user cancellation or errors
+    if error:
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_cancelled"
+        return response
+
+    if not code or not state:
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
+        return response
+
+    # Verify state
+    if state not in oauth_states or oauth_states[state]["provider"] != "linkedin":
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
+        return response
+
+    del oauth_states[state]  # Clean up
+
+    # Exchange code for tokens
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://www.linkedin.com/oauth/v2/accessToken",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "client_id": LINKEDIN_CLIENT_ID,
+                "client_secret": LINKEDIN_CLIENT_SECRET,
+                "redirect_uri": LINKEDIN_REDIRECT_URI,
+            },
+        )
+
+        if token_response.status_code != 200:
+            response.status_code = 302
+            response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
+            return response
+
+        tokens = token_response.json()
+        access_token = tokens.get("access_token")
+
+        if not access_token:
+            response.status_code = 302
+            response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
+            return response
+
+        # Get user info using OpenID Connect userinfo endpoint
+        user_response = await client.get(
+            "https://api.linkedin.com/v2/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        if user_response.status_code != 200:
+            response.status_code = 302
+            response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
+            return response
+
+        user_info = user_response.json()
+
+    email = user_info.get("email")
+    name = user_info.get("name")
+    linkedin_id = user_info.get("sub")  # OpenID Connect subject identifier
+    avatar = user_info.get("picture")
+
+    if not email:
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/login?error=email_required"
+        return response
+
+    # Find or create user
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        # Create new user and organization
+        org_name = name.split()[0] + "'s Company" if name else "My Company"
+        base_slug = create_slug(org_name)
+        slug = get_unique_slug(db, base_slug)
+
+        # Create organization with 14-day trial
+        org = Organization(
+            name=org_name,
+            slug=slug,
+            subscription_tier=SubscriptionTier.STARTER.value,
+            subscription_status=SubscriptionStatus.TRIALING.value,
+            trial_ends_at=datetime.utcnow() + timedelta(days=14),
+        )
+        db.add(org)
+        db.flush()
+
+        # Create user
+        user = User(
+            email=email,
+            name=name,
+            oauth_provider="linkedin",
+            oauth_provider_id=linkedin_id,
+            avatar_url=avatar,
+            email_verified=True,  # LinkedIn verifies emails
+            email_verified_at=datetime.utcnow(),
+            organization_id=org.id,
+            is_org_owner=True,
+            role="admin",
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+    else:
+        # Update existing user with LinkedIn info if not already linked
+        if not user.oauth_provider:
+            user.oauth_provider = "linkedin"
+            user.oauth_provider_id = linkedin_id
+        if not user.avatar_url:
+            user.avatar_url = avatar
+        if not user.email_verified:
+            user.email_verified = True
+            user.email_verified_at = datetime.utcnow()
+        db.commit()
+
+    # Store LinkedIn tokens for social posting (if user has organization)
+    if user.organization_id:
+        from .models import OAuthConnection
+
+        # Check if connection already exists
+        existing_conn = db.query(OAuthConnection).filter(
+            OAuthConnection.organization_id == user.organization_id,
+            OAuthConnection.user_id == user.id,
+            OAuthConnection.provider == "linkedin"
+        ).first()
+
+        if existing_conn:
+            existing_conn.access_token = access_token
+            existing_conn.refresh_token = tokens.get("refresh_token")
+            existing_conn.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
+            existing_conn.provider_user_id = linkedin_id
+            existing_conn.is_active = True
+            existing_conn.updated_at = datetime.utcnow()
+        else:
+            oauth_conn = OAuthConnection(
+                organization_id=user.organization_id,
+                user_id=user.id,
+                provider="linkedin",
+                provider_user_id=linkedin_id,
+                access_token=access_token,
+                refresh_token=tokens.get("refresh_token"),
+                token_expires_at=datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600)),
+                scopes="openid,profile,email,w_member_social",
+                is_active=True,
+            )
+            db.add(oauth_conn)
         db.commit()
 
     # Create auth tokens
