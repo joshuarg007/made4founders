@@ -1295,6 +1295,9 @@ class User(Base):
     mfa_secret = Column(String(255), nullable=True)  # Encrypted TOTP secret
     mfa_backup_codes = Column(Text, nullable=True)  # JSON array of hashed backup codes
 
+    # Onboarding
+    has_completed_onboarding = Column(Boolean, default=False)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

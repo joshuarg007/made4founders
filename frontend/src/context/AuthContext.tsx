@@ -6,6 +6,7 @@ interface User {
   email: string;
   name: string | null;
   role: string;
+  has_completed_onboarding: boolean;
 }
 
 interface AuthContextType {

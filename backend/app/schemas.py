@@ -738,6 +738,7 @@ class UserMe(BaseModel):
     email: str
     name: Optional[str]
     role: str = "viewer"
+    has_completed_onboarding: bool = False
 
 
 # User Management schemas (admin only)

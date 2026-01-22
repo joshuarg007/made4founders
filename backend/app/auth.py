@@ -252,7 +252,23 @@ def logout(response: Response):
 
 @router.get("/me", response_model=UserMe)
 def me(current_user: User = Depends(get_current_user)):
-    return {"email": current_user.email, "name": current_user.name, "role": current_user.role or "viewer"}
+    return {
+        "email": current_user.email,
+        "name": current_user.name,
+        "role": current_user.role or "viewer",
+        "has_completed_onboarding": current_user.has_completed_onboarding or False,
+    }
+
+
+@router.post("/me/complete-onboarding")
+def complete_onboarding(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Mark user's onboarding as complete"""
+    current_user.has_completed_onboarding = True
+    db.commit()
+    return {"ok": True}
 
 
 @router.post("/register", response_model=UserResponse)

@@ -452,6 +452,10 @@ export const createAccountFromOAuth = (data: CreateFromOAuthRequest) =>
     body: JSON.stringify(data),
   });
 
+// Onboarding
+export const completeOnboarding = () =>
+  fetchApi<{ ok: boolean }>('/auth/me/complete-onboarding', { method: 'POST' });
+
 // Stripe Billing
 export interface StripeConfig {
   publishable_key: string;

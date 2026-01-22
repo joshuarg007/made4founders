@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BusinessSwitcher from './BusinessSwitcher';
+import Tutorial from './Tutorial';
 
 interface NavItem {
   to: string;
@@ -125,8 +126,24 @@ const navSections: NavSection[] = [
 ];
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const location = useLocation();
+  const [showTutorial, setShowTutorial] = useState(() => {
+    // Show tutorial if user hasn't completed onboarding
+    return false; // Will be set by useEffect after user loads
+  });
+
+  // Show tutorial when user loads and hasn't completed onboarding
+  useEffect(() => {
+    if (user && !user.has_completed_onboarding) {
+      setShowTutorial(true);
+    }
+  }, [user]);
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    refreshUser(); // Refresh user data to update has_completed_onboarding
+  };
 
   // Initialize expanded sections from localStorage or default all open
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
@@ -289,6 +306,9 @@ export default function Layout() {
       <main className="flex-1 overflow-auto relative">
         <Outlet />
       </main>
+
+      {/* Onboarding Tutorial */}
+      {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
     </div>
   );
 }
