@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { getGoogleLoginUrl, getGitHubLoginUrl, getLinkedInLoginUrl } from '../lib/api';
+import { getGoogleLoginUrl, getGitHubLoginUrl, getLinkedInLoginUrl, getTwitterLoginUrl, getFacebookLoginUrl } from '../lib/api';
 
 // SVG Icons for OAuth providers
 const GoogleIcon = () => (
@@ -26,6 +26,18 @@ const LinkedInIcon = () => (
   </svg>
 );
 
+const TwitterIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+);
+
+const FacebookIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+);
+
 export default function Login() {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
@@ -34,7 +46,7 @@ export default function Login() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | 'linkedin' | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | 'linkedin' | 'twitter' | 'facebook' | null>(null);
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -42,17 +54,27 @@ export default function Login() {
 
   const from = (location.state as { from?: Location })?.from?.pathname || '/app';
 
-  const handleOAuthLogin = async (provider: 'google' | 'github' | 'linkedin') => {
+  const handleOAuthLogin = async (provider: 'google' | 'github' | 'linkedin' | 'twitter' | 'facebook') => {
     setError('');
     setOauthLoading(provider);
     try {
       let response;
-      if (provider === 'google') {
-        response = await getGoogleLoginUrl();
-      } else if (provider === 'github') {
-        response = await getGitHubLoginUrl();
-      } else {
-        response = await getLinkedInLoginUrl();
+      switch (provider) {
+        case 'google':
+          response = await getGoogleLoginUrl();
+          break;
+        case 'github':
+          response = await getGitHubLoginUrl();
+          break;
+        case 'linkedin':
+          response = await getLinkedInLoginUrl();
+          break;
+        case 'twitter':
+          response = await getTwitterLoginUrl();
+          break;
+        case 'facebook':
+          response = await getFacebookLoginUrl();
+          break;
       }
       window.location.href = response.url;
     } catch (err) {
@@ -242,6 +264,34 @@ export default function Login() {
               <LinkedInIcon />
             )}
             Continue with LinkedIn
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin('twitter')}
+            disabled={oauthLoading !== null}
+            className="w-full py-3 px-4 rounded-lg bg-black text-white font-medium hover:bg-gray-900 transition disabled:opacity-50 flex items-center justify-center gap-3"
+          >
+            {oauthLoading === 'twitter' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <TwitterIcon />
+            )}
+            Continue with X
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin('facebook')}
+            disabled={oauthLoading !== null}
+            className="w-full py-3 px-4 rounded-lg bg-[#1877F2] text-white font-medium hover:bg-[#0d65d9] transition disabled:opacity-50 flex items-center justify-center gap-3"
+          >
+            {oauthLoading === 'facebook' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <FacebookIcon />
+            )}
+            Continue with Facebook
           </button>
         </div>
 
