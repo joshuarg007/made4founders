@@ -44,10 +44,13 @@ services:
       # Social OAuth
       - TWITTER_CLIENT_ID=${TWITTER_CLIENT_ID}
       - TWITTER_CLIENT_SECRET=${TWITTER_CLIENT_SECRET}
+      - TWITTER_REDIRECT_URI=https://made4founders.com/api/auth/twitter/callback
       - LINKEDIN_CLIENT_ID=${LINKEDIN_CLIENT_ID}
       - LINKEDIN_CLIENT_SECRET=${LINKEDIN_CLIENT_SECRET}
+      - LINKEDIN_REDIRECT_URI=https://made4founders.com/api/auth/linkedin/callback
       - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
       - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
+      - FACEBOOK_REDIRECT_URI=https://made4founders.com/api/auth/facebook/callback
     volumes:
       - backend-data:/app/data
       - uploads-data:/app/uploads
