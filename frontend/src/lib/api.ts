@@ -419,6 +419,39 @@ export const getLinkedInLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/lin
 export const getTwitterLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/twitter/login');
 export const getFacebookLoginUrl = () => fetchApi<OAuthLoginResponse>('/auth/facebook/login');
 
+// OAuth Account Linking
+export interface PendingOAuthInfo {
+  provider: string;
+  email: string | null;
+  name: string | null;
+  avatar: string | null;
+}
+
+export interface LinkAccountRequest {
+  token: string;
+  email: string;
+  password: string;
+}
+
+export interface CreateFromOAuthRequest {
+  token: string;
+}
+
+export const getPendingOAuth = (token: string) =>
+  fetchApi<PendingOAuthInfo>(`/auth/oauth/pending/${token}`);
+
+export const linkOAuthToAccount = (data: LinkAccountRequest) =>
+  fetchApi<{ ok: boolean; message: string }>('/auth/oauth/link', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const createAccountFromOAuth = (data: CreateFromOAuthRequest) =>
+  fetchApi<{ ok: boolean; message: string }>('/auth/oauth/create', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
 // Stripe Billing
 export interface StripeConfig {
   publishable_key: string;

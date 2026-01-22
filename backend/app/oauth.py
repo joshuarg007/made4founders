@@ -56,6 +56,9 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 # State tokens (in production, use Redis or database)
 oauth_states: dict[str, dict] = {}
 
+# Pending OAuth data for account linking (expires in 10 minutes)
+pending_oauth: dict[str, dict] = {}
+
 
 def generate_state() -> str:
     """Generate a secure random state token."""
@@ -501,47 +504,31 @@ async def linkedin_callback(
     linkedin_id = user_info.get("sub")  # OpenID Connect subject identifier
     avatar = user_info.get("picture")
 
-    if not email:
-        response.status_code = 302
-        response.headers["Location"] = f"{FRONTEND_URL}/login?error=email_required"
-        return response
+    # Find existing user by email
+    user = db.query(User).filter(User.email == email).first() if email else None
 
-    # Find or create user
-    user = db.query(User).filter(User.email == email).first()
+    # Also check if user exists by OAuth provider ID
+    if not user:
+        user = db.query(User).filter(
+            User.oauth_provider == "linkedin",
+            User.oauth_provider_id == linkedin_id
+        ).first()
 
     if not user:
-        # Create new user and organization
-        org_name = name.split()[0] + "'s Company" if name else "My Company"
-        base_slug = create_slug(org_name)
-        slug = get_unique_slug(db, base_slug)
-
-        # Create organization with 14-day trial
-        org = Organization(
-            name=org_name,
-            slug=slug,
-            subscription_tier=SubscriptionTier.STARTER.value,
-            subscription_status=SubscriptionStatus.TRIALING.value,
-            trial_ends_at=datetime.utcnow() + timedelta(days=14),
-        )
-        db.add(org)
-        db.flush()
-
-        # Create user
-        user = User(
+        # No existing user - redirect to link page
+        pending_token = store_pending_oauth(
+            provider="linkedin",
+            provider_id=linkedin_id,
             email=email,
             name=name,
-            oauth_provider="linkedin",
-            oauth_provider_id=linkedin_id,
-            avatar_url=avatar,
-            email_verified=True,  # LinkedIn verifies emails
-            email_verified_at=datetime.utcnow(),
-            organization_id=org.id,
-            is_org_owner=True,
-            role="admin",
-            is_active=True,
+            avatar=avatar,
+            access_token=access_token,
+            refresh_token=tokens.get("refresh_token"),
+            expires_in=tokens.get("expires_in"),
         )
-        db.add(user)
-        db.commit()
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/link-account?token={pending_token}"
+        return response
     else:
         # Update existing user with LinkedIn info if not already linked
         if not user.oauth_provider:
@@ -692,49 +679,29 @@ async def twitter_callback(
     avatar = twitter_user.get("profile_image_url")
 
     # Twitter doesn't provide email by default - need elevated access
-    # For now, create a placeholder email based on username
-    email = f"{username}@twitter.placeholder"
+    email = None  # Will be set during account linking or creation
 
-    # Try to find user by Twitter ID first, then by email
+    # Try to find user by Twitter ID
     user = db.query(User).filter(
         User.oauth_provider == "twitter",
         User.oauth_provider_id == twitter_id
     ).first()
 
     if not user:
-        # Check if user with this placeholder email exists
-        user = db.query(User).filter(User.email == email).first()
-
-    if not user:
-        # Create new user and organization
-        org_name = name.split()[0] + "'s Company" if name else "My Company"
-        base_slug = create_slug(org_name)
-        slug = get_unique_slug(db, base_slug)
-
-        org = Organization(
-            name=org_name,
-            slug=slug,
-            subscription_tier=SubscriptionTier.STARTER.value,
-            subscription_status=SubscriptionStatus.TRIALING.value,
-            trial_ends_at=datetime.utcnow() + timedelta(days=14),
-        )
-        db.add(org)
-        db.flush()
-
-        user = User(
+        # No existing user - redirect to link page
+        pending_token = store_pending_oauth(
+            provider="twitter",
+            provider_id=twitter_id,
             email=email,
             name=name,
-            oauth_provider="twitter",
-            oauth_provider_id=twitter_id,
-            avatar_url=avatar,
-            email_verified=False,  # Twitter doesn't verify email for us
-            organization_id=org.id,
-            is_org_owner=True,
-            role="admin",
-            is_active=True,
+            avatar=avatar,
+            access_token=access_token,
+            refresh_token=tokens.get("refresh_token"),
+            expires_in=tokens.get("expires_in"),
         )
-        db.add(user)
-        db.commit()
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/link-account?token={pending_token}"
+        return response
     else:
         if not user.oauth_provider:
             user.oauth_provider = "twitter"
@@ -891,61 +858,43 @@ async def facebook_callback(
             tokens["expires_in"] = long_tokens.get("expires_in", 5184000)
 
     facebook_id = fb_user.get("id")
-    email = fb_user.get("email")
+    email = fb_user.get("email")  # May be None if user didn't share email
     name = fb_user.get("name")
     avatar = fb_user.get("picture", {}).get("data", {}).get("url")
 
-    if not email:
-        # Facebook user didn't share email
-        email = f"{facebook_id}@facebook.placeholder"
+    # Find existing user by email if provided
+    user = db.query(User).filter(User.email == email).first() if email else None
 
-    # Find or create user
-    user = db.query(User).filter(User.email == email).first()
-
+    # Also check by Facebook ID
     if not user:
-        # Check by Facebook ID
         user = db.query(User).filter(
             User.oauth_provider == "facebook",
             User.oauth_provider_id == facebook_id
         ).first()
 
     if not user:
-        org_name = name.split()[0] + "'s Company" if name else "My Company"
-        base_slug = create_slug(org_name)
-        slug = get_unique_slug(db, base_slug)
-
-        org = Organization(
-            name=org_name,
-            slug=slug,
-            subscription_tier=SubscriptionTier.STARTER.value,
-            subscription_status=SubscriptionStatus.TRIALING.value,
-            trial_ends_at=datetime.utcnow() + timedelta(days=14),
-        )
-        db.add(org)
-        db.flush()
-
-        user = User(
+        # No existing user - redirect to link page
+        pending_token = store_pending_oauth(
+            provider="facebook",
+            provider_id=facebook_id,
             email=email,
             name=name,
-            oauth_provider="facebook",
-            oauth_provider_id=facebook_id,
-            avatar_url=avatar,
-            email_verified="@facebook.placeholder" not in email,
-            email_verified_at=datetime.utcnow() if "@facebook.placeholder" not in email else None,
-            organization_id=org.id,
-            is_org_owner=True,
-            role="admin",
-            is_active=True,
+            avatar=avatar,
+            access_token=access_token,
+            refresh_token=None,  # Facebook doesn't provide refresh tokens
+            expires_in=tokens.get("expires_in"),
         )
-        db.add(user)
-        db.commit()
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/link-account?token={pending_token}"
+        return response
     else:
+        # Existing user found - update and login
         if not user.oauth_provider:
             user.oauth_provider = "facebook"
             user.oauth_provider_id = facebook_id
         if not user.avatar_url:
             user.avatar_url = avatar
-        if not user.email_verified and "@facebook.placeholder" not in email:
+        if email and not user.email_verified:
             user.email_verified = True
             user.email_verified_at = datetime.utcnow()
         db.commit()
@@ -995,14 +944,272 @@ async def facebook_callback(
     return response
 
 
+# ============ ACCOUNT LINKING ============
+
+from pydantic import BaseModel
+
+class LinkAccountRequest(BaseModel):
+    token: str
+    email: str
+    password: str
+
+
+class CreateFromOAuthRequest(BaseModel):
+    token: str
+
+
+def store_pending_oauth(
+    provider: str,
+    provider_id: str,
+    email: Optional[str],
+    name: Optional[str],
+    avatar: Optional[str],
+    access_token: str,
+    refresh_token: Optional[str] = None,
+    expires_in: Optional[int] = None,
+) -> str:
+    """Store pending OAuth data and return a token for retrieval."""
+    token = secrets.token_urlsafe(32)
+    pending_oauth[token] = {
+        "provider": provider,
+        "provider_id": provider_id,
+        "email": email,
+        "name": name,
+        "avatar": avatar,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "expires_in": expires_in,
+        "created_at": datetime.utcnow(),
+    }
+    return token
+
+
+@router.get("/oauth/pending/{token}")
+async def get_pending_oauth(token: str):
+    """Get pending OAuth information for account linking."""
+    if token not in pending_oauth:
+        raise HTTPException(status_code=404, detail="Pending OAuth not found or expired")
+
+    data = pending_oauth[token]
+
+    # Check if expired (10 minutes)
+    if (datetime.utcnow() - data["created_at"]).total_seconds() > 600:
+        del pending_oauth[token]
+        raise HTTPException(status_code=404, detail="Pending OAuth expired")
+
+    # Return safe info (not tokens)
+    return {
+        "provider": data["provider"],
+        "email": data["email"],
+        "name": data["name"],
+        "avatar": data["avatar"],
+    }
+
+
+@router.post("/oauth/link")
+async def link_oauth_to_account(
+    request: LinkAccountRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Link pending OAuth to an existing account by verifying credentials."""
+    if request.token not in pending_oauth:
+        raise HTTPException(status_code=404, detail="Pending OAuth not found or expired")
+
+    oauth_data = pending_oauth[request.token]
+
+    # Check if expired
+    if (datetime.utcnow() - oauth_data["created_at"]).total_seconds() > 600:
+        del pending_oauth[request.token]
+        raise HTTPException(status_code=404, detail="Pending OAuth expired")
+
+    # Verify the user's credentials
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not user.hashed_password:
+        raise HTTPException(status_code=400, detail="Account uses OAuth only. Please use that login method.")
+
+    if not security.verify_password(request.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account is disabled")
+
+    # Link the OAuth provider to this account
+    provider = oauth_data["provider"]
+    provider_id = oauth_data["provider_id"]
+
+    # Update user's OAuth info if not already set
+    if not user.oauth_provider:
+        user.oauth_provider = provider
+        user.oauth_provider_id = provider_id
+
+    if not user.avatar_url and oauth_data.get("avatar"):
+        user.avatar_url = oauth_data["avatar"]
+
+    # Store OAuth connection for social features
+    if user.organization_id:
+        from .models import OAuthConnection
+
+        existing_conn = db.query(OAuthConnection).filter(
+            OAuthConnection.organization_id == user.organization_id,
+            OAuthConnection.user_id == user.id,
+            OAuthConnection.provider == provider
+        ).first()
+
+        expires_at = None
+        if oauth_data.get("expires_in"):
+            expires_at = datetime.utcnow() + timedelta(seconds=oauth_data["expires_in"])
+
+        if existing_conn:
+            existing_conn.access_token = oauth_data["access_token"]
+            existing_conn.refresh_token = oauth_data.get("refresh_token")
+            existing_conn.token_expires_at = expires_at
+            existing_conn.provider_user_id = provider_id
+            existing_conn.is_active = True
+            existing_conn.updated_at = datetime.utcnow()
+        else:
+            oauth_conn = OAuthConnection(
+                organization_id=user.organization_id,
+                user_id=user.id,
+                provider=provider,
+                provider_user_id=provider_id,
+                access_token=oauth_data["access_token"],
+                refresh_token=oauth_data.get("refresh_token"),
+                token_expires_at=expires_at,
+                is_active=True,
+            )
+            db.add(oauth_conn)
+
+    db.commit()
+
+    # Clean up pending OAuth
+    del pending_oauth[request.token]
+
+    # Create auth tokens and set cookies
+    access = security.create_access_token(user.email)
+    refresh = security.create_refresh_token(user.email)
+    security.set_auth_cookies(response, access, refresh)
+
+    return {"ok": True, "message": f"{provider.title()} account linked successfully"}
+
+
+@router.post("/oauth/create")
+async def create_account_from_oauth(
+    request: CreateFromOAuthRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Create a new account from pending OAuth data."""
+    if request.token not in pending_oauth:
+        raise HTTPException(status_code=404, detail="Pending OAuth not found or expired")
+
+    oauth_data = pending_oauth[request.token]
+
+    # Check if expired
+    if (datetime.utcnow() - oauth_data["created_at"]).total_seconds() > 600:
+        del pending_oauth[request.token]
+        raise HTTPException(status_code=404, detail="Pending OAuth expired")
+
+    provider = oauth_data["provider"]
+    provider_id = oauth_data["provider_id"]
+    email = oauth_data.get("email")
+    name = oauth_data.get("name")
+    avatar = oauth_data.get("avatar")
+
+    # Generate placeholder email if not provided
+    if not email:
+        email = f"{provider_id}@{provider}.placeholder"
+
+    # Check if user already exists (shouldn't happen, but safety check)
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="An account with this email already exists. Please link instead.")
+
+    # Create organization
+    org_name = name.split()[0] + "'s Company" if name else "My Company"
+    base_slug = create_slug(org_name)
+    slug = get_unique_slug(db, base_slug)
+
+    org = Organization(
+        name=org_name,
+        slug=slug,
+        subscription_tier=SubscriptionTier.STARTER.value,
+        subscription_status=SubscriptionStatus.TRIALING.value,
+        trial_ends_at=datetime.utcnow() + timedelta(days=14),
+    )
+    db.add(org)
+    db.flush()
+
+    # Create user
+    user = User(
+        email=email,
+        name=name,
+        oauth_provider=provider,
+        oauth_provider_id=provider_id,
+        avatar_url=avatar,
+        email_verified="@" in email and ".placeholder" not in email,
+        email_verified_at=datetime.utcnow() if ("@" in email and ".placeholder" not in email) else None,
+        organization_id=org.id,
+        is_org_owner=True,
+        role="admin",
+        is_active=True,
+    )
+    db.add(user)
+    db.flush()
+
+    # Store OAuth connection
+    from .models import OAuthConnection
+
+    expires_at = None
+    if oauth_data.get("expires_in"):
+        expires_at = datetime.utcnow() + timedelta(seconds=oauth_data["expires_in"])
+
+    oauth_conn = OAuthConnection(
+        organization_id=org.id,
+        user_id=user.id,
+        provider=provider,
+        provider_user_id=provider_id,
+        access_token=oauth_data["access_token"],
+        refresh_token=oauth_data.get("refresh_token"),
+        token_expires_at=expires_at,
+        is_active=True,
+    )
+    db.add(oauth_conn)
+
+    db.commit()
+
+    # Clean up pending OAuth
+    del pending_oauth[request.token]
+
+    # Create auth tokens and set cookies
+    access = security.create_access_token(user.email)
+    refresh = security.create_refresh_token(user.email)
+    security.set_auth_cookies(response, access, refresh)
+
+    return {"ok": True, "message": "Account created successfully"}
+
+
 # ============ CLEANUP ============
 
 def cleanup_old_states():
-    """Remove expired state tokens (call periodically)."""
+    """Remove expired state tokens and pending OAuth data (call periodically)."""
     now = datetime.utcnow()
-    expired = [
+
+    # Clean up oauth_states
+    expired_states = [
         state for state, data in oauth_states.items()
         if (now - data["created_at"]).total_seconds() > 600  # 10 minutes
     ]
-    for state in expired:
+    for state in expired_states:
         del oauth_states[state]
+
+    # Clean up pending_oauth
+    expired_pending = [
+        token for token, data in pending_oauth.items()
+        if (now - data["created_at"]).total_seconds() > 600  # 10 minutes
+    ]
+    for token in expired_pending:
+        del pending_oauth[token]

@@ -24,8 +24,9 @@ const Terms = lazy(() => import('./pages/public/Terms'))
 const Security = lazy(() => import('./pages/public/Security'))
 const Contact = lazy(() => import('./pages/public/Contact'))
 
-// Auth page
+// Auth pages
 const Login = lazy(() => import('./pages/Login'))
+const LinkAccount = lazy(() => import('./pages/LinkAccount'))
 
 // Protected pages (lazy loaded)
 const DailyBrief = lazy(() => import('./pages/DailyBrief'))
@@ -68,8 +69,9 @@ function App() {
           <Route path="/contact" element={<Contact />} />
         </Route>
 
-        {/* Login page (separate from public layout for cleaner UX) */}
+        {/* Auth pages (separate from public layout for cleaner UX) */}
         <Route path="/login" element={<Login />} />
+        <Route path="/link-account" element={<LinkAccount />} />
 
         {/* Protected app routes */}
         <Route
