@@ -1563,7 +1563,27 @@ export const connectSocialAccount = (provider: 'twitter' | 'linkedin' | 'faceboo
 export const disconnectSocialAccount = (provider: string) =>
   fetchApi<{ ok: boolean }>(`/social/accounts/${provider}`, { method: 'DELETE' });
 
-// LinkedIn Posting
+// Social Media Posting
+
+// Twitter/X
+export interface TwitterPostRequest {
+  content: string;
+}
+
+export interface TwitterPostResponse {
+  success: boolean;
+  tweet_id: string | null;
+  tweet_url: string | null;
+  error: string | null;
+}
+
+export const postToTwitter = (data: TwitterPostRequest) =>
+  fetchApi<TwitterPostResponse>('/social/twitter/post', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+// LinkedIn
 export interface LinkedInPostRequest {
   content: string;
   visibility?: 'PUBLIC' | 'CONNECTIONS';
@@ -1578,6 +1598,25 @@ export interface LinkedInPostResponse {
 
 export const postToLinkedIn = (data: LinkedInPostRequest) =>
   fetchApi<LinkedInPostResponse>('/social/linkedin/post', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+// Facebook
+export interface FacebookPostRequest {
+  content: string;
+  link?: string;
+}
+
+export interface FacebookPostResponse {
+  success: boolean;
+  post_id: string | null;
+  post_url: string | null;
+  error: string | null;
+}
+
+export const postToFacebook = (data: FacebookPostRequest) =>
+  fetchApi<FacebookPostResponse>('/social/facebook/post', {
     method: 'POST',
     body: JSON.stringify(data),
   });

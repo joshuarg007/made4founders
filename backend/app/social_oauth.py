@@ -270,6 +270,162 @@ async def twitter_callback(
     return response
 
 
+# ============ TWITTER/X POSTING ============
+
+class TwitterPostRequest(BaseModel):
+    content: str
+
+
+class TwitterPostResponse(BaseModel):
+    success: bool
+    tweet_id: Optional[str] = None
+    tweet_url: Optional[str] = None
+    error: Optional[str] = None
+
+
+async def refresh_twitter_token(client: httpx.AsyncClient, connection: OAuthConnection, db: Session) -> Optional[str]:
+    """Refresh Twitter OAuth 2.0 token."""
+    if not connection.refresh_token:
+        return None
+
+    response = await client.post(
+        "https://api.twitter.com/2/oauth2/token",
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": connection.refresh_token,
+            "client_id": TWITTER_CLIENT_ID,
+        },
+        auth=(TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET),
+    )
+
+    if response.status_code != 200:
+        return None
+
+    tokens = response.json()
+    connection.access_token = tokens["access_token"]
+    connection.refresh_token = tokens.get("refresh_token", connection.refresh_token)
+    if tokens.get("expires_in"):
+        connection.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens["expires_in"])
+    connection.updated_at = datetime.utcnow()
+    db.commit()
+
+    return tokens["access_token"]
+
+
+@router.post("/twitter/post", response_model=TwitterPostResponse)
+async def create_twitter_post(
+    request: TwitterPostRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a tweet on Twitter/X."""
+    if current_user.role not in ['admin', 'editor']:
+        raise HTTPException(status_code=403, detail="Not authorized to post")
+
+    if not current_user.organization_id:
+        raise HTTPException(status_code=400, detail="No organization")
+
+    # Validate content length (280 chars for Twitter)
+    if len(request.content) > 280:
+        return TwitterPostResponse(
+            success=False,
+            error=f"Tweet exceeds 280 characters ({len(request.content)} chars)"
+        )
+
+    # Get Twitter connection
+    connection = db.query(OAuthConnection).filter(
+        OAuthConnection.organization_id == current_user.organization_id,
+        OAuthConnection.provider == "twitter",
+        OAuthConnection.is_active == True,
+    ).first()
+
+    if not connection:
+        return TwitterPostResponse(
+            success=False,
+            error="Twitter account not connected. Please connect your Twitter account first."
+        )
+
+    try:
+        async with httpx.AsyncClient() as client:
+            access_token = connection.access_token
+
+            # Check if token is expired and refresh if needed
+            if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+                new_token = await refresh_twitter_token(client, connection, db)
+                if not new_token:
+                    return TwitterPostResponse(
+                        success=False,
+                        error="Twitter token expired. Please reconnect your Twitter account."
+                    )
+                access_token = new_token
+
+            # Post tweet using Twitter API v2
+            response = await client.post(
+                "https://api.twitter.com/2/tweets",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                json={"text": request.content},
+            )
+
+            if response.status_code == 201:
+                result = response.json()
+                tweet_id = result.get("data", {}).get("id")
+                username = connection.provider_username or ""
+                return TwitterPostResponse(
+                    success=True,
+                    tweet_id=tweet_id,
+                    tweet_url=f"https://twitter.com/{username}/status/{tweet_id}" if tweet_id else None
+                )
+
+            # Handle specific error codes
+            if response.status_code == 401:
+                # Try refreshing the token
+                new_token = await refresh_twitter_token(client, connection, db)
+                if new_token:
+                    # Retry with new token
+                    retry_response = await client.post(
+                        "https://api.twitter.com/2/tweets",
+                        headers={
+                            "Authorization": f"Bearer {new_token}",
+                            "Content-Type": "application/json",
+                        },
+                        json={"text": request.content},
+                    )
+                    if retry_response.status_code == 201:
+                        result = retry_response.json()
+                        tweet_id = result.get("data", {}).get("id")
+                        username = connection.provider_username or ""
+                        return TwitterPostResponse(
+                            success=True,
+                            tweet_id=tweet_id,
+                            tweet_url=f"https://twitter.com/{username}/status/{tweet_id}" if tweet_id else None
+                        )
+
+                return TwitterPostResponse(
+                    success=False,
+                    error="Twitter authentication failed. Please reconnect your account."
+                )
+
+            error_detail = response.json() if response.text else {"detail": "Unknown error"}
+            return TwitterPostResponse(
+                success=False,
+                error=f"Twitter API error: {error_detail}"
+            )
+
+    except httpx.HTTPError as e:
+        return TwitterPostResponse(
+            success=False,
+            error=f"Network error: {str(e)}"
+        )
+    except Exception as e:
+        return TwitterPostResponse(
+            success=False,
+            error=f"Unexpected error: {str(e)}"
+        )
+
+
 # ============ LINKEDIN OAUTH 2.0 ============
 
 @router.get("/linkedin/connect")
@@ -645,6 +801,116 @@ async def facebook_callback(
     response.status_code = 302
     response.headers["Location"] = f"{FRONTEND_URL}/app/marketing?connected=facebook"
     return response
+
+
+# ============ FACEBOOK POSTING ============
+
+class FacebookPostRequest(BaseModel):
+    content: str
+    link: Optional[str] = None  # Optional link to share
+
+
+class FacebookPostResponse(BaseModel):
+    success: bool
+    post_id: Optional[str] = None
+    post_url: Optional[str] = None
+    error: Optional[str] = None
+
+
+@router.post("/facebook/post", response_model=FacebookPostResponse)
+async def create_facebook_post(
+    request: FacebookPostRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a post on Facebook."""
+    if current_user.role not in ['admin', 'editor']:
+        raise HTTPException(status_code=403, detail="Not authorized to post")
+
+    if not current_user.organization_id:
+        raise HTTPException(status_code=400, detail="No organization")
+
+    # Get Facebook connection
+    connection = db.query(OAuthConnection).filter(
+        OAuthConnection.organization_id == current_user.organization_id,
+        OAuthConnection.provider == "facebook",
+        OAuthConnection.is_active == True,
+    ).first()
+
+    if not connection:
+        return FacebookPostResponse(
+            success=False,
+            error="Facebook account not connected. Please connect your Facebook account first."
+        )
+
+    # Check token expiration
+    if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+        return FacebookPostResponse(
+            success=False,
+            error="Facebook token expired. Please reconnect your Facebook account."
+        )
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # If we have a page_id, post to the page, otherwise post to user feed
+            if connection.page_id and connection.page_access_token:
+                # Post to Facebook Page
+                endpoint = f"https://graph.facebook.com/v18.0/{connection.page_id}/feed"
+                access_token = connection.page_access_token
+            else:
+                # Post to user's feed (limited by Facebook permissions)
+                endpoint = "https://graph.facebook.com/v18.0/me/feed"
+                access_token = connection.access_token
+
+            params = {
+                "access_token": access_token,
+                "message": request.content,
+            }
+
+            if request.link:
+                params["link"] = request.link
+
+            response = await client.post(endpoint, params=params)
+
+            if response.status_code in [200, 201]:
+                result = response.json()
+                post_id = result.get("id")
+                # Facebook post URLs follow pattern: facebook.com/{page_or_user_id}/posts/{post_id}
+                post_url = None
+                if post_id and "_" in post_id:
+                    parts = post_id.split("_")
+                    post_url = f"https://www.facebook.com/{parts[0]}/posts/{parts[1]}"
+                return FacebookPostResponse(
+                    success=True,
+                    post_id=post_id,
+                    post_url=post_url
+                )
+
+            error_data = response.json() if response.text else {}
+            error_message = error_data.get("error", {}).get("message", "Unknown error")
+
+            # Check for specific errors
+            if "permission" in error_message.lower():
+                return FacebookPostResponse(
+                    success=False,
+                    error="Permission denied. Your Facebook account may need additional permissions. Please reconnect."
+                )
+
+            return FacebookPostResponse(
+                success=False,
+                error=f"Facebook API error: {error_message}"
+            )
+
+    except httpx.HTTPError as e:
+        return FacebookPostResponse(
+            success=False,
+            error=f"Network error: {str(e)}"
+        )
+    except Exception as e:
+        return FacebookPostResponse(
+            success=False,
+            error=f"Unexpected error: {str(e)}"
+        )
 
 
 # ============ INSTAGRAM (VIA FACEBOOK) ============
