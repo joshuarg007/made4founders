@@ -1563,6 +1563,25 @@ export const connectSocialAccount = (provider: 'twitter' | 'linkedin' | 'faceboo
 export const disconnectSocialAccount = (provider: string) =>
   fetchApi<{ ok: boolean }>(`/social/accounts/${provider}`, { method: 'DELETE' });
 
+// LinkedIn Posting
+export interface LinkedInPostRequest {
+  content: string;
+  visibility?: 'PUBLIC' | 'CONNECTIONS';
+}
+
+export interface LinkedInPostResponse {
+  success: boolean;
+  post_id: string | null;
+  post_url: string | null;
+  error: string | null;
+}
+
+export const postToLinkedIn = (data: LinkedInPostRequest) =>
+  fetchApi<LinkedInPostResponse>('/social/linkedin/post', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
 
 // ============ Axios-like API wrapper for legacy components ============
 // Used by Marketing.tsx, Branding.tsx

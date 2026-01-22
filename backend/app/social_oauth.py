@@ -377,6 +377,155 @@ async def linkedin_callback(
     return response
 
 
+# ============ LINKEDIN POSTING ============
+
+class LinkedInPostRequest(BaseModel):
+    content: str
+    visibility: str = "PUBLIC"  # PUBLIC, CONNECTIONS
+
+
+class LinkedInPostResponse(BaseModel):
+    success: bool
+    post_id: Optional[str] = None
+    post_url: Optional[str] = None
+    error: Optional[str] = None
+
+
+@router.post("/linkedin/post", response_model=LinkedInPostResponse)
+async def create_linkedin_post(
+    request: LinkedInPostRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a post on LinkedIn."""
+    if current_user.role not in ['admin', 'editor']:
+        raise HTTPException(status_code=403, detail="Not authorized to post")
+
+    if not current_user.organization_id:
+        raise HTTPException(status_code=400, detail="No organization")
+
+    # Get LinkedIn connection
+    connection = db.query(OAuthConnection).filter(
+        OAuthConnection.organization_id == current_user.organization_id,
+        OAuthConnection.provider == "linkedin",
+        OAuthConnection.is_active == True,
+    ).first()
+
+    if not connection:
+        return LinkedInPostResponse(
+            success=False,
+            error="LinkedIn account not connected. Please connect your LinkedIn account first."
+        )
+
+    # Check token expiration
+    if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+        return LinkedInPostResponse(
+            success=False,
+            error="LinkedIn token expired. Please reconnect your LinkedIn account."
+        )
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # Get user URN
+            me_response = await client.get(
+                "https://api.linkedin.com/v2/userinfo",
+                headers={"Authorization": f"Bearer {connection.access_token}"},
+            )
+
+            if me_response.status_code != 200:
+                return LinkedInPostResponse(
+                    success=False,
+                    error="Failed to verify LinkedIn connection. Please reconnect."
+                )
+
+            user_sub = me_response.json().get("sub")
+            author_urn = f"urn:li:person:{user_sub}"
+
+            # Use the new Posts API
+            headers = {
+                "Authorization": f"Bearer {connection.access_token}",
+                "Content-Type": "application/json",
+                "X-Restli-Protocol-Version": "2.0.0",
+                "LinkedIn-Version": "202401",
+            }
+
+            payload = {
+                "author": author_urn,
+                "lifecycleState": "PUBLISHED",
+                "visibility": request.visibility,
+                "commentary": request.content,
+                "distribution": {
+                    "feedDistribution": "MAIN_FEED",
+                    "targetEntities": [],
+                    "thirdPartyDistributionChannels": []
+                }
+            }
+
+            response = await client.post(
+                "https://api.linkedin.com/rest/posts",
+                headers=headers,
+                json=payload,
+            )
+
+            if response.status_code in [200, 201]:
+                post_id = response.headers.get("x-restli-id", "")
+                return LinkedInPostResponse(
+                    success=True,
+                    post_id=post_id,
+                    post_url=f"https://www.linkedin.com/feed/update/{post_id}" if post_id else None
+                )
+
+            # Fallback to UGC Posts API
+            ugc_payload = {
+                "author": author_urn,
+                "lifecycleState": "PUBLISHED",
+                "specificContent": {
+                    "com.linkedin.ugc.ShareContent": {
+                        "shareCommentary": {"text": request.content},
+                        "shareMediaCategory": "NONE",
+                    }
+                },
+                "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": request.visibility},
+            }
+
+            ugc_headers = {
+                "Authorization": f"Bearer {connection.access_token}",
+                "Content-Type": "application/json",
+                "X-Restli-Protocol-Version": "2.0.0",
+            }
+
+            response = await client.post(
+                "https://api.linkedin.com/v2/ugcPosts",
+                headers=ugc_headers,
+                json=ugc_payload,
+            )
+
+            if response.status_code in [200, 201]:
+                result = response.json()
+                post_id = result.get("id", "")
+                return LinkedInPostResponse(
+                    success=True,
+                    post_id=post_id,
+                    post_url=f"https://www.linkedin.com/feed/update/{post_id}" if post_id else None
+                )
+
+            return LinkedInPostResponse(
+                success=False,
+                error=f"LinkedIn API error: {response.text}"
+            )
+
+    except httpx.HTTPError as e:
+        return LinkedInPostResponse(
+            success=False,
+            error=f"Network error: {str(e)}"
+        )
+    except Exception as e:
+        return LinkedInPostResponse(
+            success=False,
+            error=f"Unexpected error: {str(e)}"
+        )
+
+
 # ============ FACEBOOK OAUTH ============
 
 @router.get("/facebook/connect")
@@ -690,14 +839,8 @@ async def post_to_twitter(client: httpx.AsyncClient, access_token: str, content:
 
 
 async def post_to_linkedin(client: httpx.AsyncClient, connection: OAuthConnection, content: str, image: Optional[bytes] = None):
-    """Post to LinkedIn."""
-    headers = {
-        "Authorization": f"Bearer {connection.access_token}",
-        "Content-Type": "application/json",
-        "X-Restli-Protocol-Version": "2.0.0",
-    }
-
-    # Get user URN
+    """Post to LinkedIn using the new Posts API."""
+    # Get user URN from userinfo
     me_response = await client.get(
         "https://api.linkedin.com/v2/userinfo",
         headers={"Authorization": f"Bearer {connection.access_token}"},
@@ -709,28 +852,62 @@ async def post_to_linkedin(client: httpx.AsyncClient, connection: OAuthConnectio
     user_sub = me_response.json().get("sub")
     author_urn = f"urn:li:person:{user_sub}"
 
+    headers = {
+        "Authorization": f"Bearer {connection.access_token}",
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0",
+        "LinkedIn-Version": "202401",
+    }
+
+    # Use the new Posts API (recommended by LinkedIn)
     payload = {
         "author": author_urn,
         "lifecycleState": "PUBLISHED",
-        "specificContent": {
-            "com.linkedin.ugc.ShareContent": {
-                "shareCommentary": {"text": content},
-                "shareMediaCategory": "NONE",
-            }
-        },
-        "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
+        "visibility": "PUBLIC",
+        "commentary": content,
+        "distribution": {
+            "feedDistribution": "MAIN_FEED",
+            "targetEntities": [],
+            "thirdPartyDistributionChannels": []
+        }
     }
 
     response = await client.post(
-        "https://api.linkedin.com/v2/ugcPosts",
+        "https://api.linkedin.com/rest/posts",
         headers=headers,
         json=payload,
     )
 
     if response.status_code not in [200, 201]:
-        raise HTTPException(status_code=response.status_code, detail=f"LinkedIn error: {response.text}")
+        # Fallback to UGC Posts API if new API fails
+        ugc_headers = {
+            "Authorization": f"Bearer {connection.access_token}",
+            "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0",
+        }
 
-    return response.json()
+        ugc_payload = {
+            "author": author_urn,
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {"text": content},
+                    "shareMediaCategory": "NONE",
+                }
+            },
+            "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
+        }
+
+        response = await client.post(
+            "https://api.linkedin.com/v2/ugcPosts",
+            headers=ugc_headers,
+            json=ugc_payload,
+        )
+
+        if response.status_code not in [200, 201]:
+            raise HTTPException(status_code=response.status_code, detail=f"LinkedIn error: {response.text}")
+
+    return response.json() if response.text else {"success": True, "id": response.headers.get("x-restli-id")}
 
 
 async def post_to_facebook(client: httpx.AsyncClient, connection: OAuthConnection, content: str, image: Optional[bytes] = None):
