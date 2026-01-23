@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from uuid import uuid4
@@ -263,6 +263,27 @@ try:
                 conn.execute(text('ALTER TABLE social_analytics ADD COLUMN business_id INTEGER'))
                 logger.info("Added business_id column to social_analytics table")
                 conn.commit()
+
+    # Organizations table migrations (for AI usage tracking)
+    if 'organizations' in existing_tables:
+        org_columns = [col['name'] for col in inspector.get_columns('organizations')]
+        org_migrations = [
+            ('ai_summaries_used', 'ALTER TABLE organizations ADD COLUMN ai_summaries_used INTEGER DEFAULT 0'),
+            ('ai_usage_reset_at', 'ALTER TABLE organizations ADD COLUMN ai_usage_reset_at DATETIME'),
+        ]
+        with engine.connect() as conn:
+            for col_name, sql in org_migrations:
+                if col_name not in org_columns:
+                    conn.execute(text(sql))
+                    logger.info(f"Added {col_name} column to organizations table")
+            conn.commit()
+
+    # Meeting transcripts table (create if not exists)
+    if 'meeting_transcripts' not in existing_tables:
+        table = Base.metadata.tables.get('meeting_transcripts')
+        if table is not None:
+            table.create(bind=engine, checkfirst=True)
+            logger.info("Created meeting_transcripts table")
 
 except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
@@ -7299,6 +7320,58 @@ def get_transcripts(
     ]
 
 
+# ============ AI USAGE LIMITS ============
+
+# AI summary limits per tier (monthly)
+AI_SUMMARY_LIMITS = {
+    "free": 5,
+    "starter": 50,
+    "growth": 200,
+    "scale": 1000,
+    "enterprise": 10000,  # Effectively unlimited
+}
+
+
+def check_ai_usage_limit(db: Session, organization_id: int) -> tuple[bool, int, int]:
+    """
+    Check if organization can use AI summaries.
+    Returns (can_use, used_count, limit)
+    """
+    from calendar import monthrange
+
+    org = db.query(Organization).filter(Organization.id == organization_id).first()
+    if not org:
+        return False, 0, 0
+
+    tier = org.subscription_tier or "free"
+    limit = AI_SUMMARY_LIMITS.get(tier, AI_SUMMARY_LIMITS["free"])
+
+    # Check if we need to reset (new month)
+    now = datetime.utcnow()
+    if org.ai_usage_reset_at:
+        if now.year > org.ai_usage_reset_at.year or now.month > org.ai_usage_reset_at.month:
+            # Reset for new month
+            org.ai_summaries_used = 0
+            org.ai_usage_reset_at = now
+            db.commit()
+    else:
+        org.ai_usage_reset_at = now
+        db.commit()
+
+    used = org.ai_summaries_used or 0
+    can_use = used < limit
+
+    return can_use, used, limit
+
+
+def increment_ai_usage(db: Session, organization_id: int):
+    """Increment AI usage counter for organization."""
+    org = db.query(Organization).filter(Organization.id == organization_id).first()
+    if org:
+        org.ai_summaries_used = (org.ai_summaries_used or 0) + 1
+        db.commit()
+
+
 @app.post("/api/transcripts/upload")
 async def upload_transcript(
     file: UploadFile = File(...),
@@ -7355,11 +7428,18 @@ async def upload_transcript(
         except:
             pass
 
-    # Generate AI summary if requested
+    # Generate AI summary if requested and within limits
     summary_data = None
+    ai_limit_reached = False
     should_summarize = generate_summary.lower() in ("true", "1", "yes")
     if should_summarize and parsed.text:
-        summary_data = summarize_transcript(parsed.text)
+        can_use, used, limit = check_ai_usage_limit(db, current_user.organization_id)
+        if can_use:
+            summary_data = summarize_transcript(parsed.text)
+            if summary_data:
+                increment_ai_usage(db, current_user.organization_id)
+        else:
+            ai_limit_reached = True
 
     # Create database record
     transcript = MeetingTranscript(
@@ -7404,6 +7484,7 @@ async def upload_transcript(
         "tags": transcript.tags,
         "notes": transcript.notes,
         "created_at": transcript.created_at.isoformat(),
+        "ai_limit_reached": ai_limit_reached,
     }
 
 
@@ -7509,6 +7590,14 @@ def regenerate_summary(
     if not current_user.organization_id:
         raise HTTPException(status_code=403, detail="User not in an organization")
 
+    # Check AI usage limit
+    can_use, used, limit = check_ai_usage_limit(db, current_user.organization_id)
+    if not can_use:
+        raise HTTPException(
+            status_code=429,
+            detail=f"AI summary limit reached ({used}/{limit}). Upgrade your plan for more summaries."
+        )
+
     transcript = db.query(MeetingTranscript).filter(
         MeetingTranscript.id == transcript_id,
         MeetingTranscript.organization_id == current_user.organization_id
@@ -7523,7 +7612,10 @@ def regenerate_summary(
     summary_data = summarize_transcript(transcript.transcript_text)
 
     if not summary_data:
-        raise HTTPException(status_code=500, detail="Failed to generate summary. Check API key.")
+        raise HTTPException(status_code=500, detail="Failed to generate summary. Ollama may not be running.")
+
+    # Increment usage counter
+    increment_ai_usage(db, current_user.organization_id)
 
     transcript.summary = summary_data.summary
     transcript.action_items = json.dumps(summary_data.action_items)
@@ -7536,6 +7628,28 @@ def regenerate_summary(
         "summary": summary_data.summary,
         "action_items": summary_data.action_items,
         "key_points": summary_data.key_points,
+    }
+
+
+@app.get("/api/ai/usage")
+def get_ai_usage(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current AI usage status for the organization."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    can_use, used, limit = check_ai_usage_limit(db, current_user.organization_id)
+    org = db.query(Organization).filter(Organization.id == current_user.organization_id).first()
+
+    return {
+        "used": used,
+        "limit": limit,
+        "remaining": max(0, limit - used),
+        "can_use": can_use,
+        "tier": org.subscription_tier if org else "free",
+        "resets_at": org.ai_usage_reset_at.isoformat() if org and org.ai_usage_reset_at else None,
     }
 
 
