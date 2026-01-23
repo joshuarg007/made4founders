@@ -130,6 +130,34 @@ def decode_access_token(token: str) -> Optional[str]:
         return None
 
 
+def decode_token_full(token: str) -> Optional[dict]:
+    """
+    Decode and validate an access token, returning full payload.
+    Returns dict with sub, jti, exp, etc. if valid; None otherwise.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={
+                "require_exp": True,
+                "require_sub": True,
+                "verify_exp": True,
+                "verify_iat": True
+            }
+        )
+
+        # Verify token type
+        if payload.get("typ") not in (None, "access"):
+            return None
+
+        return payload
+
+    except JWTError:
+        return None
+
+
 def decode_refresh_token(token: str) -> Optional[str]:
     """
     Decode and validate a refresh token.

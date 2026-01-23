@@ -1,17 +1,33 @@
 from typing import Optional, List
 from datetime import datetime, timedelta
+import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from .database import get_db
-from .models import User
-from .schemas import Token, UserCreate, UserResponse, UserMe, UserAdminCreate, UserAdminUpdate
+from .models import User, UserSession
+from .schemas import (
+    Token, UserCreate, UserResponse, UserMe, UserAdminCreate, UserAdminUpdate,
+    VerifyEmailRequest, ResendVerificationRequest, ForgotPasswordRequest,
+    ResetPasswordRequest, SessionResponse
+)
 from . import security
 from .captcha import verify_captcha, get_captcha_config
+from .email_service import send_verification_email, send_password_reset_email
+from .session_manager import (
+    create_session, is_token_revoked, get_user_sessions, get_session_by_id,
+    revoke_session, revoke_all_sessions, parse_device_info
+)
+
+# Security constants
+LOCKOUT_THRESHOLD = 5  # Failed attempts before lockout
+LOCKOUT_DURATION_MINUTES = 15
+VERIFICATION_TOKEN_EXPIRE_HOURS = 24
+PASSWORD_RESET_TOKEN_EXPIRE_HOURS = 1
 
 router = APIRouter()
 
@@ -30,11 +46,54 @@ class LoginWithCaptchaRequest(BaseModel):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token", auto_error=False)
 
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
+def authenticate_user(db: Session, email: str, password: str) -> tuple[Optional[User], Optional[str]]:
+    """
+    Authenticate user with lockout and email verification checks.
+
+    Returns:
+        (user, error_code) - user if successful, error_code if failed:
+        - "invalid_credentials": Wrong email/password
+        - "account_locked": Too many failed attempts
+        - "email_not_verified": Email not verified yet
+    """
     user = db.query(User).filter(User.email == email).first()
-    if not user or not security.verify_password(password, user.hashed_password):
-        return None
-    return user
+
+    if not user:
+        return None, "invalid_credentials"
+
+    # Check if account is locked
+    if user.locked_until and user.locked_until > datetime.utcnow():
+        return None, "account_locked"
+
+    # Clear lockout if expired
+    if user.locked_until and user.locked_until <= datetime.utcnow():
+        user.locked_until = None
+        user.failed_login_attempts = 0
+        db.commit()
+
+    # Verify password
+    if not security.verify_password(password, user.hashed_password):
+        # Increment failed attempts
+        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+
+        # Lock account if threshold reached
+        if user.failed_login_attempts >= LOCKOUT_THRESHOLD:
+            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_DURATION_MINUTES)
+
+        db.commit()
+        return None, "invalid_credentials"
+
+    # Check email verification
+    if not user.email_verified:
+        return None, "email_not_verified"
+
+    # Successful login - reset failed attempts
+    if user.failed_login_attempts > 0:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        db.commit()
+
+    return user, None
 
 
 def get_current_user(
@@ -50,15 +109,26 @@ def get_current_user(
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    email = security.decode_access_token(token)
-    if not email:
+    # Decode full token to get jti for revocation check
+    payload = security.decode_token_full(token)
+    if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+    email = payload.get("sub")
+    token_id = payload.get("jti")
+
+    # Check if token has been revoked
+    if token_id and is_token_revoked(db, token_id):
+        raise HTTPException(status_code=401, detail="Token has been revoked")
 
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="User is inactive")
+
+    # Store token_id on user object for session management
+    user._current_token_id = token_id
     return user
 
 
@@ -76,13 +146,23 @@ def get_current_user_optional(
     if not token:
         return None
 
-    email = security.decode_access_token(token)
-    if not email:
+    payload = security.decode_token_full(token)
+    if not payload:
+        return None
+
+    email = payload.get("sub")
+    token_id = payload.get("jti")
+
+    # Check if token has been revoked
+    if token_id and is_token_revoked(db, token_id):
         return None
 
     user = db.query(User).filter(User.email == email).first()
     if not user or not user.is_active:
         return None
+
+    # Store token_id on user object for session management
+    user._current_token_id = token_id
     return user
 
 
@@ -94,11 +174,23 @@ def captcha_config():
 
 @router.post("/token")
 async def login(
+    request: Request,
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user, error_code = authenticate_user(db, form_data.username, form_data.password)
+
+    if error_code == "account_locked":
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Account temporarily locked due to too many failed attempts. Try again later."
+        )
+    if error_code == "email_not_verified":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="email_not_verified"
+        )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -107,7 +199,6 @@ async def login(
 
     # Check if MFA is enabled
     if user.mfa_enabled and user.mfa_secret:
-        # Create a temporary MFA token (short-lived, 5 minutes)
         mfa_token = jwt.encode(
             {
                 "sub": user.email,
@@ -126,11 +217,27 @@ async def login(
     access = security.create_access_token(user.email)
     refresh = security.create_refresh_token(user.email)
     security.set_auth_cookies(response, access, refresh)
+
+    # Create session record
+    payload = security.decode_token_full(access)
+    if payload:
+        device_info = parse_device_info(request.headers.get("user-agent", ""))
+        ip_address = request.client.host if request.client else None
+        create_session(
+            db=db,
+            user=user,
+            token_id=payload.get("jti"),
+            device_info=device_info,
+            ip_address=ip_address,
+            expires_at=datetime.utcfromtimestamp(payload.get("exp"))
+        )
+
     return {"access_token": access, "token_type": "bearer"}
 
 
 @router.post("/login")
 async def login_with_captcha(
+    http_request: Request,
     response: Response,
     request: LoginWithCaptchaRequest,
     db: Session = Depends(get_db),
@@ -143,7 +250,18 @@ async def login_with_captcha(
             detail="Captcha verification failed"
         )
 
-    user = authenticate_user(db, request.username, request.password)
+    user, error_code = authenticate_user(db, request.username, request.password)
+
+    if error_code == "account_locked":
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Account temporarily locked due to too many failed attempts. Try again later."
+        )
+    if error_code == "email_not_verified":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="email_not_verified"
+        )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -170,11 +288,27 @@ async def login_with_captcha(
     access = security.create_access_token(user.email)
     refresh = security.create_refresh_token(user.email)
     security.set_auth_cookies(response, access, refresh)
+
+    # Create session record
+    payload = security.decode_token_full(access)
+    if payload:
+        device_info = parse_device_info(http_request.headers.get("user-agent", ""))
+        ip_address = http_request.client.host if http_request.client else None
+        create_session(
+            db=db,
+            user=user,
+            token_id=payload.get("jti"),
+            device_info=device_info,
+            ip_address=ip_address,
+            expires_at=datetime.utcfromtimestamp(payload.get("exp"))
+        )
+
     return {"access_token": access, "token_type": "bearer"}
 
 
 @router.post("/token/mfa")
 def login_with_mfa(
+    http_request: Request,
     response: Response,
     request: MFALoginRequest,
     db: Session = Depends(get_db),
@@ -210,6 +344,21 @@ def login_with_mfa(
     access = security.create_access_token(user.email)
     refresh = security.create_refresh_token(user.email)
     security.set_auth_cookies(response, access, refresh)
+
+    # Create session record
+    access_payload = security.decode_token_full(access)
+    if access_payload:
+        device_info = parse_device_info(http_request.headers.get("user-agent", ""))
+        ip_address = http_request.client.host if http_request.client else None
+        create_session(
+            db=db,
+            user=user,
+            token_id=access_payload.get("jti"),
+            device_info=device_info,
+            ip_address=ip_address,
+            expires_at=datetime.utcfromtimestamp(access_payload.get("exp"))
+        )
+
     return {"access_token": access, "token_type": "bearer"}
 
 
@@ -245,7 +394,24 @@ def refresh_token(
 
 
 @router.post("/logout")
-def logout(response: Response):
+def logout(
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Logout and revoke current session."""
+    # Revoke current session if user is authenticated
+    if current_user:
+        current_token_id = getattr(current_user, '_current_token_id', None)
+        if current_token_id:
+            session = db.query(UserSession).filter(
+                UserSession.token_id == current_token_id,
+                UserSession.user_id == current_user.id,
+                UserSession.is_revoked == False
+            ).first()
+            if session:
+                revoke_session(db, session, reason="logout")
+
     security.clear_auth_cookies(response)
     return {"ok": True}
 
@@ -272,7 +438,7 @@ def complete_onboarding(
 
 
 @router.post("/register", response_model=UserResponse)
-def register(
+async def register(
     user_data: UserCreate,
     response: Response,
     db: Session = Depends(get_db),
@@ -289,24 +455,199 @@ def register(
     user_count = db.query(User).count()
     is_first_user = user_count == 0
 
-    # Create user
+    # Generate email verification token
+    verification_token = secrets.token_urlsafe(32)
+    verification_expires = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
+
+    # Create user with verification token (not verified yet)
     hashed_password = security.get_password_hash(user_data.password)
     user = User(
         email=user_data.email,
         hashed_password=hashed_password,
         name=user_data.name,
         role="admin" if is_first_user else "viewer",
+        email_verified=False,
+        email_verification_token=verification_token,
+        email_verification_token_expires=verification_expires,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    # Auto-login after registration
-    access = security.create_access_token(user.email)
-    refresh = security.create_refresh_token(user.email)
-    security.set_auth_cookies(response, access, refresh)
+    # Send verification email (don't block on failure)
+    await send_verification_email(user.email, verification_token, user.name)
 
+    # No auto-login - user must verify email first
     return user
+
+
+# ============ Email Verification ============
+
+@router.post("/verify-email")
+def verify_email(
+    request: VerifyEmailRequest,
+    db: Session = Depends(get_db),
+):
+    """Verify email address using token from email link."""
+    user = db.query(User).filter(
+        User.email_verification_token == request.token
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+
+    # Check if token has expired
+    if user.email_verification_token_expires and user.email_verification_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Verification token has expired")
+
+    # Mark email as verified
+    user.email_verified = True
+    user.email_verification_token = None
+    user.email_verification_token_expires = None
+    db.commit()
+
+    return {"message": "Email verified successfully"}
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    request: ResendVerificationRequest,
+    db: Session = Depends(get_db),
+):
+    """Resend verification email."""
+    # Generic response to prevent email enumeration
+    generic_response = {"message": "If an account exists with this email, a verification link has been sent."}
+
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user or user.email_verified:
+        return generic_response
+
+    # Generate new verification token
+    verification_token = secrets.token_urlsafe(32)
+    verification_expires = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
+
+    user.email_verification_token = verification_token
+    user.email_verification_token_expires = verification_expires
+    db.commit()
+
+    await send_verification_email(user.email, verification_token, user.name)
+    return generic_response
+
+
+# ============ Password Reset ============
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Request password reset email."""
+    # Generic response to prevent email enumeration
+    generic_response = {"message": "If an account exists with this email, a password reset link has been sent."}
+
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        return generic_response
+
+    # Generate password reset token
+    reset_token = secrets.token_urlsafe(32)
+    reset_expires = datetime.utcnow() + timedelta(hours=PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
+
+    user.password_reset_token = reset_token
+    user.password_reset_token_expires = reset_expires
+    db.commit()
+
+    await send_password_reset_email(user.email, reset_token, user.name)
+    return generic_response
+
+
+@router.post("/reset-password")
+def reset_password(
+    request: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Reset password using token from email link."""
+    user = db.query(User).filter(
+        User.password_reset_token == request.token
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+
+    # Check if token has expired
+    if user.password_reset_token_expires and user.password_reset_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+
+    # Update password
+    user.hashed_password = security.get_password_hash(request.new_password)
+    user.password_reset_token = None
+    user.password_reset_token_expires = None
+    db.commit()
+
+    # Revoke all existing sessions for security
+    revoke_all_sessions(db, user.id, reason="password_reset")
+
+    return {"message": "Password reset successfully"}
+
+
+# ============ Session Management ============
+
+@router.get("/sessions", response_model=List[SessionResponse])
+def list_sessions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """List all active sessions for the current user."""
+    sessions = get_user_sessions(db, current_user.id)
+    current_token_id = getattr(current_user, '_current_token_id', None)
+
+    result = []
+    for session in sessions:
+        result.append(SessionResponse(
+            id=session.id,
+            device_info=session.device_info,
+            ip_address=session.ip_address,
+            created_at=session.created_at,
+            last_used_at=session.last_used_at,
+            is_current=(session.token_id == current_token_id) if current_token_id else False
+        ))
+    return result
+
+
+@router.post("/sessions/{session_id}/revoke")
+def revoke_single_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Revoke a specific session."""
+    session = get_session_by_id(db, session_id, current_user.id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Prevent revoking current session through this endpoint
+    current_token_id = getattr(current_user, '_current_token_id', None)
+    if current_token_id and session.token_id == current_token_id:
+        raise HTTPException(status_code=400, detail="Cannot revoke current session. Use logout instead.")
+
+    revoke_session(db, session, reason="manual_revoke")
+    return {"message": "Session revoked successfully"}
+
+
+@router.post("/sessions/revoke-all")
+def revoke_all_other_sessions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Revoke all sessions except the current one."""
+    current_token_id = getattr(current_user, '_current_token_id', None)
+    count = revoke_all_sessions(
+        db,
+        current_user.id,
+        reason="revoke_all",
+        exclude_token_id=current_token_id
+    )
+    return {"message": f"Revoked {count} session(s)", "count": count}
 
 
 # ============ Admin-only User Management ============

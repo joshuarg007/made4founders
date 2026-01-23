@@ -1298,11 +1298,63 @@ class User(Base):
     # Onboarding
     has_completed_onboarding = Column(Boolean, default=False)
 
+    # Account Lockout (security hardening)
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime, nullable=True)
+
+    # Password Reset
+    password_reset_token = Column(String(255), nullable=True)
+    password_reset_token_expires = Column(DateTime, nullable=True)
+
+    # Email verification token expiry
+    email_verification_token_expires = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     organization = relationship("Organization", back_populates="users")
+    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
+
+
+class UserSession(Base):
+    """Track active user sessions for session management"""
+    __tablename__ = "user_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    # Token identification (jti from JWT)
+    token_id = Column(String(32), unique=True, nullable=False, index=True)
+
+    # Session metadata
+    device_info = Column(String(500), nullable=True)
+    ip_address = Column(String(45), nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+
+    # Status
+    is_revoked = Column(Boolean, default=False)
+    revoked_at = Column(DateTime, nullable=True)
+    revoked_reason = Column(String(100), nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="sessions")
+
+
+class TokenBlacklist(Base):
+    """Blacklist for revoked JWT tokens"""
+    __tablename__ = "token_blacklist"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token_id = Column(String(32), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, default=datetime.utcnow)
+    reason = Column(String(100), nullable=True)
 
 
 class VaultConfig(Base):

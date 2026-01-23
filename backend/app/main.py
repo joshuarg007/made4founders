@@ -104,7 +104,7 @@ try:
     existing_tables = inspector.get_table_names()
 
     # Create missing tables explicitly (for tables added after initial deployment)
-    tables_to_check = ['bank_accounts', 'achievements', 'business_achievements', 'meetings']
+    tables_to_check = ['bank_accounts', 'achievements', 'business_achievements', 'meetings', 'user_sessions', 'token_blacklist']
     for table_name in tables_to_check:
         if table_name not in existing_tables:
             # Get the table from metadata and create it
@@ -121,6 +121,12 @@ try:
         ('mfa_secret', 'ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(64)'),
         ('mfa_backup_codes', 'ALTER TABLE users ADD COLUMN mfa_backup_codes TEXT'),
         ('has_completed_onboarding', 'ALTER TABLE users ADD COLUMN has_completed_onboarding BOOLEAN DEFAULT 0'),
+        # Security hardening columns
+        ('failed_login_attempts', 'ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0'),
+        ('locked_until', 'ALTER TABLE users ADD COLUMN locked_until DATETIME'),
+        ('password_reset_token', 'ALTER TABLE users ADD COLUMN password_reset_token VARCHAR(255)'),
+        ('password_reset_token_expires', 'ALTER TABLE users ADD COLUMN password_reset_token_expires DATETIME'),
+        ('email_verification_token_expires', 'ALTER TABLE users ADD COLUMN email_verification_token_expires DATETIME'),
     ]
 
     with engine.connect() as conn:

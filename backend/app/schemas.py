@@ -758,6 +758,42 @@ class UserAdminUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+# Email Verification schemas
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+
+class ResendVerificationRequest(BaseModel):
+    email: str
+
+
+# Password Reset schemas
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+# Session Management schemas
+class SessionResponse(BaseModel):
+    id: int
+    device_info: Optional[str]
+    ip_address: Optional[str]
+    created_at: datetime
+    last_used_at: datetime
+    is_current: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class RevokeSessionRequest(BaseModel):
+    session_id: int
+
+
 # Vault schemas
 class VaultSetup(BaseModel):
     master_password: str
