@@ -173,6 +173,19 @@ try:
                     logger.info(f"Added {col_name} column to bank_accounts table")
             conn.commit()
 
+    # Brand guidelines table migrations
+    if 'brand_guidelines' in existing_tables:
+        brand_columns = [col['name'] for col in inspector.get_columns('brand_guidelines')]
+        brand_migrations = [
+            ('order_index', 'ALTER TABLE brand_guidelines ADD COLUMN order_index INTEGER DEFAULT 0'),
+        ]
+        with engine.connect() as conn:
+            for col_name, sql in brand_migrations:
+                if col_name not in brand_columns:
+                    conn.execute(text(sql))
+                    logger.info(f"Added {col_name} column to brand_guidelines table")
+            conn.commit()
+
 except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
 

@@ -713,6 +713,8 @@ class BrandGuideline(Base):
     typography_notes = Column(Text, nullable=True)
     dos_and_donts = Column(Text, nullable=True)  # JSON array
 
+    order_index = Column(Integer, default=0)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
