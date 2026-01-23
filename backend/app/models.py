@@ -1962,3 +1962,47 @@ class MeetingBusiness(Base):
     business = relationship("Business", backref="meeting_associations")
 
     __table_args__ = (UniqueConstraint('meeting_id', 'business_id', name='uq_meeting_business'),)
+
+
+class MeetingTranscript(Base):
+    """Meeting transcripts uploaded from Zoom, Meet, Teams, etc."""
+    __tablename__ = "meeting_transcripts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
+
+    # Meeting info
+    title = Column(String(255), nullable=False)
+    meeting_date = Column(DateTime, nullable=True)
+    meeting_type = Column(String(50), default="general")  # general, investor, client, team, board
+    platform = Column(String(50), nullable=True)  # zoom, meet, teams, webex, other
+
+    # File info
+    file_path = Column(String(500), nullable=False)  # stored filename
+    file_name = Column(String(255), nullable=True)   # original filename
+    file_size = Column(Integer, nullable=True)
+    file_format = Column(String(10), nullable=True)  # vtt, srt, txt
+
+    # Parsed content
+    transcript_text = Column(Text, nullable=True)     # Full plain text
+    duration_seconds = Column(Integer, nullable=True)
+    word_count = Column(Integer, nullable=True)
+    speaker_count = Column(Integer, nullable=True)
+
+    # AI summary (generated once on upload)
+    summary = Column(Text, nullable=True)
+    action_items = Column(Text, nullable=True)  # JSON array
+    key_points = Column(Text, nullable=True)    # JSON array
+    summary_generated_at = Column(DateTime, nullable=True)
+
+    # Metadata
+    tags = Column(String(500), nullable=True)
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="meeting_transcripts")
+    business = relationship("Business", backref="meeting_transcripts")

@@ -32,11 +32,13 @@ from .models import (
     BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
-    Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting,
+    Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting, MeetingTranscript,
     # Junction tables for business taxonomy
     ContactBusiness, DocumentBusiness, CredentialBusiness, WebLinkBusiness,
     ProductOfferedBusiness, ProductUsedBusiness, ServiceBusiness, DeadlineBusiness, MeetingBusiness
 )
+from .transcript_parser import parse_transcript
+from .summarizer import summarize_transcript
 from .auth import router as auth_router, get_current_user
 from .oauth import router as oauth_router
 from .stripe_billing import router as stripe_router
@@ -316,9 +318,12 @@ app.add_middleware(
 # Use absolute path in Docker, relative path for local development
 if os.path.exists("/app"):
     UPLOAD_DIR = "/app/uploads"
+    TRANSCRIPTS_DIR = "/app/uploads/transcripts"
 else:
     UPLOAD_DIR = "uploads"
+    TRANSCRIPTS_DIR = "uploads/transcripts"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(TRANSCRIPTS_DIR, exist_ok=True)
 # NOTE: Static file mount removed for security - use /api/documents/{id}/download instead
 
 # Include routers
@@ -7237,3 +7242,369 @@ def submit_contact_form(
     db.commit()
 
     return {"ok": True, "message": "Your message has been received. We'll get back to you soon."}
+
+
+# ============ MEETING TRANSCRIPTS ============
+
+ALLOWED_TRANSCRIPT_EXTENSIONS = {".vtt", ".srt", ".txt"}
+
+@app.get("/api/transcripts")
+def get_transcripts(
+    meeting_type: str = None,
+    search: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all meeting transcripts for the user's organization."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    query = db.query(MeetingTranscript).filter(
+        MeetingTranscript.organization_id == current_user.organization_id
+    )
+
+    if meeting_type:
+        query = query.filter(MeetingTranscript.meeting_type == meeting_type)
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            (MeetingTranscript.title.ilike(search_term)) |
+            (MeetingTranscript.transcript_text.ilike(search_term)) |
+            (MeetingTranscript.tags.ilike(search_term))
+        )
+
+    transcripts = query.order_by(MeetingTranscript.meeting_date.desc().nullsfirst(), MeetingTranscript.created_at.desc()).all()
+
+    return [
+        {
+            "id": t.id,
+            "title": t.title,
+            "meeting_date": t.meeting_date.isoformat() if t.meeting_date else None,
+            "meeting_type": t.meeting_type,
+            "platform": t.platform,
+            "file_format": t.file_format,
+            "duration_seconds": t.duration_seconds,
+            "word_count": t.word_count,
+            "speaker_count": t.speaker_count,
+            "summary": t.summary,
+            "action_items": json.loads(t.action_items) if t.action_items else [],
+            "key_points": json.loads(t.key_points) if t.key_points else [],
+            "tags": t.tags,
+            "notes": t.notes,
+            "created_at": t.created_at.isoformat(),
+            "updated_at": t.updated_at.isoformat(),
+        }
+        for t in transcripts
+    ]
+
+
+@app.post("/api/transcripts/upload")
+async def upload_transcript(
+    file: UploadFile = File(...),
+    title: str = Form(None),
+    meeting_date: str = Form(None),
+    meeting_type: str = Form("general"),
+    platform: str = Form(None),
+    tags: str = Form(None),
+    notes: str = Form(None),
+    generate_summary: str = Form("true"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Upload a meeting transcript file (VTT, SRT, or TXT)."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    # Validate file extension
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in ALLOWED_TRANSCRIPT_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_TRANSCRIPT_EXTENSIONS)}"
+        )
+
+    # Read file content
+    content = await file.read()
+    content_str = content.decode('utf-8', errors='replace')
+
+    # Parse transcript
+    parsed = parse_transcript(content_str, file_ext)
+
+    # Generate unique filename
+    import uuid
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(TRANSCRIPTS_DIR, unique_filename)
+
+    # Save file
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    # Use filename as title if not provided
+    if not title:
+        title = os.path.splitext(file.filename)[0]
+
+    # Parse meeting date if provided
+    parsed_date = None
+    if meeting_date:
+        try:
+            parsed_date = datetime.fromisoformat(meeting_date.replace('Z', '+00:00'))
+        except:
+            pass
+
+    # Generate AI summary if requested
+    summary_data = None
+    should_summarize = generate_summary.lower() in ("true", "1", "yes")
+    if should_summarize and parsed.text:
+        summary_data = summarize_transcript(parsed.text)
+
+    # Create database record
+    transcript = MeetingTranscript(
+        organization_id=current_user.organization_id,
+        title=title,
+        meeting_date=parsed_date,
+        meeting_type=meeting_type,
+        platform=platform,
+        file_path=unique_filename,
+        file_name=file.filename,
+        file_size=len(content),
+        file_format=file_ext.strip('.'),
+        transcript_text=parsed.text,
+        duration_seconds=parsed.duration_seconds,
+        word_count=parsed.word_count,
+        speaker_count=parsed.speaker_count,
+        summary=summary_data.summary if summary_data else None,
+        action_items=json.dumps(summary_data.action_items) if summary_data else None,
+        key_points=json.dumps(summary_data.key_points) if summary_data else None,
+        summary_generated_at=datetime.utcnow() if summary_data else None,
+        tags=tags,
+        notes=notes,
+    )
+
+    db.add(transcript)
+    db.commit()
+    db.refresh(transcript)
+
+    return {
+        "id": transcript.id,
+        "title": transcript.title,
+        "meeting_date": transcript.meeting_date.isoformat() if transcript.meeting_date else None,
+        "meeting_type": transcript.meeting_type,
+        "platform": transcript.platform,
+        "file_format": transcript.file_format,
+        "duration_seconds": transcript.duration_seconds,
+        "word_count": transcript.word_count,
+        "speaker_count": transcript.speaker_count,
+        "summary": transcript.summary,
+        "action_items": json.loads(transcript.action_items) if transcript.action_items else [],
+        "key_points": json.loads(transcript.key_points) if transcript.key_points else [],
+        "tags": transcript.tags,
+        "notes": transcript.notes,
+        "created_at": transcript.created_at.isoformat(),
+    }
+
+
+@app.get("/api/transcripts/{transcript_id}")
+def get_transcript(
+    transcript_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a single transcript with full text."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    transcript = db.query(MeetingTranscript).filter(
+        MeetingTranscript.id == transcript_id,
+        MeetingTranscript.organization_id == current_user.organization_id
+    ).first()
+
+    if not transcript:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+
+    return {
+        "id": transcript.id,
+        "title": transcript.title,
+        "meeting_date": transcript.meeting_date.isoformat() if transcript.meeting_date else None,
+        "meeting_type": transcript.meeting_type,
+        "platform": transcript.platform,
+        "file_path": transcript.file_path,
+        "file_name": transcript.file_name,
+        "file_size": transcript.file_size,
+        "file_format": transcript.file_format,
+        "transcript_text": transcript.transcript_text,
+        "duration_seconds": transcript.duration_seconds,
+        "word_count": transcript.word_count,
+        "speaker_count": transcript.speaker_count,
+        "summary": transcript.summary,
+        "action_items": json.loads(transcript.action_items) if transcript.action_items else [],
+        "key_points": json.loads(transcript.key_points) if transcript.key_points else [],
+        "summary_generated_at": transcript.summary_generated_at.isoformat() if transcript.summary_generated_at else None,
+        "tags": transcript.tags,
+        "notes": transcript.notes,
+        "created_at": transcript.created_at.isoformat(),
+        "updated_at": transcript.updated_at.isoformat(),
+    }
+
+
+@app.patch("/api/transcripts/{transcript_id}")
+def update_transcript(
+    transcript_id: int,
+    title: str = None,
+    meeting_date: str = None,
+    meeting_type: str = None,
+    platform: str = None,
+    tags: str = None,
+    notes: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update transcript metadata."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    transcript = db.query(MeetingTranscript).filter(
+        MeetingTranscript.id == transcript_id,
+        MeetingTranscript.organization_id == current_user.organization_id
+    ).first()
+
+    if not transcript:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+
+    if title is not None:
+        transcript.title = title
+    if meeting_date is not None:
+        try:
+            transcript.meeting_date = datetime.fromisoformat(meeting_date.replace('Z', '+00:00'))
+        except:
+            pass
+    if meeting_type is not None:
+        transcript.meeting_type = meeting_type
+    if platform is not None:
+        transcript.platform = platform
+    if tags is not None:
+        transcript.tags = tags
+    if notes is not None:
+        transcript.notes = notes
+
+    db.commit()
+    db.refresh(transcript)
+
+    return {"ok": True, "message": "Transcript updated"}
+
+
+@app.post("/api/transcripts/{transcript_id}/regenerate-summary")
+def regenerate_summary(
+    transcript_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Regenerate AI summary for a transcript."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    transcript = db.query(MeetingTranscript).filter(
+        MeetingTranscript.id == transcript_id,
+        MeetingTranscript.organization_id == current_user.organization_id
+    ).first()
+
+    if not transcript:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+
+    if not transcript.transcript_text:
+        raise HTTPException(status_code=400, detail="No transcript text available")
+
+    summary_data = summarize_transcript(transcript.transcript_text)
+
+    if not summary_data:
+        raise HTTPException(status_code=500, detail="Failed to generate summary. Check API key.")
+
+    transcript.summary = summary_data.summary
+    transcript.action_items = json.dumps(summary_data.action_items)
+    transcript.key_points = json.dumps(summary_data.key_points)
+    transcript.summary_generated_at = datetime.utcnow()
+
+    db.commit()
+
+    return {
+        "summary": summary_data.summary,
+        "action_items": summary_data.action_items,
+        "key_points": summary_data.key_points,
+    }
+
+
+@app.get("/api/transcripts/{transcript_id}/download")
+def download_transcript(
+    transcript_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Download the original transcript file."""
+    from fastapi.responses import FileResponse
+
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    transcript = db.query(MeetingTranscript).filter(
+        MeetingTranscript.id == transcript_id,
+        MeetingTranscript.organization_id == current_user.organization_id
+    ).first()
+
+    if not transcript:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+
+    file_path = os.path.join(TRANSCRIPTS_DIR, transcript.file_path)
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Security: verify path is within transcripts directory
+    real_path = os.path.realpath(file_path)
+    real_transcripts_dir = os.path.realpath(TRANSCRIPTS_DIR)
+    if not real_path.startswith(real_transcripts_dir):
+        raise HTTPException(status_code=403, detail="Invalid file path")
+
+    return FileResponse(
+        file_path,
+        filename=transcript.file_name or f"{transcript.title}.{transcript.file_format}",
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename={transcript.file_name or transcript.title}"}
+    )
+
+
+@app.delete("/api/transcripts/{transcript_id}")
+def delete_transcript(
+    transcript_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a transcript."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    transcript = db.query(MeetingTranscript).filter(
+        MeetingTranscript.id == transcript_id,
+        MeetingTranscript.organization_id == current_user.organization_id
+    ).first()
+
+    if not transcript:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+
+    # Delete file
+    file_path = os.path.join(TRANSCRIPTS_DIR, transcript.file_path)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    db.delete(transcript)
+    db.commit()
+
+    return {"ok": True, "message": "Transcript deleted"}
