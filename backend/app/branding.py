@@ -427,11 +427,14 @@ async def upload_brand_asset(
     name: str = Form(...),
     description: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
-    is_primary: bool = Form(False),
+    is_primary: Optional[str] = Form("false"),  # Accept string, convert manually
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Upload a new brand asset."""
+    # Convert is_primary string to boolean
+    is_primary_bool = is_primary.lower() in ("true", "1", "yes") if is_primary else False
+
     org = get_user_organization(current_user, db)
 
     # Validate file extension
@@ -459,7 +462,7 @@ async def upload_brand_asset(
     file_size = len(content)
 
     # If this is primary, unset other primary assets of same type
-    if is_primary:
+    if is_primary_bool:
         db.query(BrandAsset).filter(
             BrandAsset.organization_id == org.id,
             BrandAsset.asset_type == asset_type,
@@ -477,7 +480,7 @@ async def upload_brand_asset(
         mime_type=file.content_type,
         description=description,
         tags=tags,
-        is_primary=is_primary
+        is_primary=is_primary_bool
     )
     db.add(db_asset)
     db.commit()
@@ -520,7 +523,7 @@ def update_brand_asset(
     name: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
-    is_primary: Optional[bool] = Form(None),
+    is_primary: Optional[str] = Form(None),  # Accept string, convert manually
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -541,7 +544,8 @@ def update_brand_asset(
     if tags is not None:
         db_asset.tags = tags
     if is_primary is not None:
-        if is_primary:
+        is_primary_bool = is_primary.lower() in ("true", "1", "yes")
+        if is_primary_bool:
             # Unset other primary assets of same type
             db.query(BrandAsset).filter(
                 BrandAsset.organization_id == org.id,
@@ -549,7 +553,7 @@ def update_brand_asset(
                 BrandAsset.is_primary == True,
                 BrandAsset.id != asset_id
             ).update({"is_primary": False})
-        db_asset.is_primary = is_primary
+        db_asset.is_primary = is_primary_bool
 
     db.commit()
     db.refresh(db_asset)
