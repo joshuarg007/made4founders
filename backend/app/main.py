@@ -120,6 +120,7 @@ try:
         ('mfa_enabled', 'ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN DEFAULT 0'),
         ('mfa_secret', 'ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(64)'),
         ('mfa_backup_codes', 'ALTER TABLE users ADD COLUMN mfa_backup_codes TEXT'),
+        ('has_completed_onboarding', 'ALTER TABLE users ADD COLUMN has_completed_onboarding BOOLEAN DEFAULT 0'),
     ]
 
     with engine.connect() as conn:
