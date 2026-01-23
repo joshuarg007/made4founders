@@ -24,6 +24,7 @@ import {
   LayoutDashboard,
   ListTodo,
   Video,
+  Plug,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Tutorial from './Tutorial';
@@ -65,6 +66,7 @@ const navSections: NavSection[] = [
       { to: '/app/getting-started', icon: ClipboardCheck, label: 'Setup' },
       { to: '/app/daily-brief', icon: ListTodo, label: 'Today' },
       { to: '/app/tasks', icon: CheckSquare, label: 'Tasks' },
+      { to: '/app/integrations', icon: Plug, label: 'Integrations' },
     ],
   },
   {

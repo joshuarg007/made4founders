@@ -47,6 +47,7 @@ const Vault = lazy(() => import('./pages/Vault'))
 const Leaderboard = lazy(() => import('./pages/Leaderboard'))
 const Businesses = lazy(() => import('./pages/Businesses'))
 const Marketplaces = lazy(() => import('./pages/Marketplaces'))
+const Integrations = lazy(() => import('./pages/Integrations'))
 const Settings = lazy(() => import('./pages/Settings'))
 
 function App() {
@@ -101,6 +102,7 @@ function App() {
           <Route path="vault" element={<Vault />} />
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="businesses" element={<Businesses />} />
+          <Route path="integrations" element={<Integrations />} />
           <Route path="marketplaces" element={<Marketplaces />} />
           <Route path="settings" element={<Settings />} />
         </Route>
