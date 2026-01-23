@@ -159,6 +159,20 @@ try:
                 conn.execute(text(sql))
                 logger.info(f"Added {col_name} column to contacts table")
         conn.commit()
+
+    # Bank accounts table migrations
+    if 'bank_accounts' in existing_tables:
+        bank_columns = [col['name'] for col in inspector.get_columns('bank_accounts')]
+        bank_migrations = [
+            ('business_id', 'ALTER TABLE bank_accounts ADD COLUMN business_id INTEGER'),
+        ]
+        with engine.connect() as conn:
+            for col_name, sql in bank_migrations:
+                if col_name not in bank_columns:
+                    conn.execute(text(sql))
+                    logger.info(f"Added {col_name} column to bank_accounts table")
+            conn.commit()
+
 except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
 
