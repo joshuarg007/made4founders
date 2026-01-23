@@ -138,7 +138,7 @@ export default function SocialHub() {
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Social Hub</h1>
+        <h1 className="text-2xl font-bold text-white">Marketing Hub</h1>
         <p className="text-gray-400 mt-1">Manage social media, email campaigns, branding, and web presence</p>
       </div>
 
