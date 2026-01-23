@@ -232,11 +232,17 @@ try:
     # Brand assets table migrations
     if 'brand_assets' in existing_tables:
         brand_asset_columns = [col['name'] for col in inspector.get_columns('brand_assets')]
-        if 'business_id' not in brand_asset_columns:
-            with engine.connect() as conn:
-                conn.execute(text('ALTER TABLE brand_assets ADD COLUMN business_id INTEGER'))
-                logger.info("Added business_id column to brand_assets table")
-                conn.commit()
+        brand_asset_migrations = [
+            ('business_id', 'ALTER TABLE brand_assets ADD COLUMN business_id INTEGER'),
+            ('tags', 'ALTER TABLE brand_assets ADD COLUMN tags VARCHAR(500)'),
+            ('is_primary', 'ALTER TABLE brand_assets ADD COLUMN is_primary BOOLEAN DEFAULT 0'),
+        ]
+        with engine.connect() as conn:
+            for col_name, sql in brand_asset_migrations:
+                if col_name not in brand_asset_columns:
+                    conn.execute(text(sql))
+                    logger.info(f"Added {col_name} column to brand_assets table")
+            conn.commit()
 
     # OAuth connections table migrations (for per-business social accounts)
     if 'oauth_connections' in existing_tables:

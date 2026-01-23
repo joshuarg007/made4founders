@@ -682,7 +682,7 @@ class BrandAsset(Base):
     name = Column(String(255), nullable=False)
     asset_type = Column(String(50), default=BrandAssetType.OTHER.value)
     file_path = Column(String(500), nullable=False)
-    file_name = Column(String(255), nullable=False)
+    file_name = Column(String(255), nullable=True)  # Original filename
     file_size = Column(Integer, nullable=True)  # bytes
     mime_type = Column(String(100), nullable=True)
 
@@ -694,6 +694,8 @@ class BrandAsset(Base):
     background_type = Column(String(20), nullable=True)  # "dark", "light", "transparent"
 
     description = Column(Text, nullable=True)
+    tags = Column(String(500), nullable=True)  # Comma-separated tags
+    is_primary = Column(Boolean, default=False)  # Primary asset for this type
     sort_order = Column(Integer, default=0)
 
     created_at = Column(DateTime, default=datetime.utcnow)

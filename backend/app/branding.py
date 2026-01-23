@@ -472,6 +472,7 @@ async def upload_brand_asset(
         asset_type=asset_type,
         name=name,
         file_path=unique_filename,
+        file_name=file.filename,  # Original filename
         file_size=file_size,
         mime_type=file.content_type,
         description=description,
