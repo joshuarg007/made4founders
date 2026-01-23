@@ -10,7 +10,6 @@ import {
   Download,
   Trash2,
   Loader2,
-  Plus,
   X,
   Sparkles,
   RefreshCw,
@@ -82,7 +81,7 @@ export default function Meetings() {
       if (filterType) params.append('meeting_type', filterType);
       if (searchTerm) params.append('search', searchTerm);
 
-      const res = await api.get(\`/api/transcripts?\${params.toString()}\`);
+      const res = await api.get(`/api/transcripts?${params.toString()}`);
       setTranscripts(res.data);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load transcripts');
@@ -124,7 +123,7 @@ export default function Meetings() {
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this transcript?')) return;
     try {
-      await api.delete(\`/api/transcripts/\${id}\`);
+      await api.delete(`/api/transcripts/${id}`);
       loadTranscripts();
       if (selectedTranscript?.id === id) {
         setShowDetailModal(false);
@@ -137,7 +136,7 @@ export default function Meetings() {
 
   const handleViewDetail = async (transcript: Transcript) => {
     try {
-      const res = await api.get(\`/api/transcripts/\${transcript.id}\`);
+      const res = await api.get(`/api/transcripts/${transcript.id}`);
       setSelectedTranscript(res.data);
       setShowDetailModal(true);
     } catch (err: any) {
@@ -147,13 +146,13 @@ export default function Meetings() {
 
   const handleDownload = async (transcript: Transcript) => {
     try {
-      const res = await api.get(\`/api/transcripts/\${transcript.id}/download\`, {
+      const res = await api.get(`/api/transcripts/${transcript.id}/download`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', \`\${transcript.title}.\${transcript.file_format || 'txt'}\`);
+      link.setAttribute('download', `${transcript.title}.${transcript.file_format || 'txt'}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -164,7 +163,7 @@ export default function Meetings() {
 
   const handleRegenerateSummary = async (id: number) => {
     try {
-      const res = await api.post(\`/api/transcripts/\${id}/regenerate-summary\`);
+      const res = await api.post(`/api/transcripts/${id}/regenerate-summary`);
       if (selectedTranscript?.id === id) {
         setSelectedTranscript({
           ...selectedTranscript,
@@ -186,9 +185,9 @@ export default function Meetings() {
     if (mins >= 60) {
       const hrs = Math.floor(mins / 60);
       const remainMins = mins % 60;
-      return \`\${hrs}h \${remainMins}m\`;
+      return `${hrs}h ${remainMins}m`;
     }
-    return \`\${mins}m \${secs}s\`;
+    return `${mins}m ${secs}s`;
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -461,9 +460,9 @@ function UploadModal({
             onDrop={handleDrop}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
-            className={\`border-2 border-dashed rounded-xl p-8 text-center transition cursor-pointer \${
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition cursor-pointer ${
               dragOver ? 'border-cyan-500 bg-cyan-500/10' : 'border-white/20 hover:border-white/40'
-            }\`}
+            }`}
             onClick={() => fileInputRef.current?.click()}
           >
             <input
@@ -631,9 +630,9 @@ function DetailModal({
     if (mins >= 60) {
       const hrs = Math.floor(mins / 60);
       const remainMins = mins % 60;
-      return \`\${hrs}h \${remainMins}m\`;
+      return `${hrs}h ${remainMins}m`;
     }
-    return \`\${mins} minutes\`;
+    return `${mins} minutes`;
   };
 
   return (
@@ -686,22 +685,22 @@ function DetailModal({
           <div className="flex gap-2 mt-4">
             <button
               onClick={() => setActiveTab('summary')}
-              className={\`px-4 py-2 rounded-lg text-sm font-medium transition \${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 activeTab === 'summary'
                   ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }\`}
+              }`}
             >
               <Sparkles className="w-4 h-4 inline mr-2" />
               Summary
             </button>
             <button
               onClick={() => setActiveTab('transcript')}
-              className={\`px-4 py-2 rounded-lg text-sm font-medium transition \${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 activeTab === 'transcript'
                   ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }\`}
+              }`}
             >
               <MessageSquare className="w-4 h-4 inline mr-2" />
               Full Transcript
