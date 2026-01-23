@@ -1509,7 +1509,9 @@ def get_business_achievements(
     _get_or_create_business_achievements(db, business)
 
     # Get all business achievements with their achievement data
-    return db.query(BusinessAchievement).filter(
+    return db.query(BusinessAchievement).join(
+        Achievement, BusinessAchievement.achievement_id == Achievement.id
+    ).filter(
         BusinessAchievement.business_id == business_id
     ).order_by(
         BusinessAchievement.is_unlocked.desc(),
