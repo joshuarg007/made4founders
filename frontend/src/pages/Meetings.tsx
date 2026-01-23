@@ -16,8 +16,31 @@ import {
   MessageSquare,
   CheckCircle2,
   Lightbulb,
+  Link,
+  Unlink,
+  Import,
+  ExternalLink,
 } from 'lucide-react';
 import api from '../lib/api';
+
+interface ZoomStatus {
+  connected: boolean;
+  user_email?: string;
+  user_name?: string;
+  connected_at?: string;
+}
+
+interface ZoomRecording {
+  id: string;
+  meeting_id: string;
+  topic: string;
+  start_time?: string;
+  duration?: number;
+  total_size?: number;
+  recording_count?: number;
+  has_transcript: boolean;
+  transcript_url?: string;
+}
 
 interface Transcript {
   id: number;
@@ -66,12 +89,32 @@ export default function Meetings() {
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showZoomModal, setShowZoomModal] = useState(false);
   const [selectedTranscript, setSelectedTranscript] = useState<Transcript | null>(null);
 
   const [uploading, setUploading] = useState(false);
 
+  // Zoom integration state
+  const [zoomStatus, setZoomStatus] = useState<ZoomStatus | null>(null);
+  const [zoomRecordings, setZoomRecordings] = useState<ZoomRecording[]>([]);
+  const [loadingZoom, setLoadingZoom] = useState(false);
+  const [importingRecording, setImportingRecording] = useState<string | null>(null);
+
   useEffect(() => {
     loadTranscripts();
+    loadZoomStatus();
+
+    // Check for Zoom callback result
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('zoom') === 'connected') {
+      loadZoomStatus();
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (params.get('error')) {
+      setError(`Zoom connection failed: ${params.get('error')}`);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [filterType]);
 
   const loadTranscripts = async () => {
@@ -92,6 +135,65 @@ export default function Meetings() {
 
   const handleSearch = () => {
     loadTranscripts();
+  };
+
+  const loadZoomStatus = async () => {
+    try {
+      const res = await api.get('/api/zoom/status');
+      setZoomStatus(res.data);
+    } catch {
+      setZoomStatus({ connected: false });
+    }
+  };
+
+  const connectZoom = async () => {
+    try {
+      const res = await api.get('/api/zoom/login');
+      window.location.href = res.data.auth_url;
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to connect Zoom');
+    }
+  };
+
+  const disconnectZoom = async () => {
+    if (!confirm('Disconnect Zoom account?')) return;
+    try {
+      await api.delete('/api/zoom/disconnect');
+      setZoomStatus({ connected: false });
+      setZoomRecordings([]);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to disconnect Zoom');
+    }
+  };
+
+  const loadZoomRecordings = async () => {
+    setLoadingZoom(true);
+    try {
+      const res = await api.get('/api/zoom/recordings');
+      setZoomRecordings(res.data.recordings || []);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to load Zoom recordings');
+    } finally {
+      setLoadingZoom(false);
+    }
+  };
+
+  const importZoomRecording = async (recording: ZoomRecording) => {
+    setImportingRecording(recording.id);
+    try {
+      await api.post(`/api/zoom/recordings/${encodeURIComponent(recording.id)}/import?generate_summary=true`);
+      setShowZoomModal(false);
+      loadTranscripts();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to import transcript');
+    } finally {
+      setImportingRecording(null);
+    }
+  };
+
+  const openZoomModal = () => {
+    setShowZoomModal(true);
+    loadZoomRecordings();
   };
 
   const handleUpload = async (file: File, formData: any) => {
@@ -215,13 +317,42 @@ export default function Meetings() {
           <h1 className="text-2xl font-bold text-white">Meetings</h1>
           <p className="text-gray-400 mt-1">Upload and analyze meeting transcripts</p>
         </div>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-400 transition"
-        >
-          <Upload className="w-4 h-4" />
-          Upload Transcript
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Zoom Integration Button */}
+          {zoomStatus?.connected ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={openZoomModal}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition"
+              >
+                <Import className="w-4 h-4" />
+                Import from Zoom
+              </button>
+              <button
+                onClick={disconnectZoom}
+                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                title={`Connected as ${zoomStatus.user_email}`}
+              >
+                <Unlink className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={connectZoom}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+            >
+              <Link className="w-4 h-4" />
+              Connect Zoom
+            </button>
+          )}
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-400 transition"
+          >
+            <Upload className="w-4 h-4" />
+            Upload Transcript
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -381,6 +512,18 @@ export default function Meetings() {
           onDownload={handleDownload}
           onDelete={handleDelete}
           onRegenerateSummary={handleRegenerateSummary}
+        />
+      )}
+
+      {/* Zoom Recordings Modal */}
+      {showZoomModal && (
+        <ZoomRecordingsModal
+          recordings={zoomRecordings}
+          loading={loadingZoom}
+          importingId={importingRecording}
+          onClose={() => setShowZoomModal(false)}
+          onImport={importZoomRecording}
+          onRefresh={loadZoomRecordings}
         />
       )}
     </div>
@@ -814,6 +957,195 @@ function DetailModal({
               )}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Zoom Recordings Modal Component
+function ZoomRecordingsModal({
+  recordings,
+  loading,
+  importingId,
+  onClose,
+  onImport,
+  onRefresh,
+}: {
+  recordings: ZoomRecording[];
+  loading: boolean;
+  importingId: string | null;
+  onClose: () => void;
+  onImport: (recording: ZoomRecording) => void;
+  onRefresh: () => void;
+}) {
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'Unknown date';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDuration = (minutes?: number) => {
+    if (!minutes) return '';
+    if (minutes >= 60) {
+      const hrs = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${hrs}h ${mins}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const recordingsWithTranscript = recordings.filter(r => r.has_transcript);
+  const recordingsWithoutTranscript = recordings.filter(r => !r.has_transcript);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <Video className="w-5 h-5 text-blue-400" />
+              Import from Zoom
+            </h2>
+            <p className="text-sm text-gray-400 mt-1">Select a recording to import its transcript</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onRefresh}
+              className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+              title="Refresh"
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+            </div>
+          ) : recordings.length === 0 ? (
+            <div className="text-center py-12">
+              <Video className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+              <p className="text-gray-400">No recordings found in the last 30 days</p>
+              <p className="text-sm text-gray-500 mt-1">Make sure cloud recording is enabled in your Zoom settings</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Recordings with transcripts */}
+              {recordingsWithTranscript.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    With Transcript ({recordingsWithTranscript.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {recordingsWithTranscript.map((recording) => (
+                      <div
+                        key={recording.id}
+                        className="p-4 rounded-lg bg-white/5 border border-white/10 hover:border-blue-500/30 transition"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-white truncate">{recording.topic}</h4>
+                            <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {formatDate(recording.start_time)}
+                              </span>
+                              {recording.duration && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {formatDuration(recording.duration)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onImport(recording)}
+                            disabled={importingId !== null}
+                            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition disabled:opacity-50 flex items-center gap-2 text-sm"
+                          >
+                            {importingId === recording.id ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Importing...
+                              </>
+                            ) : (
+                              <>
+                                <Import className="w-4 h-4" />
+                                Import
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recordings without transcripts */}
+              {recordingsWithoutTranscript.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                    <Video className="w-4 h-4" />
+                    Without Transcript ({recordingsWithoutTranscript.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {recordingsWithoutTranscript.map((recording) => (
+                      <div
+                        key={recording.id}
+                        className="p-4 rounded-lg bg-white/5 border border-white/5 opacity-60"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-white truncate">{recording.topic}</h4>
+                            <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {formatDate(recording.start_time)}
+                              </span>
+                              {recording.duration && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {formatDuration(recording.duration)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-500 px-2 py-1 rounded bg-white/5">
+                            No transcript
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-white/10 text-center text-sm text-gray-500">
+          <a
+            href="https://support.zoom.us/hc/en-us/articles/115004794983-Automatically-transcribe-cloud-recordings"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1"
+          >
+            Learn how to enable automatic transcription
+            <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
       </div>
     </div>

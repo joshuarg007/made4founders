@@ -31,7 +31,7 @@ from .models import (
     WebPresence, BankAccount, Organization, BrandColor, BrandFont, BrandAsset,
     BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
-    AccountingConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
+    AccountingConnection, ZoomConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
     Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting, MeetingTranscript,
     # Junction tables for business taxonomy
     ContactBusiness, DocumentBusiness, CredentialBusiness, WebLinkBusiness,
@@ -49,6 +49,7 @@ from .accounting_oauth import router as accounting_router
 from .mailchimp_api import mailchimp_router
 from .templates import router as templates_router
 from .mfa import router as mfa_router
+from .zoom_oauth import router as zoom_router
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
     DocumentCreate, DocumentUpdate, DocumentResponse,
@@ -285,6 +286,13 @@ try:
             table.create(bind=engine, checkfirst=True)
             logger.info("Created meeting_transcripts table")
 
+    # Zoom connections table (create if not exists)
+    if 'zoom_connections' not in existing_tables:
+        table = Base.metadata.tables.get('zoom_connections')
+        if table is not None:
+            table.create(bind=engine, checkfirst=True)
+            logger.info("Created zoom_connections table")
+
 except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
 
@@ -358,6 +366,7 @@ app.include_router(templates_router, prefix="/api/templates", tags=["templates"]
 app.include_router(social_oauth_router, prefix="/api/social", tags=["social"])
 app.include_router(accounting_router, prefix="/api/accounting", tags=["accounting"])
 app.include_router(mfa_router, prefix="/api/mfa", tags=["mfa"])
+app.include_router(zoom_router, prefix="/api/zoom", tags=["zoom"])
 
 # Startup validation
 @app.on_event("startup")

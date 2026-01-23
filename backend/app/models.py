@@ -637,6 +637,29 @@ class AccountingConnection(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ZoomConnection(Base):
+    """Store OAuth connections for Zoom meeting integrations"""
+    __tablename__ = "zoom_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    zoom_user_id = Column(String(255), nullable=False)
+    zoom_email = Column(String(255), nullable=True)
+    zoom_name = Column(String(255), nullable=True)
+
+    access_token = Column(Text, nullable=False)
+    refresh_token = Column(Text, nullable=True)
+    token_expires_at = Column(DateTime, nullable=True)
+
+    scopes = Column(Text, nullable=True)  # Comma-separated scopes
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # ============ BRANDING MODELS ============
 
 class BrandColor(Base):
