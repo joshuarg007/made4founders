@@ -86,14 +86,14 @@ def get_or_create_stripe_customer(user: User, org: Organization, db: Session) ->
 def tier_from_price_key(price_key: str) -> str:
     """Get subscription tier from price key."""
     if price_key.startswith("starter"):
-        return SubscriptionTier.STARTER.value
+        return SubscriptionTier.FREE.value
     elif price_key.startswith("growth"):
         return SubscriptionTier.GROWTH.value
     elif price_key.startswith("scale"):
         return SubscriptionTier.SCALE.value
     elif price_key.startswith("enterprise"):
         return SubscriptionTier.ENTERPRISE.value
-    return SubscriptionTier.STARTER.value
+    return SubscriptionTier.FREE.value
 
 
 # ============ ROUTES ============
@@ -118,7 +118,7 @@ async def get_subscription(
         raise HTTPException(status_code=404, detail="Organization not found")
 
     return SubscriptionResponse(
-        tier=org.subscription_tier or SubscriptionTier.STARTER.value,
+        tier=org.subscription_tier or SubscriptionTier.FREE.value,
         status=org.subscription_status or SubscriptionStatus.TRIALING.value,
         trial_ends_at=org.trial_ends_at,
         subscription_ends_at=org.subscription_ends_at,
@@ -355,14 +355,14 @@ async def handle_subscription_deleted(data: dict, db: Session):
         return
 
     org.subscription_status = SubscriptionStatus.CANCELED.value
-    org.subscription_tier = SubscriptionTier.STARTER.value
+    org.subscription_tier = SubscriptionTier.FREE.value
     org.stripe_subscription_id = None
 
     # Log history
     history = SubscriptionHistory(
         organization_id=org.id,
         event_type="canceled",
-        tier=SubscriptionTier.STARTER.value,
+        tier=SubscriptionTier.FREE.value,
     )
     db.add(history)
     db.commit()

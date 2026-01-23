@@ -4,28 +4,55 @@ import { useState } from 'react';
 import { createCheckoutSession } from '../../lib/api';
 import SEO, { pageSEO } from '../../components/SEO';
 
-type PriceKey = 'starter_monthly' | 'starter_yearly' | 'growth_monthly' | 'growth_yearly' | 'scale_monthly' | 'scale_yearly';
+type PriceKey = 'starter_monthly' | 'starter_yearly' | 'growth_monthly' | 'growth_yearly' | 'scale_monthly' | 'scale_yearly' | null;
 
 const plans = [
+  {
+    name: 'Free',
+    slug: 'free',
+    description: 'Get started with the essentials',
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    monthlyPriceKey: null as PriceKey,
+    yearlyPriceKey: null as PriceKey,
+    features: [
+      { name: '1 user', included: true },
+      { name: '1 business', included: true },
+      { name: 'Document storage (500MB)', included: true },
+      { name: 'Dashboard & Daily Brief', included: true },
+      { name: 'Checklist (20 items)', included: true },
+      { name: '25 contacts', included: true },
+      { name: '10 deadlines', included: true },
+      { name: 'Vault (10 credentials)', included: true },
+      { name: 'XP & basic achievements', included: true },
+      { name: 'AI meeting summaries', included: false },
+      { name: 'Social posting', included: false },
+      { name: 'Accounting integrations', included: false },
+    ],
+    cta: 'Get Started Free',
+    popular: false,
+  },
   {
     name: 'Starter',
     slug: 'starter',
     description: 'For solo founders getting organized',
-    monthlyPrice: 7,
-    yearlyPrice: 70,
+    monthlyPrice: 12,
+    yearlyPrice: 120,
     monthlyPriceKey: 'starter_monthly' as PriceKey,
     yearlyPriceKey: 'starter_yearly' as PriceKey,
     features: [
       { name: '1 user', included: true },
-      { name: 'Business checklist (98 items)', included: true },
-      { name: 'Document storage (5GB)', included: true },
-      { name: 'Full dashboard', included: true },
-      { name: 'Credential vault', included: true },
-      { name: 'Contacts & deadlines', included: true },
-      { name: 'Basic analytics', included: false },
-      { name: 'Email integrations', included: false },
-      { name: 'Marketing tools', included: false },
-      { name: 'Priority support', included: false },
+      { name: '3 businesses', included: true },
+      { name: 'Document storage (10GB)', included: true },
+      { name: 'Full checklist (98 items)', included: true },
+      { name: '250 contacts', included: true },
+      { name: '100 deadlines', included: true },
+      { name: 'Vault (100 credentials)', included: true },
+      { name: '3 task boards', included: true },
+      { name: 'Calendar sync', included: true },
+      { name: 'AI summaries (50/mo)', included: true },
+      { name: '1 social platform', included: true },
+      { name: 'Accounting integrations', included: false },
     ],
     cta: 'Start 14-Day Free Trial',
     popular: false,
@@ -33,21 +60,23 @@ const plans = [
   {
     name: 'Growth',
     slug: 'growth',
-    description: 'For growing startups with more needs',
-    monthlyPrice: 29,
-    yearlyPrice: 290,
+    description: 'For growing startups with teams',
+    monthlyPrice: 39,
+    yearlyPrice: 390,
     monthlyPriceKey: 'growth_monthly' as PriceKey,
     yearlyPriceKey: 'growth_yearly' as PriceKey,
     features: [
-      { name: '3 users', included: true },
-      { name: 'Business checklist (98 items)', included: true },
-      { name: 'Document storage (25GB)', included: true },
-      { name: 'Full dashboard', included: true },
-      { name: 'Credential vault', included: true },
-      { name: 'Contacts & deadlines', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Email integration (1)', included: true },
-      { name: 'Marketing tools', included: false },
+      { name: '5 users', included: true },
+      { name: '10 businesses', included: true },
+      { name: 'Document storage (50GB)', included: true },
+      { name: 'Unlimited contacts & deadlines', included: true },
+      { name: 'Unlimited vault credentials', included: true },
+      { name: 'Unlimited task boards', included: true },
+      { name: 'AI summaries (200/mo)', included: true },
+      { name: '3 social platforms', included: true },
+      { name: '1 accounting integration', included: true },
+      { name: 'Basic email marketing', included: true },
+      { name: 'Challenges & leaderboards', included: true },
       { name: 'Priority support', included: false },
     ],
     cta: 'Start 14-Day Free Trial',
@@ -56,22 +85,24 @@ const plans = [
   {
     name: 'Scale',
     slug: 'scale',
-    description: 'For teams ready to scale',
-    monthlyPrice: 79,
-    yearlyPrice: 790,
+    description: 'For teams ready to dominate',
+    monthlyPrice: 99,
+    yearlyPrice: 990,
     monthlyPriceKey: 'scale_monthly' as PriceKey,
     yearlyPriceKey: 'scale_yearly' as PriceKey,
     features: [
-      { name: '10 users', included: true },
-      { name: 'Business checklist (98 items)', included: true },
-      { name: 'Document storage (100GB)', included: true },
-      { name: 'Full dashboard', included: true },
-      { name: 'Credential vault', included: true },
-      { name: 'Contacts & deadlines', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Unlimited email integrations', included: true },
-      { name: 'Marketing tools', included: true },
+      { name: '15 users', included: true },
+      { name: 'Unlimited businesses', included: true },
+      { name: 'Document storage (200GB)', included: true },
+      { name: 'AI summaries (1000/mo)', included: true },
+      { name: 'All 5 social platforms', included: true },
+      { name: 'All 4 accounting integrations', included: true },
+      { name: 'Full email marketing + analytics', included: true },
+      { name: 'Advanced reporting', included: true },
+      { name: 'Onboarding call', included: true },
       { name: 'Priority support', included: true },
+      { name: 'Custom branding', included: true },
+      { name: 'API access (coming soon)', included: true },
     ],
     cta: 'Start 14-Day Free Trial',
     popular: false,
@@ -127,6 +158,12 @@ export default function Pricing() {
 
   const handlePlanSelect = async (plan: typeof plans[0]) => {
     setError(null);
+
+    // Free plan goes directly to signup
+    if (plan.slug === 'free') {
+      navigate('/signup?plan=free');
+      return;
+    }
 
     const priceKey = billingCycle === 'monthly' ? plan.monthlyPriceKey : plan.yearlyPriceKey;
     if (!priceKey) {
@@ -203,7 +240,7 @@ export default function Pricing() {
         </div>
 
         {/* Pricing cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16 sm:mb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8 mb-16 sm:mb-24">
           {plans.map((plan) => (
             <div
               key={plan.name}
@@ -228,16 +265,25 @@ export default function Pricing() {
               </div>
 
               <div className="mb-6">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-white">
-                    ${billingCycle === 'monthly' ? plan.monthlyPrice : Math.round(plan.yearlyPrice / 12)}
-                  </span>
-                  <span className="text-gray-400">/month</span>
-                </div>
-                {billingCycle === 'yearly' && plan.yearlyPrice > 0 && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    ${plan.yearlyPrice} billed yearly
-                  </p>
+                {plan.monthlyPrice === 0 ? (
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold text-white">Free</span>
+                    <span className="text-gray-400">forever</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-white">
+                        ${billingCycle === 'monthly' ? plan.monthlyPrice : Math.round(plan.yearlyPrice / 12)}
+                      </span>
+                      <span className="text-gray-400">/month</span>
+                    </div>
+                    {billingCycle === 'yearly' && plan.yearlyPrice > 0 && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        ${plan.yearlyPrice} billed yearly
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 

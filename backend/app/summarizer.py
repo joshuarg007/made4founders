@@ -1,6 +1,6 @@
 """
-AI Summarization for meeting transcripts using Claude Haiku.
-Cost-effective approach: ~$0.001-0.01 per transcript.
+AI Summarization for meeting transcripts using Ollama (local LLM).
+Cost-effective approach: runs locally, no API costs.
 """
 
 import os
@@ -9,15 +9,9 @@ import logging
 from typing import Optional
 from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
+import httpx
 
-# Try to import anthropic, but don't fail if not installed
-try:
-    import anthropic
-    ANTHROPIC_AVAILABLE = True
-except ImportError:
-    ANTHROPIC_AVAILABLE = False
-    logger.warning("anthropic package not installed. AI summarization will be disabled.")
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -50,51 +44,70 @@ Only respond with the JSON, no other text."""
 
 def summarize_transcript(transcript_text: str, max_chars: int = 50000) -> Optional[TranscriptSummary]:
     """
-    Generate AI summary of a meeting transcript using Claude Haiku.
+    Generate AI summary of a meeting transcript using Ollama (local LLM).
 
     Args:
         transcript_text: The full transcript text
         max_chars: Maximum characters to send (truncate if longer)
 
     Returns:
-        TranscriptSummary or None if API unavailable/error
+        TranscriptSummary or None if Ollama unavailable/error
     """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    ollama_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 
-    if not api_key:
-        logger.info("ANTHROPIC_API_KEY not set. Skipping AI summarization.")
-        return None
-
-    if not ANTHROPIC_AVAILABLE:
-        logger.warning("anthropic package not available. Skipping AI summarization.")
-        return None
-
-    # Truncate if too long (to manage costs)
+    # Truncate if too long (to manage memory)
     if len(transcript_text) > max_chars:
         transcript_text = transcript_text[:max_chars] + "\n\n[Transcript truncated for summarization]"
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-
-        message = client.messages.create(
-            model="claude-3-haiku-20240307",  # Cheapest model
-            max_tokens=1024,
-            messages=[
-                {
-                    "role": "user",
-                    "content": SUMMARIZE_PROMPT.format(transcript=transcript_text)
+        response = httpx.post(
+            f"{ollama_url}/api/generate",
+            json={
+                "model": ollama_model,
+                "prompt": SUMMARIZE_PROMPT.format(transcript=transcript_text),
+                "stream": False,
+                "options": {
+                    "temperature": 0.3,
+                    "num_predict": 1024
                 }
-            ]
+            },
+            timeout=120.0  # Ollama can be slow on first run
         )
 
-        # Parse response
-        response_text = message.content[0].text.strip()
+        if response.status_code != 200:
+            logger.error(f"Ollama returned status {response.status_code}: {response.text}")
+            return None
+
+        result = response.json()
+        response_text = result.get("response", "").strip()
+
+        if not response_text:
+            logger.warning("Ollama returned empty response")
+            return None
 
         # Try to extract JSON from response
         # Handle case where model might wrap in markdown code blocks
         if response_text.startswith("```"):
             lines = response_text.split('\n')
-            response_text = '\n'.join(lines[1:-1])
+            # Find the closing ```
+            end_idx = -1
+            for i, line in enumerate(lines[1:], 1):
+                if line.strip().startswith("```"):
+                    end_idx = i
+                    break
+            if end_idx > 0:
+                response_text = '\n'.join(lines[1:end_idx])
+            else:
+                response_text = '\n'.join(lines[1:])
+
+        # Try to find JSON in the response if not already JSON
+        if not response_text.startswith("{"):
+            # Look for JSON object in the response
+            json_start = response_text.find("{")
+            json_end = response_text.rfind("}") + 1
+            if json_start >= 0 and json_end > json_start:
+                response_text = response_text[json_start:json_end]
 
         data = json.loads(response_text)
 
@@ -104,11 +117,15 @@ def summarize_transcript(transcript_text: str, max_chars: int = 50000) -> Option
             key_points=data.get("key_points", [])
         )
 
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse AI response as JSON: {e}")
+    except httpx.ConnectError:
+        logger.info("Ollama not running or not accessible. Skipping AI summarization.")
         return None
-    except anthropic.APIError as e:
-        logger.error(f"Anthropic API error: {e}")
+    except httpx.TimeoutException:
+        logger.error("Ollama request timed out")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse Ollama response as JSON: {e}")
+        logger.debug(f"Raw response: {response_text}")
         return None
     except Exception as e:
         logger.error(f"Unexpected error in summarization: {e}")
