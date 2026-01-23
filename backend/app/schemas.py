@@ -5,6 +5,17 @@ from datetime import datetime, date
 
 # ============ Business Schemas (Fractal Hierarchy) ============
 
+class BusinessBrief(BaseModel):
+    """Minimal business info for list displays and entity associations"""
+    id: int
+    name: str
+    color: Optional[str] = None
+    emoji: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class BusinessBase(BaseModel):
     name: str
     slug: Optional[str] = None
@@ -14,6 +25,10 @@ class BusinessBase(BaseModel):
     emoji: Optional[str] = None
     parent_id: Optional[int] = None
     is_active: bool = True
+    # New fields for business taxonomy
+    website: Optional[str] = None
+    primary_contact_id: Optional[int] = None
+    notes: Optional[str] = None
 
 
 class BusinessCreate(BusinessBase):
@@ -31,13 +46,18 @@ class BusinessUpdate(BaseModel):
     is_active: Optional[bool] = None
     is_archived: Optional[bool] = None
     gamification_enabled: Optional[bool] = None
+    # New fields for business taxonomy
+    website: Optional[str] = None
+    primary_contact_id: Optional[int] = None
+    notes: Optional[str] = None
 
 
 class BusinessResponse(BusinessBase):
     id: int
     organization_id: int
     is_archived: bool
-    # Gamification
+    archived_at: Optional[datetime] = None
+    # Gamification (keeping for backwards compatibility, but simplified usage)
     xp: int
     level: int
     current_streak: int
@@ -73,6 +93,32 @@ class BusinessWithChildren(BusinessResponse):
 class BusinessSwitchRequest(BaseModel):
     """Request to switch current business context"""
     business_id: Optional[int] = None  # None = org-wide view
+
+
+class BulkBusinessAssignRequest(BaseModel):
+    """Bulk assign/remove businesses from entities"""
+    entity_ids: List[int]  # IDs of entities to modify
+    business_ids: List[int]  # Business IDs to assign/remove
+    action: Literal["add", "remove", "set"]  # add: append, remove: unassign, set: replace all
+
+
+class BusinessArchiveRequest(BaseModel):
+    """Archive or restore a business"""
+    is_archived: bool
+
+
+class BusinessExportResponse(BaseModel):
+    """Response for business data export"""
+    business: BusinessBrief
+    contacts_count: int
+    documents_count: int
+    credentials_count: int
+    services_count: int
+    products_offered_count: int
+    products_used_count: int
+    web_links_count: int
+    deadlines_count: int
+    meetings_count: int
 
 
 # ============ Quest Schemas ============
@@ -343,7 +389,7 @@ class ServiceBase(BaseModel):
 
 
 class ServiceCreate(ServiceBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class ServiceUpdate(BaseModel):
@@ -361,6 +407,7 @@ class ServiceUpdate(BaseModel):
 class ServiceResponse(ServiceBase):
     id: int
     last_visited: Optional[datetime]
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -381,7 +428,7 @@ class DocumentBase(BaseModel):
 
 
 class DocumentCreate(DocumentBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class DocumentUpdate(BaseModel):
@@ -397,6 +444,7 @@ class DocumentUpdate(BaseModel):
 
 class DocumentResponse(DocumentBase):
     id: int
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -442,7 +490,7 @@ class ContactBase(BaseModel):
 
 
 class ContactCreate(ContactBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class ContactUpdate(BaseModel):
@@ -476,6 +524,7 @@ class ContactResponse(ContactBase):
     additional_emails: Optional[List[str]] = None
     additional_phones: Optional[List[str]] = None
     last_contacted: Optional[datetime]
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -503,7 +552,7 @@ class MeetingBase(BaseModel):
 
 
 class MeetingCreate(MeetingBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class MeetingUpdate(BaseModel):
@@ -526,6 +575,7 @@ class MeetingUpdate(BaseModel):
 
 class MeetingResponse(MeetingBase):
     id: int
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -547,7 +597,7 @@ class DeadlineBase(BaseModel):
 
 
 class DeadlineCreate(DeadlineBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class DeadlineUpdate(BaseModel):
@@ -567,6 +617,7 @@ class DeadlineResponse(DeadlineBase):
     id: int
     is_completed: bool
     completed_at: Optional[datetime]
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -831,6 +882,7 @@ class CredentialCreate(CredentialBase):
     totp_secret: Optional[str] = None
     purpose: Optional[str] = None
     custom_fields: Optional[List[CustomField]] = None
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class CredentialUpdate(BaseModel):
@@ -845,6 +897,7 @@ class CredentialUpdate(BaseModel):
     purpose: Optional[str] = None
     custom_fields: Optional[List[CustomField]] = None
     related_service_id: Optional[int] = None
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class CredentialMasked(CredentialBase):
@@ -857,6 +910,7 @@ class CredentialMasked(CredentialBase):
     has_purpose: bool
     has_custom_fields: bool
     custom_field_count: int
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -873,6 +927,7 @@ class CredentialDecrypted(CredentialBase):
     totp_secret: Optional[str] = None
     purpose: Optional[str] = None
     custom_fields: Optional[List[CustomField]] = None
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -894,7 +949,7 @@ class ProductOfferedBase(BaseModel):
 
 
 class ProductOfferedCreate(ProductOfferedBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class ProductOfferedUpdate(BaseModel):
@@ -907,10 +962,12 @@ class ProductOfferedUpdate(BaseModel):
     icon: Optional[str] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class ProductOfferedResponse(ProductOfferedBase):
     id: int
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -943,7 +1000,7 @@ class ProductUsedBase(BaseModel):
 
 
 class ProductUsedCreate(ProductUsedBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class ProductUsedUpdate(BaseModel):
@@ -966,10 +1023,12 @@ class ProductUsedUpdate(BaseModel):
     license_type: Optional[str] = None
     status: Optional[str] = None
     contract_end_date: Optional[datetime] = None
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class ProductUsedResponse(ProductUsedBase):
     id: int
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 
@@ -988,7 +1047,7 @@ class WebLinkBase(BaseModel):
 
 
 class WebLinkCreate(WebLinkBase):
-    pass
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class WebLinkUpdate(BaseModel):
@@ -998,11 +1057,13 @@ class WebLinkUpdate(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
     is_favorite: Optional[bool] = None
+    business_ids: Optional[List[int]] = None  # Multi-business associations
 
 
 class WebLinkResponse(WebLinkBase):
     id: int
     last_visited: Optional[datetime] = None
+    businesses: List[BusinessBrief] = []  # Associated businesses
     created_at: datetime
     updated_at: datetime
 

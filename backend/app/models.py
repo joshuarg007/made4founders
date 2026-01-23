@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Boolean, ForeignKey, Enum, Float, JSON, Index
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Boolean, ForeignKey, Enum, Float, JSON, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -179,9 +179,15 @@ class Business(Base):
     emoji = Column(String(10), nullable=True)  # Emoji icon e.g., "🚀"
     logo_path = Column(String(500), nullable=True)  # Path to logo file
 
+    # Additional business info
+    website = Column(String(500), nullable=True)
+    primary_contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="SET NULL"), nullable=True)
+    notes = Column(Text, nullable=True)
+
     # Status
     is_active = Column(Boolean, default=True)
     is_archived = Column(Boolean, default=False)
+    archived_at = Column(DateTime, nullable=True)
 
     # ============ GAMIFICATION ============
     # XP and Leveling
@@ -578,6 +584,7 @@ class OAuthConnection(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     provider = Column(String(50), nullable=False)  # twitter, facebook, instagram, linkedin
@@ -633,6 +640,7 @@ class BrandColor(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
 
     name = Column(String(100), nullable=False)  # e.g., "Ocean Blue", "Sunset Orange"
     hex_value = Column(String(7), nullable=False)  # #RRGGBB
@@ -651,6 +659,7 @@ class BrandFont(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
 
     name = Column(String(100), nullable=False)  # e.g., "Inter", "Playfair Display"
     font_family = Column(String(255), nullable=False)  # CSS font-family value
@@ -668,6 +677,7 @@ class BrandAsset(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
 
     name = Column(String(255), nullable=False)
     asset_type = Column(String(50), default=BrandAssetType.OTHER.value)
@@ -695,7 +705,8 @@ class BrandGuideline(Base):
     __tablename__ = "brand_guidelines"
 
     id = Column(Integer, primary_key=True, index=True)
-    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
 
     # Company identity
     company_name = Column(String(255), nullable=True)
@@ -854,6 +865,7 @@ class SocialAnalytics(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
     campaign_version_id = Column(Integer, ForeignKey("campaign_versions.id", ondelete="CASCADE"), nullable=True)
 
     platform = Column(String(50), nullable=False)
@@ -1811,3 +1823,140 @@ class ContactSubmission(Base):
     is_replied = Column(Boolean, default=False)
     replied_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ============ BUSINESS JUNCTION TABLES (Many-to-Many) ============
+
+class ContactBusiness(Base):
+    """Junction table for Contact to Business many-to-many relationship"""
+    __tablename__ = "contact_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    contact = relationship("Contact", backref="business_associations")
+    business = relationship("Business", backref="contact_associations")
+
+    __table_args__ = (UniqueConstraint('contact_id', 'business_id', name='uq_contact_business'),)
+
+
+class DocumentBusiness(Base):
+    """Junction table for Document to Business many-to-many relationship"""
+    __tablename__ = "document_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    document = relationship("Document", backref="business_associations")
+    business = relationship("Business", backref="document_associations")
+
+    __table_args__ = (UniqueConstraint('document_id', 'business_id', name='uq_document_business'),)
+
+
+class CredentialBusiness(Base):
+    """Junction table for Credential to Business many-to-many relationship"""
+    __tablename__ = "credential_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    credential_id = Column(Integer, ForeignKey("credentials.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    credential = relationship("Credential", backref="business_associations")
+    business = relationship("Business", backref="credential_associations")
+
+    __table_args__ = (UniqueConstraint('credential_id', 'business_id', name='uq_credential_business'),)
+
+
+class WebLinkBusiness(Base):
+    """Junction table for WebLink to Business many-to-many relationship"""
+    __tablename__ = "web_link_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    web_link_id = Column(Integer, ForeignKey("web_links.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    web_link = relationship("WebLink", backref="business_associations")
+    business = relationship("Business", backref="web_link_associations")
+
+    __table_args__ = (UniqueConstraint('web_link_id', 'business_id', name='uq_web_link_business'),)
+
+
+class ProductOfferedBusiness(Base):
+    """Junction table for ProductOffered to Business many-to-many relationship"""
+    __tablename__ = "product_offered_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_offered_id = Column(Integer, ForeignKey("products_offered.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    product_offered = relationship("ProductOffered", backref="business_associations")
+    business = relationship("Business", backref="product_offered_associations")
+
+    __table_args__ = (UniqueConstraint('product_offered_id', 'business_id', name='uq_product_offered_business'),)
+
+
+class ProductUsedBusiness(Base):
+    """Junction table for ProductUsed to Business many-to-many relationship"""
+    __tablename__ = "product_used_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_used_id = Column(Integer, ForeignKey("products_used.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    product_used = relationship("ProductUsed", backref="business_associations")
+    business = relationship("Business", backref="product_used_associations")
+
+    __table_args__ = (UniqueConstraint('product_used_id', 'business_id', name='uq_product_used_business'),)
+
+
+class ServiceBusiness(Base):
+    """Junction table for Service to Business many-to-many relationship"""
+    __tablename__ = "service_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_id = Column(Integer, ForeignKey("services.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    service = relationship("Service", backref="business_associations")
+    business = relationship("Business", backref="service_associations")
+
+    __table_args__ = (UniqueConstraint('service_id', 'business_id', name='uq_service_business'),)
+
+
+class DeadlineBusiness(Base):
+    """Junction table for Deadline to Business many-to-many relationship"""
+    __tablename__ = "deadline_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    deadline_id = Column(Integer, ForeignKey("deadlines.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    deadline = relationship("Deadline", backref="business_associations")
+    business = relationship("Business", backref="deadline_associations")
+
+    __table_args__ = (UniqueConstraint('deadline_id', 'business_id', name='uq_deadline_business'),)
+
+
+class MeetingBusiness(Base):
+    """Junction table for Meeting to Business many-to-many relationship"""
+    __tablename__ = "meeting_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    meeting_id = Column(Integer, ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    meeting = relationship("Meeting", backref="business_associations")
+    business = relationship("Business", backref="meeting_associations")
+
+    __table_args__ = (UniqueConstraint('meeting_id', 'business_id', name='uq_meeting_business'),)

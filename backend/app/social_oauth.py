@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from .database import get_db
-from .models import User, OAuthConnection
+from .models import User, OAuthConnection, Business
 from .auth import get_current_user
 
 router = APIRouter()
@@ -48,19 +48,20 @@ LINKEDIN_REDIRECT_URI = f"{BACKEND_URL}/api/social/linkedin/callback"
 oauth_states: dict[str, dict] = {}
 
 
-def generate_state(user_id: int, provider: str) -> str:
-    """Generate a secure state token with user context."""
+def generate_state(user_id: int, provider: str, business_id: Optional[int] = None) -> str:
+    """Generate a secure state token with user and business context."""
     state = secrets.token_urlsafe(32)
     oauth_states[state] = {
         "user_id": user_id,
         "provider": provider,
+        "business_id": business_id,
         "created_at": datetime.utcnow(),
     }
     return state
 
 
-def validate_state(state: str, provider: str) -> Optional[int]:
-    """Validate state and return user_id if valid."""
+def validate_state(state: str, provider: str) -> Optional[dict]:
+    """Validate state and return dict with user_id and business_id if valid."""
     data = oauth_states.get(state)
     if not data:
         return None
@@ -71,7 +72,7 @@ def validate_state(state: str, provider: str) -> Optional[int]:
         del oauth_states[state]
         return None
     del oauth_states[state]
-    return data["user_id"]
+    return {"user_id": data["user_id"], "business_id": data.get("business_id")}
 
 
 # ============ SCHEMAS ============
@@ -81,6 +82,7 @@ class SocialAccountResponse(BaseModel):
     provider: str
     provider_username: Optional[str]
     page_name: Optional[str]
+    business_id: Optional[int]
     is_active: bool
     created_at: datetime
 
@@ -99,17 +101,30 @@ class ConnectedAccountsResponse(BaseModel):
 
 @router.get("/accounts", response_model=ConnectedAccountsResponse)
 async def get_connected_accounts(
+    business_id: Optional[int] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Get all connected social media accounts."""
+    """Get connected social media accounts, optionally filtered by business."""
     if not current_user.organization_id:
         raise HTTPException(status_code=400, detail="No organization")
 
-    accounts = db.query(OAuthConnection).filter(
+    query = db.query(OAuthConnection).filter(
         OAuthConnection.organization_id == current_user.organization_id,
         OAuthConnection.is_active == True,
-    ).all()
+    )
+
+    # Filter by business if specified
+    if business_id:
+        business = db.query(Business).filter(
+            Business.id == business_id,
+            Business.organization_id == current_user.organization_id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+        query = query.filter(OAuthConnection.business_id == business_id)
+
+    accounts = query.all()
 
     result = ConnectedAccountsResponse()
     for acc in accounts:
@@ -118,6 +133,7 @@ async def get_connected_accounts(
             provider=acc.provider,
             provider_username=acc.provider_username,
             page_name=acc.page_name,
+            business_id=acc.business_id,
             is_active=acc.is_active,
             created_at=acc.created_at,
         )
@@ -163,12 +179,25 @@ async def disconnect_account(
 # ============ TWITTER/X OAUTH 2.0 ============
 
 @router.get("/twitter/connect")
-async def twitter_connect(current_user: User = Depends(get_current_user)):
-    """Initiate Twitter OAuth 2.0 flow."""
+async def twitter_connect(
+    business_id: Optional[int] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Initiate Twitter OAuth 2.0 flow, optionally for a specific business."""
     if not TWITTER_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Twitter OAuth not configured")
 
-    state = generate_state(current_user.id, "twitter")
+    # Verify business if specified
+    if business_id:
+        business = db.query(Business).filter(
+            Business.id == business_id,
+            Business.organization_id == current_user.organization_id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+    state = generate_state(current_user.id, "twitter", business_id)
 
     # Twitter OAuth 2.0 with PKCE
     params = {
@@ -193,9 +222,12 @@ async def twitter_callback(
     db: Session = Depends(get_db),
 ):
     """Handle Twitter OAuth callback."""
-    user_id = validate_state(state, "twitter")
-    if not user_id:
+    state_data = validate_state(state, "twitter")
+    if not state_data:
         raise HTTPException(status_code=400, detail="Invalid state")
+
+    user_id = state_data["user_id"]
+    business_id = state_data.get("business_id")
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.organization_id:
@@ -231,11 +263,17 @@ async def twitter_callback(
 
         twitter_user = user_response.json().get("data", {})
 
-    # Save or update connection
-    existing = db.query(OAuthConnection).filter(
+    # Build filter for existing connection (include business_id if specified)
+    filter_conditions = [
         OAuthConnection.organization_id == user.organization_id,
         OAuthConnection.provider == "twitter",
-    ).first()
+    ]
+    if business_id:
+        filter_conditions.append(OAuthConnection.business_id == business_id)
+    else:
+        filter_conditions.append(OAuthConnection.business_id.is_(None))
+
+    existing = db.query(OAuthConnection).filter(*filter_conditions).first()
 
     expires_at = None
     if tokens.get("expires_in"):
@@ -252,6 +290,7 @@ async def twitter_callback(
     else:
         connection = OAuthConnection(
             organization_id=user.organization_id,
+            business_id=business_id,
             user_id=user.id,
             provider="twitter",
             provider_user_id=twitter_user.get("id"),
@@ -265,8 +304,13 @@ async def twitter_callback(
 
     db.commit()
 
+    # Include business_id in redirect if specified
+    redirect_url = f"{FRONTEND_URL}/app/marketing?connected=twitter"
+    if business_id:
+        redirect_url += f"&business_id={business_id}"
+
     response.status_code = 302
-    response.headers["Location"] = f"{FRONTEND_URL}/app/marketing?connected=twitter"
+    response.headers["Location"] = redirect_url
     return response
 
 

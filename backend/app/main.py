@@ -32,7 +32,10 @@ from .models import (
     BrandGuideline, EmailTemplate, MarketingCampaign, CampaignVersion,
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
-    Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting
+    Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting,
+    # Junction tables for business taxonomy
+    ContactBusiness, DocumentBusiness, CredentialBusiness, WebLinkBusiness,
+    ProductOfferedBusiness, ProductUsedBusiness, ServiceBusiness, DeadlineBusiness, MeetingBusiness
 )
 from .auth import router as auth_router, get_current_user
 from .oauth import router as oauth_router
@@ -50,7 +53,7 @@ from .schemas import (
     ContactCreate, ContactUpdate, ContactResponse,
     DeadlineCreate, DeadlineUpdate, DeadlineResponse,
     DashboardStats,
-    BusinessCreate, BusinessUpdate, BusinessResponse, BusinessWithChildren, BusinessSwitchRequest,
+    BusinessCreate, BusinessUpdate, BusinessResponse, BusinessWithChildren, BusinessSwitchRequest, BulkBusinessAssignRequest,
     BusinessInfoCreate, BusinessInfoUpdate, BusinessInfoResponse,
     BusinessIdentifierCreate, BusinessIdentifierUpdate, BusinessIdentifierResponse, BusinessIdentifierMasked,
     ChecklistProgressCreate, ChecklistProgressUpdate, ChecklistProgressResponse,
@@ -104,7 +107,12 @@ try:
     existing_tables = inspector.get_table_names()
 
     # Create missing tables explicitly (for tables added after initial deployment)
-    tables_to_check = ['bank_accounts', 'achievements', 'business_achievements', 'meetings', 'user_sessions', 'token_blacklist']
+    tables_to_check = [
+        'bank_accounts', 'achievements', 'business_achievements', 'meetings', 'user_sessions', 'token_blacklist',
+        # Business taxonomy junction tables
+        'contact_businesses', 'document_businesses', 'credential_businesses', 'web_link_businesses',
+        'product_offered_businesses', 'product_used_businesses', 'service_businesses', 'deadline_businesses', 'meeting_businesses'
+    ]
     for table_name in tables_to_check:
         if table_name not in existing_tables:
             # Get the table from metadata and create it
@@ -178,6 +186,7 @@ try:
         brand_columns = [col['name'] for col in inspector.get_columns('brand_guidelines')]
         brand_migrations = [
             ('order_index', 'ALTER TABLE brand_guidelines ADD COLUMN order_index INTEGER DEFAULT 0'),
+            ('business_id', 'ALTER TABLE brand_guidelines ADD COLUMN business_id INTEGER'),
         ]
         with engine.connect() as conn:
             for col_name, sql in brand_migrations:
@@ -185,6 +194,67 @@ try:
                     conn.execute(text(sql))
                     logger.info(f"Added {col_name} column to brand_guidelines table")
             conn.commit()
+
+    # Business model enhancements
+    if 'businesses' in existing_tables:
+        business_columns = [col['name'] for col in inspector.get_columns('businesses')]
+        business_migrations = [
+            ('website', 'ALTER TABLE businesses ADD COLUMN website VARCHAR(500)'),
+            ('primary_contact_id', 'ALTER TABLE businesses ADD COLUMN primary_contact_id INTEGER'),
+            ('notes', 'ALTER TABLE businesses ADD COLUMN notes TEXT'),
+            ('archived_at', 'ALTER TABLE businesses ADD COLUMN archived_at DATETIME'),
+        ]
+        with engine.connect() as conn:
+            for col_name, sql in business_migrations:
+                if col_name not in business_columns:
+                    conn.execute(text(sql))
+                    logger.info(f"Added {col_name} column to businesses table")
+            conn.commit()
+
+    # Brand colors table migrations
+    if 'brand_colors' in existing_tables:
+        brand_color_columns = [col['name'] for col in inspector.get_columns('brand_colors')]
+        if 'business_id' not in brand_color_columns:
+            with engine.connect() as conn:
+                conn.execute(text('ALTER TABLE brand_colors ADD COLUMN business_id INTEGER'))
+                logger.info("Added business_id column to brand_colors table")
+                conn.commit()
+
+    # Brand fonts table migrations
+    if 'brand_fonts' in existing_tables:
+        brand_font_columns = [col['name'] for col in inspector.get_columns('brand_fonts')]
+        if 'business_id' not in brand_font_columns:
+            with engine.connect() as conn:
+                conn.execute(text('ALTER TABLE brand_fonts ADD COLUMN business_id INTEGER'))
+                logger.info("Added business_id column to brand_fonts table")
+                conn.commit()
+
+    # Brand assets table migrations
+    if 'brand_assets' in existing_tables:
+        brand_asset_columns = [col['name'] for col in inspector.get_columns('brand_assets')]
+        if 'business_id' not in brand_asset_columns:
+            with engine.connect() as conn:
+                conn.execute(text('ALTER TABLE brand_assets ADD COLUMN business_id INTEGER'))
+                logger.info("Added business_id column to brand_assets table")
+                conn.commit()
+
+    # OAuth connections table migrations (for per-business social accounts)
+    if 'oauth_connections' in existing_tables:
+        oauth_columns = [col['name'] for col in inspector.get_columns('oauth_connections')]
+        if 'business_id' not in oauth_columns:
+            with engine.connect() as conn:
+                conn.execute(text('ALTER TABLE oauth_connections ADD COLUMN business_id INTEGER'))
+                logger.info("Added business_id column to oauth_connections table")
+                conn.commit()
+
+    # Social analytics table migrations (for per-business analytics)
+    if 'social_analytics' in existing_tables:
+        social_columns = [col['name'] for col in inspector.get_columns('social_analytics')]
+        if 'business_id' not in social_columns:
+            with engine.connect() as conn:
+                conn.execute(text('ALTER TABLE social_analytics ADD COLUMN business_id INTEGER'))
+                logger.info("Added business_id column to social_analytics table")
+                conn.commit()
 
 except Exception as e:
     logger.warning(f"Migration check failed (may be OK on fresh install): {e}")
@@ -512,6 +582,7 @@ def delete_business(
     if children:
         # Soft delete (archive) if has children
         business.is_archived = True
+        business.archived_at = datetime.utcnow()
         db.commit()
         return {"message": "Business archived (has children)", "archived": True}
 
@@ -519,6 +590,77 @@ def delete_business(
     db.delete(business)
     db.commit()
     return {"message": "Business deleted"}
+
+
+@app.post("/api/businesses/{business_id}/archive")
+def archive_business(
+    business_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Archive a business (soft delete)"""
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    business.is_archived = True
+    business.archived_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Business archived", "business_id": business_id}
+
+
+@app.post("/api/businesses/{business_id}/restore")
+def restore_business(
+    business_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Restore an archived business"""
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    business.is_archived = False
+    business.archived_at = None
+    db.commit()
+    return {"message": "Business restored", "business_id": business_id}
+
+
+@app.get("/api/businesses/{business_id}/stats")
+def get_business_stats(
+    business_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get item counts for a business (via junction tables)"""
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Count items via junction tables
+    stats = {
+        "business_id": business_id,
+        "business_name": business.name,
+        "contacts": db.query(ContactBusiness).filter(ContactBusiness.business_id == business_id).count(),
+        "documents": db.query(DocumentBusiness).filter(DocumentBusiness.business_id == business_id).count(),
+        "credentials": db.query(CredentialBusiness).filter(CredentialBusiness.business_id == business_id).count(),
+        "services": db.query(ServiceBusiness).filter(ServiceBusiness.business_id == business_id).count(),
+        "web_links": db.query(WebLinkBusiness).filter(WebLinkBusiness.business_id == business_id).count(),
+        "products_offered": db.query(ProductOfferedBusiness).filter(ProductOfferedBusiness.business_id == business_id).count(),
+        "products_used": db.query(ProductUsedBusiness).filter(ProductUsedBusiness.business_id == business_id).count(),
+        "deadlines": db.query(DeadlineBusiness).filter(DeadlineBusiness.business_id == business_id).count(),
+        "meetings": db.query(MeetingBusiness).filter(MeetingBusiness.business_id == business_id).count(),
+    }
+    return stats
 
 
 # ============ XP Helper Functions ============
@@ -2386,34 +2528,91 @@ def get_challenge_progress(
 
 
 # ============ Services ============
-@app.get("/api/services", response_model=List[ServiceResponse])
-def get_services(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def _serialize_service(service: Service, db: Session) -> dict:
+    """Serialize service with businesses."""
+    return {
+        "id": service.id,
+        "name": service.name,
+        "url": service.url,
+        "category": service.category,
+        "description": service.description,
+        "username_hint": service.username_hint,
+        "notes": service.notes,
+        "icon": service.icon,
+        "is_favorite": service.is_favorite,
+        "last_visited": service.last_visited,
+        "businesses": _get_entity_businesses(db, ServiceBusiness, "service_id", service.id),
+        "created_at": service.created_at,
+        "updated_at": service.updated_at,
+    }
+
+
+@app.get("/api/services")
+def get_services(
+    category: str = None,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get services with optional business filtering."""
     query = db.query(Service).filter(Service.organization_id == current_user.organization_id)
     if category:
         query = query.filter(Service.category == category)
-    return query.order_by(Service.is_favorite.desc(), Service.name).all()
+
+    # Business filtering via junction table
+    if business_id:
+        business_ids = [business_id]
+        if include_children:
+            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        service_ids = db.query(ServiceBusiness.service_id).filter(
+            ServiceBusiness.business_id.in_(business_ids)
+        ).subquery()
+        query = query.filter(Service.id.in_(service_ids))
+    elif unassigned_only:
+        assigned_ids = db.query(ServiceBusiness.service_id).subquery()
+        query = query.filter(~Service.id.in_(assigned_ids))
+
+    services = query.order_by(Service.is_favorite.desc(), Service.name).all()
+    return [_serialize_service(s, db) for s in services]
 
 
-@app.post("/api/services", response_model=ServiceResponse)
+@app.post("/api/services")
 def create_service(service: ServiceCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_service = Service(**service.model_dump(), organization_id=current_user.organization_id)
+    service_data = service.model_dump(exclude={'business_ids'})
+    business_ids = service.business_ids or []
+
+    db_service = Service(**service_data, organization_id=current_user.organization_id)
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
-    return db_service
+
+    # Set business associations
+    if business_ids:
+        _set_entity_businesses(db, ServiceBusiness, "service_id", db_service.id, business_ids, current_user.organization_id)
+        db.commit()
+
+    return _serialize_service(db_service, db)
 
 
-@app.get("/api/services/{service_id}", response_model=ServiceResponse)
+@app.get("/api/services/{service_id}")
 def get_service(service_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.id == service_id).first()
+    service = db.query(Service).filter(
+        Service.id == service_id,
+        Service.organization_id == current_user.organization_id
+    ).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
-    return service
+    return _serialize_service(service, db)
 
 
-@app.patch("/api/services/{service_id}", response_model=ServiceResponse)
+@app.patch("/api/services/{service_id}")
 def update_service(service_id: int, service: ServiceUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_service = db.query(Service).filter(Service.id == service_id).first()
+    db_service = db.query(Service).filter(
+        Service.id == service_id,
+        Service.organization_id == current_user.organization_id
+    ).first()
     if not db_service:
         raise HTTPException(status_code=404, detail="Service not found")
 
@@ -2422,22 +2621,95 @@ def update_service(service_id: int, service: ServiceUpdate, current_user: User =
 
     db.commit()
     db.refresh(db_service)
-    return db_service
+    return _serialize_service(db_service, db)
+
+
+@app.put("/api/services/{service_id}/businesses")
+def update_service_businesses(
+    service_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Set businesses for a service."""
+    service = db.query(Service).filter(
+        Service.id == service_id,
+        Service.organization_id == current_user.organization_id
+    ).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    _set_entity_businesses(db, ServiceBusiness, "service_id", service_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_service(service, db)
 
 
 @app.delete("/api/services/{service_id}")
 def delete_service(service_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.id == service_id).first()
+    service = db.query(Service).filter(
+        Service.id == service_id,
+        Service.organization_id == current_user.organization_id
+    ).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
+    db.query(ServiceBusiness).filter(ServiceBusiness.service_id == service_id).delete()
     db.delete(service)
     db.commit()
     return {"ok": True}
 
 
+@app.post("/api/services/bulk-assign-business")
+def bulk_assign_services_to_business(
+    request: BulkBusinessAssignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign/remove businesses from multiple services."""
+    services = db.query(Service).filter(
+        Service.id.in_(request.entity_ids),
+        Service.organization_id == current_user.organization_id
+    ).all()
+
+    if len(services) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some services not found")
+
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found")
+
+    for service_id in request.entity_ids:
+        if request.action == "set":
+            db.query(ServiceBusiness).filter(ServiceBusiness.service_id == service_id).delete()
+            for biz_id in request.business_ids:
+                db.add(ServiceBusiness(service_id=service_id, business_id=biz_id))
+        elif request.action == "add":
+            for biz_id in request.business_ids:
+                existing = db.query(ServiceBusiness).filter(
+                    ServiceBusiness.service_id == service_id,
+                    ServiceBusiness.business_id == biz_id
+                ).first()
+                if not existing:
+                    db.add(ServiceBusiness(service_id=service_id, business_id=biz_id))
+        elif request.action == "remove":
+            db.query(ServiceBusiness).filter(
+                ServiceBusiness.service_id == service_id,
+                ServiceBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"message": f"Updated {len(services)} services", "action": request.action}
+
+
 @app.post("/api/services/{service_id}/visit")
 def record_service_visit(service_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.id == service_id).first()
+    service = db.query(Service).filter(
+        Service.id == service_id,
+        Service.organization_id == current_user.organization_id
+    ).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     service.last_visited = datetime.utcnow()
@@ -2467,13 +2739,35 @@ def check_file_exists(file_path: str) -> bool:
 
 
 @app.get("/api/documents")
-def get_documents(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_documents(
+    category: str = None,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get documents with optional business filtering."""
     query = db.query(Document).filter(Document.organization_id == current_user.organization_id)
     if category:
         query = query.filter(Document.category == category)
+
+    # Business filtering via junction table
+    if business_id:
+        business_ids = [business_id]
+        if include_children:
+            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        doc_ids = db.query(DocumentBusiness.document_id).filter(
+            DocumentBusiness.business_id.in_(business_ids)
+        ).subquery()
+        query = query.filter(Document.id.in_(doc_ids))
+    elif unassigned_only:
+        assigned_ids = db.query(DocumentBusiness.document_id).subquery()
+        query = query.filter(~Document.id.in_(assigned_ids))
+
     documents = query.order_by(Document.created_at.desc()).all()
 
-    # Add file_exists status to each document
+    # Add file_exists status and businesses to each document
     result = []
     for doc in documents:
         doc_dict = {
@@ -2485,6 +2779,8 @@ def get_documents(category: str = None, current_user: User = Depends(get_current
             "description": doc.description,
             "expiration_date": doc.expiration_date,
             "tags": doc.tags,
+            "is_sensitive": doc.is_sensitive,
+            "businesses": _get_entity_businesses(db, DocumentBusiness, "document_id", doc.id),
             "created_at": doc.created_at,
             "updated_at": doc.updated_at,
             "file_exists": check_file_exists(doc.file_path) if doc.file_path else False
@@ -2496,10 +2792,19 @@ def get_documents(category: str = None, current_user: User = Depends(get_current
 
 @app.post("/api/documents", response_model=DocumentResponse)
 def create_document(document: DocumentCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_document = Document(**document.model_dump())
+    document_data = document.model_dump(exclude={'business_ids'})
+    business_ids = document.business_ids or []
+
+    db_document = Document(**document_data, organization_id=current_user.organization_id)
     db.add(db_document)
     db.commit()
     db.refresh(db_document)
+
+    # Set business associations
+    if business_ids:
+        _set_entity_businesses(db, DocumentBusiness, "document_id", db_document.id, business_ids, current_user.organization_id)
+        db.commit()
+
     return db_document
 
 
@@ -2903,8 +3208,89 @@ def recategorize_documents(current_user: User = Depends(get_current_user), db: S
     }
 
 
+# ============ Business Association Helpers ============
+def _get_entity_businesses(db: Session, junction_model, entity_id_field: str, entity_id: int) -> List[dict]:
+    """Get businesses associated with an entity via junction table.
+
+    Args:
+        db: Database session
+        junction_model: The junction table model (e.g., ContactBusiness)
+        entity_id_field: Name of the entity ID field in junction table (e.g., 'contact_id')
+        entity_id: ID of the entity to look up
+
+    Returns:
+        List of BusinessBrief dicts
+    """
+    associations = db.query(junction_model).filter(
+        getattr(junction_model, entity_id_field) == entity_id
+    ).all()
+
+    businesses = []
+    for assoc in associations:
+        if assoc.business:
+            businesses.append({
+                "id": assoc.business.id,
+                "name": assoc.business.name,
+                "color": assoc.business.color,
+                "emoji": assoc.business.emoji
+            })
+    return businesses
+
+
+def _set_entity_businesses(db: Session, junction_model, entity_id_field: str, entity_id: int, business_ids: List[int], org_id: int):
+    """Set businesses for an entity (replaces existing associations).
+
+    Args:
+        db: Database session
+        junction_model: The junction table model (e.g., ContactBusiness)
+        entity_id_field: Name of the entity ID field in junction table (e.g., 'contact_id')
+        entity_id: ID of the entity
+        business_ids: List of business IDs to associate
+        org_id: Organization ID for validation
+    """
+    # Remove existing associations
+    db.query(junction_model).filter(
+        getattr(junction_model, entity_id_field) == entity_id
+    ).delete()
+
+    # Add new associations
+    for biz_id in business_ids:
+        # Verify business belongs to org
+        business = db.query(Business).filter(
+            Business.id == biz_id,
+            Business.organization_id == org_id
+        ).first()
+        if business:
+            assoc = junction_model(**{entity_id_field: entity_id, "business_id": biz_id})
+            db.add(assoc)
+
+
+def _get_descendant_business_ids(db: Session, business_id: int, org_id: int) -> List[int]:
+    """Get all descendant business IDs (for include_children filter).
+
+    Args:
+        db: Database session
+        business_id: Parent business ID
+        org_id: Organization ID
+
+    Returns:
+        List of business IDs including the parent and all descendants
+    """
+    result = [business_id]
+    children = db.query(Business).filter(
+        Business.parent_id == business_id,
+        Business.organization_id == org_id,
+        Business.is_archived == False
+    ).all()
+
+    for child in children:
+        result.extend(_get_descendant_business_ids(db, child.id, org_id))
+
+    return result
+
+
 # ============ Contacts ============
-def _serialize_contact(contact: Contact) -> dict:
+def _serialize_contact(contact: Contact, db: Session = None) -> dict:
     """Serialize contact with JSON fields parsed."""
     data = {
         "id": contact.id,
@@ -2931,6 +3317,7 @@ def _serialize_contact(contact: Contact) -> dict:
         "responsibilities": contact.responsibilities,
         "notes": contact.notes,
         "last_contacted": contact.last_contacted,
+        "businesses": _get_entity_businesses(db, ContactBusiness, "contact_id", contact.id) if db else [],
         "created_at": contact.created_at,
         "updated_at": contact.updated_at,
     }
@@ -2938,17 +3325,43 @@ def _serialize_contact(contact: Contact) -> dict:
 
 
 @app.get("/api/contacts")
-def get_contacts(contact_type: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_contacts(
+    contact_type: str = None,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get contacts with optional business filtering."""
     query = db.query(Contact).filter(Contact.organization_id == current_user.organization_id)
+
     if contact_type:
         query = query.filter(Contact.contact_type == contact_type)
+
+    # Business filtering via junction table
+    if business_id:
+        business_ids = [business_id]
+        if include_children:
+            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        contact_ids = db.query(ContactBusiness.contact_id).filter(
+            ContactBusiness.business_id.in_(business_ids)
+        ).subquery()
+        query = query.filter(Contact.id.in_(contact_ids))
+    elif unassigned_only:
+        # Get contacts with no business associations
+        assigned_ids = db.query(ContactBusiness.contact_id).subquery()
+        query = query.filter(~Contact.id.in_(assigned_ids))
+
     contacts = query.order_by(Contact.name).all()
-    return [_serialize_contact(c) for c in contacts]
+    return [_serialize_contact(c, db) for c in contacts]
 
 
 @app.post("/api/contacts")
 def create_contact(contact: ContactCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    contact_data = contact.model_dump()
+    contact_data = contact.model_dump(exclude={'business_ids'})
+    business_ids = contact.business_ids or []
+
     # Serialize list fields to JSON
     if contact_data.get('additional_emails'):
         contact_data['additional_emails'] = json.dumps(contact_data['additional_emails'])
@@ -2960,29 +3373,39 @@ def create_contact(contact: ContactCreate, current_user: User = Depends(get_curr
     db.commit()
     db.refresh(db_contact)
 
-    # Award XP for creating a contact
-    business_id = db_contact.business_id or current_user.current_business_id
-    if business_id:
-        _award_xp(db, business_id, XP_CONTACT_CREATED, current_user.organization_id)
-        # Update quest and achievement progress
-        _update_quest_progress(db, business_id, "contact_create")
-        _update_achievement_progress_internal(db, business_id, "contact_create")
+    # Set business associations
+    if business_ids:
+        _set_entity_businesses(db, ContactBusiness, "contact_id", db_contact.id, business_ids, current_user.organization_id)
         db.commit()
 
-    return _serialize_contact(db_contact)
+    # Award XP for creating a contact (use first business or current)
+    xp_business_id = business_ids[0] if business_ids else current_user.current_business_id
+    if xp_business_id:
+        _award_xp(db, xp_business_id, XP_CONTACT_CREATED, current_user.organization_id)
+        _update_quest_progress(db, xp_business_id, "contact_create")
+        _update_achievement_progress_internal(db, xp_business_id, "contact_create")
+        db.commit()
+
+    return _serialize_contact(db_contact, db)
 
 
 @app.get("/api/contacts/{contact_id}")
 def get_contact(contact_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    contact = db.query(Contact).filter(
+        Contact.id == contact_id,
+        Contact.organization_id == current_user.organization_id
+    ).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    return _serialize_contact(contact)
+    return _serialize_contact(contact, db)
 
 
 @app.patch("/api/contacts/{contact_id}")
 def update_contact(contact_id: int, contact: ContactUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    db_contact = db.query(Contact).filter(
+        Contact.id == contact_id,
+        Contact.organization_id == current_user.organization_id
+    ).first()
     if not db_contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
@@ -2994,22 +3417,108 @@ def update_contact(contact_id: int, contact: ContactUpdate, current_user: User =
 
     db.commit()
     db.refresh(db_contact)
-    return _serialize_contact(db_contact)
+    return _serialize_contact(db_contact, db)
+
+
+@app.put("/api/contacts/{contact_id}/businesses")
+def update_contact_businesses(
+    contact_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Set businesses for a contact (replaces all existing associations)."""
+    contact = db.query(Contact).filter(
+        Contact.id == contact_id,
+        Contact.organization_id == current_user.organization_id
+    ).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    _set_entity_businesses(db, ContactBusiness, "contact_id", contact_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_contact(contact, db)
 
 
 @app.delete("/api/contacts/{contact_id}")
 def delete_contact(contact_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    contact = db.query(Contact).filter(
+        Contact.id == contact_id,
+        Contact.organization_id == current_user.organization_id
+    ).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
+    # Delete business associations first (cascade should handle this, but be explicit)
+    db.query(ContactBusiness).filter(ContactBusiness.contact_id == contact_id).delete()
     db.delete(contact)
     db.commit()
     return {"ok": True}
 
 
+@app.post("/api/contacts/bulk-assign-business")
+def bulk_assign_contacts_to_business(
+    request: BulkBusinessAssignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign/remove businesses from multiple contacts.
+
+    Actions:
+    - add: Add businesses to contacts (keeps existing)
+    - remove: Remove specified businesses from contacts
+    - set: Replace all business associations with specified ones
+    """
+    # Verify all contacts belong to org
+    contacts = db.query(Contact).filter(
+        Contact.id.in_(request.entity_ids),
+        Contact.organization_id == current_user.organization_id
+    ).all()
+
+    if len(contacts) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some contacts not found or don't belong to your organization")
+
+    # Verify all businesses belong to org
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found or don't belong to your organization")
+
+    updated_count = 0
+    for contact_id in request.entity_ids:
+        if request.action == "set":
+            # Replace all associations
+            db.query(ContactBusiness).filter(ContactBusiness.contact_id == contact_id).delete()
+            for biz_id in request.business_ids:
+                db.add(ContactBusiness(contact_id=contact_id, business_id=biz_id))
+            updated_count += 1
+        elif request.action == "add":
+            # Add new associations (skip existing)
+            for biz_id in request.business_ids:
+                existing = db.query(ContactBusiness).filter(
+                    ContactBusiness.contact_id == contact_id,
+                    ContactBusiness.business_id == biz_id
+                ).first()
+                if not existing:
+                    db.add(ContactBusiness(contact_id=contact_id, business_id=biz_id))
+            updated_count += 1
+        elif request.action == "remove":
+            # Remove specified associations
+            db.query(ContactBusiness).filter(
+                ContactBusiness.contact_id == contact_id,
+                ContactBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+            updated_count += 1
+
+    db.commit()
+    return {"message": f"Updated {updated_count} contacts", "action": request.action}
+
+
 # ============ Meetings ============
-def _serialize_meeting(meeting: Meeting) -> dict:
-    """Serialize meeting with JSON fields parsed."""
+def _serialize_meeting(meeting: Meeting, db: Session) -> dict:
+    """Serialize meeting with JSON fields parsed and businesses."""
     return {
         "id": meeting.id,
         "title": meeting.title,
@@ -3027,6 +3536,7 @@ def _serialize_meeting(meeting: Meeting) -> dict:
         "tags": meeting.tags,
         "is_recurring": meeting.is_recurring,
         "recurrence_pattern": meeting.recurrence_pattern,
+        "businesses": _get_entity_businesses(db, MeetingBusiness, "meeting_id", meeting.id),
         "created_at": meeting.created_at,
         "updated_at": meeting.updated_at,
     }
@@ -3035,15 +3545,32 @@ def _serialize_meeting(meeting: Meeting) -> dict:
 @app.get("/api/meetings")
 def get_meetings(
     meeting_type: str = None,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all meetings for the organization."""
+    """Get meetings with optional business filtering."""
     query = db.query(Meeting).filter(Meeting.organization_id == current_user.organization_id)
     if meeting_type:
         query = query.filter(Meeting.meeting_type == meeting_type)
+
+    # Business filtering via junction table
+    if business_id:
+        business_ids = [business_id]
+        if include_children:
+            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        meeting_ids = db.query(MeetingBusiness.meeting_id).filter(
+            MeetingBusiness.business_id.in_(business_ids)
+        ).subquery()
+        query = query.filter(Meeting.id.in_(meeting_ids))
+    elif unassigned_only:
+        assigned_ids = db.query(MeetingBusiness.meeting_id).subquery()
+        query = query.filter(~Meeting.id.in_(assigned_ids))
+
     meetings = query.order_by(Meeting.meeting_date.desc()).all()
-    return [_serialize_meeting(m) for m in meetings]
+    return [_serialize_meeting(m, db) for m in meetings]
 
 
 @app.post("/api/meetings")
@@ -3053,7 +3580,9 @@ def create_meeting(
     db: Session = Depends(get_db)
 ):
     """Create a new meeting."""
-    meeting_data = meeting.model_dump()
+    meeting_data = meeting.model_dump(exclude={'business_ids'})
+    business_ids = meeting.business_ids or []
+
     # Serialize list fields to JSON
     if meeting_data.get('attendees'):
         meeting_data['attendees'] = json.dumps(meeting_data['attendees'])
@@ -3066,7 +3595,13 @@ def create_meeting(
     db.add(db_meeting)
     db.commit()
     db.refresh(db_meeting)
-    return _serialize_meeting(db_meeting)
+
+    # Set business associations
+    if business_ids:
+        _set_entity_businesses(db, MeetingBusiness, "meeting_id", db_meeting.id, business_ids, current_user.organization_id)
+        db.commit()
+
+    return _serialize_meeting(db_meeting, db)
 
 
 @app.get("/api/meetings/{meeting_id}")
@@ -3082,7 +3617,7 @@ def get_meeting(
     ).first()
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
-    return _serialize_meeting(meeting)
+    return _serialize_meeting(meeting, db)
 
 
 @app.patch("/api/meetings/{meeting_id}")
@@ -3108,7 +3643,27 @@ def update_meeting(
 
     db.commit()
     db.refresh(db_meeting)
-    return _serialize_meeting(db_meeting)
+    return _serialize_meeting(db_meeting, db)
+
+
+@app.put("/api/meetings/{meeting_id}/businesses")
+def update_meeting_businesses(
+    meeting_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Set businesses for a meeting."""
+    meeting = db.query(Meeting).filter(
+        Meeting.id == meeting_id,
+        Meeting.organization_id == current_user.organization_id
+    ).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    _set_entity_businesses(db, MeetingBusiness, "meeting_id", meeting_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_meeting(meeting, db)
 
 
 @app.delete("/api/meetings/{meeting_id}")
@@ -3124,47 +3679,149 @@ def delete_meeting(
     ).first()
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
+    db.query(MeetingBusiness).filter(MeetingBusiness.meeting_id == meeting_id).delete()
     db.delete(meeting)
     db.commit()
     return {"ok": True}
 
 
-# ============ Deadlines ============
-@app.get("/api/deadlines", response_model=List[DeadlineResponse])
-def get_deadlines(
-    deadline_type: str = None,
-    include_completed: bool = False,
+@app.post("/api/meetings/bulk-assign-business")
+def bulk_assign_meetings_to_business(
+    request: BulkBusinessAssignRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Bulk assign/remove businesses from multiple meetings."""
+    meetings = db.query(Meeting).filter(
+        Meeting.id.in_(request.entity_ids),
+        Meeting.organization_id == current_user.organization_id
+    ).all()
+
+    if len(meetings) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some meetings not found")
+
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found")
+
+    for meeting_id in request.entity_ids:
+        if request.action == "set":
+            db.query(MeetingBusiness).filter(MeetingBusiness.meeting_id == meeting_id).delete()
+            for biz_id in request.business_ids:
+                db.add(MeetingBusiness(meeting_id=meeting_id, business_id=biz_id))
+        elif request.action == "add":
+            for biz_id in request.business_ids:
+                existing = db.query(MeetingBusiness).filter(
+                    MeetingBusiness.meeting_id == meeting_id,
+                    MeetingBusiness.business_id == biz_id
+                ).first()
+                if not existing:
+                    db.add(MeetingBusiness(meeting_id=meeting_id, business_id=biz_id))
+        elif request.action == "remove":
+            db.query(MeetingBusiness).filter(
+                MeetingBusiness.meeting_id == meeting_id,
+                MeetingBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"message": f"Updated {len(meetings)} meetings", "action": request.action}
+
+
+# ============ Deadlines ============
+def _serialize_deadline(deadline: Deadline, db: Session) -> dict:
+    """Serialize deadline with businesses."""
+    return {
+        "id": deadline.id,
+        "title": deadline.title,
+        "description": deadline.description,
+        "deadline_type": deadline.deadline_type,
+        "due_date": deadline.due_date,
+        "reminder_days": deadline.reminder_days,
+        "is_recurring": deadline.is_recurring,
+        "recurrence_months": deadline.recurrence_months,
+        "related_service_id": deadline.related_service_id,
+        "related_document_id": deadline.related_document_id,
+        "is_completed": deadline.is_completed,
+        "completed_at": deadline.completed_at,
+        "businesses": _get_entity_businesses(db, DeadlineBusiness, "deadline_id", deadline.id),
+        "created_at": deadline.created_at,
+        "updated_at": deadline.updated_at,
+    }
+
+
+@app.get("/api/deadlines")
+def get_deadlines(
+    deadline_type: str = None,
+    include_completed: bool = False,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get deadlines with optional business filtering."""
     query = db.query(Deadline).filter(Deadline.organization_id == current_user.organization_id)
     if deadline_type:
         query = query.filter(Deadline.deadline_type == deadline_type)
     if not include_completed:
         query = query.filter(Deadline.is_completed == False)
-    return query.order_by(Deadline.due_date).all()
+
+    # Business filtering via junction table
+    if business_id:
+        business_ids = [business_id]
+        if include_children:
+            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        deadline_ids = db.query(DeadlineBusiness.deadline_id).filter(
+            DeadlineBusiness.business_id.in_(business_ids)
+        ).subquery()
+        query = query.filter(Deadline.id.in_(deadline_ids))
+    elif unassigned_only:
+        assigned_ids = db.query(DeadlineBusiness.deadline_id).subquery()
+        query = query.filter(~Deadline.id.in_(assigned_ids))
+
+    deadlines = query.order_by(Deadline.due_date).all()
+    return [_serialize_deadline(d, db) for d in deadlines]
 
 
-@app.post("/api/deadlines", response_model=DeadlineResponse)
+@app.post("/api/deadlines")
 def create_deadline(deadline: DeadlineCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_deadline = Deadline(**deadline.model_dump(), organization_id=current_user.organization_id)
+    deadline_data = deadline.model_dump(exclude={'business_ids'})
+    business_ids = deadline.business_ids or []
+
+    db_deadline = Deadline(**deadline_data, organization_id=current_user.organization_id)
     db.add(db_deadline)
     db.commit()
     db.refresh(db_deadline)
-    return db_deadline
+
+    # Set business associations
+    if business_ids:
+        _set_entity_businesses(db, DeadlineBusiness, "deadline_id", db_deadline.id, business_ids, current_user.organization_id)
+        db.commit()
+
+    return _serialize_deadline(db_deadline, db)
 
 
-@app.get("/api/deadlines/{deadline_id}", response_model=DeadlineResponse)
+@app.get("/api/deadlines/{deadline_id}")
 def get_deadline(deadline_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
+    deadline = db.query(Deadline).filter(
+        Deadline.id == deadline_id,
+        Deadline.organization_id == current_user.organization_id
+    ).first()
     if not deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
-    return deadline
+    return _serialize_deadline(deadline, db)
 
 
-@app.patch("/api/deadlines/{deadline_id}", response_model=DeadlineResponse)
+@app.patch("/api/deadlines/{deadline_id}")
 def update_deadline(deadline_id: int, deadline: DeadlineUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
+    db_deadline = db.query(Deadline).filter(
+        Deadline.id == deadline_id,
+        Deadline.organization_id == current_user.organization_id
+    ).first()
     if not db_deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
 
@@ -3179,22 +3836,95 @@ def update_deadline(deadline_id: int, deadline: DeadlineUpdate, current_user: Us
 
     db.commit()
     db.refresh(db_deadline)
-    return db_deadline
+    return _serialize_deadline(db_deadline, db)
+
+
+@app.put("/api/deadlines/{deadline_id}/businesses")
+def update_deadline_businesses(
+    deadline_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Set businesses for a deadline."""
+    deadline = db.query(Deadline).filter(
+        Deadline.id == deadline_id,
+        Deadline.organization_id == current_user.organization_id
+    ).first()
+    if not deadline:
+        raise HTTPException(status_code=404, detail="Deadline not found")
+
+    _set_entity_businesses(db, DeadlineBusiness, "deadline_id", deadline_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_deadline(deadline, db)
 
 
 @app.delete("/api/deadlines/{deadline_id}")
 def delete_deadline(deadline_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
+    deadline = db.query(Deadline).filter(
+        Deadline.id == deadline_id,
+        Deadline.organization_id == current_user.organization_id
+    ).first()
     if not deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
+    db.query(DeadlineBusiness).filter(DeadlineBusiness.deadline_id == deadline_id).delete()
     db.delete(deadline)
     db.commit()
     return {"ok": True}
 
 
+@app.post("/api/deadlines/bulk-assign-business")
+def bulk_assign_deadlines_to_business(
+    request: BulkBusinessAssignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign/remove businesses from multiple deadlines."""
+    deadlines = db.query(Deadline).filter(
+        Deadline.id.in_(request.entity_ids),
+        Deadline.organization_id == current_user.organization_id
+    ).all()
+
+    if len(deadlines) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some deadlines not found")
+
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found")
+
+    for deadline_id in request.entity_ids:
+        if request.action == "set":
+            db.query(DeadlineBusiness).filter(DeadlineBusiness.deadline_id == deadline_id).delete()
+            for biz_id in request.business_ids:
+                db.add(DeadlineBusiness(deadline_id=deadline_id, business_id=biz_id))
+        elif request.action == "add":
+            for biz_id in request.business_ids:
+                existing = db.query(DeadlineBusiness).filter(
+                    DeadlineBusiness.deadline_id == deadline_id,
+                    DeadlineBusiness.business_id == biz_id
+                ).first()
+                if not existing:
+                    db.add(DeadlineBusiness(deadline_id=deadline_id, business_id=biz_id))
+        elif request.action == "remove":
+            db.query(DeadlineBusiness).filter(
+                DeadlineBusiness.deadline_id == deadline_id,
+                DeadlineBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"message": f"Updated {len(deadlines)} deadlines", "action": request.action}
+
+
 @app.post("/api/deadlines/{deadline_id}/complete")
 def complete_deadline(deadline_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    deadline = db.query(Deadline).filter(Deadline.id == deadline_id).first()
+    deadline = db.query(Deadline).filter(
+        Deadline.id == deadline_id,
+        Deadline.organization_id == current_user.organization_id
+    ).first()
     if not deadline:
         raise HTTPException(status_code=404, detail="Deadline not found")
 
@@ -3204,6 +3934,7 @@ def complete_deadline(deadline_id: int, current_user: User = Depends(get_current
     # If recurring, create next deadline
     if deadline.is_recurring and deadline.recurrence_months:
         next_deadline = Deadline(
+            organization_id=current_user.organization_id,
             title=deadline.title,
             description=deadline.description,
             deadline_type=deadline.deadline_type,
@@ -3215,6 +3946,12 @@ def complete_deadline(deadline_id: int, current_user: User = Depends(get_current
             related_document_id=deadline.related_document_id
         )
         db.add(next_deadline)
+
+        # Copy business associations to the new deadline
+        deadline_businesses = db.query(DeadlineBusiness).filter(DeadlineBusiness.deadline_id == deadline_id).all()
+        db.flush()  # Ensure next_deadline has an ID
+        for db_assoc in deadline_businesses:
+            db.add(DeadlineBusiness(deadline_id=next_deadline.id, business_id=db_assoc.business_id))
 
     db.commit()
     return {"ok": True}
@@ -3885,38 +4622,58 @@ def require_vault_unlocked():
     return VaultSession.get_key(session_id)
 
 
-@app.get("/api/credentials", response_model=List[CredentialMasked])
-def get_credentials(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get all credentials (masked - doesn't require unlock)."""
-    credentials = db.query(Credential).filter(
+def _serialize_credential_masked(credential: Credential, db: Session) -> dict:
+    """Serialize credential with businesses (masked version)."""
+    custom_field_count = 0
+    if credential.encrypted_custom_fields:
+        custom_field_count = 0  # Will be counted when unlocked
+
+    return {
+        "id": credential.id,
+        "name": credential.name,
+        "service_url": credential.service_url,
+        "category": credential.category,
+        "icon": credential.icon,
+        "related_service_id": credential.related_service_id,
+        "has_username": bool(credential.encrypted_username),
+        "has_password": bool(credential.encrypted_password),
+        "has_notes": bool(credential.encrypted_notes),
+        "has_totp": bool(credential.encrypted_totp_secret),
+        "has_purpose": bool(credential.encrypted_purpose),
+        "has_custom_fields": bool(credential.encrypted_custom_fields),
+        "custom_field_count": custom_field_count,
+        "businesses": _get_entity_businesses(db, CredentialBusiness, "credential_id", credential.id),
+        "created_at": credential.created_at,
+        "updated_at": credential.updated_at
+    }
+
+
+@app.get("/api/credentials")
+def get_credentials(
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all credentials (masked - doesn't require unlock). Supports business filtering."""
+    query = db.query(Credential).filter(
         Credential.organization_id == current_user.organization_id
-    ).order_by(Credential.name).all()
-    result = []
-    for c in credentials:
-        # Count custom fields if present
-        custom_field_count = 0
-        if c.encrypted_custom_fields:
-            # We can't decrypt here, but we can store the count unencrypted for display
-            # For now, we'll just indicate presence (count requires decrypt)
-            custom_field_count = 0  # Will be counted when unlocked
-        result.append(CredentialMasked(
-            id=c.id,
-            name=c.name,
-            service_url=c.service_url,
-            category=c.category,
-            icon=c.icon,
-            related_service_id=c.related_service_id,
-            has_username=bool(c.encrypted_username),
-            has_password=bool(c.encrypted_password),
-            has_notes=bool(c.encrypted_notes),
-            has_totp=bool(c.encrypted_totp_secret),
-            has_purpose=bool(c.encrypted_purpose),
-            has_custom_fields=bool(c.encrypted_custom_fields),
-            custom_field_count=custom_field_count,
-            created_at=c.created_at,
-            updated_at=c.updated_at
-        ))
-    return result
+    )
+
+    # Business filtering
+    if unassigned_only:
+        # Get credentials with no business associations
+        assigned_ids = db.query(CredentialBusiness.credential_id).distinct()
+        query = query.filter(~Credential.id.in_(assigned_ids))
+    elif business_id:
+        target_business_ids = [business_id]
+        if include_children:
+            target_business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        query = query.join(CredentialBusiness).filter(CredentialBusiness.business_id.in_(target_business_ids))
+
+    credentials = query.order_by(Credential.name).all()
+    return [_serialize_credential_masked(c, db) for c in credentials]
 
 
 @app.get("/api/credentials/{credential_id}", response_model=CredentialDecrypted)
@@ -3954,9 +4711,12 @@ def get_credential(credential_id: int, key: bytes = Depends(require_vault_unlock
     )
 
 
-@app.post("/api/credentials", response_model=CredentialMasked)
+@app.post("/api/credentials")
 def create_credential(credential: CredentialCreate, current_user: User = Depends(get_current_user), key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
     """Create a new credential (requires unlock)."""
+    # Extract business_ids before creating credential
+    business_ids = getattr(credential, 'business_ids', None) or []
+
     # Encrypt custom fields if present
     encrypted_custom_fields = None
     if credential.custom_fields:
@@ -3981,23 +4741,12 @@ def create_credential(credential: CredentialCreate, current_user: User = Depends
     db.commit()
     db.refresh(db_credential)
 
-    return CredentialMasked(
-        id=db_credential.id,
-        name=db_credential.name,
-        service_url=db_credential.service_url,
-        category=db_credential.category,
-        icon=db_credential.icon,
-        related_service_id=db_credential.related_service_id,
-        has_username=bool(db_credential.encrypted_username),
-        has_password=bool(db_credential.encrypted_password),
-        has_notes=bool(db_credential.encrypted_notes),
-        has_totp=bool(db_credential.encrypted_totp_secret),
-        has_purpose=bool(db_credential.encrypted_purpose),
-        has_custom_fields=bool(db_credential.encrypted_custom_fields),
-        custom_field_count=len(credential.custom_fields) if credential.custom_fields else 0,
-        created_at=db_credential.created_at,
-        updated_at=db_credential.updated_at
-    )
+    # Add business associations
+    if business_ids:
+        _set_entity_businesses(db, CredentialBusiness, "credential_id", db_credential.id, business_ids, current_user.organization_id)
+        db.commit()
+
+    return _serialize_credential_masked(db_credential, db)
 
 
 @app.patch("/api/credentials/{credential_id}", response_model=CredentialMasked)
@@ -4066,9 +4815,72 @@ def delete_credential(credential_id: int, key: bytes = Depends(require_vault_unl
     credential = db.query(Credential).filter(Credential.id == credential_id).first()
     if not credential:
         raise HTTPException(status_code=404, detail="Credential not found")
+    # Clean up junction table
+    db.query(CredentialBusiness).filter(CredentialBusiness.credential_id == credential_id).delete()
     db.delete(credential)
     db.commit()
     return {"ok": True}
+
+
+@app.put("/api/credentials/{credential_id}/businesses")
+def update_credential_businesses(
+    credential_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update businesses associated with a credential."""
+    credential = db.query(Credential).filter(
+        Credential.id == credential_id,
+        Credential.organization_id == current_user.organization_id
+    ).first()
+    if not credential:
+        raise HTTPException(status_code=404, detail="Credential not found")
+
+    _set_entity_businesses(db, CredentialBusiness, "credential_id", credential_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_credential_masked(credential, db)
+
+
+@app.post("/api/credentials/bulk-assign-business")
+def bulk_assign_credential_businesses(
+    request: BulkBusinessAssignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign/remove businesses for multiple credentials."""
+    # Verify all credentials belong to organization
+    credentials = db.query(Credential).filter(
+        Credential.id.in_(request.entity_ids),
+        Credential.organization_id == current_user.organization_id
+    ).all()
+    if len(credentials) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some credentials not found or don't belong to organization")
+
+    # Verify all businesses belong to organization
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found or don't belong to organization")
+
+    for credential in credentials:
+        if request.action == "set":
+            _set_entity_businesses(db, CredentialBusiness, "credential_id", credential.id, request.business_ids, current_user.organization_id)
+        elif request.action == "add":
+            existing = {cb.business_id for cb in db.query(CredentialBusiness).filter(CredentialBusiness.credential_id == credential.id).all()}
+            for biz_id in request.business_ids:
+                if biz_id not in existing:
+                    db.add(CredentialBusiness(credential_id=credential.id, business_id=biz_id))
+        elif request.action == "remove":
+            db.query(CredentialBusiness).filter(
+                CredentialBusiness.credential_id == credential.id,
+                CredentialBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"ok": True, "updated_count": len(credentials)}
 
 
 @app.get("/api/credentials/{credential_id}/copy/{field}")
@@ -4110,53 +4922,179 @@ def copy_credential_field(credential_id: int, field: str, index: int = None, key
 
 
 # ============ Products Offered ============
-@app.get("/api/products-offered", response_model=List[ProductOfferedResponse])
-def get_products_offered(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def _serialize_product_offered(product: ProductOffered, db: Session) -> dict:
+    """Serialize product offered with businesses."""
+    return {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "category": product.category,
+        "pricing_model": product.pricing_model,
+        "price": product.price,
+        "url": product.url,
+        "icon": product.icon,
+        "is_active": product.is_active,
+        "notes": product.notes,
+        "businesses": _get_entity_businesses(db, ProductOfferedBusiness, "product_offered_id", product.id),
+        "created_at": product.created_at,
+        "updated_at": product.updated_at,
+    }
+
+
+@app.get("/api/products-offered")
+def get_products_offered(
+    category: str = None,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all products offered with optional business filtering."""
     query = db.query(ProductOffered).filter(ProductOffered.organization_id == current_user.organization_id)
     if category:
         query = query.filter(ProductOffered.category == category)
-    return query.order_by(ProductOffered.name).all()
+
+    # Business filtering
+    if unassigned_only:
+        assigned_ids = db.query(ProductOfferedBusiness.product_offered_id).distinct()
+        query = query.filter(~ProductOffered.id.in_(assigned_ids))
+    elif business_id:
+        target_business_ids = [business_id]
+        if include_children:
+            target_business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        query = query.join(ProductOfferedBusiness).filter(ProductOfferedBusiness.business_id.in_(target_business_ids))
+
+    products = query.order_by(ProductOffered.name).all()
+    return [_serialize_product_offered(p, db) for p in products]
 
 
-@app.post("/api/products-offered", response_model=ProductOfferedResponse)
+@app.post("/api/products-offered")
 def create_product_offered(product: ProductOfferedCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_product = ProductOffered(**product.model_dump(), organization_id=current_user.organization_id)
+    """Create a new product offered."""
+    business_ids = getattr(product, 'business_ids', None) or []
+    product_data = product.model_dump(exclude={'business_ids'} if hasattr(product, 'business_ids') else set())
+    db_product = ProductOffered(**product_data, organization_id=current_user.organization_id)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
-    return db_product
+
+    if business_ids:
+        _set_entity_businesses(db, ProductOfferedBusiness, "product_offered_id", db_product.id, business_ids, current_user.organization_id)
+        db.commit()
+
+    return _serialize_product_offered(db_product, db)
 
 
-@app.get("/api/products-offered/{product_id}", response_model=ProductOfferedResponse)
+@app.get("/api/products-offered/{product_id}")
 def get_product_offered(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
+    """Get a single product offered."""
+    product = db.query(ProductOffered).filter(
+        ProductOffered.id == product_id,
+        ProductOffered.organization_id == current_user.organization_id
+    ).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    return product
+    return _serialize_product_offered(product, db)
 
 
-@app.patch("/api/products-offered/{product_id}", response_model=ProductOfferedResponse)
+@app.patch("/api/products-offered/{product_id}")
 def update_product_offered(product_id: int, product: ProductOfferedUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
+    """Update a product offered."""
+    db_product = db.query(ProductOffered).filter(
+        ProductOffered.id == product_id,
+        ProductOffered.organization_id == current_user.organization_id
+    ).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    for key, value in product.model_dump(exclude_unset=True).items():
+    update_data = product.model_dump(exclude_unset=True)
+    business_ids = update_data.pop('business_ids', None)
+
+    for key, value in update_data.items():
         setattr(db_product, key, value)
+
+    if business_ids is not None:
+        _set_entity_businesses(db, ProductOfferedBusiness, "product_offered_id", product_id, business_ids, current_user.organization_id)
 
     db.commit()
     db.refresh(db_product)
-    return db_product
+    return _serialize_product_offered(db_product, db)
 
 
 @app.delete("/api/products-offered/{product_id}")
 def delete_product_offered(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    product = db.query(ProductOffered).filter(ProductOffered.id == product_id).first()
+    """Delete a product offered."""
+    product = db.query(ProductOffered).filter(
+        ProductOffered.id == product_id,
+        ProductOffered.organization_id == current_user.organization_id
+    ).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    # Clean up junction table
+    db.query(ProductOfferedBusiness).filter(ProductOfferedBusiness.product_offered_id == product_id).delete()
     db.delete(product)
     db.commit()
     return {"ok": True}
+
+
+@app.put("/api/products-offered/{product_id}/businesses")
+def update_product_offered_businesses(
+    product_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update businesses associated with a product offered."""
+    product = db.query(ProductOffered).filter(
+        ProductOffered.id == product_id,
+        ProductOffered.organization_id == current_user.organization_id
+    ).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    _set_entity_businesses(db, ProductOfferedBusiness, "product_offered_id", product_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_product_offered(product, db)
+
+
+@app.post("/api/products-offered/bulk-assign-business")
+def bulk_assign_product_offered_businesses(
+    request: BulkBusinessAssignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign/remove businesses for multiple products offered."""
+    products = db.query(ProductOffered).filter(
+        ProductOffered.id.in_(request.entity_ids),
+        ProductOffered.organization_id == current_user.organization_id
+    ).all()
+    if len(products) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some products not found or don't belong to organization")
+
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found or don't belong to organization")
+
+    for product in products:
+        if request.action == "set":
+            _set_entity_businesses(db, ProductOfferedBusiness, "product_offered_id", product.id, request.business_ids, current_user.organization_id)
+        elif request.action == "add":
+            existing = {pb.business_id for pb in db.query(ProductOfferedBusiness).filter(ProductOfferedBusiness.product_offered_id == product.id).all()}
+            for biz_id in request.business_ids:
+                if biz_id not in existing:
+                    db.add(ProductOfferedBusiness(product_offered_id=product.id, business_id=biz_id))
+        elif request.action == "remove":
+            db.query(ProductOfferedBusiness).filter(
+                ProductOfferedBusiness.product_offered_id == product.id,
+                ProductOfferedBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"ok": True, "updated_count": len(products)}
 
 
 # ============ Marketplaces ============
@@ -4210,102 +5148,304 @@ def delete_marketplace(marketplace_id: int, current_user: User = Depends(get_cur
 
 
 # ============ Products Used ============
-@app.get("/api/products-used", response_model=List[ProductUsedResponse])
-def get_products_used(category: str = None, is_paid: bool = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def _serialize_product_used(product: ProductUsed, db: Session) -> dict:
+    """Serialize product used with businesses."""
+    return {
+        "id": product.id,
+        "name": product.name,
+        "vendor": product.vendor,
+        "category": product.category,
+        "is_paid": product.is_paid,
+        "monthly_cost": product.monthly_cost,
+        "billing_cycle": product.billing_cycle,
+        "url": product.url,
+        "icon": product.icon,
+        "notes": product.notes,
+        "renewal_date": product.renewal_date,
+        "description": product.description,
+        "use_case": product.use_case,
+        "features": product.features,
+        "integrations": product.integrations,
+        "login_url": product.login_url,
+        "account_email": product.account_email,
+        "license_type": product.license_type,
+        "status": product.status,
+        "contract_end_date": product.contract_end_date,
+        "businesses": _get_entity_businesses(db, ProductUsedBusiness, "product_used_id", product.id),
+        "created_at": product.created_at,
+        "updated_at": product.updated_at,
+    }
+
+
+@app.get("/api/products-used")
+def get_products_used(
+    category: str = None,
+    is_paid: bool = None,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all products used with optional business filtering."""
     query = db.query(ProductUsed).filter(ProductUsed.organization_id == current_user.organization_id)
     if category:
         query = query.filter(ProductUsed.category == category)
     if is_paid is not None:
         query = query.filter(ProductUsed.is_paid == is_paid)
-    return query.order_by(ProductUsed.name).all()
+
+    # Business filtering
+    if unassigned_only:
+        assigned_ids = db.query(ProductUsedBusiness.product_used_id).distinct()
+        query = query.filter(~ProductUsed.id.in_(assigned_ids))
+    elif business_id:
+        target_business_ids = [business_id]
+        if include_children:
+            target_business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        query = query.join(ProductUsedBusiness).filter(ProductUsedBusiness.business_id.in_(target_business_ids))
+
+    products = query.order_by(ProductUsed.name).all()
+    return [_serialize_product_used(p, db) for p in products]
 
 
-@app.post("/api/products-used", response_model=ProductUsedResponse)
+@app.post("/api/products-used")
 def create_product_used(product: ProductUsedCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_product = ProductUsed(**product.model_dump(), organization_id=current_user.organization_id)
+    """Create a new product used."""
+    business_ids = getattr(product, 'business_ids', None) or []
+    product_data = product.model_dump(exclude={'business_ids'} if hasattr(product, 'business_ids') else set())
+    db_product = ProductUsed(**product_data, organization_id=current_user.organization_id)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
-    return db_product
+
+    if business_ids:
+        _set_entity_businesses(db, ProductUsedBusiness, "product_used_id", db_product.id, business_ids, current_user.organization_id)
+        db.commit()
+
+    return _serialize_product_used(db_product, db)
 
 
-@app.get("/api/products-used/{product_id}", response_model=ProductUsedResponse)
+@app.get("/api/products-used/{product_id}")
 def get_product_used(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
+    """Get a single product used."""
+    product = db.query(ProductUsed).filter(
+        ProductUsed.id == product_id,
+        ProductUsed.organization_id == current_user.organization_id
+    ).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    return product
+    return _serialize_product_used(product, db)
 
 
-@app.patch("/api/products-used/{product_id}", response_model=ProductUsedResponse)
+@app.patch("/api/products-used/{product_id}")
 def update_product_used(product_id: int, product: ProductUsedUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
+    """Update a product used."""
+    db_product = db.query(ProductUsed).filter(
+        ProductUsed.id == product_id,
+        ProductUsed.organization_id == current_user.organization_id
+    ).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    for key, value in product.model_dump(exclude_unset=True).items():
+    update_data = product.model_dump(exclude_unset=True)
+    business_ids = update_data.pop('business_ids', None)
+
+    for key, value in update_data.items():
         setattr(db_product, key, value)
+
+    if business_ids is not None:
+        _set_entity_businesses(db, ProductUsedBusiness, "product_used_id", product_id, business_ids, current_user.organization_id)
 
     db.commit()
     db.refresh(db_product)
-    return db_product
+    return _serialize_product_used(db_product, db)
 
 
 @app.delete("/api/products-used/{product_id}")
 def delete_product_used(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    product = db.query(ProductUsed).filter(ProductUsed.id == product_id).first()
+    """Delete a product used."""
+    product = db.query(ProductUsed).filter(
+        ProductUsed.id == product_id,
+        ProductUsed.organization_id == current_user.organization_id
+    ).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    # Clean up junction table
+    db.query(ProductUsedBusiness).filter(ProductUsedBusiness.product_used_id == product_id).delete()
     db.delete(product)
     db.commit()
     return {"ok": True}
 
 
+@app.put("/api/products-used/{product_id}/businesses")
+def update_product_used_businesses(
+    product_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update businesses associated with a product used."""
+    product = db.query(ProductUsed).filter(
+        ProductUsed.id == product_id,
+        ProductUsed.organization_id == current_user.organization_id
+    ).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    _set_entity_businesses(db, ProductUsedBusiness, "product_used_id", product_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_product_used(product, db)
+
+
+@app.post("/api/products-used/bulk-assign-business")
+def bulk_assign_product_used_businesses(
+    request: BulkBusinessAssignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign/remove businesses for multiple products used."""
+    products = db.query(ProductUsed).filter(
+        ProductUsed.id.in_(request.entity_ids),
+        ProductUsed.organization_id == current_user.organization_id
+    ).all()
+    if len(products) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some products not found or don't belong to organization")
+
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found or don't belong to organization")
+
+    for product in products:
+        if request.action == "set":
+            _set_entity_businesses(db, ProductUsedBusiness, "product_used_id", product.id, request.business_ids, current_user.organization_id)
+        elif request.action == "add":
+            existing = {pb.business_id for pb in db.query(ProductUsedBusiness).filter(ProductUsedBusiness.product_used_id == product.id).all()}
+            for biz_id in request.business_ids:
+                if biz_id not in existing:
+                    db.add(ProductUsedBusiness(product_used_id=product.id, business_id=biz_id))
+        elif request.action == "remove":
+            db.query(ProductUsedBusiness).filter(
+                ProductUsedBusiness.product_used_id == product.id,
+                ProductUsedBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"ok": True, "updated_count": len(products)}
+
+
 # ============ Web Links ============
-@app.get("/api/web-links", response_model=List[WebLinkResponse])
-def get_web_links(category: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def _serialize_web_link(link: WebLink, db: Session) -> dict:
+    """Serialize web link with businesses."""
+    return {
+        "id": link.id,
+        "title": link.title,
+        "url": link.url,
+        "description": link.description,
+        "category": link.category,
+        "icon": link.icon,
+        "is_favorite": link.is_favorite,
+        "last_visited": link.last_visited,
+        "businesses": _get_entity_businesses(db, WebLinkBusiness, "web_link_id", link.id),
+        "created_at": link.created_at,
+        "updated_at": link.updated_at,
+    }
+
+
+@app.get("/api/web-links")
+def get_web_links(
+    category: str = None,
+    business_id: int = None,
+    include_children: bool = False,
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all web links with optional business filtering."""
     query = db.query(WebLink).filter(WebLink.organization_id == current_user.organization_id)
     if category:
         query = query.filter(WebLink.category == category)
-    return query.order_by(WebLink.is_favorite.desc(), WebLink.title).all()
+
+    # Business filtering
+    if unassigned_only:
+        assigned_ids = db.query(WebLinkBusiness.web_link_id).distinct()
+        query = query.filter(~WebLink.id.in_(assigned_ids))
+    elif business_id:
+        target_business_ids = [business_id]
+        if include_children:
+            target_business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+        query = query.join(WebLinkBusiness).filter(WebLinkBusiness.business_id.in_(target_business_ids))
+
+    links = query.order_by(WebLink.is_favorite.desc(), WebLink.title).all()
+    return [_serialize_web_link(l, db) for l in links]
 
 
-@app.post("/api/web-links", response_model=WebLinkResponse)
+@app.post("/api/web-links")
 def create_web_link(link: WebLinkCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_link = WebLink(**link.model_dump(), organization_id=current_user.organization_id)
+    """Create a new web link."""
+    business_ids = getattr(link, 'business_ids', None) or []
+    link_data = link.model_dump(exclude={'business_ids'} if hasattr(link, 'business_ids') else set())
+    db_link = WebLink(**link_data, organization_id=current_user.organization_id)
     db.add(db_link)
     db.commit()
     db.refresh(db_link)
-    return db_link
+
+    if business_ids:
+        _set_entity_businesses(db, WebLinkBusiness, "web_link_id", db_link.id, business_ids, current_user.organization_id)
+        db.commit()
+
+    return _serialize_web_link(db_link, db)
 
 
-@app.get("/api/web-links/{link_id}", response_model=WebLinkResponse)
+@app.get("/api/web-links/{link_id}")
 def get_web_link(link_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    """Get a single web link."""
+    link = db.query(WebLink).filter(
+        WebLink.id == link_id,
+        WebLink.organization_id == current_user.organization_id
+    ).first()
     if not link:
         raise HTTPException(status_code=404, detail="Web link not found")
-    return link
+    return _serialize_web_link(link, db)
 
 
-@app.patch("/api/web-links/{link_id}", response_model=WebLinkResponse)
+@app.patch("/api/web-links/{link_id}")
 def update_web_link(link_id: int, link: WebLinkUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    """Update a web link."""
+    db_link = db.query(WebLink).filter(
+        WebLink.id == link_id,
+        WebLink.organization_id == current_user.organization_id
+    ).first()
     if not db_link:
         raise HTTPException(status_code=404, detail="Web link not found")
 
-    for key, value in link.model_dump(exclude_unset=True).items():
+    update_data = link.model_dump(exclude_unset=True)
+    business_ids = update_data.pop('business_ids', None)
+
+    for key, value in update_data.items():
         setattr(db_link, key, value)
+
+    if business_ids is not None:
+        _set_entity_businesses(db, WebLinkBusiness, "web_link_id", link_id, business_ids, current_user.organization_id)
 
     db.commit()
     db.refresh(db_link)
-    return db_link
+    return _serialize_web_link(db_link, db)
 
 
 @app.delete("/api/web-links/{link_id}")
 def delete_web_link(link_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    """Delete a web link."""
+    link = db.query(WebLink).filter(
+        WebLink.id == link_id,
+        WebLink.organization_id == current_user.organization_id
+    ).first()
     if not link:
         raise HTTPException(status_code=404, detail="Web link not found")
+    # Clean up junction table
+    db.query(WebLinkBusiness).filter(WebLinkBusiness.web_link_id == link_id).delete()
     db.delete(link)
     db.commit()
     return {"ok": True}
@@ -4313,12 +5453,75 @@ def delete_web_link(link_id: int, current_user: User = Depends(get_current_user)
 
 @app.post("/api/web-links/{link_id}/visit")
 def record_web_link_visit(link_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    link = db.query(WebLink).filter(WebLink.id == link_id).first()
+    """Record a visit to a web link."""
+    link = db.query(WebLink).filter(
+        WebLink.id == link_id,
+        WebLink.organization_id == current_user.organization_id
+    ).first()
     if not link:
         raise HTTPException(status_code=404, detail="Web link not found")
     link.last_visited = datetime.utcnow()
     db.commit()
     return {"ok": True}
+
+
+@app.put("/api/web-links/{link_id}/businesses")
+def update_web_link_businesses(
+    link_id: int,
+    business_ids: List[int],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update businesses associated with a web link."""
+    link = db.query(WebLink).filter(
+        WebLink.id == link_id,
+        WebLink.organization_id == current_user.organization_id
+    ).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Web link not found")
+
+    _set_entity_businesses(db, WebLinkBusiness, "web_link_id", link_id, business_ids, current_user.organization_id)
+    db.commit()
+    return _serialize_web_link(link, db)
+
+
+@app.post("/api/web-links/bulk-assign-business")
+def bulk_assign_web_link_businesses(
+    request: BulkBusinessAssignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign/remove businesses for multiple web links."""
+    links = db.query(WebLink).filter(
+        WebLink.id.in_(request.entity_ids),
+        WebLink.organization_id == current_user.organization_id
+    ).all()
+    if len(links) != len(request.entity_ids):
+        raise HTTPException(status_code=400, detail="Some web links not found or don't belong to organization")
+
+    businesses = db.query(Business).filter(
+        Business.id.in_(request.business_ids),
+        Business.organization_id == current_user.organization_id
+    ).all()
+    if len(businesses) != len(request.business_ids):
+        raise HTTPException(status_code=400, detail="Some businesses not found or don't belong to organization")
+
+    for link in links:
+        if request.action == "set":
+            _set_entity_businesses(db, WebLinkBusiness, "web_link_id", link.id, request.business_ids, current_user.organization_id)
+        elif request.action == "add":
+            existing = {wb.business_id for wb in db.query(WebLinkBusiness).filter(WebLinkBusiness.web_link_id == link.id).all()}
+            for biz_id in request.business_ids:
+                if biz_id not in existing:
+                    db.add(WebLinkBusiness(web_link_id=link.id, business_id=biz_id))
+        elif request.action == "remove":
+            db.query(WebLinkBusiness).filter(
+                WebLinkBusiness.web_link_id == link.id,
+                WebLinkBusiness.business_id.in_(request.business_ids)
+            ).delete(synchronize_session=False)
+
+    db.commit()
+    return {"ok": True, "updated_count": len(links)}
 
 
 # ============ Task Management - Auth Helpers ============

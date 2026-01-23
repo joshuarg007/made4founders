@@ -12,7 +12,7 @@ import uuid
 
 from .database import get_db
 from .models import (
-    User, Organization, BrandColor, BrandFont, BrandAsset, BrandGuideline,
+    User, Organization, Business, BrandColor, BrandFont, BrandAsset, BrandGuideline,
     ColorType, FontUsage, BrandAssetType
 )
 from .auth import get_current_user
@@ -27,6 +27,7 @@ class BrandColorCreate(BaseModel):
     hex_value: str
     name: Optional[str] = None
     description: Optional[str] = None
+    business_id: Optional[int] = None  # None = org-level, ID = business-specific
 
 class BrandColorUpdate(BaseModel):
     color_type: Optional[str] = None
@@ -37,6 +38,7 @@ class BrandColorUpdate(BaseModel):
 class BrandColorResponse(BaseModel):
     id: int
     organization_id: int
+    business_id: Optional[int]
     color_type: str
     hex_value: str
     name: Optional[str]
@@ -54,6 +56,7 @@ class BrandFontCreate(BaseModel):
     font_weight: Optional[str] = "400"
     google_font_url: Optional[str] = None
     fallback_fonts: Optional[str] = None
+    business_id: Optional[int] = None  # None = org-level, ID = business-specific
 
 class BrandFontUpdate(BaseModel):
     font_family: Optional[str] = None
@@ -65,6 +68,7 @@ class BrandFontUpdate(BaseModel):
 class BrandFontResponse(BaseModel):
     id: int
     organization_id: int
+    business_id: Optional[int]
     font_family: str
     usage: str
     font_weight: Optional[str]
@@ -80,6 +84,7 @@ class BrandFontResponse(BaseModel):
 class BrandAssetResponse(BaseModel):
     id: int
     organization_id: int
+    business_id: Optional[int]
     asset_type: str
     name: str
     file_path: str
@@ -102,6 +107,7 @@ class BrandGuidelineCreate(BaseModel):
     category: str
     content: str
     order_index: Optional[int] = 0
+    business_id: Optional[int] = None  # None = org-level, ID = business-specific
 
 class BrandGuidelineUpdate(BaseModel):
     title: Optional[str] = None
@@ -112,6 +118,7 @@ class BrandGuidelineUpdate(BaseModel):
 class BrandGuidelineResponse(BaseModel):
     id: int
     organization_id: int
+    business_id: Optional[int]
     title: str
     category: str
     content: str
@@ -153,12 +160,41 @@ def get_user_organization(user: User, db: Session) -> Organization:
 
 @router.get("/colors", response_model=List[BrandColorResponse])
 def get_brand_colors(
+    business_id: Optional[int] = None,
+    include_org_level: bool = True,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all brand colors for the organization."""
+    """Get brand colors, optionally filtered by business.
+
+    Args:
+        business_id: Filter by specific business (None = org-level only)
+        include_org_level: Include org-level colors when filtering by business
+    """
     org = get_user_organization(current_user, db)
-    colors = db.query(BrandColor).filter(BrandColor.organization_id == org.id).all()
+    query = db.query(BrandColor).filter(BrandColor.organization_id == org.id)
+
+    if business_id:
+        # Verify business belongs to org
+        business = db.query(Business).filter(
+            Business.id == business_id,
+            Business.organization_id == org.id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+        if include_org_level:
+            # Include both business-specific and org-level (null business_id)
+            query = query.filter(
+                (BrandColor.business_id == business_id) | (BrandColor.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandColor.business_id == business_id)
+    else:
+        # Only org-level colors
+        query = query.filter(BrandColor.business_id.is_(None))
+
+    colors = query.all()
     return colors
 
 
@@ -171,6 +207,15 @@ def create_brand_color(
     """Create a new brand color."""
     org = get_user_organization(current_user, db)
 
+    # Validate business_id if provided
+    if color.business_id:
+        business = db.query(Business).filter(
+            Business.id == color.business_id,
+            Business.organization_id == org.id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
     # Validate hex value
     hex_value = color.hex_value.strip()
     if not hex_value.startswith("#"):
@@ -180,6 +225,7 @@ def create_brand_color(
 
     db_color = BrandColor(
         organization_id=org.id,
+        business_id=color.business_id,
         color_type=color.color_type,
         hex_value=hex_value,
         name=color.name,
@@ -248,12 +294,33 @@ def delete_brand_color(
 
 @router.get("/fonts", response_model=List[BrandFontResponse])
 def get_brand_fonts(
+    business_id: Optional[int] = None,
+    include_org_level: bool = True,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all brand fonts for the organization."""
+    """Get brand fonts, optionally filtered by business."""
     org = get_user_organization(current_user, db)
-    fonts = db.query(BrandFont).filter(BrandFont.organization_id == org.id).all()
+    query = db.query(BrandFont).filter(BrandFont.organization_id == org.id)
+
+    if business_id:
+        business = db.query(Business).filter(
+            Business.id == business_id,
+            Business.organization_id == org.id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+        if include_org_level:
+            query = query.filter(
+                (BrandFont.business_id == business_id) | (BrandFont.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandFont.business_id == business_id)
+    else:
+        query = query.filter(BrandFont.business_id.is_(None))
+
+    fonts = query.all()
     return fonts
 
 
@@ -266,8 +333,17 @@ def create_brand_font(
     """Create a new brand font."""
     org = get_user_organization(current_user, db)
 
+    if font.business_id:
+        business = db.query(Business).filter(
+            Business.id == font.business_id,
+            Business.organization_id == org.id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
     db_font = BrandFont(
         organization_id=org.id,
+        business_id=font.business_id,
         font_family=font.font_family,
         usage=font.usage,
         font_weight=font.font_weight,
@@ -510,15 +586,34 @@ def delete_brand_asset(
 @router.get("/guidelines", response_model=List[BrandGuidelineResponse])
 def get_brand_guidelines(
     category: Optional[str] = None,
+    business_id: Optional[int] = None,
+    include_org_level: bool = True,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all brand guidelines for the organization."""
+    """Get brand guidelines, optionally filtered by business."""
     org = get_user_organization(current_user, db)
     query = db.query(BrandGuideline).filter(BrandGuideline.organization_id == org.id)
 
     if category:
         query = query.filter(BrandGuideline.category == category)
+
+    if business_id:
+        business = db.query(Business).filter(
+            Business.id == business_id,
+            Business.organization_id == org.id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+        if include_org_level:
+            query = query.filter(
+                (BrandGuideline.business_id == business_id) | (BrandGuideline.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandGuideline.business_id == business_id)
+    else:
+        query = query.filter(BrandGuideline.business_id.is_(None))
 
     return query.order_by(BrandGuideline.order_index).all()
 
@@ -532,8 +627,17 @@ def create_brand_guideline(
     """Create a new brand guideline."""
     org = get_user_organization(current_user, db)
 
+    if guideline.business_id:
+        business = db.query(Business).filter(
+            Business.id == guideline.business_id,
+            Business.organization_id == org.id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
     db_guideline = BrandGuideline(
         organization_id=org.id,
+        business_id=guideline.business_id,
         title=guideline.title,
         category=guideline.category,
         content=guideline.content,
