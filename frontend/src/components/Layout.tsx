@@ -26,7 +26,6 @@ import {
   Video,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import BusinessSwitcher from './BusinessSwitcher';
 import Tutorial from './Tutorial';
 
 interface NavItem {
@@ -187,11 +186,6 @@ export default function Layout() {
             <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
             <span className="text-lg font-bold text-white">Made4Founders</span>
           </Link>
-        </div>
-
-        {/* Business Switcher */}
-        <div className="p-3 border-b border-white/10">
-          <BusinessSwitcher />
         </div>
 
         {/* Navigation - with bottom padding for fixed footer */}
