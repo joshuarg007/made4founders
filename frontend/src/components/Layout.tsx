@@ -51,7 +51,7 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     id: 'command',
-    label: 'Mission Control',
+    label: 'Command',
     icon: Rocket,
     color: {
       bg: 'bg-cyan-500/10',
@@ -61,15 +61,15 @@ const navSections: NavSection[] = [
       hoverText: 'hover:text-cyan-400',
     },
     items: [
-      { to: '/app', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/app/getting-started', icon: ClipboardCheck, label: 'Setup Checklist' },
-      { to: '/app/daily-brief', icon: ListTodo, label: 'Daily Brief' },
-      { to: '/app/tasks', icon: CheckSquare, label: 'Tasks / Todo' },
+      { to: '/app', icon: LayoutDashboard, label: 'Home' },
+      { to: '/app/getting-started', icon: ClipboardCheck, label: 'Setup' },
+      { to: '/app/daily-brief', icon: ListTodo, label: 'Today' },
+      { to: '/app/tasks', icon: CheckSquare, label: 'Tasks' },
     ],
   },
   {
-    id: 'business',
-    label: 'Business',
+    id: 'workspace',
+    label: 'Workspace',
     icon: Building2,
     color: {
       bg: 'bg-blue-500/10',
@@ -79,18 +79,18 @@ const navSections: NavSection[] = [
       hoverText: 'hover:text-blue-400',
     },
     items: [
-      { to: '/app/businesses', icon: Building2, label: 'Businesses' },
-      { to: '/app/library', icon: BookOpen, label: 'Business Library' },
+      { to: '/app/businesses', icon: Building2, label: 'Companies' },
+      { to: '/app/library', icon: BookOpen, label: 'Library' },
       { to: '/app/documents', icon: FileText, label: 'Documents' },
       { to: '/app/meetings', icon: Video, label: 'Meetings' },
       { to: '/app/contacts', icon: Users, label: 'Contacts' },
       { to: '/app/deadlines', icon: Calendar, label: 'Deadlines' },
-      { to: '/app/vault', icon: Shield, label: 'Credential Vault' },
+      { to: '/app/vault', icon: Shield, label: 'Vault' },
     ],
   },
   {
     id: 'growth',
-    label: 'Growth Hub',
+    label: 'Growth',
     icon: TrendingUp,
     color: {
       bg: 'bg-purple-500/10',
@@ -100,15 +100,15 @@ const navSections: NavSection[] = [
       hoverText: 'hover:text-purple-400',
     },
     items: [
-      { to: '/app/social-hub', icon: Megaphone, label: 'Social Hub' },
-      { to: '/app/insights', icon: BarChart3, label: 'Insights' },
-      { to: '/app/marketplaces', icon: Store, label: 'Marketplaces' },
-      { to: '/app/leaderboard', icon: Trophy, label: 'Leaderboard' },
+      { to: '/app/social-hub', icon: Megaphone, label: 'Social' },
+      { to: '/app/insights', icon: BarChart3, label: 'Analytics' },
+      { to: '/app/marketplaces', icon: Store, label: 'Markets' },
+      { to: '/app/leaderboard', icon: Trophy, label: 'Compete' },
     ],
   },
   {
-    id: 'operations',
-    label: 'Operations',
+    id: 'products',
+    label: 'Products',
     icon: Package,
     color: {
       bg: 'bg-emerald-500/10',
@@ -118,7 +118,7 @@ const navSections: NavSection[] = [
       hoverText: 'hover:text-emerald-400',
     },
     items: [
-      { to: '/app/offerings', icon: Package, label: 'Offerings' },
+      { to: '/app/offerings', icon: Package, label: 'Catalog' },
       { to: '/app/finance', icon: Landmark, label: 'Finance' },
     ],
   },
@@ -256,7 +256,7 @@ export default function Layout() {
                 }
               >
                 <UserCog className="w-4 h-4" />
-                <span>User Management</span>
+                <span>Team</span>
               </NavLink>
             </div>
           )}
