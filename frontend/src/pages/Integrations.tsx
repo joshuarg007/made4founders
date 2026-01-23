@@ -8,7 +8,6 @@ import {
   Loader2,
   ExternalLink,
   CheckCircle2,
-  XCircle,
   RefreshCw,
   Link,
   Unlink,
@@ -215,7 +214,7 @@ export default function Integrations() {
     setLoading(true);
     try {
       // Load Zoom status
-      const zoomStatus = await loadStatus('/api/zoom/status', 'zoom');
+      const zoomStatus = await loadStatus('/api/zoom/status');
 
       // Load social accounts
       const socialAccounts = await loadSocialAccounts();
@@ -259,7 +258,7 @@ export default function Integrations() {
     }
   };
 
-  const loadStatus = async (endpoint: string, id: string): Promise<IntegrationStatus> => {
+  const loadStatus = async (endpoint: string): Promise<IntegrationStatus> => {
     try {
       const res = await api.get(endpoint);
       return res.data;
