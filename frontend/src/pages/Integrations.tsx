@@ -75,8 +75,9 @@ const INTEGRATIONS: Integration[] = [
     icon: '𝕏',
     color: 'gray',
     categories: ['social', 'auth'],
-    connectEndpoint: '/api/social/twitter/login',
+    connectEndpoint: '/api/social/twitter/connect',
     statusEndpoint: '/api/social/accounts',
+    disconnectEndpoint: '/api/social/accounts/twitter',
   },
   {
     id: 'linkedin',
@@ -85,19 +86,22 @@ const INTEGRATIONS: Integration[] = [
     icon: '💼',
     color: 'blue',
     categories: ['social', 'auth'],
-    connectEndpoint: '/api/social/linkedin/login',
+    connectEndpoint: '/api/social/linkedin/connect',
     statusEndpoint: '/api/social/accounts',
+    disconnectEndpoint: '/api/social/accounts/linkedin',
   },
-  {
-    id: 'facebook',
-    name: 'Facebook',
-    description: 'Post to your business page',
-    icon: '📘',
-    color: 'blue',
-    categories: ['social', 'auth'],
-    connectEndpoint: '/api/social/facebook/login',
-    statusEndpoint: '/api/social/accounts',
-  },
+  // Facebook temporarily disabled
+  // {
+  //   id: 'facebook',
+  //   name: 'Facebook',
+  //   description: 'Post to your business page',
+  //   icon: '📘',
+  //   color: 'blue',
+  //   categories: ['social', 'auth'],
+  //   connectEndpoint: '/api/social/facebook/connect',
+  //   statusEndpoint: '/api/social/accounts',
+  //   disconnectEndpoint: '/api/social/accounts/facebook',
+  // },
   {
     id: 'instagram',
     name: 'Instagram',
@@ -105,8 +109,9 @@ const INTEGRATIONS: Integration[] = [
     icon: '📷',
     color: 'pink',
     categories: ['social'],
-    connectEndpoint: '/api/social/instagram/login',
+    connectEndpoint: '/api/social/instagram/connect',
     statusEndpoint: '/api/social/accounts',
+    disconnectEndpoint: '/api/social/accounts/instagram',
   },
 
   // Accounting
@@ -270,7 +275,21 @@ export default function Integrations() {
   const loadSocialAccounts = async () => {
     try {
       const res = await api.get('/api/social/accounts');
-      return res.data || [];
+      // Transform the response to match the expected format (convert object to array)
+      const accounts = res.data || {};
+      const accountsList: any[] = [];
+      for (const [provider, account] of Object.entries(accounts)) {
+        if (account && typeof account === 'object') {
+          accountsList.push({
+            provider,
+            username: (account as any).provider_username,
+            page_name: (account as any).page_name,
+            connected_at: (account as any).created_at,
+            is_active: (account as any).is_active,
+          });
+        }
+      }
+      return accountsList.filter(a => a.is_active);
     } catch {
       return [];
     }
@@ -278,8 +297,20 @@ export default function Integrations() {
 
   const loadAccountingConnections = async () => {
     try {
-      const res = await api.get('/api/accounting/connections');
-      return res.data || [];
+      const res = await api.get('/api/accounting/accounts');
+      // Transform the response to match the expected format
+      const accounts = res.data || {};
+      const connections: any[] = [];
+      for (const [provider, account] of Object.entries(accounts)) {
+        if (account && typeof account === 'object' && (account as any).is_active) {
+          connections.push({
+            provider,
+            company_name: (account as any).company_name,
+            connected_at: (account as any).created_at,
+          });
+        }
+      }
+      return connections;
     } catch {
       return [];
     }
@@ -294,8 +325,10 @@ export default function Integrations() {
 
     try {
       const res = await api.get(integration.connectEndpoint);
-      if (res.data.auth_url) {
-        window.location.href = res.data.auth_url;
+      // Different integrations return auth URL in different fields
+      const authUrl = res.data.auth_url || res.data.url;
+      if (authUrl) {
+        window.location.href = authUrl;
       }
     } catch (err: any) {
       console.error('Failed to connect:', err);

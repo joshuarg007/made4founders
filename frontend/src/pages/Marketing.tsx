@@ -80,11 +80,14 @@ const TEMPLATE_TYPES = [
 ];
 
 const PLATFORMS = [
-  { id: 'twitter', label: 'Twitter/X', icon: Twitter, color: 'bg-black', hoverColor: 'hover:bg-neutral-900', borderColor: 'border-neutral-700', charLimit: 280, supportsImages: true, imageNote: 'Up to 4 images, JPG/PNG/GIF' },
-  { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'bg-[#0A66C2]', hoverColor: 'hover:bg-[#004182]', borderColor: 'border-[#0A66C2]', charLimit: 3000, supportsImages: true, imageNote: 'Single image or document' },
-  { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'bg-[#1877F2]', hoverColor: 'hover:bg-[#0d65d9]', borderColor: 'border-[#1877F2]', charLimit: 63206, supportsImages: true, imageNote: 'Multiple images supported' },
-  { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737]', hoverColor: 'hover:opacity-90', borderColor: 'border-[#E1306C]', charLimit: 2200, supportsImages: true, imageNote: 'Image required, square recommended' },
+  { id: 'twitter', label: 'Twitter/X', icon: Twitter, color: 'bg-black', hoverColor: 'hover:bg-neutral-900', borderColor: 'border-neutral-700', charLimit: 280, supportsImages: true, imageNote: 'Up to 4 images, JPG/PNG/GIF', disabled: false },
+  { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'bg-[#0A66C2]', hoverColor: 'hover:bg-[#004182]', borderColor: 'border-[#0A66C2]', charLimit: 3000, supportsImages: true, imageNote: 'Single image or document', disabled: false },
+  { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'bg-[#1877F2]', hoverColor: 'hover:bg-[#0d65d9]', borderColor: 'border-[#1877F2]', charLimit: 63206, supportsImages: true, imageNote: 'Multiple images supported', disabled: true },
+  { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737]', hoverColor: 'hover:opacity-90', borderColor: 'border-[#E1306C]', charLimit: 2200, supportsImages: true, imageNote: 'Image required, square recommended', disabled: false },
 ];
+
+// Filter out disabled platforms for UI display
+const ACTIVE_PLATFORMS = PLATFORMS.filter(p => !p.disabled);
 
 type Tab = 'templates' | 'campaigns' | 'social' | 'integrations' | 'analytics';
 
@@ -676,7 +679,7 @@ function SocialPublisherTab() {
             Select Platforms
           </label>
           <div className="flex flex-wrap gap-3">
-            {PLATFORMS.map((platform) => {
+            {ACTIVE_PLATFORMS.map((platform) => {
               const isConnected = connectedAccounts[platform.id];
               const isEnabled = platformPosts[platform.id]?.enabled;
               return (
@@ -792,7 +795,7 @@ function SocialPublisherTab() {
 
         {/* Platform-Specific Editors */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          {PLATFORMS.filter(p => platformPosts[p.id]?.enabled).map((platform) => {
+          {ACTIVE_PLATFORMS.filter(p => platformPosts[p.id]?.enabled).map((platform) => {
             const post = platformPosts[platform.id];
             const charCount = getCharCount(platform.id);
             const overLimit = isOverLimit(platform.id);
@@ -932,12 +935,12 @@ function SocialPublisherTab() {
         </div>
 
         {/* Post All Button */}
-        {PLATFORMS.some(p => platformPosts[p.id]?.enabled && connectedAccounts[p.id]) && (
+        {ACTIVE_PLATFORMS.some(p => platformPosts[p.id]?.enabled && connectedAccounts[p.id]) && (
           <div className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-white/10">
             <p className="text-sm text-gray-400">Ready to publish your content?</p>
             <button
               onClick={handlePostAll}
-              disabled={posting !== null || !PLATFORMS.some(p =>
+              disabled={posting !== null || !ACTIVE_PLATFORMS.some(p =>
                 platformPosts[p.id]?.enabled &&
                 platformPosts[p.id]?.content.trim() &&
                 connectedAccounts[p.id] &&
@@ -949,7 +952,7 @@ function SocialPublisherTab() {
               Post to All Platforms
             </button>
             <p className="text-xs text-gray-500">
-              {PLATFORMS.filter(p => platformPosts[p.id]?.enabled && connectedAccounts[p.id]).length} platform(s) ready
+              {ACTIVE_PLATFORMS.filter(p => platformPosts[p.id]?.enabled && connectedAccounts[p.id]).length} platform(s) ready
             </p>
           </div>
         )}
@@ -1236,7 +1239,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
         )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PLATFORMS.map((platform) => {
+          {ACTIVE_PLATFORMS.map((platform) => {
             const account = getSocialAccount(platform.id);
             const isConnected = account?.is_active;
             const isLoading = socialLoading === platform.id;

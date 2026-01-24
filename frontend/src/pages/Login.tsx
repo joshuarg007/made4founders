@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { getGoogleLoginUrl, getGitHubLoginUrl, getLinkedInLoginUrl, getTwitterLoginUrl, getFacebookLoginUrl } from '../lib/api';
+import { getGoogleLoginUrl, getGitHubLoginUrl, getLinkedInLoginUrl, getTwitterLoginUrl } from '../lib/api';
 
 // SVG Icons for OAuth providers
 const GoogleIcon = () => (
@@ -32,11 +32,13 @@ const TwitterIcon = () => (
   </svg>
 );
 
+/* Facebook login temporarily disabled
 const FacebookIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
   </svg>
 );
+*/
 
 export default function Login() {
   const [isRegister, setIsRegister] = useState(false);
@@ -46,7 +48,7 @@ export default function Login() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | 'linkedin' | 'twitter' | 'facebook' | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | 'linkedin' | 'twitter' | null>(null);
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ export default function Login() {
 
   const from = (location.state as { from?: Location })?.from?.pathname || '/app';
 
-  const handleOAuthLogin = async (provider: 'google' | 'github' | 'linkedin' | 'twitter' | 'facebook') => {
+  const handleOAuthLogin = async (provider: 'google' | 'github' | 'linkedin' | 'twitter') => {
     setError('');
     setOauthLoading(provider);
     try {
@@ -72,9 +74,10 @@ export default function Login() {
         case 'twitter':
           response = await getTwitterLoginUrl();
           break;
-        case 'facebook':
-          response = await getFacebookLoginUrl();
-          break;
+        // Facebook login temporarily disabled
+        // case 'facebook':
+        //   response = await getFacebookLoginUrl();
+        //   break;
       }
       window.location.href = response.url;
     } catch (err) {
@@ -280,6 +283,7 @@ export default function Login() {
             Continue with X
           </button>
 
+          {/* Facebook login temporarily disabled
           <button
             type="button"
             onClick={() => handleOAuthLogin('facebook')}
@@ -293,6 +297,7 @@ export default function Login() {
             )}
             Continue with Facebook
           </button>
+          */}
         </div>
 
         <div className="mt-6 text-center">

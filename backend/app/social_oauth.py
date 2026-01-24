@@ -500,10 +500,11 @@ async def linkedin_callback(
     db: Session = Depends(get_db),
 ):
     """Handle LinkedIn OAuth callback."""
-    user_id = validate_state(state, "linkedin")
-    if not user_id:
+    state_data = validate_state(state, "linkedin")
+    if not state_data:
         raise HTTPException(status_code=400, detail="Invalid state")
 
+    user_id = state_data["user_id"]
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.organization_id:
         raise HTTPException(status_code=400, detail="User not found")
@@ -755,10 +756,11 @@ async def facebook_callback(
     db: Session = Depends(get_db),
 ):
     """Handle Facebook OAuth callback."""
-    user_id = validate_state(state, "facebook")
-    if not user_id:
+    state_data = validate_state(state, "facebook")
+    if not state_data:
         raise HTTPException(status_code=400, detail="Invalid state")
 
+    user_id = state_data["user_id"]
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.organization_id:
         raise HTTPException(status_code=400, detail="User not found")
@@ -986,10 +988,11 @@ async def instagram_callback(
     db: Session = Depends(get_db),
 ):
     """Handle Instagram OAuth callback."""
-    user_id = validate_state(state, "instagram")
-    if not user_id:
+    state_data = validate_state(state, "instagram")
+    if not state_data:
         raise HTTPException(status_code=400, detail="Invalid state")
 
+    user_id = state_data["user_id"]
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.organization_id:
         raise HTTPException(status_code=400, detail="User not found")
