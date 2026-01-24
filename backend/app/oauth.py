@@ -514,6 +514,16 @@ async def linkedin_callback(
             User.oauth_provider_id == linkedin_id
         ).first()
 
+    # Also check OAuthConnection table for linked LinkedIn accounts
+    if not user:
+        from .models import OAuthConnection
+        oauth_conn = db.query(OAuthConnection).filter(
+            OAuthConnection.provider == "linkedin",
+            OAuthConnection.provider_user_id == linkedin_id
+        ).first()
+        if oauth_conn:
+            user = db.query(User).filter(User.id == oauth_conn.user_id).first()
+
     if not user:
         # No existing user - redirect to link page
         pending_token = store_pending_oauth(
@@ -699,11 +709,21 @@ async def twitter_callback(
     # Twitter doesn't provide email by default - need elevated access
     email = None  # Will be set during account linking or creation
 
-    # Try to find user by Twitter ID
+    # Try to find user by Twitter ID in User table
     user = db.query(User).filter(
         User.oauth_provider == "twitter",
         User.oauth_provider_id == twitter_id
     ).first()
+
+    # Also check OAuthConnection table for linked Twitter accounts
+    if not user:
+        from .models import OAuthConnection
+        oauth_conn = db.query(OAuthConnection).filter(
+            OAuthConnection.provider == "twitter",
+            OAuthConnection.provider_user_id == twitter_id
+        ).first()
+        if oauth_conn:
+            user = db.query(User).filter(User.id == oauth_conn.user_id).first()
 
     if not user:
         # No existing user - redirect to link page
