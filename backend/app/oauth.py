@@ -587,6 +587,17 @@ async def linkedin_callback(
 
 # ============ TWITTER/X OAUTH ============
 
+import hashlib
+import base64
+
+def generate_pkce_pair():
+    """Generate PKCE code_verifier and code_challenge (S256)."""
+    code_verifier = secrets.token_urlsafe(32)  # 43 chars
+    # S256: SHA256 hash of verifier, base64url encoded without padding
+    digest = hashlib.sha256(code_verifier.encode()).digest()
+    code_challenge = base64.urlsafe_b64encode(digest).rstrip(b'=').decode()
+    return code_verifier, code_challenge
+
 @router.get("/twitter/login")
 async def twitter_login():
     """Initiate Twitter OAuth 2.0 flow for login."""
@@ -594,23 +605,22 @@ async def twitter_login():
         raise HTTPException(status_code=500, detail="Twitter OAuth not configured")
 
     state = generate_state()
-    # Generate a proper PKCE code_verifier (43-128 chars, alphanumeric + -._~)
-    code_verifier = secrets.token_urlsafe(64)  # 86 chars
+    code_verifier, code_challenge = generate_pkce_pair()
     oauth_states[state] = {
         "provider": "twitter",
         "created_at": datetime.utcnow(),
         "code_verifier": code_verifier,
     }
 
-    # Twitter OAuth 2.0 with PKCE
+    # Twitter OAuth 2.0 with PKCE (S256 method)
     params = {
         "response_type": "code",
         "client_id": TWITTER_CLIENT_ID,
         "redirect_uri": TWITTER_REDIRECT_URI,
         "scope": "tweet.read users.read offline.access",
         "state": state,
-        "code_challenge": code_verifier,  # Plain method uses verifier directly
-        "code_challenge_method": "plain",
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
     }
 
     url = f"https://twitter.com/i/oauth2/authorize?{urlencode(params)}"
