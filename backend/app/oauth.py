@@ -594,7 +594,13 @@ async def twitter_login():
         raise HTTPException(status_code=500, detail="Twitter OAuth not configured")
 
     state = generate_state()
-    oauth_states[state] = {"provider": "twitter", "created_at": datetime.utcnow()}
+    # Generate a proper PKCE code_verifier (43-128 chars, alphanumeric + -._~)
+    code_verifier = secrets.token_urlsafe(64)  # 86 chars
+    oauth_states[state] = {
+        "provider": "twitter",
+        "created_at": datetime.utcnow(),
+        "code_verifier": code_verifier,
+    }
 
     # Twitter OAuth 2.0 with PKCE
     params = {
@@ -603,7 +609,7 @@ async def twitter_login():
         "redirect_uri": TWITTER_REDIRECT_URI,
         "scope": "tweet.read users.read offline.access",
         "state": state,
-        "code_challenge": state[:43],  # Simplified PKCE
+        "code_challenge": code_verifier,  # Plain method uses verifier directly
         "code_challenge_method": "plain",
     }
 
@@ -635,6 +641,8 @@ async def twitter_callback(
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
         return response
 
+    state_data = oauth_states[state]
+    code_verifier = state_data.get("code_verifier", state[:43])  # Fallback for old states
     del oauth_states[state]
 
     async with httpx.AsyncClient() as client:
@@ -646,7 +654,7 @@ async def twitter_callback(
                 "grant_type": "authorization_code",
                 "client_id": TWITTER_CLIENT_ID,
                 "redirect_uri": TWITTER_REDIRECT_URI,
-                "code_verifier": state[:43],
+                "code_verifier": code_verifier,
             },
             auth=(TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET),
         )
