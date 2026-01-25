@@ -1169,17 +1169,30 @@ export default function GettingStarted() {
     }
   };
 
-  const handleItemClick = (item: ChecklistItem) => {
+  const handleItemClick = async (item: ChecklistItem) => {
     const current = progress[item.id];
-    if (current?.is_completed) {
-      confirmComplete(item.id, false);
-    } else {
-      setTipsExpanded(false);
-      setIsEditMode(false);
-      const existingData = getItemData(item.id);
-      setModalDataFields(existingData);
-      setModalNotes(current?.notes || '');
-      setConfirmModal(item);
+    const newCompleted = !current?.is_completed;
+
+    // Immediately toggle the checkbox
+    try {
+      const res = await fetch(`${API_BASE}/checklist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          item_id: item.id,
+          is_completed: newCompleted,
+          notes: current?.notes || null,
+          data: current?.data || null
+        })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setProgress(prev => ({ ...prev, [item.id]: updated }));
+      }
+    } catch (error) {
+      console.error('Failed to update progress:', error);
     }
   };
 

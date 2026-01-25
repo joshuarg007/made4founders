@@ -62,10 +62,11 @@ const navSections: NavSection[] = [
     },
     items: [
       { to: '/app', icon: LayoutDashboard, label: 'Home' },
-      { to: '/app/getting-started', icon: ClipboardCheck, label: 'Setup' },
+      { to: '/app/getting-started', icon: ClipboardCheck, label: 'To-Do' },
       { to: '/app/daily-brief', icon: ListTodo, label: 'Today' },
-      { to: '/app/tasks', icon: CheckSquare, label: 'Tasks' },
+      { to: '/app/tasks', icon: Calendar, label: 'Calendar' },
       { to: '/app/integrations', icon: Plug, label: 'Integrations' },
+      { to: '/app/vault', icon: Shield, label: 'Vault' },
     ],
   },
   {
@@ -86,7 +87,6 @@ const navSections: NavSection[] = [
       { to: '/app/meetings', icon: Video, label: 'Meetings' },
       { to: '/app/contacts', icon: Users, label: 'Contacts' },
       { to: '/app/deadlines', icon: Calendar, label: 'Deadlines' },
-      { to: '/app/vault', icon: Shield, label: 'Vault' },
     ],
   },
   {
