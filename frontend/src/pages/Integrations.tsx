@@ -68,18 +68,24 @@ const INTEGRATIONS: Integration[] = [
   {
     id: 'google-meet',
     name: 'Google Meet',
-    description: 'Coming soon - Import transcripts from Google Meet',
+    description: 'Import meeting recordings and transcripts from Google Meet',
     logo: googleMeetLogo,
     color: 'green',
     categories: ['meetings'],
+    connectEndpoint: '/api/google-meet/login',
+    statusEndpoint: '/api/google-meet/status',
+    disconnectEndpoint: '/api/google-meet/disconnect',
   },
   {
     id: 'teams',
     name: 'Microsoft Teams',
-    description: 'Coming soon - Import transcripts from Teams meetings',
+    description: 'Import meeting recordings and transcripts from Teams',
     logo: teamsLogo,
     color: 'purple',
     categories: ['meetings'],
+    connectEndpoint: '/api/teams/login',
+    statusEndpoint: '/api/teams/status',
+    disconnectEndpoint: '/api/teams/disconnect',
   },
 
   // Social
@@ -233,8 +239,10 @@ export default function Integrations() {
   const loadAllStatuses = async () => {
     setLoading(true);
     try {
-      // Load Zoom status
+      // Load meeting platform statuses
       const zoomStatus = await loadStatus('/api/zoom/status');
+      const googleMeetStatus = await loadStatus('/api/google-meet/status');
+      const teamsStatus = await loadStatus('/api/teams/status');
 
       // Load social accounts
       const socialAccounts = await loadSocialAccounts();
@@ -246,6 +254,12 @@ export default function Integrations() {
       setIntegrations(prev => prev.map(integration => {
         if (integration.id === 'zoom') {
           return { ...integration, status: zoomStatus };
+        }
+        if (integration.id === 'google-meet') {
+          return { ...integration, status: googleMeetStatus };
+        }
+        if (integration.id === 'teams') {
+          return { ...integration, status: teamsStatus };
         }
         if (['twitter', 'linkedin', 'facebook', 'instagram'].includes(integration.id)) {
           const account = socialAccounts.find((a: any) => a.provider === integration.id);

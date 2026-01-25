@@ -17,7 +17,6 @@ import {
   ChevronDown,
   Rocket,
   Shield,
-  Trophy,
   BookOpen,
   Store,
   Settings,
@@ -105,7 +104,6 @@ const navSections: NavSection[] = [
       { to: '/app/social-hub', icon: Megaphone, label: 'Marketing' },
       { to: '/app/insights', icon: BarChart3, label: 'Analytics' },
       { to: '/app/marketplaces', icon: Store, label: 'Markets' },
-      { to: '/app/leaderboard', icon: Trophy, label: 'Compete' },
     ],
   },
   {

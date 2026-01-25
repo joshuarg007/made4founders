@@ -50,6 +50,8 @@ from .mailchimp_api import mailchimp_router
 from .templates import router as templates_router
 from .mfa import router as mfa_router
 from .zoom_oauth import router as zoom_router
+from .google_meet_oauth import router as google_meet_router
+from .teams_oauth import router as teams_router
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
     DocumentCreate, DocumentUpdate, DocumentResponse,
@@ -372,6 +374,8 @@ app.include_router(social_oauth_router, prefix="/api/social", tags=["social"])
 app.include_router(accounting_router, prefix="/api/accounting", tags=["accounting"])
 app.include_router(mfa_router, prefix="/api/mfa", tags=["mfa"])
 app.include_router(zoom_router, prefix="/api/zoom", tags=["zoom"])
+app.include_router(google_meet_router, prefix="/api/google-meet", tags=["google-meet"])
+app.include_router(teams_router, prefix="/api/teams", tags=["teams"])
 
 # Startup validation
 @app.on_event("startup")

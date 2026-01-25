@@ -51,6 +51,15 @@ services:
       - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
       - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
       - FACEBOOK_REDIRECT_URI=https://made4founders.com/api/auth/facebook/callback
+      # Meeting Integrations
+      - ZOOM_CLIENT_ID=${ZOOM_CLIENT_ID}
+      - ZOOM_CLIENT_SECRET=${ZOOM_CLIENT_SECRET}
+      - ZOOM_REDIRECT_URI=https://made4founders.com/api/zoom/callback
+      - GOOGLE_MEET_REDIRECT_URI=https://made4founders.com/api/google-meet/callback
+      - TEAMS_CLIENT_ID=${TEAMS_CLIENT_ID}
+      - TEAMS_CLIENT_SECRET=${TEAMS_CLIENT_SECRET}
+      - TEAMS_TENANT_ID=${TEAMS_TENANT_ID}
+      - TEAMS_REDIRECT_URI=https://made4founders.com/api/teams/callback
     volumes:
       - backend-data:/app/data
       - uploads-data:/app/uploads

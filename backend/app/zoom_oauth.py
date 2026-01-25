@@ -230,14 +230,18 @@ async def zoom_login(
 @router.get("/callback")
 async def zoom_callback(
     code: str = Query(...),
-    state: str = Query(...),
+    state: str = Query(None),
     db: Session = Depends(get_db),
 ):
     """Handle Zoom OAuth callback."""
-    # Verify state
-    state_data = _oauth_states.pop(state, None)
-    if not state_data:
-        return RedirectResponse(f"{FRONTEND_URL}/app/meetings?error=invalid_state")
+    # Verify state (if provided)
+    if state:
+        state_data = _oauth_states.pop(state, None)
+        if not state_data:
+            return RedirectResponse(f"{FRONTEND_URL}/app/integrations?error=invalid_state")
+    else:
+        # No state - redirect to login to start proper OAuth flow
+        return RedirectResponse(f"{FRONTEND_URL}/app/integrations?error=missing_state&message=Please+connect+via+Integrations+page")
 
     user_id = state_data["user_id"]
     organization_id = state_data["organization_id"]

@@ -660,6 +660,53 @@ class ZoomConnection(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class GoogleMeetConnection(Base):
+    """Store OAuth connections for Google Meet/Calendar integrations"""
+    __tablename__ = "google_meet_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    google_user_id = Column(String(255), nullable=False)
+    google_email = Column(String(255), nullable=True)
+    google_name = Column(String(255), nullable=True)
+
+    access_token = Column(Text, nullable=False)
+    refresh_token = Column(Text, nullable=True)
+    token_expires_at = Column(DateTime, nullable=True)
+
+    scopes = Column(Text, nullable=True)  # Comma-separated scopes
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class TeamsConnection(Base):
+    """Store OAuth connections for Microsoft Teams integrations"""
+    __tablename__ = "teams_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    microsoft_user_id = Column(String(255), nullable=False)
+    microsoft_email = Column(String(255), nullable=True)
+    microsoft_name = Column(String(255), nullable=True)
+    tenant_id = Column(String(255), nullable=True)
+
+    access_token = Column(Text, nullable=False)
+    refresh_token = Column(Text, nullable=True)
+    token_expires_at = Column(DateTime, nullable=True)
+
+    scopes = Column(Text, nullable=True)  # Comma-separated scopes
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # ============ BRANDING MODELS ============
 
 class BrandColor(Base):
