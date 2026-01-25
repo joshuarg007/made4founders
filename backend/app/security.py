@@ -21,7 +21,12 @@ from passlib.context import CryptContext
 
 # JWT settings - MUST set SECRET_KEY in production
 SECRET_KEY = os.getenv("SECRET_KEY", "made4founders-dev-secret-change-in-production")
-if len(SECRET_KEY) < 32:
+IS_PROD = os.getenv("ENVIRONMENT", "").lower() == "production"
+
+# Enforce secure SECRET_KEY in production
+if IS_PROD and (SECRET_KEY == "made4founders-dev-secret-change-in-production" or len(SECRET_KEY) < 32):
+    raise RuntimeError("CRITICAL: Production requires SECRET_KEY of at least 32 characters. Set a secure SECRET_KEY environment variable.")
+elif len(SECRET_KEY) < 32:
     import warnings
     warnings.warn("SECRET_KEY should be at least 32 characters for security")
 

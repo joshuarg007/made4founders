@@ -1,0 +1,44 @@
+id: m4f-idor-documents
+
+info:
+  name: Made4Founders - Document IDOR
+  author: security-audit
+  severity: critical
+  description: Tests for Insecure Direct Object Reference in document endpoints
+  tags: idor,m4f,documents
+
+http:
+  - raw:
+      - |
+        GET /api/documents/{{id}} HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+
+    payloads:
+      id:
+        - "1"
+        - "2"
+        - "3"
+        - "100"
+        - "1000"
+
+    attack: pitchfork
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - '"id":'
+          - '"name":'
+          - '"organization_id":'
+        condition: and
+
+    extractors:
+      - type: json
+        json:
+          - '.organization_id'
+        name: org_id

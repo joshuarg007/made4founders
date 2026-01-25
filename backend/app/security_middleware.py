@@ -66,17 +66,19 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
 
         # Content-Security-Policy
-        # Adjust based on your frontend needs
+        # Note: 'unsafe-inline' for styles is needed for React/Tailwind.
+        # In production, consider using nonces for scripts where possible.
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self'; "  # Removed unsafe-inline and unsafe-eval for better XSS protection
+            "style-src 'self' 'unsafe-inline'; "  # Inline styles needed for Tailwind
             "img-src 'self' data: https:; "
-            "font-src 'self' data:; "
+            "font-src 'self' data: https:; "
             "connect-src 'self' https:; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
-            "form-action 'self'"
+            "form-action 'self'; "
+            "upgrade-insecure-requests"
         )
 
         # Cache control for API responses
@@ -151,13 +153,24 @@ class RateLimiter:
         return False, remaining - 1
 
     def get_client_key(self, request: Request, endpoint: str = "") -> str:
-        """Generate a rate limit key for a client."""
-        # Get client IP
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            client_ip = forwarded.split(",")[0].strip()
-        else:
-            client_ip = request.client.host if request.client else "unknown"
+        """Generate a rate limit key for a client.
+
+        Security: Only trust X-Forwarded-For when the direct client is a known
+        reverse proxy (e.g., Nginx, load balancer). Configure TRUSTED_PROXIES
+        in production.
+        """
+        # Get direct client IP first
+        client_ip = request.client.host if request.client else "unknown"
+
+        # Only trust X-Forwarded-For from known reverse proxies
+        # In production, configure with actual proxy IPs: {"10.0.0.1", "172.16.0.1"}
+        TRUSTED_PROXIES = {"127.0.0.1", "::1"}  # localhost only by default
+
+        if client_ip in TRUSTED_PROXIES:
+            forwarded = request.headers.get("X-Forwarded-For")
+            if forwarded:
+                # Take the first (client) IP from the chain
+                client_ip = forwarded.split(",")[0].strip()
 
         # Hash for privacy
         ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
@@ -175,12 +188,18 @@ RATE_LIMITS = {
     # Auth endpoints - stricter limits
     "/api/auth/login": {"max_requests": 5, "window_seconds": 60},
     "/api/auth/register": {"max_requests": 3, "window_seconds": 60},
+    "/api/auth/forgot-password": {"max_requests": 3, "window_seconds": 60},
+    "/api/auth/reset-password": {"max_requests": 5, "window_seconds": 60},
     "/api/vault/unlock": {"max_requests": 5, "window_seconds": 60},
     "/api/vault/setup": {"max_requests": 3, "window_seconds": 300},
 
-    # Sensitive data endpoints
+    # Sensitive data endpoints - prevent enumeration attacks
     "/api/business-identifiers": {"max_requests": 30, "window_seconds": 60},
     "/api/credentials": {"max_requests": 30, "window_seconds": 60},
+    "/api/documents": {"max_requests": 60, "window_seconds": 60},
+
+    # Calendar feed - prevent token enumeration
+    "/api/calendar/feed": {"max_requests": 10, "window_seconds": 60},
 
     # General API - more lenient
     "default": {"max_requests": 100, "window_seconds": 60}
@@ -309,13 +328,24 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
     BLOCKED_USER_AGENTS = ["sqlmap", "nikto", "havij", "acunetix"]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Check content length
+        # Check content length header (if provided)
         content_length = request.headers.get("Content-Length")
-        if content_length and int(content_length) > self.MAX_CONTENT_LENGTH:
-            return JSONResponse(
-                status_code=413,
-                content={"detail": "Request body too large"}
-            )
+        if content_length:
+            try:
+                if int(content_length) > self.MAX_CONTENT_LENGTH:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"detail": "Request body too large"}
+                    )
+            except ValueError:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Invalid Content-Length header"}
+                )
+
+        # For chunked transfers without Content-Length, we rely on
+        # the web framework's built-in limits. FastAPI/Starlette
+        # handle this at the ASGI server level (uvicorn default: 10MB).
 
         # Block known malicious user agents
         user_agent = request.headers.get("User-Agent", "").lower()

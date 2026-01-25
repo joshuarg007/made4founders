@@ -31,10 +31,12 @@ SCHEDULER_API_KEY = os.getenv("SCHEDULER_API_KEY", "")
 
 
 def verify_scheduler_key(x_api_key: str = Header(None)):
-    """Verify the scheduler API key."""
+    """Verify the scheduler API key using constant-time comparison."""
+    import secrets as sec
     if not SCHEDULER_API_KEY:
         raise HTTPException(status_code=500, detail="Scheduler API key not configured")
-    if x_api_key != SCHEDULER_API_KEY:
+    # Use constant-time comparison to prevent timing attacks
+    if not x_api_key or not sec.compare_digest(x_api_key, SCHEDULER_API_KEY):
         raise HTTPException(status_code=401, detail="Invalid API key")
     return True
 

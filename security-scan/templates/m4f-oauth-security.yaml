@@ -1,0 +1,72 @@
+id: m4f-oauth-security
+
+info:
+  name: Made4Founders - OAuth Security Tests
+  author: security-audit
+  severity: medium
+  description: Tests for OAuth-related security issues
+  tags: oauth,csrf,m4f
+
+http:
+  # Test OAuth state validation
+  - raw:
+      - |
+        GET /api/auth/google/callback?code=test&state=invalid_state HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 302
+
+      - type: word
+        words:
+          - "invalid_state"
+          - "error"
+        condition: or
+        part: header
+
+  # Test OAuth without state
+  - raw:
+      - |
+        GET /api/auth/google/callback?code=test HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers:
+      - type: status
+        status:
+          - 302
+
+  # Test OAuth CSRF by reusing state
+  - raw:
+      - |
+        GET /api/auth/github/callback?code=test&state=reused_state_token HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers:
+      - type: word
+        words:
+          - "invalid_state"
+        part: header
+        negative: true
+
+  # Test open redirect in OAuth
+  - raw:
+      - |
+        GET /api/auth/google/login?redirect={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+
+    payloads:
+      payload:
+        - "https://evil.com"
+        - "//evil.com"
+        - "https://evil.com%00.{{Hostname}}"
+
+    attack: pitchfork
+
+    matchers:
+      - type: word
+        words:
+          - "evil.com"
+        part: header

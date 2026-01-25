@@ -1,0 +1,68 @@
+id: m4f-privilege-escalation
+
+info:
+  name: Made4Founders - Privilege Escalation
+  author: security-audit
+  severity: critical
+  description: Tests for privilege escalation vulnerabilities
+  tags: privesc,rbac,m4f
+
+http:
+  # Test role escalation via registration
+  - raw:
+      - |
+        POST /api/auth/register HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"email":"attacker{{rand}}@example.com","password":"SecurePass123!","name":"Attacker","role":"admin"}
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - '"role":"admin"'
+        condition: and
+
+  # Test accessing admin endpoints as viewer
+  - raw:
+      - |
+        GET /api/auth/users HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{viewer_token}}
+
+    matchers:
+      - type: status
+        status:
+          - 200
+
+  # Test user modification by non-admin
+  - raw:
+      - |
+        PATCH /api/auth/users/1 HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{viewer_token}}
+        Content-Type: application/json
+
+        {"role":"admin"}
+
+    matchers:
+      - type: status
+        status:
+          - 200
+
+  # Test audit log access by non-admin
+  - raw:
+      - |
+        GET /api/audit-logs/ HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{viewer_token}}
+
+    matchers:
+      - type: status
+        status:
+          - 200

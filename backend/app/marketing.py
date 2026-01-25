@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 import json
+import os
+from cryptography.fernet import Fernet
+import base64
+import hashlib
 
 from .database import get_db
 from .models import (
@@ -16,6 +20,33 @@ from .models import (
 )
 from .auth import get_current_user
 from pydantic import BaseModel
+
+
+def _get_api_key_encryption_key() -> bytes:
+    """Get the encryption key for API keys."""
+    key_source = os.getenv("APP_ENCRYPTION_KEY", "default-dev-key-change-in-production")
+    # Derive a Fernet-compatible key (32 bytes, base64 encoded = 44 chars)
+    key_bytes = hashlib.sha256(key_source.encode()).digest()
+    return base64.urlsafe_b64encode(key_bytes)
+
+
+def encrypt_api_key(api_key: str) -> str:
+    """Encrypt an API key for storage."""
+    if not api_key:
+        return ""
+    fernet = Fernet(_get_api_key_encryption_key())
+    return fernet.encrypt(api_key.encode()).decode()
+
+
+def decrypt_api_key(encrypted_key: str) -> str:
+    """Decrypt an API key from storage."""
+    if not encrypted_key:
+        return ""
+    try:
+        fernet = Fernet(_get_api_key_encryption_key())
+        return fernet.decrypt(encrypted_key.encode()).decode()
+    except Exception:
+        return ""
 
 router = APIRouter()
 
@@ -611,13 +642,14 @@ def create_email_integration(
     if existing:
         raise HTTPException(status_code=400, detail=f"Integration for {integration.provider} already exists")
 
+    # Encrypt the API key before storage
+    encrypted_api_key = encrypt_api_key(integration.api_key)
+
     db_integration = EmailIntegration(
         organization_id=org.id,
         provider=integration.provider,
-        api_key=integration.api_key,  # Should be encrypted in production
-        list_id=integration.list_id,
-        from_email=integration.from_email,
-        from_name=integration.from_name
+        api_key_encrypted=encrypted_api_key,
+        default_list_id=integration.list_id,
     )
     db.add(db_integration)
     db.commit()
@@ -642,8 +674,21 @@ def update_email_integration(
     if not db_integration:
         raise HTTPException(status_code=404, detail="Integration not found")
 
-    for key, value in integration.model_dump(exclude_unset=True).items():
-        setattr(db_integration, key, value)
+    update_data = integration.model_dump(exclude_unset=True)
+
+    # Handle API key encryption
+    if "api_key" in update_data:
+        db_integration.api_key_encrypted = encrypt_api_key(update_data.pop("api_key"))
+
+    # Map schema fields to model fields
+    field_mapping = {
+        "list_id": "default_list_id",
+    }
+
+    for key, value in update_data.items():
+        model_key = field_mapping.get(key, key)
+        if hasattr(db_integration, model_key):
+            setattr(db_integration, model_key, value)
 
     db.commit()
     db.refresh(db_integration)

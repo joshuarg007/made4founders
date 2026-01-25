@@ -8,17 +8,17 @@
 **Last Updated:** 2026-01-25
 
 ### Where We Left Off:
-- Completed ALL roadmap items (P0-P4) except Calendar and Team Collaboration
-- Backend modules added: backups.py, monitoring.py, audit_logs.py, data_export.py, support.py, analytics.py
-- Frontend: Mobile responsive, support widget, audit log viewer, page analytics
-- Created CHANGELOG.md, updated README.md with all new features
-- Application is fully production-ready
+- **SECURITY AUDIT COMPLETED** - Found 21 vulnerabilities (4 critical, 7 high, 6 medium, 4 low)
+- Full audit report: `SECURITY_AUDIT.md` (gitignored, confidential)
+- Critical IDOR vulnerabilities allow cross-tenant data access
+- Application NOT production-ready until security fixes applied
 
 ### Currently Working On:
-- Nothing - all priority items complete
+- Security remediation (see Security Roadmap below)
 
 ### Current Blockers:
-- None
+- **CRITICAL**: 4 IDOR vulnerabilities expose all tenant data
+- **HIGH**: Email API keys stored unencrypted, timing attack on scheduler key
 
 ### Deferred (Future)
 - Calendar Integration (requires Google/Outlook OAuth setup)
@@ -315,6 +315,18 @@ Features:
 
 ## Recent Changes Log
 
+### 2026-01-25
+- **Security Audit Completed**
+  - Found 21 vulnerabilities (4 critical, 7 high, 6 medium, 4 low)
+  - Critical IDOR flaws in documents, credentials, business identifiers, tasks
+  - XSS in email template preview (dangerouslySetInnerHTML)
+  - Timing attack vulnerability on scheduler API key
+  - Email integration API keys stored unencrypted
+  - OAuth state tokens never expire, no memory limits
+  - Rate limiter bypassable via X-Forwarded-For spoofing
+  - Full report: `SECURITY_AUDIT.md` (gitignored)
+  - Added Security Remediation Roadmap to CLAUDE.md
+
 ### 2026-01-24
 - **Critical Security Fix**
   - Fixed data leak in `/api/daily-brief` endpoint
@@ -448,6 +460,79 @@ Features:
 | 17 | **SEO Optimization** | Meta tags, structured data, sitemap | ✅ Complete |
 | 18 | **Calendar Integration** | Google/Outlook calendar sync | Not Started |
 | 19 | **Team Collaboration** | Invite team members, shared workspaces | Not Started |
+
+---
+
+## Security Remediation Roadmap
+
+> **CRITICAL: Do NOT deploy to production until P0 items are fixed.**
+
+### S0 - Critical (Fix Immediately)
+| # | Vulnerability | File | Fix Required | Status |
+|---|--------------|------|--------------|--------|
+| 1 | **IDOR - Documents** | `main.py:3315-3344` | Add `organization_id` filter to GET/PATCH/DELETE | Not Started |
+| 2 | **IDOR - Business Identifiers** | `main.py:4453-4589` | Add `organization_id` filter | Not Started |
+| 3 | **IDOR - Credentials** | `main.py:4869-5083` | Add `organization_id` filter | Not Started |
+| 4 | **Password Field Bug** | `main.py:3187` | Change `password_hash` to `hashed_password` | Not Started |
+| 5 | **Unencrypted API Keys** | `marketing.py:617` | Encrypt before storing | Not Started |
+
+### S1 - High (Fix This Week)
+| # | Vulnerability | File | Fix Required | Status |
+|---|--------------|------|--------------|--------|
+| 6 | **XSS - Email Templates** | `SocialHub.tsx:1600`, `Marketing.tsx:1614` | Add DOMPurify sanitization | Not Started |
+| 7 | **IDOR - Task Boards** | `main.py:5798-6056` | Add `organization_id` filter | Not Started |
+| 8 | **Rate Limit Bypass** | `security_middleware.py:156-160` | Validate X-Forwarded-For | Not Started |
+| 9 | **Timing Attack** | `backups.py:79`, `notifications.py:37` | Use `secrets.compare_digest()` | Not Started |
+
+### S2 - Medium (Fix Within 2 Weeks)
+| # | Vulnerability | File | Fix Required | Status |
+|---|--------------|------|--------------|--------|
+| 10 | **Weak CSP** | `security_middleware.py:70-80` | Remove unsafe-inline/eval, use nonces | Not Started |
+| 11 | **Missing Rate Limits** | `security_middleware.py:174-179` | Add limits for documents, credentials | Not Started |
+| 12 | **OAuth Memory DoS** | `oauth.py:57` | Add state expiration + max size | Not Started |
+| 13 | **IDOR - Marketplace** | `main.py:5307-5329` | Add `organization_id` filter | Not Started |
+| 14 | **Calendar Enumeration** | `main.py:7289-7304` | Generic error message, rate limit | Not Started |
+
+### S3 - Low (Fix Within Month)
+| # | Vulnerability | File | Fix Required | Status |
+|---|--------------|------|--------------|--------|
+| 15 | **File Size Bypass** | `security_middleware.py:313-318` | Add streaming size check | Not Started |
+| 16 | **OpenAPI Exposure** | `main.py:341-343` | Case-insensitive env check | Not Started |
+| 17 | **OAuth No Expiry** | `oauth.py:57-60` | Add 10-min state expiration | Not Started |
+| 18 | **Default SECRET_KEY** | `security.py:23-26` | Enforce in production | Not Started |
+| 19 | **Insufficient Logging** | Various | Log failed auth, IDOR attempts | Not Started |
+
+### Quick Reference: IDOR Fix Pattern
+```python
+# BEFORE (vulnerable):
+item = db.query(Model).filter(Model.id == item_id).first()
+
+# AFTER (secure):
+item = db.query(Model).filter(
+    Model.id == item_id,
+    Model.organization_id == current_user.organization_id
+).first()
+```
+
+### Quick Reference: Timing-Safe Comparison
+```python
+# BEFORE (vulnerable to timing attack):
+if x_api_key != SCHEDULER_API_KEY:
+
+# AFTER (constant-time):
+import secrets
+if not x_api_key or not secrets.compare_digest(x_api_key, SCHEDULER_API_KEY):
+```
+
+---
+
+## Known Security Issues
+| Issue | Description | Impact |
+|-------|-------------|--------|
+| Cross-tenant IDOR | Documents, credentials, identifiers, tasks accessible by any authenticated user | **CRITICAL** - Full data breach |
+| XSS in templates | Email template preview executes arbitrary JavaScript | **HIGH** - Session hijacking |
+| API key storage | Marketing integration keys stored plaintext | **HIGH** - Third-party compromise |
+| Rate limit bypass | X-Forwarded-For spoofing bypasses auth rate limits | **HIGH** - Brute force attacks |
 
 ---
 

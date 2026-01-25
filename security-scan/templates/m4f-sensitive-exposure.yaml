@@ -1,0 +1,85 @@
+id: m4f-sensitive-exposure
+
+info:
+  name: Made4Founders - Sensitive Data Exposure
+  author: security-audit
+  severity: high
+  description: Tests for exposure of sensitive files and endpoints
+  tags: exposure,sensitive,m4f
+
+http:
+  # Check for exposed sensitive files
+  - raw:
+      - |
+        GET {{path}} HTTP/1.1
+        Host: {{Hostname}}
+
+    payloads:
+      path:
+        - "/.env"
+        - "/.env.local"
+        - "/.env.production"
+        - "/.git/config"
+        - "/.git/HEAD"
+        - "/config.json"
+        - "/secrets.json"
+        - "/credentials.json"
+        - "/database.db"
+        - "/made4founders.db"
+        - "/backup.sql"
+        - "/.htaccess"
+        - "/web.config"
+        - "/phpinfo.php"
+        - "/server-status"
+        - "/debug"
+        - "/admin"
+        - "/api/docs"
+        - "/docs"
+        - "/openapi.json"
+        - "/swagger.json"
+        - "/api-docs"
+
+    attack: pitchfork
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "SECRET_KEY"
+          - "DATABASE_URL"
+          - "password"
+          - "api_key"
+          - "AWS_"
+          - "GOOGLE_CLIENT"
+          - "GITHUB_CLIENT"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - '"openapi":'
+          - '"swagger":'
+          - '"paths":'
+        condition: or
+
+  # Check for exposed API documentation in production
+  - raw:
+      - |
+        GET /docs HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - "swagger"
+          - "FastAPI"
+          - "openapi"
+        condition: or

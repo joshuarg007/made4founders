@@ -54,14 +54,70 @@ FACEBOOK_REDIRECT_URI = os.getenv("FACEBOOK_REDIRECT_URI", "http://localhost:800
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 # State tokens (in production, use Redis or database)
+# Now includes expiration and size limits
 oauth_states: dict[str, dict] = {}
 
 # Pending OAuth data for account linking (expires in 10 minutes)
 pending_oauth: dict[str, dict] = {}
 
+# Maximum number of pending OAuth states (DoS protection)
+MAX_OAUTH_STATES = 10000
+# OAuth state expiration in minutes
+OAUTH_STATE_EXPIRY_MINUTES = 10
+
+
+def cleanup_expired_oauth_states():
+    """Remove expired OAuth states to prevent memory exhaustion."""
+    now = datetime.utcnow()
+    expired_keys = [
+        key for key, data in oauth_states.items()
+        if now - data.get("created_at", now) > timedelta(minutes=OAUTH_STATE_EXPIRY_MINUTES)
+    ]
+    for key in expired_keys:
+        del oauth_states[key]
+
+    # Also cleanup pending_oauth
+    expired_pending = [
+        key for key, data in pending_oauth.items()
+        if now - data.get("created_at", now) > timedelta(minutes=OAUTH_STATE_EXPIRY_MINUTES)
+    ]
+    for key in expired_pending:
+        del pending_oauth[key]
+
+
+def validate_oauth_state(state: str, provider: str) -> bool:
+    """Validate OAuth state token with expiration check."""
+    if state not in oauth_states:
+        return False
+
+    state_data = oauth_states[state]
+    if state_data.get("provider") != provider:
+        return False
+
+    # Check expiration
+    created_at = state_data.get("created_at", datetime.utcnow())
+    if datetime.utcnow() - created_at > timedelta(minutes=OAUTH_STATE_EXPIRY_MINUTES):
+        del oauth_states[state]
+        return False
+
+    return True
+
 
 def generate_state() -> str:
-    """Generate a secure random state token."""
+    """Generate a secure random state token with cleanup."""
+    # Periodically cleanup expired states
+    cleanup_expired_oauth_states()
+
+    # Prevent memory exhaustion - reject if too many pending states
+    if len(oauth_states) >= MAX_OAUTH_STATES:
+        # Force cleanup and check again
+        cleanup_expired_oauth_states()
+        if len(oauth_states) >= MAX_OAUTH_STATES:
+            raise HTTPException(
+                status_code=503,
+                detail="Service temporarily busy. Please try again."
+            )
+
     return secrets.token_urlsafe(32)
 
 
@@ -130,13 +186,13 @@ async def google_callback(
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
         return response
 
-    # Verify state
-    if state not in oauth_states or oauth_states[state]["provider"] != "google":
+    # Verify state with expiration check
+    if not validate_oauth_state(state, "google"):
         response.status_code = 302
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
         return response
 
-    del oauth_states[state]  # Clean up
+    del oauth_states[state]  # Clean up after validation
 
     # Exchange code for tokens
     async with httpx.AsyncClient() as client:
@@ -276,13 +332,13 @@ async def github_callback(
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
         return response
 
-    # Verify state
-    if state not in oauth_states or oauth_states[state]["provider"] != "github":
+    # Verify state with expiration check
+    if not validate_oauth_state(state, "github"):
         response.status_code = 302
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
         return response
 
-    del oauth_states[state]  # Clean up
+    del oauth_states[state]  # Clean up after validation  # Clean up
 
     # Exchange code for tokens
     async with httpx.AsyncClient() as client:
@@ -449,13 +505,13 @@ async def linkedin_callback(
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
         return response
 
-    # Verify state
-    if state not in oauth_states or oauth_states[state]["provider"] != "linkedin":
+    # Verify state with expiration check
+    if not validate_oauth_state(state, "linkedin"):
         response.status_code = 302
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
         return response
 
-    del oauth_states[state]  # Clean up
+    del oauth_states[state]  # Clean up after validation  # Clean up
 
     # Exchange code for tokens
     async with httpx.AsyncClient() as client:
@@ -654,14 +710,15 @@ async def twitter_callback(
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
         return response
 
-    if state not in oauth_states or oauth_states[state]["provider"] != "twitter":
+    # Verify state with expiration check
+    if not validate_oauth_state(state, "twitter"):
         response.status_code = 302
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
         return response
 
     state_data = oauth_states[state]
     code_verifier = state_data.get("code_verifier", state[:43])  # Fallback for old states
-    del oauth_states[state]
+    del oauth_states[state]  # Clean up after validation
 
     async with httpx.AsyncClient() as client:
         # Exchange code for tokens
@@ -834,12 +891,13 @@ async def facebook_callback(
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=oauth_failed"
         return response
 
-    if state not in oauth_states or oauth_states[state]["provider"] != "facebook":
+    # Verify state with expiration check
+    if not validate_oauth_state(state, "facebook"):
         response.status_code = 302
         response.headers["Location"] = f"{FRONTEND_URL}/login?error=invalid_state"
         return response
 
-    del oauth_states[state]
+    del oauth_states[state]  # Clean up after validation
 
     async with httpx.AsyncClient() as client:
         # Exchange code for tokens

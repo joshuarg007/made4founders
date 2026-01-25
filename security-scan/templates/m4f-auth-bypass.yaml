@@ -1,0 +1,63 @@
+id: m4f-auth-bypass
+
+info:
+  name: Made4Founders - Authentication Bypass Tests
+  author: security-audit
+  severity: high
+  description: Tests for authentication bypass vulnerabilities
+  tags: auth,bypass,m4f
+
+http:
+  # Test 1: Access without auth
+  - raw:
+      - |
+        GET {{path}} HTTP/1.1
+        Host: {{Hostname}}
+
+    payloads:
+      path:
+        - "/api/auth/me"
+        - "/api/credentials"
+        - "/api/business-identifiers"
+        - "/api/documents"
+        - "/api/vault/status"
+        - "/api/auth/users"
+        - "/api/audit-logs"
+
+    attack: pitchfork
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - '"id":'
+          - '"email":'
+        condition: or
+
+  # Test 2: Invalid/expired token
+  - raw:
+      - |
+        GET /api/auth/me HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer invalid_token_12345
+
+    matchers:
+      - type: status
+        status:
+          - 200
+
+  # Test 3: JWT none algorithm
+  - raw:
+      - |
+        GET /api/auth/me HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsImV4cCI6OTk5OTk5OTk5OX0.
+
+    matchers:
+      - type: status
+        status:
+          - 200

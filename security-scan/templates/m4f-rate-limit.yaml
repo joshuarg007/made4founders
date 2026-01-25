@@ -1,0 +1,55 @@
+id: m4f-rate-limit-bypass
+
+info:
+  name: Made4Founders - Rate Limit Bypass
+  author: security-audit
+  severity: high
+  description: Tests for rate limiting bypass via X-Forwarded-For spoofing
+  tags: ratelimit,bypass,m4f
+
+http:
+  # Test rate limit bypass with X-Forwarded-For
+  - raw:
+      - |
+        POST /api/auth/login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+        X-Forwarded-For: {{ip}}
+
+        {"email":"test@example.com","password":"wrongpassword"}
+
+    payloads:
+      ip:
+        - "10.0.0.1"
+        - "10.0.0.2"
+        - "10.0.0.3"
+        - "10.0.0.4"
+        - "10.0.0.5"
+        - "10.0.0.6"
+        - "10.0.0.7"
+        - "10.0.0.8"
+        - "192.168.1.1"
+        - "192.168.1.2"
+
+    attack: pitchfork
+    threads: 10
+
+    matchers-condition: and
+    matchers:
+      # If we get 10+ 401s without 429, rate limiting is bypassed
+      - type: status
+        status:
+          - 401
+
+      - type: word
+        words:
+          - "Invalid"
+          - "credentials"
+        condition: or
+        negative: false
+
+    # Alert if we never see 429 after many requests
+    extractors:
+      - type: dsl
+        dsl:
+          - '"Rate limit bypass possible - got " + status_code + " instead of 429"'

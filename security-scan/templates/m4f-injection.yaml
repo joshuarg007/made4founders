@@ -1,0 +1,94 @@
+id: m4f-injection
+
+info:
+  name: Made4Founders - Injection Tests
+  author: security-audit
+  severity: critical
+  description: Tests for SQL injection, command injection, and template injection
+  tags: injection,sqli,cmdi,ssti,m4f
+
+http:
+  # SQL Injection in search
+  - raw:
+      - |
+        GET /api/contacts?search={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+
+    payloads:
+      payload:
+        - "' OR '1'='1"
+        - "1' OR '1'='1'--"
+        - "'; DROP TABLE users;--"
+        - "1 UNION SELECT * FROM users--"
+        - "admin'--"
+
+    attack: pitchfork
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "SQL"
+          - "syntax error"
+          - "mysql"
+          - "postgresql"
+          - "sqlite"
+        condition: or
+
+      - type: status
+        status:
+          - 500
+
+  # SQL Injection in ID parameters
+  - raw:
+      - |
+        GET /api/contacts/{{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+
+    payloads:
+      payload:
+        - "1 OR 1=1"
+        - "1' OR '1'='1"
+        - "1; DROP TABLE contacts;--"
+
+    attack: pitchfork
+
+    matchers:
+      - type: status
+        status:
+          - 500
+
+  # Command Injection in filename
+  - raw:
+      - |
+        POST /api/documents/upload HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+        Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+        ------WebKitFormBoundary
+        Content-Disposition: form-data; name="file"; filename="{{payload}}"
+        Content-Type: text/plain
+
+        test content
+        ------WebKitFormBoundary--
+
+    payloads:
+      payload:
+        - "; ls -la"
+        - "| cat /etc/passwd"
+        - "`id`"
+        - "$(whoami)"
+        - "test.txt; rm -rf /"
+
+    attack: pitchfork
+
+    matchers:
+      - type: word
+        words:
+          - "root:"
+          - "uid="
+          - "/bin/bash"
+        condition: or

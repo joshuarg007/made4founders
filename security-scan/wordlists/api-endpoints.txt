@@ -1,0 +1,204 @@
+# Made4Founders API Endpoints
+# Generated from codebase analysis
+
+# Authentication
+api/auth/login
+api/auth/logout
+api/auth/register
+api/auth/token
+api/auth/token/refresh
+api/auth/token/mfa
+api/auth/me
+api/auth/users
+api/auth/users-list
+api/auth/sessions
+api/auth/forgot-password
+api/auth/reset-password
+api/auth/verify-email
+api/auth/verify-password
+api/auth/resend-verification
+
+# OAuth
+api/auth/google/login
+api/auth/google/callback
+api/auth/github/login
+api/auth/github/callback
+api/auth/linkedin/login
+api/auth/linkedin/callback
+api/auth/twitter/login
+api/auth/twitter/callback
+api/auth/facebook/login
+api/auth/facebook/callback
+api/auth/oauth/create
+api/auth/oauth/link
+api/auth/oauth/pending
+
+# Business Management
+api/businesses
+api/businesses/tree
+api/businesses/current
+api/businesses/switch
+api/dashboard/stats
+api/business-info
+api/daily-brief
+api/leaderboard
+
+# Business Identifiers (Sensitive)
+api/business-identifiers
+api/business-identifiers/1
+api/business-identifiers/1/value
+
+# Vault & Credentials (Critical)
+api/vault/status
+api/vault/setup
+api/vault/unlock
+api/vault/lock
+api/vault/reset
+api/credentials
+api/credentials/1
+api/credentials/1/copy/username
+api/credentials/1/copy/password
+
+# Documents
+api/documents
+api/documents/upload
+api/documents/recategorize
+api/documents/1
+api/documents/1/download
+api/documents/1/reupload
+
+# Contacts
+api/contacts
+api/contacts/1
+api/contacts/bulk-assign-business
+
+# Deadlines
+api/deadlines
+api/deadlines/1
+api/deadlines/1/complete
+api/deadlines/bulk-assign-business
+
+# Tasks & Boards
+api/boards
+api/boards/1
+api/columns
+api/columns/1
+api/columns/reorder
+api/tasks
+api/tasks/1
+api/tasks/1/assign
+api/tasks/1/complete
+api/tasks/1/reopen
+api/tasks/1/activity
+api/tasks/1/comments
+api/tasks/move
+
+# Time Tracking
+api/time-entries
+api/time-entries/start
+api/time-entries/running
+api/time-entries/1
+api/time-entries/1/stop
+
+# Products & Services
+api/services
+api/services/1
+api/services/1/visit
+api/products-offered
+api/products-offered/1
+api/products-used
+api/products-used/1
+
+# Metrics & Analytics
+api/metrics
+api/metrics/1
+api/metrics/summary/latest
+api/analytics/stats
+api/analytics/dashboard
+api/analytics/goals
+api/analytics/multi-chart
+api/ai/usage
+
+# Marketing
+api/marketing/templates
+api/marketing/templates/prebuilt
+api/marketing/campaigns
+api/marketing/integrations
+api/marketing/adapt-content
+
+# Social
+api/social/social-accounts
+api/social/linkedin/post
+api/social/twitter/post
+api/social/facebook/post
+
+# Calendar
+api/calendar/token
+api/calendar/generate-token
+api/calendar/feed
+
+# Accounting
+api/accounting/accounts
+api/accounting/summary
+api/accounting/quickbooks/connect
+api/accounting/xero/connect
+api/accounting/freshbooks/connect
+api/accounting/zoho/connect
+
+# Admin
+api/admin/users
+api/audit-logs
+api/monitoring/metrics
+api/backups/create
+api/backups/list
+api/notifications/send-deadline-reminders
+api/notifications/send-weekly-digest
+
+# Checklist
+api/checklist
+api/checklist/bulk
+
+# Meetings
+api/meetings
+api/meetings/1
+
+# Web Links
+api/web-links
+api/web-links/1
+api/web-links/1/visit
+
+# Marketplaces
+api/marketplaces
+api/marketplaces/1
+
+# Transcripts
+api/transcripts
+api/transcripts/upload
+api/transcripts/1
+api/transcripts/1/download
+
+# Bank Accounts
+api/bank-accounts
+api/bank-accounts/1
+
+# Gamification
+api/quests/templates
+api/achievements
+api/challenges
+api/challenges/public
+
+# Health
+api/health
+
+# Misc paths to test
+.env
+.git/config
+.git/HEAD
+admin
+debug
+test
+swagger
+docs
+openapi.json
+graphql
+api-docs

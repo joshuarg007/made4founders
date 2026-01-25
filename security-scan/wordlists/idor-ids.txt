@@ -1,0 +1,29 @@
+# IDOR test IDs
+0
+1
+2
+3
+4
+5
+10
+100
+1000
+-1
+-100
+999999
+2147483647
+9999999999
+null
+undefined
+true
+false
+NaN
+[]
+{}
+../1
+1' OR '1'='1
+1; DROP TABLE users--
+admin
+root
+test
+guest

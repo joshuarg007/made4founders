@@ -338,9 +338,9 @@ except Exception as e:
 app = FastAPI(
     title="Made4Founders API",
     version="1.0.0",
-    docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
+    docs_url="/docs" if os.getenv("ENVIRONMENT", "").lower() != "production" else None,
     redoc_url=None,
-    openapi_url="/openapi.json" if os.getenv("ENVIRONMENT") != "production" else None
+    openapi_url="/openapi.json" if os.getenv("ENVIRONMENT", "").lower() != "production" else None
 )
 
 # ============ SECURITY MIDDLEWARE (Order matters - first added = last executed) ============
@@ -3173,7 +3173,10 @@ async def download_document(
     - Audit logging
     - Password verification for sensitive documents
     """
-    document = db.query(Document).filter(Document.id == document_id).first()
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.organization_id == current_user.organization_id
+    ).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -3184,7 +3187,7 @@ async def download_document(
     if document.is_sensitive:
         if not x_verify_password:
             raise HTTPException(status_code=401, detail="Password required for sensitive documents")
-        if not verify_password(x_verify_password, current_user.password_hash):
+        if not verify_password(x_verify_password, current_user.hashed_password):
             logger.warning(f"Invalid password attempt for sensitive document {document_id} by {current_user.email}")
             raise HTTPException(status_code=401, detail="Invalid password")
 
@@ -3261,8 +3264,11 @@ async def reupload_document_file(
     if current_user.role not in ["admin", "editor"]:
         raise HTTPException(status_code=403, detail="Editor access required")
 
-    # Get existing document
-    document = db.query(Document).filter(Document.id == document_id).first()
+    # Get existing document (must belong to user's organization)
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.organization_id == current_user.organization_id
+    ).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -3314,7 +3320,10 @@ async def reupload_document_file(
 
 @app.get("/api/documents/{document_id}", response_model=DocumentResponse)
 def get_document(document_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    document = db.query(Document).filter(Document.id == document_id).first()
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.organization_id == current_user.organization_id
+    ).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     return document
@@ -3322,7 +3331,10 @@ def get_document(document_id: int, current_user: User = Depends(get_current_user
 
 @app.patch("/api/documents/{document_id}", response_model=DocumentResponse)
 def update_document(document_id: int, document: DocumentUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_document = db.query(Document).filter(Document.id == document_id).first()
+    db_document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.organization_id == current_user.organization_id
+    ).first()
     if not db_document:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -3336,7 +3348,10 @@ def update_document(document_id: int, document: DocumentUpdate, current_user: Us
 
 @app.delete("/api/documents/{document_id}")
 def delete_document(document_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    document = db.query(Document).filter(Document.id == document_id).first()
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.organization_id == current_user.organization_id
+    ).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     db.delete(document)
@@ -4450,7 +4465,10 @@ def get_business_identifier(
     db: Session = Depends(get_db)
 ):
     """Get full (decrypted) identifier - requires authentication."""
-    ident = db.query(BusinessIdentifier).filter(BusinessIdentifier.id == identifier_id).first()
+    ident = db.query(BusinessIdentifier).filter(
+        BusinessIdentifier.id == identifier_id,
+        BusinessIdentifier.organization_id == current_user.organization_id
+    ).first()
     if not ident:
         raise HTTPException(status_code=404, detail="Identifier not found")
 
@@ -4482,7 +4500,10 @@ def get_business_identifier_value(
     db: Session = Depends(get_db)
 ):
     """Get just the decrypted value for copying (requires auth)."""
-    ident = db.query(BusinessIdentifier).filter(BusinessIdentifier.id == identifier_id).first()
+    ident = db.query(BusinessIdentifier).filter(
+        BusinessIdentifier.id == identifier_id,
+        BusinessIdentifier.organization_id == current_user.organization_id
+    ).first()
     if not ident:
         raise HTTPException(status_code=404, detail="Identifier not found")
 
@@ -4542,7 +4563,10 @@ def update_business_identifier(
     if current_user.role not in ["admin", "editor"]:
         raise HTTPException(status_code=403, detail="Editor access required")
 
-    db_ident = db.query(BusinessIdentifier).filter(BusinessIdentifier.id == identifier_id).first()
+    db_ident = db.query(BusinessIdentifier).filter(
+        BusinessIdentifier.id == identifier_id,
+        BusinessIdentifier.organization_id == current_user.organization_id
+    ).first()
     if not db_ident:
         raise HTTPException(status_code=404, detail="Identifier not found")
 
@@ -4586,7 +4610,10 @@ def delete_business_identifier(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    ident = db.query(BusinessIdentifier).filter(BusinessIdentifier.id == identifier_id).first()
+    ident = db.query(BusinessIdentifier).filter(
+        BusinessIdentifier.id == identifier_id,
+        BusinessIdentifier.organization_id == current_user.organization_id
+    ).first()
     if not ident:
         raise HTTPException(status_code=404, detail="Identifier not found")
 
@@ -4864,9 +4891,12 @@ def get_credentials(
 
 
 @app.get("/api/credentials/{credential_id}", response_model=CredentialDecrypted)
-def get_credential(credential_id: int, key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
+def get_credential(credential_id: int, current_user: User = Depends(get_current_user), key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
     """Get a single credential with decrypted values (requires unlock)."""
-    credential = db.query(Credential).filter(Credential.id == credential_id).first()
+    credential = db.query(Credential).filter(
+        Credential.id == credential_id,
+        Credential.organization_id == current_user.organization_id
+    ).first()
     if not credential:
         raise HTTPException(status_code=404, detail="Credential not found")
 
@@ -4937,9 +4967,12 @@ def create_credential(credential: CredentialCreate, current_user: User = Depends
 
 
 @app.patch("/api/credentials/{credential_id}", response_model=CredentialMasked)
-def update_credential(credential_id: int, credential: CredentialUpdate, key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
+def update_credential(credential_id: int, credential: CredentialUpdate, current_user: User = Depends(get_current_user), key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
     """Update a credential (requires unlock)."""
-    db_credential = db.query(Credential).filter(Credential.id == credential_id).first()
+    db_credential = db.query(Credential).filter(
+        Credential.id == credential_id,
+        Credential.organization_id == current_user.organization_id
+    ).first()
     if not db_credential:
         raise HTTPException(status_code=404, detail="Credential not found")
 
@@ -4997,9 +5030,12 @@ def update_credential(credential_id: int, credential: CredentialUpdate, key: byt
 
 
 @app.delete("/api/credentials/{credential_id}")
-def delete_credential(credential_id: int, key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
+def delete_credential(credential_id: int, current_user: User = Depends(get_current_user), key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
     """Delete a credential (requires unlock)."""
-    credential = db.query(Credential).filter(Credential.id == credential_id).first()
+    credential = db.query(Credential).filter(
+        Credential.id == credential_id,
+        Credential.organization_id == current_user.organization_id
+    ).first()
     if not credential:
         raise HTTPException(status_code=404, detail="Credential not found")
     # Clean up junction table
@@ -5304,7 +5340,10 @@ def create_marketplace(marketplace: MarketplaceCreate, current_user: User = Depe
 
 @app.get("/api/marketplaces/{marketplace_id}", response_model=MarketplaceResponse)
 def get_marketplace(marketplace_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    marketplace = db.query(Marketplace).filter(Marketplace.id == marketplace_id).first()
+    marketplace = db.query(Marketplace).filter(
+        Marketplace.id == marketplace_id,
+        Marketplace.organization_id == current_user.organization_id
+    ).first()
     if not marketplace:
         raise HTTPException(status_code=404, detail="Marketplace not found")
     return marketplace
@@ -5312,7 +5351,10 @@ def get_marketplace(marketplace_id: int, current_user: User = Depends(get_curren
 
 @app.patch("/api/marketplaces/{marketplace_id}", response_model=MarketplaceResponse)
 def update_marketplace(marketplace_id: int, marketplace: MarketplaceUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_marketplace = db.query(Marketplace).filter(Marketplace.id == marketplace_id).first()
+    db_marketplace = db.query(Marketplace).filter(
+        Marketplace.id == marketplace_id,
+        Marketplace.organization_id == current_user.organization_id
+    ).first()
     if not db_marketplace:
         raise HTTPException(status_code=404, detail="Marketplace not found")
 
@@ -5326,7 +5368,10 @@ def update_marketplace(marketplace_id: int, marketplace: MarketplaceUpdate, curr
 
 @app.delete("/api/marketplaces/{marketplace_id}")
 def delete_marketplace(marketplace_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    marketplace = db.query(Marketplace).filter(Marketplace.id == marketplace_id).first()
+    marketplace = db.query(Marketplace).filter(
+        Marketplace.id == marketplace_id,
+        Marketplace.organization_id == current_user.organization_id
+    ).first()
     if not marketplace:
         raise HTTPException(status_code=404, detail="Marketplace not found")
     db.delete(marketplace)
@@ -5795,7 +5840,10 @@ def create_board(
 
 @app.get("/api/boards/{board_id}", response_model=TaskBoardResponse)
 def get_board(board_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    board = db.query(TaskBoard).filter(TaskBoard.id == board_id).first()
+    board = db.query(TaskBoard).filter(
+        TaskBoard.id == board_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     return board
@@ -5808,7 +5856,10 @@ def update_board(
     current_user: User = Depends(get_editor_or_admin),
     db: Session = Depends(get_db)
 ):
-    db_board = db.query(TaskBoard).filter(TaskBoard.id == board_id).first()
+    db_board = db.query(TaskBoard).filter(
+        TaskBoard.id == board_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not db_board:
         raise HTTPException(status_code=404, detail="Board not found")
     for key, value in board.model_dump(exclude_unset=True).items():
@@ -5825,7 +5876,10 @@ def delete_board(
     db: Session = Depends(get_db)
 ):
     """Delete board (admin only)."""
-    board = db.query(TaskBoard).filter(TaskBoard.id == board_id).first()
+    board = db.query(TaskBoard).filter(
+        TaskBoard.id == board_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     db.delete(board)
@@ -5859,7 +5913,11 @@ def update_column(
     current_user: User = Depends(get_editor_or_admin),
     db: Session = Depends(get_db)
 ):
-    db_column = db.query(TaskColumn).filter(TaskColumn.id == column_id).first()
+    # Join with TaskBoard to verify organization ownership
+    db_column = db.query(TaskColumn).join(TaskBoard).filter(
+        TaskColumn.id == column_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not db_column:
         raise HTTPException(status_code=404, detail="Column not found")
     for key, value in column.model_dump(exclude_unset=True).items():
@@ -5875,7 +5933,11 @@ def delete_column(
     current_user: User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
-    column = db.query(TaskColumn).filter(TaskColumn.id == column_id).first()
+    # Join with TaskBoard to verify organization ownership
+    column = db.query(TaskColumn).join(TaskBoard).filter(
+        TaskColumn.id == column_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not column:
         raise HTTPException(status_code=404, detail="Column not found")
     # Move tasks to null column
@@ -5980,7 +6042,11 @@ def create_task(
 
 @app.get("/api/tasks/{task_id}", response_model=TaskResponse)
 def get_task(task_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
+    # Join with TaskBoard to verify organization ownership
+    task = db.query(Task).join(TaskBoard).filter(
+        Task.id == task_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
@@ -5998,7 +6064,11 @@ def update_task(
     db: Session = Depends(get_db)
 ):
     """Update task (editor/admin only)."""
-    db_task = db.query(Task).filter(Task.id == task_id).first()
+    # Join with TaskBoard to verify organization ownership
+    db_task = db.query(Task).join(TaskBoard).filter(
+        Task.id == task_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
 
@@ -6053,7 +6123,11 @@ def delete_task(
     current_user: User = Depends(get_editor_or_admin),
     db: Session = Depends(get_db)
 ):
-    task = db.query(Task).filter(Task.id == task_id).first()
+    # Join with TaskBoard to verify organization ownership
+    task = db.query(Task).join(TaskBoard).filter(
+        Task.id == task_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     db.delete(task)
@@ -6071,7 +6145,11 @@ def assign_task(
     db: Session = Depends(get_db)
 ):
     """Assign task to user (admin only)."""
-    db_task = db.query(Task).filter(Task.id == task_id).first()
+    # Join with TaskBoard to verify organization ownership
+    db_task = db.query(Task).join(TaskBoard).filter(
+        Task.id == task_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
 

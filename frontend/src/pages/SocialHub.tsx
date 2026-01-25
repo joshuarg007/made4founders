@@ -22,6 +22,7 @@ import {
   Palette,
   Globe,
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { SocialMockups } from '../components/SocialPostMockups';
@@ -1597,7 +1598,12 @@ function PreviewModal({ template, onClose }: {
         <div className="p-4 bg-gray-100 overflow-auto max-h-[calc(90vh-100px)]">
           <div
             className="bg-white mx-auto max-w-[600px] shadow-lg"
-            dangerouslySetInnerHTML={{ __html: template.html_content }}
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(template.html_content, {
+                ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'span', 'img', 'table', 'tr', 'td', 'th', 'thead', 'tbody'],
+                ALLOWED_ATTR: ['href', 'src', 'alt', 'style', 'class', 'target', 'width', 'height'],
+              })
+            }}
           />
         </div>
       </div>
