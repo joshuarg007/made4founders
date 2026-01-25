@@ -1027,9 +1027,7 @@ function AssetModal({ asset, onClose, onSave }: {
         if (formData.tags) form.append('tags', formData.tags);
         form.append('is_primary', String(formData.is_primary));
 
-        await api.put(`/api/branding/assets/${asset.id}`, form, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.put(`/api/branding/assets/${asset.id}`, form);
       } else {
         // Upload new asset
         if (!file) {
@@ -1046,9 +1044,7 @@ function AssetModal({ asset, onClose, onSave }: {
         if (formData.tags) form.append('tags', formData.tags);
         form.append('is_primary', String(formData.is_primary));
 
-        await api.post('/api/branding/assets', form, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post('/api/branding/assets', form);
       }
       onSave();
       onClose();

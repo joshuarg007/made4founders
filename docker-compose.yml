@@ -54,6 +54,7 @@ services:
     volumes:
       - backend-data:/app/data
       - uploads-data:/app/uploads
+      - brand-assets-data:/app/brand_assets
     networks:
       - made4founders-network
     healthcheck:
@@ -104,6 +105,7 @@ services:
 volumes:
   backend-data:
   uploads-data:
+  brand-assets-data:
   certbot-webroot:
 
 networks:
