@@ -9,7 +9,6 @@ import {
   LogOut,
   Package,
   UserCog,
-  CheckSquare,
   BarChart3,
   TrendingUp,
   Landmark,
