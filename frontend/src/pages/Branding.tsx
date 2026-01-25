@@ -800,7 +800,7 @@ function ColorModal({ color, onClose, onSave }: {
               className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               {COLOR_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>{type.label}</option>
+                <option key={type.value} value={type.value} className="bg-[#1a1d24] text-white">{type.label}</option>
               ))}
             </select>
           </div>
@@ -929,7 +929,7 @@ function FontModal({ font, onClose, onSave }: {
               className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               {FONT_USAGES.map((u) => (
-                <option key={u.value} value={u.value}>{u.label}</option>
+                <option key={u.value} value={u.value} className="bg-[#1a1d24] text-white">{u.label}</option>
               ))}
             </select>
           </div>
@@ -941,15 +941,15 @@ function FontModal({ font, onClose, onSave }: {
               onChange={(e) => setFormData({ ...formData, font_weight: e.target.value })}
               className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
-              <option value="100">100 - Thin</option>
-              <option value="200">200 - Extra Light</option>
-              <option value="300">300 - Light</option>
-              <option value="400">400 - Regular</option>
-              <option value="500">500 - Medium</option>
-              <option value="600">600 - Semi Bold</option>
-              <option value="700">700 - Bold</option>
-              <option value="800">800 - Extra Bold</option>
-              <option value="900">900 - Black</option>
+              <option value="100" className="bg-[#1a1d24] text-white">100 - Thin</option>
+              <option value="200" className="bg-[#1a1d24] text-white">200 - Extra Light</option>
+              <option value="300" className="bg-[#1a1d24] text-white">300 - Light</option>
+              <option value="400" className="bg-[#1a1d24] text-white">400 - Regular</option>
+              <option value="500" className="bg-[#1a1d24] text-white">500 - Medium</option>
+              <option value="600" className="bg-[#1a1d24] text-white">600 - Semi Bold</option>
+              <option value="700" className="bg-[#1a1d24] text-white">700 - Bold</option>
+              <option value="800" className="bg-[#1a1d24] text-white">800 - Extra Bold</option>
+              <option value="900" className="bg-[#1a1d24] text-white">900 - Black</option>
             </select>
           </div>
 
@@ -1111,7 +1111,7 @@ function AssetModal({ asset, onClose, onSave }: {
               className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition disabled:opacity-50"
             >
               {ASSET_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>{type.label}</option>
+                <option key={type.value} value={type.value} className="bg-[#1a1d24] text-white">{type.label}</option>
               ))}
             </select>
           </div>
@@ -1242,7 +1242,7 @@ function GuidelineModal({ guideline, onClose, onSave }: {
               className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               {GUIDELINE_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat} className="bg-[#1a1d24] text-white">{cat}</option>
               ))}
             </select>
           </div>
