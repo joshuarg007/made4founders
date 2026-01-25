@@ -1169,31 +1169,14 @@ export default function GettingStarted() {
     }
   };
 
-  const handleItemClick = async (item: ChecklistItem) => {
+  const handleItemClick = (item: ChecklistItem) => {
     const current = progress[item.id];
-    const newCompleted = !current?.is_completed;
-
-    // Immediately toggle the checkbox
-    try {
-      const res = await fetch(`${API_BASE}/checklist`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          item_id: item.id,
-          is_completed: newCompleted,
-          notes: current?.notes || null,
-          data: current?.data || null
-        })
-      });
-
-      if (res.ok) {
-        const updated = await res.json();
-        setProgress(prev => ({ ...prev, [item.id]: updated }));
-      }
-    } catch (error) {
-      console.error('Failed to update progress:', error);
-    }
+    setTipsExpanded(false);
+    setIsEditMode(current?.is_completed || false);
+    const existingData = getItemData(item.id);
+    setModalDataFields(existingData);
+    setModalNotes(current?.notes || '');
+    setConfirmModal(item);
   };
 
   const openEditModal = (item: ChecklistItem) => {
@@ -1843,8 +1826,27 @@ export default function GettingStarted() {
                   disabled={uploading}
                   className="flex-1 px-3 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-white/5 transition text-sm disabled:opacity-50"
                 >
-                  {progress[confirmModal.id]?.is_completed && isEditMode ? 'Close' : 'Cancel'}
+                  Cancel
                 </button>
+                {canEdit && progress[confirmModal.id]?.is_completed && (
+                  <button
+                    onClick={() => confirmComplete(confirmModal.id, false)}
+                    disabled={uploading}
+                    className="flex-1 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-3 h-3" />
+                        Mark Incomplete
+                      </>
+                    )}
+                  </button>
+                )}
                 {canEdit && (
                   <button
                     onClick={() => confirmComplete(confirmModal.id, true)}
@@ -1859,12 +1861,12 @@ export default function GettingStarted() {
                     ) : progress[confirmModal.id]?.is_completed ? (
                       <>
                         <Save className="w-3 h-3" />
-                        Save
+                        Save Changes
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="w-3 h-3" />
-                        Complete
+                        Mark Complete
                       </>
                     )}
                   </button>
