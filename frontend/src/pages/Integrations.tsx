@@ -14,6 +14,21 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 
+// Integration logos
+import zoomLogo from '../assets/integrations/zoom.svg';
+import googleMeetLogo from '../assets/integrations/google-meet.svg';
+import teamsLogo from '../assets/integrations/microsoft-teams.svg';
+import twitterLogo from '../assets/integrations/twitter-x.svg';
+import linkedinLogo from '../assets/integrations/linkedin.svg';
+import instagramLogo from '../assets/integrations/instagram.svg';
+import quickbooksLogo from '../assets/integrations/quickbooks.svg';
+import xeroLogo from '../assets/integrations/xero.svg';
+import freshbooksLogo from '../assets/integrations/freshbooks.svg';
+import zohoLogo from '../assets/integrations/zoho.svg';
+import mailchimpLogo from '../assets/integrations/mailchimp.png';
+import googleLogo from '../assets/integrations/google.svg';
+import githubLogo from '../assets/integrations/github.svg';
+
 interface IntegrationStatus {
   connected: boolean;
   user_email?: string;
@@ -26,7 +41,7 @@ interface Integration {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  logo: string;
   color: string;
   categories: string[];
   connectEndpoint?: string;
@@ -43,7 +58,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'zoom',
     name: 'Zoom',
     description: 'Import meeting transcripts from cloud recordings',
-    icon: '📹',
+    logo: zoomLogo,
     color: 'blue',
     categories: ['meetings'],
     connectEndpoint: '/api/zoom/login',
@@ -54,7 +69,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'google-meet',
     name: 'Google Meet',
     description: 'Coming soon - Import transcripts from Google Meet',
-    icon: '🎥',
+    logo: googleMeetLogo,
     color: 'green',
     categories: ['meetings'],
   },
@@ -62,7 +77,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'teams',
     name: 'Microsoft Teams',
     description: 'Coming soon - Import transcripts from Teams meetings',
-    icon: '💼',
+    logo: teamsLogo,
     color: 'purple',
     categories: ['meetings'],
   },
@@ -72,7 +87,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'twitter',
     name: 'Twitter / X',
     description: 'Post updates and engage with your audience',
-    icon: '𝕏',
+    logo: twitterLogo,
     color: 'gray',
     categories: ['social', 'auth'],
     connectEndpoint: '/api/social/twitter/connect',
@@ -83,7 +98,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'linkedin',
     name: 'LinkedIn',
     description: 'Share professional updates and articles',
-    icon: '💼',
+    logo: linkedinLogo,
     color: 'blue',
     categories: ['social', 'auth'],
     connectEndpoint: '/api/social/linkedin/connect',
@@ -95,7 +110,7 @@ const INTEGRATIONS: Integration[] = [
   //   id: 'facebook',
   //   name: 'Facebook',
   //   description: 'Post to your business page',
-  //   icon: '📘',
+  //   logo: facebookLogo,
   //   color: 'blue',
   //   categories: ['social', 'auth'],
   //   connectEndpoint: '/api/social/facebook/connect',
@@ -106,7 +121,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'instagram',
     name: 'Instagram',
     description: 'Share visual content with your followers',
-    icon: '📷',
+    logo: instagramLogo,
     color: 'pink',
     categories: ['social'],
     connectEndpoint: '/api/social/instagram/connect',
@@ -119,7 +134,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'quickbooks',
     name: 'QuickBooks',
     description: 'Sync financial data and invoices',
-    icon: '📊',
+    logo: quickbooksLogo,
     color: 'green',
     categories: ['accounting'],
     connectEndpoint: '/api/accounting/quickbooks/login',
@@ -129,7 +144,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'xero',
     name: 'Xero',
     description: 'Connect your Xero accounting',
-    icon: '📈',
+    logo: xeroLogo,
     color: 'cyan',
     categories: ['accounting'],
     connectEndpoint: '/api/accounting/xero/login',
@@ -139,7 +154,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'freshbooks',
     name: 'FreshBooks',
     description: 'Sync invoices and expenses',
-    icon: '📒',
+    logo: freshbooksLogo,
     color: 'green',
     categories: ['accounting'],
     connectEndpoint: '/api/accounting/freshbooks/login',
@@ -149,7 +164,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'zoho',
     name: 'Zoho Books',
     description: 'Connect Zoho accounting suite',
-    icon: '📚',
+    logo: zohoLogo,
     color: 'yellow',
     categories: ['accounting'],
     connectEndpoint: '/api/accounting/zoho/login',
@@ -161,7 +176,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'mailchimp',
     name: 'Mailchimp',
     description: 'Sync email campaigns and subscribers',
-    icon: '🐵',
+    logo: mailchimpLogo,
     color: 'yellow',
     categories: ['email'],
     statusEndpoint: '/api/mailchimp/status',
@@ -172,7 +187,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'google',
     name: 'Google',
     description: 'Sign in with Google, access Calendar & Meet',
-    icon: '🔍',
+    logo: googleLogo,
     color: 'red',
     categories: ['auth', 'meetings'],
   },
@@ -180,7 +195,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'github',
     name: 'GitHub',
     description: 'Sign in with GitHub',
-    icon: '🐙',
+    logo: githubLogo,
     color: 'gray',
     categories: ['auth'],
   },
@@ -451,8 +466,8 @@ export default function Integrations() {
 
               {/* Icon and Name */}
               <div className="flex items-center gap-3 mb-3">
-                <div className={`text-2xl ${isComingSoon ? 'grayscale' : ''}`}>
-                  {integration.icon}
+                <div className={`w-8 h-8 flex items-center justify-center ${isComingSoon ? 'grayscale opacity-50' : ''}`}>
+                  <img src={integration.logo} alt={integration.name} className="w-8 h-8 object-contain" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">{integration.name}</h3>
