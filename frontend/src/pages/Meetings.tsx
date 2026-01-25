@@ -23,14 +23,14 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 
-interface ZoomStatus {
+interface PlatformStatus {
   connected: boolean;
   user_email?: string;
   user_name?: string;
   connected_at?: string;
 }
 
-interface ZoomRecording {
+interface MeetingRecording {
   id: string;
   meeting_id: string;
   topic: string;
@@ -94,28 +94,53 @@ export default function Meetings() {
 
   const [uploading, setUploading] = useState(false);
 
-  // Zoom integration state
-  const [zoomStatus, setZoomStatus] = useState<ZoomStatus | null>(null);
-  const [zoomRecordings, setZoomRecordings] = useState<ZoomRecording[]>([]);
+  // Meeting platform integration state
+  const [zoomStatus, setZoomStatus] = useState<PlatformStatus | null>(null);
+  const [googleMeetStatus, setGoogleMeetStatus] = useState<PlatformStatus | null>(null);
+  const [teamsStatus, setTeamsStatus] = useState<PlatformStatus | null>(null);
+
+  const [zoomRecordings, setZoomRecordings] = useState<MeetingRecording[]>([]);
+  const [googleMeetRecordings, setGoogleMeetRecordings] = useState<MeetingRecording[]>([]);
+  const [teamsRecordings, setTeamsRecordings] = useState<MeetingRecording[]>([]);
+
   const [loadingZoom, setLoadingZoom] = useState(false);
+  const [loadingGoogleMeet, setLoadingGoogleMeet] = useState(false);
+  const [loadingTeams, setLoadingTeams] = useState(false);
+
+  const [showGoogleMeetModal, setShowGoogleMeetModal] = useState(false);
+  const [showTeamsModal, setShowTeamsModal] = useState(false);
+
   const [importingRecording, setImportingRecording] = useState<string | null>(null);
 
   useEffect(() => {
     loadTranscripts();
-    loadZoomStatus();
+    loadAllPlatformStatuses();
 
-    // Check for Zoom callback result
+    // Check for callback results
     const params = new URLSearchParams(window.location.search);
     if (params.get('zoom') === 'connected') {
       loadZoomStatus();
-      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (params.get('google-meet') === 'connected') {
+      loadGoogleMeetStatus();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (params.get('teams') === 'connected') {
+      loadTeamsStatus();
       window.history.replaceState({}, '', window.location.pathname);
     }
     if (params.get('error')) {
-      setError(`Zoom connection failed: ${params.get('error')}`);
+      setError(`Connection failed: ${params.get('error')}`);
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [filterType]);
+
+  const loadAllPlatformStatuses = () => {
+    loadZoomStatus();
+    loadGoogleMeetStatus();
+    loadTeamsStatus();
+  };
 
   const loadTranscripts = async () => {
     setLoading(true);
@@ -137,6 +162,7 @@ export default function Meetings() {
     loadTranscripts();
   };
 
+  // Zoom functions
   const loadZoomStatus = async () => {
     try {
       const res = await api.get('/api/zoom/status');
@@ -178,7 +204,7 @@ export default function Meetings() {
     }
   };
 
-  const importZoomRecording = async (recording: ZoomRecording) => {
+  const importZoomRecording = async (recording: MeetingRecording) => {
     setImportingRecording(recording.id);
     try {
       await api.post(`/api/zoom/recordings/${encodeURIComponent(recording.id)}/import?generate_summary=true`);
@@ -194,6 +220,126 @@ export default function Meetings() {
   const openZoomModal = () => {
     setShowZoomModal(true);
     loadZoomRecordings();
+  };
+
+  // Google Meet functions
+  const loadGoogleMeetStatus = async () => {
+    try {
+      const res = await api.get('/api/google-meet/status');
+      setGoogleMeetStatus(res.data);
+    } catch {
+      setGoogleMeetStatus({ connected: false });
+    }
+  };
+
+  const connectGoogleMeet = async () => {
+    try {
+      const res = await api.get('/api/google-meet/login');
+      window.location.href = res.data.auth_url;
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to connect Google Meet');
+    }
+  };
+
+  const disconnectGoogleMeet = async () => {
+    if (!confirm('Disconnect Google Meet account?')) return;
+    try {
+      await api.delete('/api/google-meet/disconnect');
+      setGoogleMeetStatus({ connected: false });
+      setGoogleMeetRecordings([]);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to disconnect Google Meet');
+    }
+  };
+
+  const loadGoogleMeetRecordings = async () => {
+    setLoadingGoogleMeet(true);
+    try {
+      const res = await api.get('/api/google-meet/recordings');
+      setGoogleMeetRecordings(res.data.recordings || []);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to load Google Meet recordings');
+    } finally {
+      setLoadingGoogleMeet(false);
+    }
+  };
+
+  const importGoogleMeetRecording = async (recording: MeetingRecording) => {
+    setImportingRecording(recording.id);
+    try {
+      await api.post(`/api/google-meet/recordings/${encodeURIComponent(recording.id)}/import?generate_summary=true`);
+      setShowGoogleMeetModal(false);
+      loadTranscripts();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to import transcript');
+    } finally {
+      setImportingRecording(null);
+    }
+  };
+
+  const openGoogleMeetModal = () => {
+    setShowGoogleMeetModal(true);
+    loadGoogleMeetRecordings();
+  };
+
+  // Microsoft Teams functions
+  const loadTeamsStatus = async () => {
+    try {
+      const res = await api.get('/api/teams/status');
+      setTeamsStatus(res.data);
+    } catch {
+      setTeamsStatus({ connected: false });
+    }
+  };
+
+  const connectTeams = async () => {
+    try {
+      const res = await api.get('/api/teams/login');
+      window.location.href = res.data.auth_url;
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to connect Microsoft Teams');
+    }
+  };
+
+  const disconnectTeams = async () => {
+    if (!confirm('Disconnect Microsoft Teams account?')) return;
+    try {
+      await api.delete('/api/teams/disconnect');
+      setTeamsStatus({ connected: false });
+      setTeamsRecordings([]);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to disconnect Microsoft Teams');
+    }
+  };
+
+  const loadTeamsRecordings = async () => {
+    setLoadingTeams(true);
+    try {
+      const res = await api.get('/api/teams/recordings');
+      setTeamsRecordings(res.data.recordings || []);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to load Teams recordings');
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  const importTeamsRecording = async (recording: MeetingRecording) => {
+    setImportingRecording(recording.id);
+    try {
+      await api.post(`/api/teams/recordings/${encodeURIComponent(recording.id)}/import?generate_summary=true`);
+      setShowTeamsModal(false);
+      loadTranscripts();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to import transcript');
+    } finally {
+      setImportingRecording(null);
+    }
+  };
+
+  const openTeamsModal = () => {
+    setShowTeamsModal(true);
+    loadTeamsRecordings();
   };
 
   const handleUpload = async (file: File, formData: any) => {
@@ -317,40 +463,97 @@ export default function Meetings() {
           <h1 className="text-2xl font-bold text-white">Meetings</h1>
           <p className="text-gray-400 mt-1">Upload and analyze meeting transcripts</p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Zoom Integration Button */}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Zoom */}
           {zoomStatus?.connected ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={openZoomModal}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition text-sm"
               >
                 <Import className="w-4 h-4" />
-                Import from Zoom
+                Zoom
               </button>
               <button
                 onClick={disconnectZoom}
                 className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
                 title={`Connected as ${zoomStatus.user_email}`}
               >
-                <Unlink className="w-4 h-4" />
+                <Unlink className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
             <button
               onClick={connectZoom}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm"
             >
               <Link className="w-4 h-4" />
-              Connect Zoom
+              Zoom
             </button>
           )}
+
+          {/* Google Meet */}
+          {googleMeetStatus?.connected ? (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={openGoogleMeetModal}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500 transition text-sm"
+              >
+                <Import className="w-4 h-4" />
+                Meet
+              </button>
+              <button
+                onClick={disconnectGoogleMeet}
+                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                title={`Connected as ${googleMeetStatus.user_email}`}
+              >
+                <Unlink className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={connectGoogleMeet}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm"
+            >
+              <Link className="w-4 h-4" />
+              Meet
+            </button>
+          )}
+
+          {/* Microsoft Teams */}
+          {teamsStatus?.connected ? (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={openTeamsModal}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-500 transition text-sm"
+              >
+                <Import className="w-4 h-4" />
+                Teams
+              </button>
+              <button
+                onClick={disconnectTeams}
+                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                title={`Connected as ${teamsStatus.user_email}`}
+              >
+                <Unlink className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={connectTeams}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm"
+            >
+              <Link className="w-4 h-4" />
+              Teams
+            </button>
+          )}
+
           <button
             onClick={() => setShowUploadModal(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-400 transition"
           >
             <Upload className="w-4 h-4" />
-            Upload Transcript
+            Upload
           </button>
         </div>
       </div>
@@ -517,13 +720,46 @@ export default function Meetings() {
 
       {/* Zoom Recordings Modal */}
       {showZoomModal && (
-        <ZoomRecordingsModal
+        <RecordingsModal
+          platform="zoom"
+          platformName="Zoom"
+          platformColor="blue"
           recordings={zoomRecordings}
           loading={loadingZoom}
           importingId={importingRecording}
           onClose={() => setShowZoomModal(false)}
           onImport={importZoomRecording}
           onRefresh={loadZoomRecordings}
+        />
+      )}
+
+      {/* Google Meet Recordings Modal */}
+      {showGoogleMeetModal && (
+        <RecordingsModal
+          platform="google-meet"
+          platformName="Google Meet"
+          platformColor="green"
+          recordings={googleMeetRecordings}
+          loading={loadingGoogleMeet}
+          importingId={importingRecording}
+          onClose={() => setShowGoogleMeetModal(false)}
+          onImport={importGoogleMeetRecording}
+          onRefresh={loadGoogleMeetRecordings}
+        />
+      )}
+
+      {/* Teams Recordings Modal */}
+      {showTeamsModal && (
+        <RecordingsModal
+          platform="teams"
+          platformName="Microsoft Teams"
+          platformColor="purple"
+          recordings={teamsRecordings}
+          loading={loadingTeams}
+          importingId={importingRecording}
+          onClose={() => setShowTeamsModal(false)}
+          onImport={importTeamsRecording}
+          onRefresh={loadTeamsRecordings}
         />
       )}
     </div>
@@ -963,8 +1199,11 @@ function DetailModal({
   );
 }
 
-// Zoom Recordings Modal Component
-function ZoomRecordingsModal({
+// Generic Recordings Modal Component
+function RecordingsModal({
+  platform,
+  platformName,
+  platformColor,
   recordings,
   loading,
   importingId,
@@ -972,13 +1211,22 @@ function ZoomRecordingsModal({
   onImport,
   onRefresh,
 }: {
-  recordings: ZoomRecording[];
+  platform: string;
+  platformName: string;
+  platformColor: 'blue' | 'green' | 'purple';
+  recordings: MeetingRecording[];
   loading: boolean;
   importingId: string | null;
   onClose: () => void;
-  onImport: (recording: ZoomRecording) => void;
+  onImport: (recording: MeetingRecording) => void;
   onRefresh: () => void;
 }) {
+  const colorClasses = {
+    blue: { bg: 'bg-blue-600', hover: 'hover:bg-blue-500', text: 'text-blue-400', border: 'hover:border-blue-500/30' },
+    green: { bg: 'bg-green-600', hover: 'hover:bg-green-500', text: 'text-green-400', border: 'hover:border-green-500/30' },
+    purple: { bg: 'bg-purple-600', hover: 'hover:bg-purple-500', text: 'text-purple-400', border: 'hover:border-purple-500/30' },
+  };
+  const colors = colorClasses[platformColor];
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Unknown date';
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -1009,8 +1257,8 @@ function ZoomRecordingsModal({
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-              <Video className="w-5 h-5 text-blue-400" />
-              Import from Zoom
+              <Video className={`w-5 h-5 ${colors.text}`} />
+              Import from {platformName}
             </h2>
             <p className="text-sm text-gray-400 mt-1">Select a recording to import its transcript</p>
           </div>
@@ -1031,13 +1279,13 @@ function ZoomRecordingsModal({
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+              <Loader2 className={`w-8 h-8 animate-spin ${colors.text}`} />
             </div>
           ) : recordings.length === 0 ? (
             <div className="text-center py-12">
               <Video className="w-12 h-12 mx-auto mb-3 text-gray-600" />
               <p className="text-gray-400">No recordings found in the last 30 days</p>
-              <p className="text-sm text-gray-500 mt-1">Make sure cloud recording is enabled in your Zoom settings</p>
+              <p className="text-sm text-gray-500 mt-1">Make sure cloud recording is enabled in your {platformName} settings</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -1052,7 +1300,7 @@ function ZoomRecordingsModal({
                     {recordingsWithTranscript.map((recording) => (
                       <div
                         key={recording.id}
-                        className="p-4 rounded-lg bg-white/5 border border-white/10 hover:border-blue-500/30 transition"
+                        className={`p-4 rounded-lg bg-white/5 border border-white/10 ${colors.border} transition`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
@@ -1073,7 +1321,7 @@ function ZoomRecordingsModal({
                           <button
                             onClick={() => onImport(recording)}
                             disabled={importingId !== null}
-                            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition disabled:opacity-50 flex items-center gap-2 text-sm"
+                            className={`px-4 py-2 rounded-lg ${colors.bg} text-white ${colors.hover} transition disabled:opacity-50 flex items-center gap-2 text-sm`}
                           >
                             {importingId === recording.id ? (
                               <>
@@ -1137,15 +1385,39 @@ function ZoomRecordingsModal({
         </div>
 
         <div className="p-4 border-t border-white/10 text-center text-sm text-gray-500">
-          <a
-            href="https://support.zoom.us/hc/en-us/articles/115004794983-Automatically-transcribe-cloud-recordings"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1"
-          >
-            Learn how to enable automatic transcription
-            <ExternalLink className="w-3 h-3" />
-          </a>
+          {platform === 'zoom' && (
+            <a
+              href="https://support.zoom.us/hc/en-us/articles/115004794983-Automatically-transcribe-cloud-recordings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${colors.text} hover:opacity-80 inline-flex items-center gap-1`}
+            >
+              Learn how to enable automatic transcription
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+          {platform === 'google-meet' && (
+            <a
+              href="https://support.google.com/meet/answer/10090371"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${colors.text} hover:opacity-80 inline-flex items-center gap-1`}
+            >
+              Learn how to enable Meet recording &amp; transcription
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+          {platform === 'teams' && (
+            <a
+              href="https://support.microsoft.com/en-us/office/record-a-meeting-in-teams-34dfbe7f-b07d-4a27-b4c6-de62f1348c24"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${colors.text} hover:opacity-80 inline-flex items-center gap-1`}
+            >
+              Learn how to record Teams meetings
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
         </div>
       </div>
     </div>
