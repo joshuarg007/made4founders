@@ -670,11 +670,12 @@ class BrandColor(Base):
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
 
-    name = Column(String(100), nullable=False)  # e.g., "Ocean Blue", "Sunset Orange"
-    hex_value = Column(String(7), nullable=False)  # #RRGGBB
+    name = Column(String(100), nullable=True)  # e.g., "Ocean Blue", "Sunset Orange"
+    hex_value = Column(String(9), nullable=False)  # #RRGGBB or #RRGGBBAA
     rgb_value = Column(String(20), nullable=True)  # "255, 128, 0"
     hsl_value = Column(String(20), nullable=True)  # "30, 100%, 50%"
     color_type = Column(String(50), default=ColorType.CUSTOM.value)
+    description = Column(Text, nullable=True)
     sort_order = Column(Integer, default=0)
 
     created_at = Column(DateTime, default=datetime.utcnow)

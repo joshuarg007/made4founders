@@ -27,6 +27,7 @@ import { useAuth } from '../context/AuthContext';
 import { SocialMockups } from '../components/SocialPostMockups';
 import Branding from './Branding';
 import Website from './Website';
+import marketingIcon from '../assets/marketing-icon.webp';
 
 // Types
 interface EmailTemplate {
@@ -659,7 +660,7 @@ function SocialPublisherTab() {
         {/* Hero Header */}
         <div className="relative mb-8 p-6 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-white/10 overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 opacity-20">
-            <img src="/src/assets/marketing-icon.webp" alt="" className="w-full h-full object-contain" />
+            <img src={marketingIcon} alt="" className="w-full h-full object-contain" />
           </div>
           <div className="relative">
             <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">

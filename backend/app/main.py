@@ -217,11 +217,16 @@ try:
     # Brand colors table migrations
     if 'brand_colors' in existing_tables:
         brand_color_columns = [col['name'] for col in inspector.get_columns('brand_colors')]
-        if 'business_id' not in brand_color_columns:
-            with engine.connect() as conn:
-                conn.execute(text('ALTER TABLE brand_colors ADD COLUMN business_id INTEGER'))
-                logger.info("Added business_id column to brand_colors table")
-                conn.commit()
+        brand_color_migrations = [
+            ('business_id', 'ALTER TABLE brand_colors ADD COLUMN business_id INTEGER'),
+            ('description', 'ALTER TABLE brand_colors ADD COLUMN description TEXT'),
+        ]
+        with engine.connect() as conn:
+            for col_name, sql in brand_color_migrations:
+                if col_name not in brand_color_columns:
+                    conn.execute(text(sql))
+                    logger.info(f"Added {col_name} column to brand_colors table")
+            conn.commit()
 
     # Brand fonts table migrations
     if 'brand_fonts' in existing_tables:
