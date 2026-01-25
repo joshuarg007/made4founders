@@ -2085,3 +2085,33 @@ class MeetingTranscript(Base):
     # Relationships
     organization = relationship("Organization", backref="meeting_transcripts")
     business = relationship("Business", backref="meeting_transcripts")
+
+
+class AuditLog(Base):
+    """Audit log for security-sensitive operations."""
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Event details
+    event_type = Column(String(50), nullable=False, index=True)  # login, logout, password_change, etc.
+    action = Column(String(100), nullable=False)  # e.g., "POST /api/auth/login"
+    resource = Column(String(200), nullable=True)  # affected resource path
+    resource_id = Column(String(50), nullable=True)  # ID of affected resource
+
+    # Context
+    ip_address = Column(String(45), nullable=True)  # IPv4 or IPv6
+    user_agent = Column(String(500), nullable=True)
+    status_code = Column(Integer, nullable=True)
+    success = Column(Boolean, default=True)
+
+    # Additional data (JSON)
+    details = Column(Text, nullable=True)  # JSON object with extra context
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    # Relationships
+    organization = relationship("Organization", backref="audit_logs")
+    user = relationship("User", backref="audit_logs")

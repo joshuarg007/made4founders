@@ -175,6 +175,20 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 # Optional
 ACCESS_TOKEN_EXPIRE_MINUTES=15
 REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# Sentry Error Tracking
+SENTRY_DSN=https://your-dsn@sentry.io/project
+
+# Automated Backups
+BACKUP_S3_BUCKET=your-backup-bucket
+BACKUP_RETENTION_DAYS=30
+
+# Scheduler (for automated jobs)
+SCHEDULER_API_KEY=your-random-key
+
+# Alerting
+ALERT_WEBHOOK_URL=https://hooks.slack.com/services/xxx
+ALERT_EMAIL=alerts@yourdomain.com
 ```
 
 ### OAuth Callback URLs
@@ -300,6 +314,28 @@ made4founders/
 - `/api/users` - User management (admin only)
 - `/api/health` - Health check
 
+### Operations Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/monitoring/health` | GET | Quick health check for load balancers |
+| `/api/monitoring/status` | GET | Detailed status with all service checks |
+| `/api/monitoring/metrics` | GET | System resource metrics (admin only) |
+| `/api/backups/create` | POST | Create database backup (scheduler key required) |
+| `/api/backups/list` | GET | List available backups (admin only) |
+| `/api/backups/restore/{key}` | POST | Restore from backup (admin only) |
+| `/api/audit-logs/` | GET | List audit logs with filtering (admin only) |
+| `/api/audit-logs/stats` | GET | Audit log statistics (admin only) |
+| `/api/audit-logs/export` | GET | Export audit logs as CSV (admin only) |
+| `/api/export/all` | GET | Export all user data as JSON |
+| `/api/export/contacts` | GET | Export contacts as CSV |
+| `/api/export/deadlines` | GET | Export deadlines as CSV |
+| `/api/analytics/track` | POST | Track analytics event |
+| `/api/analytics/stats` | GET | Get analytics statistics (admin only) |
+| `/api/support/contact` | POST | Submit support request |
+| `/api/notifications/send-deadline-reminders` | POST | Send deadline emails (scheduler key) |
+| `/api/notifications/send-weekly-digest` | POST | Send weekly digest (scheduler key) |
+
 ---
 
 ## User Roles
@@ -418,23 +454,34 @@ SQLite database located at `backend/made4founders.db`
 ## Roadmap
 
 ### Completed
-- [x] OAuth authentication (Google, GitHub)
+- [x] OAuth authentication (Google, GitHub, LinkedIn, Twitter, Facebook)
 - [x] Public marketing pages (Privacy, Terms, Security)
 - [x] Extended contact fields
 - [x] Color-coded navigation sections
 - [x] Browser password manager integration
+- [x] Social media posting (LinkedIn, Twitter, Facebook)
+- [x] Accounting integrations (QuickBooks, Xero, FreshBooks, Zoho)
+- [x] **Stripe Billing** - Subscription payments, pricing tiers, customer portal
+- [x] **Transactional Email** - AWS SES for password reset, notifications
+- [x] **Email Verification** - Verify email on signup with resend
+- [x] **Password Reset** - Forgot password flow with secure tokens
+- [x] **Email Notifications** - Deadline reminders, weekly digest
+- [x] **Two-Factor Auth (TOTP)** - Authenticator app support with backup codes
+- [x] **Onboarding/Tutorial** - Interactive walkthrough for new users
+- [x] **OAuth Account Linking** - Link OAuth to existing account
+- [x] **Automated Backups** - Scheduled S3 backups with retention policy
+- [x] **Error Tracking** - Sentry integration (frontend + backend)
+- [x] **Monitoring/Alerting** - Health checks, Slack/email alerts
+- [x] **Audit Log Dashboard** - View security events, login history
+- [x] **Mobile Responsive** - Hamburger menu, slide-out sidebar
+- [x] **Data Export** - Export to JSON/CSV (GDPR compliant)
+- [x] **Customer Support** - Help widget with FAQs and contact form
+- [x] **Analytics** - Privacy-friendly usage tracking
+- [x] **SEO Optimization** - Meta tags, Open Graph, structured data, sitemap
 
-### Planned
-- [ ] **Tutorial/Onboarding for new users** - Interactive walkthrough for first-time users
-- [ ] OAuth account linking (link new OAuth to existing account)
-- [ ] Email notifications for deadlines
-- [ ] Calendar integration
-- [ ] Mobile responsive improvements
-- [ ] Export data (PDF/CSV)
-- [ ] Two-factor authentication (TOTP)
-- [ ] Team collaboration features
-- [x] Social media OAuth (Twitter, LinkedIn, Facebook) - Completed
-- [ ] Stripe payment integration
+### Future
+- [ ] **Calendar Integration** - Google/Outlook calendar sync
+- [ ] **Team Collaboration** - Invite members, shared workspaces
 
 ---
 

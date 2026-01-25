@@ -491,6 +491,39 @@ export const createCheckoutSession = (priceKey: string) =>
 export const createPortalSession = () =>
   fetchApi<PortalSession>('/billing/create-portal-session', { method: 'POST' });
 
+// MFA (Two-Factor Authentication)
+export interface MFAStatus {
+  mfa_enabled: boolean;
+}
+
+export interface MFASetupResponse {
+  secret: string;
+  qr_code: string;
+  backup_codes: string[];
+}
+
+export const getMFAStatus = () => fetchApi<MFAStatus>('/mfa/status');
+
+export const setupMFA = () => fetchApi<MFASetupResponse>('/mfa/setup', { method: 'POST' });
+
+export const verifyMFASetup = (code: string) =>
+  fetchApi<{ message: string }>('/mfa/verify', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+
+export const disableMFA = (password: string, code: string) =>
+  fetchApi<{ message: string }>('/mfa/disable', {
+    method: 'POST',
+    body: JSON.stringify({ password, code }),
+  });
+
+export const regenerateBackupCodes = (code: string) =>
+  fetchApi<{ backup_codes: string[] }>('/mfa/regenerate-backup-codes', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+
 // Services
 export interface Service {
   id: number;
@@ -1733,5 +1766,152 @@ const api = {
     return { data: await res.json() as T };
   },
 };
+
+// =============== Audit Logs ===============
+export interface AuditLogEntry {
+  id: number;
+  event_type: string;
+  action: string;
+  resource: string | null;
+  resource_id: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  status_code: number | null;
+  success: boolean;
+  details: Record<string, unknown> | null;
+  created_at: string;
+  user_email: string | null;
+}
+
+export interface AuditLogStats {
+  total_events: number;
+  events_today: number;
+  events_this_week: number;
+  failed_logins_today: number;
+  unique_ips_today: number;
+  by_event_type: Record<string, number>;
+  recent_failed_logins: Array<{
+    ip_address: string;
+    created_at: string;
+    details: Record<string, unknown> | null;
+  }>;
+}
+
+export interface AuditLogFilters {
+  event_type?: string;
+  success?: boolean;
+  user_id?: number;
+  start_date?: string;
+  end_date?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export const getAuditLogs = (filters: AuditLogFilters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.event_type) params.append('event_type', filters.event_type);
+  if (filters.success !== undefined) params.append('success', String(filters.success));
+  if (filters.user_id) params.append('user_id', String(filters.user_id));
+  if (filters.start_date) params.append('start_date', filters.start_date);
+  if (filters.end_date) params.append('end_date', filters.end_date);
+  if (filters.limit) params.append('limit', String(filters.limit));
+  if (filters.offset) params.append('offset', String(filters.offset));
+  const query = params.toString();
+  return fetchApi<AuditLogEntry[]>(`/audit-logs/${query ? `?${query}` : ''}`);
+};
+
+export const getAuditLogStats = () =>
+  fetchApi<AuditLogStats>('/audit-logs/stats');
+
+export const exportAuditLogs = async (startDate?: string, endDate?: string) => {
+  const params = new URLSearchParams();
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+  const query = params.toString();
+
+  const res = await fetch(`${API_BASE}/audit-logs/export${query ? `?${query}` : ''}`, {
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    throw new ApiError(res.status);
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  a.remove();
+};
+
+// =============== Monitoring ===============
+export interface HealthStatus {
+  status: string;
+  timestamp: string;
+  uptime_seconds: number;
+  version: string;
+  checks: Record<string, {
+    status: string;
+    latency_ms?: number;
+    error?: string;
+    message?: string;
+  }>;
+}
+
+export const getMonitoringStatus = () =>
+  fetchApi<HealthStatus>('/monitoring/status');
+
+export const getSystemMetrics = () =>
+  fetchApi<{
+    timestamp: string;
+    metrics: {
+      cpu_percent: number | null;
+      memory_percent: number | null;
+      disk_percent: number | null;
+      disk_free_gb: number | null;
+      python_version: string;
+      platform: string;
+    };
+  }>('/monitoring/metrics');
+
+// =============== Data Export ===============
+const downloadFile = async (endpoint: string, filename: string) => {
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    throw new ApiError(res.status);
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  a.remove();
+};
+
+export const exportAllData = () =>
+  downloadFile('/export/all', `made4founders_export_${new Date().toISOString().slice(0, 10)}.json`);
+
+export const exportContactsCsv = () =>
+  downloadFile('/export/contacts', `contacts_${new Date().toISOString().slice(0, 10)}.csv`);
+
+export const exportDeadlinesCsv = () =>
+  downloadFile('/export/deadlines', `deadlines_${new Date().toISOString().slice(0, 10)}.csv`);
+
+export const exportTasksCsv = () =>
+  downloadFile('/export/tasks', `tasks_${new Date().toISOString().slice(0, 10)}.csv`);
+
+export const exportMetricsCsv = () =>
+  downloadFile('/export/metrics', `metrics_${new Date().toISOString().slice(0, 10)}.csv`);
 
 export default api;

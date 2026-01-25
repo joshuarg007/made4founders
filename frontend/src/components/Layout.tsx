@@ -23,9 +23,13 @@ import {
   ListTodo,
   Video,
   Plug,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Tutorial from './Tutorial';
+import SupportWidget from './SupportWidget';
+import { usePageTracking } from '../hooks/useAnalytics';
 
 interface NavItem {
   to: string;
@@ -126,10 +130,20 @@ const navSections: NavSection[] = [
 export default function Layout() {
   const { user, logout, refreshUser } = useAuth();
   const location = useLocation();
+
+  // Track page views
+  usePageTracking();
+
   const [showTutorial, setShowTutorial] = useState(() => {
     // Show tutorial if user hasn't completed onboarding
     return false; // Will be set by useEffect after user loads
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   // Show tutorial when user loads and hasn't completed onboarding
   useEffect(() => {
@@ -177,11 +191,40 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-[#0f1117]">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#1a1d24] border-r border-white/10 flex flex-col relative">
+      {/* Mobile Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 md:hidden bg-[#1a1d24] border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        <Link to="/app" className="flex items-center gap-2">
+          <img src="/logo.webp" alt="Made4Founders" className="h-8 w-auto" />
+          <span className="text-sm font-bold text-white">M4F</span>
+        </Link>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 rounded-lg bg-white/5 text-white hover:bg-white/10 transition"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - responsive */}
+      <aside className={`
+        fixed md:relative z-50 md:z-auto
+        w-72 md:w-64 h-full
+        bg-[#1a1d24] border-r border-white/10
+        flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         {/* Logo */}
         <div className="p-4 border-b border-white/10">
-          <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity" onClick={() => setMobileMenuOpen(false)}>
             <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
             <span className="text-lg font-bold text-white">Made4Founders</span>
           </Link>
@@ -296,12 +339,15 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto relative">
+      <main className="flex-1 overflow-auto relative pt-14 md:pt-0">
         <Outlet />
       </main>
 
       {/* Onboarding Tutorial */}
       {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
+
+      {/* Support Widget */}
+      <SupportWidget userEmail={user?.email || undefined} userName={user?.name || undefined} />
     </div>
   );
 }

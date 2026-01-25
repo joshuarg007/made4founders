@@ -23,13 +23,31 @@ import {
   Mail,
   Shield,
   User,
+  Smartphone,
+  Key,
+  Copy,
+  Eye,
+  EyeOff,
+  FileText,
+  RefreshCw,
 } from 'lucide-react';
 import {
   getSubscriptionStatus,
   createCheckoutSession,
   createPortalSession,
   updateBusiness,
+  getMFAStatus,
+  setupMFA,
+  verifyMFASetup,
+  disableMFA,
+  regenerateBackupCodes,
+  getAuditLogs,
+  getAuditLogStats,
+  exportAuditLogs,
+  exportAllData,
   type SubscriptionStatus,
+  type AuditLogEntry,
+  type AuditLogStats,
 } from '../lib/api';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
@@ -100,8 +118,34 @@ export default function Settings() {
   // Display preferences
   const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
 
+  // MFA state
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(true);
+  const [showMfaSetup, setShowMfaSetup] = useState(false);
+  const [mfaQrCode, setMfaQrCode] = useState('');
+  const [mfaSecret, setMfaSecret] = useState('');
+  const [mfaBackupCodes, setMfaBackupCodes] = useState<string[]>([]);
+  const [mfaVerifyCode, setMfaVerifyCode] = useState('');
+  const [showMfaDisable, setShowMfaDisable] = useState(false);
+  const [mfaDisablePassword, setMfaDisablePassword] = useState('');
+  const [mfaDisableCode, setMfaDisableCode] = useState('');
+  const [showMfaPassword, setShowMfaPassword] = useState(false);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
+
+  // Audit logs state (admin only)
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [auditStats, setAuditStats] = useState<AuditLogStats | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+
   useEffect(() => {
     loadSubscription();
+    loadMfaStatus();
+
+    // Load audit logs for admins
+    if (user?.role === 'admin') {
+      loadAuditData();
+    }
 
     // Check for success/canceled from Stripe redirect
     if (searchParams.get('success') === 'true') {
@@ -112,7 +156,7 @@ export default function Settings() {
       setError('Checkout was canceled. No changes were made.');
       window.history.replaceState({}, '', '/app/settings');
     }
-  }, [searchParams]);
+  }, [searchParams, user?.role]);
 
   const loadSubscription = async () => {
     try {
@@ -123,6 +167,127 @@ export default function Settings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMfaStatus = async () => {
+    try {
+      const data = await getMFAStatus();
+      setMfaEnabled(data.mfa_enabled);
+    } catch (err) {
+      console.error('Failed to load MFA status:', err);
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const loadAuditData = async () => {
+    setAuditLoading(true);
+    setAuditError(null);
+    try {
+      const [logs, stats] = await Promise.all([
+        getAuditLogs({ limit: 50 }),
+        getAuditLogStats()
+      ]);
+      setAuditLogs(logs);
+      setAuditStats(stats);
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+      setAuditError('Failed to load audit logs');
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  const handleExportAuditLogs = async () => {
+    setActionLoading('export-audit');
+    try {
+      await exportAuditLogs();
+    } catch (err) {
+      setError('Failed to export audit logs');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleMfaSetup = async () => {
+    setActionLoading('mfa-setup');
+    setError(null);
+    try {
+      const data = await setupMFA();
+      setMfaQrCode(data.qr_code);
+      setMfaSecret(data.secret);
+      setMfaBackupCodes(data.backup_codes);
+      setShowMfaSetup(true);
+    } catch (err) {
+      setError('Failed to initialize MFA setup. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleMfaVerify = async () => {
+    if (!mfaVerifyCode || mfaVerifyCode.length !== 6) {
+      setError('Please enter a valid 6-digit code');
+      return;
+    }
+    setActionLoading('mfa-verify');
+    setError(null);
+    try {
+      await verifyMFASetup(mfaVerifyCode);
+      setMfaEnabled(true);
+      setShowMfaSetup(false);
+      setShowBackupCodes(true);
+      setSuccessMessage('Two-factor authentication enabled successfully!');
+      setMfaVerifyCode('');
+    } catch (err) {
+      setError('Invalid verification code. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleMfaDisable = async () => {
+    if (!mfaDisablePassword || !mfaDisableCode) {
+      setError('Please enter both your password and MFA code');
+      return;
+    }
+    setActionLoading('mfa-disable');
+    setError(null);
+    try {
+      await disableMFA(mfaDisablePassword, mfaDisableCode);
+      setMfaEnabled(false);
+      setShowMfaDisable(false);
+      setSuccessMessage('Two-factor authentication has been disabled.');
+      setMfaDisablePassword('');
+      setMfaDisableCode('');
+    } catch (err) {
+      setError('Invalid password or MFA code. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRegenerateBackupCodes = async () => {
+    const code = prompt('Enter your current MFA code to generate new backup codes:');
+    if (!code) return;
+    setActionLoading('mfa-backup');
+    setError(null);
+    try {
+      const data = await regenerateBackupCodes(code);
+      setMfaBackupCodes(data.backup_codes);
+      setShowBackupCodes(true);
+      setSuccessMessage('New backup codes generated. Please save them securely.');
+    } catch (err) {
+      setError('Invalid MFA code. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setSuccessMessage('Copied to clipboard!');
+    setTimeout(() => setSuccessMessage(null), 2000);
   };
 
   const handleUpgrade = async (priceKey: string) => {
@@ -212,13 +377,11 @@ export default function Settings() {
   const handleExportData = async () => {
     setActionLoading('export');
     try {
-      // TODO: Implement data export endpoint
-      setTimeout(() => {
-        setSuccessMessage('Data export started. You will receive an email with the download link.');
-        setActionLoading(null);
-      }, 1000);
+      await exportAllData();
+      setSuccessMessage('Data exported successfully! Check your downloads folder.');
     } catch (err) {
       setError('Failed to export data');
+    } finally {
       setActionLoading(null);
     }
   };
@@ -658,6 +821,263 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Two-Factor Authentication */}
+      <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-500/10 flex items-center justify-center">
+            <Smartphone className="w-5 h-5 text-green-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Two-Factor Authentication</h2>
+            <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
+          </div>
+        </div>
+
+        {mfaLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : showMfaSetup ? (
+          /* MFA Setup Flow */
+          <div className="space-y-6">
+            <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5">
+              <h3 className="font-medium text-white mb-4">Step 1: Scan QR Code</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+              </p>
+              <div className="flex justify-center mb-4">
+                <div className="p-4 bg-white rounded-lg">
+                  <img
+                    src={`data:image/png;base64,${mfaQrCode}`}
+                    alt="MFA QR Code"
+                    className="w-48 h-48"
+                  />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-2">Can't scan? Enter this code manually:</p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="px-3 py-1.5 bg-white/5 rounded text-sm text-cyan-400 font-mono">
+                    {mfaSecret}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(mfaSecret)}
+                    className="p-1.5 hover:bg-white/10 rounded transition"
+                  >
+                    <Copy className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5">
+              <h3 className="font-medium text-white mb-4">Step 2: Enter Verification Code</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Enter the 6-digit code from your authenticator app to verify setup.
+              </p>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={mfaVerifyCode}
+                  onChange={(e) => setMfaVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-center text-lg font-mono tracking-widest focus:outline-none focus:border-green-500/50"
+                  maxLength={6}
+                />
+                <button
+                  onClick={handleMfaVerify}
+                  disabled={actionLoading === 'mfa-verify' || mfaVerifyCode.length !== 6}
+                  className="px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  {actionLoading === 'mfa-verify' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
+                  Verify
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowMfaSetup(false);
+                setMfaVerifyCode('');
+              }}
+              className="text-sm text-gray-400 hover:text-white transition"
+            >
+              Cancel setup
+            </button>
+          </div>
+        ) : showMfaDisable ? (
+          /* MFA Disable Flow */
+          <div className="space-y-4">
+            <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+              <p className="text-sm text-red-400">
+                Disabling two-factor authentication will make your account less secure. Are you sure?
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Current Password</label>
+                <div className="relative">
+                  <input
+                    type={showMfaPassword ? 'text' : 'password'}
+                    value={mfaDisablePassword}
+                    onChange={(e) => setMfaDisablePassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full px-4 py-3 pr-12 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMfaPassword(!showMfaPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  >
+                    {showMfaPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">MFA Code</label>
+                <input
+                  type="text"
+                  value={mfaDisableCode}
+                  onChange={(e) => setMfaDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Enter 6-digit code"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white font-mono focus:outline-none focus:border-red-500/50"
+                  maxLength={6}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowMfaDisable(false);
+                  setMfaDisablePassword('');
+                  setMfaDisableCode('');
+                }}
+                className="flex-1 px-4 py-3 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMfaDisable}
+                disabled={actionLoading === 'mfa-disable'}
+                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading === 'mfa-disable' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : null}
+                Disable MFA
+              </button>
+            </div>
+          </div>
+        ) : showBackupCodes ? (
+          /* Backup Codes Display */
+          <div className="space-y-4">
+            <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+              <div className="flex items-start gap-3">
+                <Key className="w-5 h-5 text-yellow-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-yellow-400 font-medium">Save your backup codes</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    These codes can be used to access your account if you lose your authenticator device.
+                    Each code can only be used once. Store them securely.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 p-4 bg-[#0f1117] rounded-lg border border-white/5">
+              {mfaBackupCodes.map((code, i) => (
+                <div key={i} className="px-3 py-2 bg-white/5 rounded font-mono text-sm text-center text-white">
+                  {code}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => copyToClipboard(mfaBackupCodes.join('\n'))}
+                className="flex-1 px-4 py-3 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition flex items-center justify-center gap-2"
+              >
+                <Copy className="w-4 h-4" />
+                Copy All
+              </button>
+              <button
+                onClick={() => setShowBackupCodes(false)}
+                className="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* MFA Status Display */
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  mfaEnabled ? 'bg-green-500/20' : 'bg-white/5'
+                }`}>
+                  <Shield className={`w-5 h-5 ${mfaEnabled ? 'text-green-400' : 'text-gray-500'}`} />
+                </div>
+                <div>
+                  <div className="font-medium text-white">Authenticator App</div>
+                  <div className="text-sm text-gray-400">
+                    {mfaEnabled ? 'Two-factor authentication is enabled' : 'Not configured'}
+                  </div>
+                </div>
+              </div>
+              {mfaEnabled ? (
+                <span className="px-2.5 py-1 text-xs bg-green-500/20 text-green-400 rounded-full flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Enabled
+                </span>
+              ) : (
+                <span className="px-2.5 py-1 text-xs bg-yellow-500/20 text-yellow-400 rounded-full">
+                  Not enabled
+                </span>
+              )}
+            </div>
+
+            {mfaEnabled ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={handleRegenerateBackupCodes}
+                  disabled={actionLoading === 'mfa-backup'}
+                  className="flex-1 px-4 py-3 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition flex items-center justify-center gap-2"
+                >
+                  {actionLoading === 'mfa-backup' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Key className="w-4 h-4" />
+                  )}
+                  Regenerate Backup Codes
+                </button>
+                <button
+                  onClick={() => setShowMfaDisable(true)}
+                  className="px-4 py-3 border border-red-500/30 text-red-400 rounded-lg font-medium hover:bg-red-500/10 transition"
+                >
+                  Disable
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleMfaSetup}
+                disabled={actionLoading === 'mfa-setup'}
+                className="w-full px-4 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition flex items-center justify-center gap-2"
+              >
+                {actionLoading === 'mfa-setup' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Smartphone className="w-4 h-4" />
+                )}
+                Enable Two-Factor Authentication
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Notification Settings */}
       <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
         <div className="flex items-center gap-3 mb-6">
@@ -860,6 +1280,109 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Audit Logs (Admin Only) */}
+      {user?.role === 'admin' && (
+        <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500/20 to-red-500/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">Security Audit Logs</h2>
+                <p className="text-sm text-gray-500">Monitor security events and login activity</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadAuditData}
+                disabled={auditLoading}
+                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                title="Refresh"
+              >
+                <RefreshCw className={`w-4 h-4 ${auditLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={handleExportAuditLogs}
+                disabled={actionLoading === 'export-audit'}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          {auditError && (
+            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {auditError}
+            </div>
+          )}
+
+          {/* Stats Cards */}
+          {auditStats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 rounded-lg bg-[#0f1117] border border-white/5">
+                <div className="text-2xl font-bold text-white">{auditStats.events_today}</div>
+                <div className="text-sm text-gray-500">Events Today</div>
+              </div>
+              <div className="p-4 rounded-lg bg-[#0f1117] border border-white/5">
+                <div className="text-2xl font-bold text-white">{auditStats.events_this_week}</div>
+                <div className="text-sm text-gray-500">This Week</div>
+              </div>
+              <div className="p-4 rounded-lg bg-[#0f1117] border border-white/5">
+                <div className={`text-2xl font-bold ${auditStats.failed_logins_today > 0 ? 'text-red-400' : 'text-white'}`}>
+                  {auditStats.failed_logins_today}
+                </div>
+                <div className="text-sm text-gray-500">Failed Logins Today</div>
+              </div>
+              <div className="p-4 rounded-lg bg-[#0f1117] border border-white/5">
+                <div className="text-2xl font-bold text-white">{auditStats.unique_ips_today}</div>
+                <div className="text-sm text-gray-500">Unique IPs Today</div>
+              </div>
+            </div>
+          )}
+
+          {/* Recent Logs */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Activity</h3>
+            {auditLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              </div>
+            ) : auditLogs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No audit logs found</div>
+            ) : (
+              <div className="max-h-80 overflow-y-auto space-y-2">
+                {auditLogs.slice(0, 20).map((log) => (
+                  <div
+                    key={log.id}
+                    className={`p-3 rounded-lg border ${
+                      log.success
+                        ? 'bg-[#0f1117] border-white/5'
+                        : 'bg-red-500/5 border-red-500/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${log.success ? 'bg-green-400' : 'bg-red-400'}`} />
+                        <span className="font-medium text-white">{log.event_type}</span>
+                        <span className="text-gray-500 text-sm">{log.action}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-gray-500">
+                        {log.user_email && <span>{log.user_email}</span>}
+                        {log.ip_address && <span className="font-mono">{log.ip_address}</span>}
+                        <span>{new Date(log.created_at).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Help */}
       <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">

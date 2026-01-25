@@ -176,42 +176,41 @@ async def google_callback(
     if not email:
         raise HTTPException(status_code=400, detail="Email not provided by Google")
 
-    # Find or create user
+    # Find existing user by email
     user = db.query(User).filter(User.email == email).first()
 
+    # Also check if user exists by OAuth provider ID
     if not user:
-        # Create new user and organization
-        org_name = name.split()[0] + "'s Company" if name else "My Company"
-        base_slug = create_slug(org_name)
-        slug = get_unique_slug(db, base_slug)
+        user = db.query(User).filter(
+            User.oauth_provider == "google",
+            User.oauth_provider_id == google_id
+        ).first()
 
-        # Create organization with 14-day trial
-        org = Organization(
-            name=org_name,
-            slug=slug,
-            subscription_tier=SubscriptionTier.FREE.value,
-            subscription_status=SubscriptionStatus.TRIALING.value,
-            trial_ends_at=datetime.utcnow() + timedelta(days=14),
-        )
-        db.add(org)
-        db.flush()
+    # Also check OAuthConnection table for linked Google accounts
+    if not user:
+        from .models import OAuthConnection
+        oauth_conn = db.query(OAuthConnection).filter(
+            OAuthConnection.provider == "google",
+            OAuthConnection.provider_user_id == google_id
+        ).first()
+        if oauth_conn:
+            user = db.query(User).filter(User.id == oauth_conn.user_id).first()
 
-        # Create user
-        user = User(
+    if not user:
+        # No existing user - redirect to link page where they can create account or link existing
+        pending_token = store_pending_oauth(
+            provider="google",
+            provider_id=google_id,
             email=email,
             name=name,
-            oauth_provider="google",
-            oauth_provider_id=google_id,
-            avatar_url=avatar,
-            email_verified=True,  # Google verifies emails
-            email_verified_at=datetime.utcnow(),
-            organization_id=org.id,
-            is_org_owner=True,
-            role="admin",
-            is_active=True,
+            avatar=avatar,
+            access_token=access_token,
+            refresh_token=tokens.get("refresh_token"),
+            expires_in=tokens.get("expires_in"),
         )
-        db.add(user)
-        db.commit()
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/link-account?token={pending_token}"
+        return response
     else:
         # Update existing user with Google info if not already linked
         if not user.oauth_provider:
@@ -347,42 +346,41 @@ async def github_callback(
     github_id = str(user_info.get("id"))
     avatar = user_info.get("avatar_url")
 
-    # Find or create user
+    # Find existing user by email
     user = db.query(User).filter(User.email == email).first()
 
+    # Also check if user exists by OAuth provider ID
     if not user:
-        # Create new user and organization
-        org_name = name.split()[0] + "'s Company" if name else "My Company"
-        base_slug = create_slug(org_name)
-        slug = get_unique_slug(db, base_slug)
+        user = db.query(User).filter(
+            User.oauth_provider == "github",
+            User.oauth_provider_id == github_id
+        ).first()
 
-        # Create organization with 14-day trial
-        org = Organization(
-            name=org_name,
-            slug=slug,
-            subscription_tier=SubscriptionTier.FREE.value,
-            subscription_status=SubscriptionStatus.TRIALING.value,
-            trial_ends_at=datetime.utcnow() + timedelta(days=14),
-        )
-        db.add(org)
-        db.flush()
+    # Also check OAuthConnection table for linked GitHub accounts
+    if not user:
+        from .models import OAuthConnection
+        oauth_conn = db.query(OAuthConnection).filter(
+            OAuthConnection.provider == "github",
+            OAuthConnection.provider_user_id == github_id
+        ).first()
+        if oauth_conn:
+            user = db.query(User).filter(User.id == oauth_conn.user_id).first()
 
-        # Create user
-        user = User(
+    if not user:
+        # No existing user - redirect to link page where they can create account or link existing
+        pending_token = store_pending_oauth(
+            provider="github",
+            provider_id=github_id,
             email=email,
             name=name,
-            oauth_provider="github",
-            oauth_provider_id=github_id,
-            avatar_url=avatar,
-            email_verified=True,  # GitHub verifies emails
-            email_verified_at=datetime.utcnow(),
-            organization_id=org.id,
-            is_org_owner=True,
-            role="admin",
-            is_active=True,
+            avatar=avatar,
+            access_token=access_token,
+            refresh_token=None,
+            expires_in=None,
         )
-        db.add(user)
-        db.commit()
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/link-account?token={pending_token}"
+        return response
     else:
         # Update existing user with GitHub info if not already linked
         if not user.oauth_provider:

@@ -33,6 +33,7 @@ from .models import (
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, ZoomConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
     Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting, MeetingTranscript,
+    AuditLog,
     # Junction tables for business taxonomy
     ContactBusiness, DocumentBusiness, CredentialBusiness, WebLinkBusiness,
     ProductOfferedBusiness, ProductUsedBusiness, ServiceBusiness, DeadlineBusiness, MeetingBusiness
@@ -52,6 +53,13 @@ from .mfa import router as mfa_router
 from .zoom_oauth import router as zoom_router
 from .google_meet_oauth import router as google_meet_router
 from .teams_oauth import router as teams_router
+from .notifications import router as notifications_router
+from .backups import router as backups_router
+from .monitoring import router as monitoring_router
+from .audit_logs import router as audit_logs_router
+from .data_export import router as data_export_router
+from .support import router as support_router
+from .analytics import router as analytics_router, AnalyticsEvent
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
     DocumentCreate, DocumentUpdate, DocumentResponse,
@@ -102,6 +110,29 @@ from .security import verify_password
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize Sentry for error tracking (if configured)
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                FastApiIntegration(),
+                SqlalchemyIntegration(),
+            ],
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+            profiles_sample_rate=float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.1")),
+            environment=os.getenv("ENVIRONMENT", "development"),
+            release=os.getenv("APP_VERSION", "1.0.0"),
+        )
+        logger.info("Sentry error tracking initialized")
+    except ImportError:
+        logger.warning("sentry-sdk not installed, error tracking disabled")
+
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -114,6 +145,7 @@ try:
     # Create missing tables explicitly (for tables added after initial deployment)
     tables_to_check = [
         'bank_accounts', 'achievements', 'business_achievements', 'meetings', 'user_sessions', 'token_blacklist',
+        'audit_logs', 'analytics_events',
         # Business taxonomy junction tables
         'contact_businesses', 'document_businesses', 'credential_businesses', 'web_link_businesses',
         'product_offered_businesses', 'product_used_businesses', 'service_businesses', 'deadline_businesses', 'meeting_businesses'
@@ -376,6 +408,13 @@ app.include_router(mfa_router, prefix="/api/mfa", tags=["mfa"])
 app.include_router(zoom_router, prefix="/api/zoom", tags=["zoom"])
 app.include_router(google_meet_router, prefix="/api/google-meet", tags=["google-meet"])
 app.include_router(teams_router, prefix="/api/teams", tags=["teams"])
+app.include_router(notifications_router, prefix="/api/notifications", tags=["notifications"])
+app.include_router(backups_router, prefix="/api/backups", tags=["backups"])
+app.include_router(monitoring_router, prefix="/api/monitoring", tags=["monitoring"])
+app.include_router(audit_logs_router, prefix="/api/audit-logs", tags=["audit-logs"])
+app.include_router(data_export_router, prefix="/api/export", tags=["export"])
+app.include_router(support_router, prefix="/api/support", tags=["support"])
+app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 
 # Startup validation
 @app.on_event("startup")
