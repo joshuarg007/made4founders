@@ -101,8 +101,11 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u joshuarg007 --password-stdin
 
             # Deploy with explicit env file
+            # CRITICAL: Always do down/up to properly reload env vars
+            # Just using --force-recreate does NOT reload env vars reliably
             docker compose --env-file .env -f docker-compose.prod.yml pull
-            docker compose --env-file .env -f docker-compose.prod.yml up -d --force-recreate
+            docker compose --env-file .env -f docker-compose.prod.yml down
+            docker compose --env-file .env -f docker-compose.prod.yml up -d
 
             # Verify containers have env vars
             sleep 5
