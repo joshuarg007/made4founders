@@ -19,8 +19,9 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
-              <img src="/logo.webp" alt="Made4Founders" className="h-16 w-auto" width={51} height={62} />
+            <Link to="/" className="flex items-center gap-3 group">
+              <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
+              <span className="text-lg font-bold text-white">Made4Founders</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -118,8 +119,9 @@ export default function PublicLayout() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
-              <Link to="/" className="flex items-center gap-2">
-                <img src="/logo.webp" alt="Made4Founders" className="h-16 w-auto" width={51} height={62} />
+              <Link to="/" className="flex items-center gap-3">
+                <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
+                <span className="text-lg font-bold text-white">Made4Founders</span>
               </Link>
               <p className="mt-4 text-sm text-gray-400">
                 Built by founders, for founders. Secure. Profitable. Fun.
@@ -183,7 +185,7 @@ export default function PublicLayout() {
 
           <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-400">
-              &copy; {new Date().getFullYear()} Made4Founders. All rights reserved.
+              &copy; {new Date().getFullYear()} Axion Deep Labs. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-2 text-xs text-gray-400">

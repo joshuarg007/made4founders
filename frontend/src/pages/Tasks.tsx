@@ -48,7 +48,7 @@ export default function Tasks() {
   const [filterAssignee, setFilterAssignee] = useState<number | null>(null);
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
-  const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('calendar');
 
   // Modal states
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -377,17 +377,6 @@ export default function Tasks() {
             {/* View toggle */}
             <div className="flex items-center bg-white/5 border border-white/10 rounded-lg p-1">
               <button
-                onClick={() => setViewMode('kanban')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                  viewMode === 'kanban'
-                    ? 'bg-cyan-500/20 text-cyan-300'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-                Board
-              </button>
-              <button
                 onClick={() => setViewMode('calendar')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
                   viewMode === 'calendar'
@@ -397,6 +386,17 @@ export default function Tasks() {
               >
                 <CalendarDays className="w-4 h-4" />
                 Calendar
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                  viewMode === 'kanban'
+                    ? 'bg-cyan-500/20 text-cyan-300'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Board
               </button>
             </div>
 
@@ -657,84 +657,14 @@ export default function Tasks() {
 
       {/* Calendar Sync Modal */}
       {showCalendarModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowCalendarModal(false)}>
-          <div
-            className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Link2 className="w-5 h-5 text-cyan-400" />
-                Calendar Sync
-              </h2>
-              <button onClick={() => setShowCalendarModal(false)}>
-                <X className="w-5 h-5 text-gray-400 hover:text-white" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <p className="text-gray-400 text-sm">
-                Subscribe to your tasks and deadlines in Google Calendar, Apple Calendar, Outlook, or any app that supports iCal feeds.
-              </p>
-
-              {calendarToken ? (
-                <div className="space-y-3">
-                  <label className="block text-sm text-gray-400">Your Calendar URL</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={getCalendarFeedUrl(calendarToken)}
-                      className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm font-mono truncate"
-                    />
-                    <button
-                      onClick={copyCalendarUrl}
-                      className="px-3 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition flex items-center gap-1"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between pt-2">
-                    <button
-                      onClick={handleGenerateToken}
-                      disabled={calendarLoading}
-                      className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
-                      Regenerate URL
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-gray-500 text-sm mb-4">
-                    Generate a subscription URL to sync your calendar
-                  </p>
-                  <button
-                    onClick={handleGenerateToken}
-                    disabled={calendarLoading}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition flex items-center gap-2 mx-auto"
-                  >
-                    {calendarLoading ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Link2 className="w-4 h-4" />
-                    )}
-                    Generate URL
-                  </button>
-                </div>
-              )}
-
-              <div className="pt-4 border-t border-white/10">
-                <h3 className="text-sm font-medium text-white mb-2">How to subscribe:</h3>
-                <ul className="text-xs text-gray-400 space-y-1">
-                  <li><span className="text-cyan-400">Google Calendar:</span> Settings &gt; Add calendar &gt; From URL</li>
-                  <li><span className="text-cyan-400">Apple Calendar:</span> File &gt; New Calendar Subscription</li>
-                  <li><span className="text-cyan-400">Outlook:</span> Add calendar &gt; Subscribe from web</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CalendarSyncModal
+          calendarToken={calendarToken}
+          calendarLoading={calendarLoading}
+          onClose={() => setShowCalendarModal(false)}
+          onGenerateToken={handleGenerateToken}
+          onCopyUrl={copyCalendarUrl}
+          setToast={setToast}
+        />
       )}
 
       {/* Toast Notification */}
@@ -1477,6 +1407,11 @@ function CalendarView({
     task => task.column_id === backlogColumn?.id
   );
 
+  // Get undated tasks (tasks without due date, not in backlog, not completed)
+  const undatedTasks = filteredTasks.filter(
+    task => !task.due_date && task.column_id !== backlogColumn?.id && task.status !== 'done'
+  );
+
   // Get tasks with due dates for calendar (exclude backlog)
   const calendarTasks = filteredTasks.filter(task => task.due_date && task.column_id !== backlogColumn?.id);
 
@@ -1501,57 +1436,117 @@ function CalendarView({
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      {/* Backlog Sidebar */}
+      {/* Sidebar with Backlog and Undated */}
       <div className="w-72 flex-shrink-0 border-r border-white/10 flex flex-col bg-white/5">
-        <div className="p-3 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-white flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-gray-500" />
-              Backlog
-            </h3>
-            <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
-              {backlogTasks.length}
-            </span>
+        {/* Backlog Section */}
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="p-3 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-white flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-gray-500" />
+                Backlog
+              </h3>
+              <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
+                {backlogTasks.length}
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {backlogTasks.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-4">No backlog tasks</p>
-          ) : (
-            backlogTasks.map(task => (
-              <div
-                key={task.id}
-                onClick={() => onTaskClick(task)}
-                className={`p-2.5 rounded-lg bg-[#1a1d24] border border-white/10 hover:border-white/20 cursor-pointer transition ${
-                  task.status === 'done' ? 'opacity-60' : ''
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCompleteTask(task.id);
-                    }}
-                    className="mt-0.5 flex-shrink-0"
-                  >
-                    {task.status === 'done' ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-400" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-gray-500 hover:text-cyan-400 transition" />
-                    )}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`text-sm text-white truncate ${task.status === 'done' ? 'line-through' : ''}`}>
-                      {task.title}
-                    </h4>
-                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border mt-1 ${PRIORITY_COLORS[task.priority]}`}>
-                      {task.priority}
-                    </span>
+          <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+            {backlogTasks.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-4">No backlog tasks</p>
+            ) : (
+              backlogTasks.map(task => (
+                <div
+                  key={task.id}
+                  onClick={() => onTaskClick(task)}
+                  className={`p-2.5 rounded-lg bg-[#1a1d24] border border-white/10 hover:border-white/20 cursor-pointer transition ${
+                    task.status === 'done' ? 'opacity-60' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCompleteTask(task.id);
+                      }}
+                      className="mt-0.5 flex-shrink-0"
+                    >
+                      {task.status === 'done' ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-gray-500 hover:text-cyan-400 transition" />
+                      )}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-sm text-white truncate ${task.status === 'done' ? 'line-through' : ''}`}>
+                        {task.title}
+                      </h4>
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border mt-1 ${PRIORITY_COLORS[task.priority]}`}>
+                        {task.priority}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Undated Section */}
+        <div className="flex flex-col flex-1 min-h-0 border-t border-white/10">
+          <div className="p-3 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-white flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-orange-500" />
+                Undated
+              </h3>
+              <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
+                {undatedTasks.length}
+              </span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+            {undatedTasks.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-4">No undated tasks</p>
+            ) : (
+              undatedTasks.map(task => (
+                <div
+                  key={task.id}
+                  onClick={() => onTaskClick(task)}
+                  className={`p-2.5 rounded-lg bg-[#1a1d24] border border-white/10 hover:border-white/20 cursor-pointer transition ${
+                    task.status === 'done' ? 'opacity-60' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCompleteTask(task.id);
+                      }}
+                      className="mt-0.5 flex-shrink-0"
+                    >
+                      {task.status === 'done' ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-gray-500 hover:text-cyan-400 transition" />
+                      )}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-sm text-white truncate ${task.status === 'done' ? 'line-through' : ''}`}>
+                        {task.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border ${PRIORITY_COLORS[task.priority]}`}>
+                          {task.priority}
+                        </span>
+                        <span className="text-xs text-gray-500">{task.status?.replace('_', ' ')}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
@@ -1656,6 +1651,276 @@ function CalendarView({
               </div>
             );
           })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Calendar Sync Modal Component
+function CalendarSyncModal({
+  calendarToken,
+  calendarLoading,
+  onClose,
+  onGenerateToken,
+  onCopyUrl,
+  setToast,
+}: {
+  calendarToken: string | null;
+  calendarLoading: boolean;
+  onClose: () => void;
+  onGenerateToken: () => void;
+  onCopyUrl: () => void;
+  setToast: (toast: { message: string; color: string } | null) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'pull' | 'push'>('pull');
+  const [importUrl, setImportUrl] = useState('');
+
+  const handleImportCalendar = async () => {
+    if (!importUrl.trim()) {
+      setToast({ message: 'Please enter a calendar URL', color: 'bg-red-500' });
+      setTimeout(() => setToast(null), 2000);
+      return;
+    }
+    // TODO: Implement backend endpoint for importing external calendars
+    setToast({ message: 'Calendar import coming soon!', color: 'bg-blue-500' });
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  const handleConnectService = (service: string) => {
+    // TODO: Implement OAuth flows for calendar services
+    setToast({ message: `${service} integration coming soon!`, color: 'bg-blue-500' });
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Link2 className="w-5 h-5 text-cyan-400" />
+            Calendar Sync
+          </h2>
+          <button onClick={onClose}>
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-white/10">
+          <button
+            onClick={() => setActiveTab('pull')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
+              activeTab === 'pull'
+                ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <ChevronDown className="w-4 h-4 inline mr-1.5" />
+            Pull (Subscribe)
+          </button>
+          <button
+            onClick={() => setActiveTab('push')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
+              activeTab === 'push'
+                ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <ChevronUp className="w-4 h-4 inline mr-1.5" />
+            Push (Export)
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {activeTab === 'pull' && (
+            <>
+              <p className="text-gray-400 text-sm">
+                Subscribe to Made4Founders tasks in your favorite calendar app, or import an external calendar.
+              </p>
+
+              {/* Export URL Section */}
+              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+                <h3 className="text-sm font-medium text-white">Subscribe to Your Tasks</h3>
+                {calendarToken ? (
+                  <div className="space-y-3">
+                    <label className="block text-xs text-gray-400">Your iCal URL</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={getCalendarFeedUrl(calendarToken)}
+                        className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs font-mono truncate"
+                      />
+                      <button
+                        onClick={onCopyUrl}
+                        className="px-3 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition flex items-center gap-1"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={onGenerateToken}
+                      disabled={calendarLoading}
+                      className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${calendarLoading ? 'animate-spin' : ''}`} />
+                      Regenerate URL
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={onGenerateToken}
+                    disabled={calendarLoading}
+                    className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
+                  >
+                    {calendarLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Link2 className="w-4 h-4" />
+                    )}
+                    Generate Subscription URL
+                  </button>
+                )}
+              </div>
+
+              {/* Import External Calendar */}
+              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+                <h3 className="text-sm font-medium text-white">Import External Calendar</h3>
+                <p className="text-xs text-gray-500">
+                  Import events from an external iCal URL (Google Calendar, Outlook, etc.)
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={importUrl}
+                    onChange={(e) => setImportUrl(e.target.value)}
+                    placeholder="https://calendar.google.com/calendar/ical/..."
+                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  />
+                  <button
+                    onClick={handleImportCalendar}
+                    className="px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+                  >
+                    Import
+                  </button>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="pt-2">
+                <h3 className="text-sm font-medium text-white mb-2">How to subscribe:</h3>
+                <ul className="text-xs text-gray-400 space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="Google" className="w-4 h-4 mt-0.5" />
+                    <span><span className="text-white">Google Calendar:</span> Settings &gt; Add calendar &gt; From URL</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-lg leading-none">🍎</span>
+                    <span><span className="text-white">Apple Calendar:</span> File &gt; New Calendar Subscription</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-lg leading-none">📧</span>
+                    <span><span className="text-white">Outlook:</span> Add calendar &gt; Subscribe from web</span>
+                  </li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'push' && (
+            <>
+              <p className="text-gray-400 text-sm">
+                Push your Made4Founders tasks to external calendar services for two-way sync.
+              </p>
+
+              {/* Connected Services */}
+              <div className="space-y-3">
+                {/* Google Calendar */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="Google Calendar" className="w-8 h-8" />
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Google Calendar</h4>
+                      <p className="text-xs text-gray-500">Two-way sync with Google</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleConnectService('Google Calendar')}
+                    className="px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 text-sm font-medium hover:bg-cyan-500/30 transition"
+                  >
+                    Connect
+                  </button>
+                </div>
+
+                {/* Microsoft Outlook */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-8 h-8" viewBox="0 0 48 48" fill="none">
+                      <path d="M28.5 8H42.5C43.6046 8 44.5 8.89543 44.5 10V38C44.5 39.1046 43.6046 40 42.5 40H28.5V8Z" fill="#1976D2"/>
+                      <path d="M5.5 8H28.5V40H5.5C4.39543 40 3.5 39.1046 3.5 38V10C3.5 8.89543 4.39543 8 5.5 8Z" fill="#2196F3"/>
+                      <ellipse cx="17" cy="24" rx="7" ry="8" fill="white"/>
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Microsoft Outlook</h4>
+                      <p className="text-xs text-gray-500">Sync with Outlook 365</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleConnectService('Outlook')}
+                    className="px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 text-sm font-medium hover:bg-cyan-500/30 transition"
+                  >
+                    Connect
+                  </button>
+                </div>
+
+                {/* Apple Calendar */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-lg font-bold">
+                      📅
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Apple Calendar</h4>
+                      <p className="text-xs text-gray-500">Sync via iCloud CalDAV</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleConnectService('Apple Calendar')}
+                    className="px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 text-sm font-medium hover:bg-cyan-500/30 transition"
+                  >
+                    Connect
+                  </button>
+                </div>
+
+                {/* Calendly */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                      C
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-white">Calendly</h4>
+                      <p className="text-xs text-gray-500">Import scheduled meetings</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleConnectService('Calendly')}
+                    className="px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 text-sm font-medium hover:bg-cyan-500/30 transition"
+                  >
+                    Connect
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500 text-center pt-2">
+                Two-way sync allows changes made in external calendars to appear in Made4Founders
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

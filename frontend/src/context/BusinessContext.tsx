@@ -4,6 +4,7 @@ import {
   type BusinessWithChildren,
   getBusinesses,
   getBusinessesTree,
+  getCurrentBusiness,
   switchBusiness as apiSwitchBusiness,
   createBusiness as apiCreateBusiness,
   type BusinessCreate,
@@ -59,11 +60,19 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       setBusinesses(flat);
       setBusinessTree(tree);
 
-      // If no current business is set but businesses exist, default to first top-level
-      if (!currentBusiness && flat.length > 0) {
-        const topLevel = flat.find(b => !b.parent_id);
-        if (topLevel) {
-          setCurrentBusiness(topLevel);
+      // Get the user's current business from the API
+      try {
+        const current = await getCurrentBusiness();
+        setCurrentBusiness(current);
+      } catch {
+        // No current business set, default to first top-level
+        if (flat.length > 0) {
+          const topLevel = flat.find(b => !b.parent_id);
+          if (topLevel) {
+            setCurrentBusiness(topLevel);
+            // Also set it on the backend
+            await apiSwitchBusiness(topLevel.id);
+          }
         }
       }
     } catch (error) {
@@ -71,7 +80,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, currentBusiness]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchBusinesses();

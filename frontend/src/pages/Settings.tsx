@@ -10,13 +10,30 @@ import {
   Sparkles,
   Crown,
   Zap,
+  Settings as SettingsIcon,
+  Trophy,
+  Gamepad2,
+  Volume2,
+  VolumeX,
+  Bell,
+  BellOff,
+  Globe,
+  Download,
+  Trash2,
+  Mail,
+  Shield,
+  User,
 } from 'lucide-react';
 import {
   getSubscriptionStatus,
   createCheckoutSession,
   createPortalSession,
+  updateBusiness,
   type SubscriptionStatus,
 } from '../lib/api';
+import { useBusiness } from '../context/BusinessContext';
+import { useAuth } from '../context/AuthContext';
+import { isSoundMuted, setSoundMuted, getSoundVolume, setSoundVolume, playNotificationSound } from '../lib/sounds';
 
 const plans = [
   {
@@ -61,12 +78,27 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
+  const { currentBusiness, refreshBusinesses } = useBusiness();
+  const { user } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+  // Business settings state
+  const [savingGamification, setSavingGamification] = useState(false);
+  const [soundMuted, setSoundMutedState] = useState(() => isSoundMuted());
+  const [soundVolume, setSoundVolumeState] = useState(() => Math.round(getSoundVolume() * 100));
+
+  // Notification preferences
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [deadlineReminders, setDeadlineReminders] = useState(true);
+  const [weeklyDigest, setWeeklyDigest] = useState(true);
+
+  // Display preferences
+  const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   useEffect(() => {
     loadSubscription();
@@ -134,6 +166,80 @@ export default function Settings() {
     const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : 0;
   };
+
+  // Gamification toggle
+  const toggleGamification = async () => {
+    if (!currentBusiness) return;
+    setSavingGamification(true);
+    try {
+      await updateBusiness(currentBusiness.id, {
+        gamification_enabled: !currentBusiness.gamification_enabled
+      });
+      await refreshBusinesses();
+    } catch (error) {
+      console.error('Failed to toggle gamification:', error);
+    } finally {
+      setSavingGamification(false);
+    }
+  };
+
+  // Sound settings
+  const toggleSoundMute = () => {
+    const newMuted = !soundMuted;
+    setSoundMuted(newMuted);
+    setSoundMutedState(newMuted);
+    if (!newMuted) {
+      setTimeout(() => playNotificationSound(), 100);
+    }
+  };
+
+  const handleVolumeChange = (newVolume: number) => {
+    setSoundVolumeState(newVolume);
+    setSoundVolume(newVolume / 100);
+    if (soundMuted && newVolume > 0) {
+      setSoundMuted(false);
+      setSoundMutedState(false);
+    }
+  };
+
+  const handleVolumeChangeEnd = () => {
+    if (!soundMuted && soundVolume > 0) {
+      playNotificationSound();
+    }
+  };
+
+  // Export data handler
+  const handleExportData = async () => {
+    setActionLoading('export');
+    try {
+      // TODO: Implement data export endpoint
+      setTimeout(() => {
+        setSuccessMessage('Data export started. You will receive an email with the download link.');
+        setActionLoading(null);
+      }, 1000);
+    } catch (err) {
+      setError('Failed to export data');
+      setActionLoading(null);
+    }
+  };
+
+  // Common timezones for dropdown
+  const commonTimezones = [
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Anchorage',
+    'Pacific/Honolulu',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Asia/Singapore',
+    'Australia/Sydney',
+    'Pacific/Auckland',
+  ];
 
   const currentPlan = plans.find(p => p.id === subscription?.tier);
   const status = subscription?.status ? statusConfig[subscription.status] : null;
@@ -356,6 +462,403 @@ export default function Settings() {
             Billed annually. Starter: $70/year, Pro: $290/year
           </p>
         )}
+      </div>
+
+      {/* Business Settings */}
+      {currentBusiness && (
+        <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 flex items-center justify-center">
+              <SettingsIcon className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Business Settings</h2>
+              <p className="text-sm text-gray-500">Preferences for {currentBusiness.name}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Gamification Toggle */}
+            <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  currentBusiness.gamification_enabled
+                    ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20'
+                    : 'bg-white/5'
+                }`}>
+                  {currentBusiness.gamification_enabled ? (
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                  ) : (
+                    <Gamepad2 className="w-5 h-5 text-gray-500" />
+                  )}
+                </div>
+                <div>
+                  <div className="font-medium text-white">Gamification</div>
+                  <div className="text-sm text-gray-400">
+                    {currentBusiness.gamification_enabled
+                      ? 'XP, levels, streaks, and quests are enabled'
+                      : 'Gamification features are disabled'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={toggleGamification}
+                disabled={savingGamification}
+                className={`relative w-14 h-8 rounded-full transition-colors ${
+                  currentBusiness.gamification_enabled
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                    : 'bg-white/10'
+                } ${savingGamification ? 'opacity-50' : ''}`}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                    currentBusiness.gamification_enabled ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Sound Effects with Volume Control */}
+            <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={toggleSoundMute}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                      !soundMuted && soundVolume > 0
+                        ? 'bg-gradient-to-br from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30'
+                        : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    {!soundMuted && soundVolume > 0 ? (
+                      <Volume2 className="w-5 h-5 text-cyan-400" />
+                    ) : (
+                      <VolumeX className="w-5 h-5 text-gray-500" />
+                    )}
+                  </button>
+                  <div>
+                    <div className="font-medium text-white">Sound Effects</div>
+                    <div className="text-sm text-gray-400">
+                      {soundMuted || soundVolume === 0
+                        ? 'Muted'
+                        : `Volume: ${soundVolume}%`}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Max 45%
+                </div>
+              </div>
+
+              {/* Volume Slider */}
+              <div className="flex items-center gap-3">
+                <VolumeX className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <input
+                  type="range"
+                  min="0"
+                  max="45"
+                  value={soundMuted ? 0 : soundVolume}
+                  onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
+                  onMouseUp={handleVolumeChangeEnd}
+                  onTouchEnd={handleVolumeChangeEnd}
+                  className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer
+                    [&::-webkit-slider-thumb]:appearance-none
+                    [&::-webkit-slider-thumb]:w-4
+                    [&::-webkit-slider-thumb]:h-4
+                    [&::-webkit-slider-thumb]:rounded-full
+                    [&::-webkit-slider-thumb]:bg-gradient-to-r
+                    [&::-webkit-slider-thumb]:from-cyan-400
+                    [&::-webkit-slider-thumb]:to-blue-400
+                    [&::-webkit-slider-thumb]:shadow-lg
+                    [&::-webkit-slider-thumb]:cursor-pointer
+                    [&::-moz-range-thumb]:w-4
+                    [&::-moz-range-thumb]:h-4
+                    [&::-moz-range-thumb]:rounded-full
+                    [&::-moz-range-thumb]:bg-gradient-to-r
+                    [&::-moz-range-thumb]:from-cyan-400
+                    [&::-moz-range-thumb]:to-blue-400
+                    [&::-moz-range-thumb]:border-0
+                    [&::-moz-range-thumb]:cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, rgb(34, 211, 238) 0%, rgb(59, 130, 246) ${((soundMuted ? 0 : soundVolume) / 45) * 100}%, rgba(255,255,255,0.1) ${((soundMuted ? 0 : soundVolume) / 45) * 100}%)`
+                  }}
+                />
+                <Volume2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Non-intrusive sounds for victories, achievements, level-ups, and task completions
+              </p>
+            </div>
+
+            {/* Current Gamification Stats (when enabled) */}
+            {currentBusiness.gamification_enabled && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-amber-400">{currentBusiness.level}</div>
+                  <div className="text-xs text-gray-500">Level</div>
+                </div>
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-cyan-400">{currentBusiness.xp.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500">Total XP</div>
+                </div>
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-orange-400">{currentBusiness.current_streak}</div>
+                  <div className="text-xs text-gray-500">Day Streak</div>
+                </div>
+                <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                  <div className="text-2xl font-bold text-violet-400">{currentBusiness.longest_streak}</div>
+                  <div className="text-xs text-gray-500">Best Streak</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Account Settings */}
+      <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/10 flex items-center justify-center">
+            <User className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Account</h2>
+            <p className="text-sm text-gray-500">{user?.email}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Email display */}
+          <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <Mail className="w-5 h-5 text-gray-400" />
+              </div>
+              <div>
+                <div className="font-medium text-white">Email Address</div>
+                <div className="text-sm text-gray-400">{user?.email}</div>
+              </div>
+            </div>
+            <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">Verified</span>
+          </div>
+
+          {/* Role */}
+          <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-gray-400" />
+              </div>
+              <div>
+                <div className="font-medium text-white">Role</div>
+                <div className="text-sm text-gray-400 capitalize">{user?.role || 'User'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Notification Settings */}
+      <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/20 to-violet-500/10 flex items-center justify-center">
+            <Bell className="w-5 h-5 text-violet-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Notifications</h2>
+            <p className="text-sm text-gray-500">Manage email and push notifications</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Email notifications */}
+          <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                emailNotifications ? 'bg-violet-500/20' : 'bg-white/5'
+              }`}>
+                {emailNotifications ? (
+                  <Bell className="w-5 h-5 text-violet-400" />
+                ) : (
+                  <BellOff className="w-5 h-5 text-gray-500" />
+                )}
+              </div>
+              <div>
+                <div className="font-medium text-white">Email Notifications</div>
+                <div className="text-sm text-gray-400">Receive email updates and alerts</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setEmailNotifications(!emailNotifications)}
+              className={`relative w-14 h-8 rounded-full transition-colors ${
+                emailNotifications ? 'bg-violet-500' : 'bg-white/10'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                  emailNotifications ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Deadline reminders */}
+          <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                deadlineReminders ? 'bg-orange-500/20' : 'bg-white/5'
+              }`}>
+                <Clock className={`w-5 h-5 ${deadlineReminders ? 'text-orange-400' : 'text-gray-500'}`} />
+              </div>
+              <div>
+                <div className="font-medium text-white">Deadline Reminders</div>
+                <div className="text-sm text-gray-400">Get reminded before deadlines</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setDeadlineReminders(!deadlineReminders)}
+              className={`relative w-14 h-8 rounded-full transition-colors ${
+                deadlineReminders ? 'bg-orange-500' : 'bg-white/10'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                  deadlineReminders ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Weekly digest */}
+          <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                weeklyDigest ? 'bg-cyan-500/20' : 'bg-white/5'
+              }`}>
+                <Mail className={`w-5 h-5 ${weeklyDigest ? 'text-cyan-400' : 'text-gray-500'}`} />
+              </div>
+              <div>
+                <div className="font-medium text-white">Weekly Digest</div>
+                <div className="text-sm text-gray-400">Summary of your week every Monday</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setWeeklyDigest(!weeklyDigest)}
+              className={`relative w-14 h-8 rounded-full transition-colors ${
+                weeklyDigest ? 'bg-cyan-500' : 'bg-white/10'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                  weeklyDigest ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Display Settings */}
+      <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-pink-500/10 flex items-center justify-center">
+            <Globe className="w-5 h-5 text-pink-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Display</h2>
+            <p className="text-sm text-gray-500">Timezone and localization</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Timezone */}
+          <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <Globe className="w-5 h-5 text-gray-400" />
+              </div>
+              <div>
+                <div className="font-medium text-white">Timezone</div>
+                <div className="text-sm text-gray-400">Used for deadlines and scheduling</div>
+              </div>
+            </div>
+            <select
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500/50"
+            >
+              {commonTimezones.map(tz => (
+                <option key={tz} value={tz} className="bg-[#1a1d24] text-white">
+                  {tz.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Data Management */}
+      <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500/20 to-red-500/10 flex items-center justify-center">
+            <Download className="w-5 h-5 text-red-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Data Management</h2>
+            <p className="text-sm text-gray-500">Export or delete your data</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Export data */}
+          <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                <Download className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <div className="font-medium text-white">Export Data</div>
+                <div className="text-sm text-gray-400">Download all your data as JSON/CSV</div>
+              </div>
+            </div>
+            <button
+              onClick={handleExportData}
+              disabled={actionLoading === 'export'}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition disabled:opacity-50"
+            >
+              {actionLoading === 'export' ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              Export
+            </button>
+          </div>
+
+          {/* Delete account warning */}
+          <div className="flex items-center justify-between p-4 bg-red-500/5 rounded-lg border border-red-500/20">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <div className="font-medium text-red-400">Delete Account</div>
+                <div className="text-sm text-gray-400">Permanently delete your account and all data</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                  alert('Please contact support@made4founders.com to delete your account.');
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Help */}

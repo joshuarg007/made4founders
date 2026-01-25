@@ -1327,7 +1327,7 @@ class ChecklistProgress(Base):
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
-    item_id = Column(String(100), nullable=False)  # matches frontend item IDs
+    item_id = Column(String(100), nullable=False, index=True)  # matches frontend item IDs
     is_completed = Column(Boolean, default=False)
     completed_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)  # User notes about this item
@@ -1339,6 +1339,9 @@ class ChecklistProgress(Base):
 
     related_document = relationship("Document")
     related_identifier = relationship("BusinessIdentifier")
+
+    # Unique constraint: one checklist item per organization
+    __table_args__ = (UniqueConstraint('organization_id', 'item_id', name='uq_checklist_org_item'),)
 
 
 class UserRole(str, enum.Enum):

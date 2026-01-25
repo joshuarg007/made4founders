@@ -774,3 +774,20 @@ def delete_user(
     db.delete(user)
     db.commit()
     return {"ok": True}
+
+
+# ============ Password Verification ============
+
+class VerifyPasswordRequest(BaseModel):
+    password: str
+
+
+@router.post("/verify-password")
+def verify_password(
+    request: VerifyPasswordRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Verify the current user's password for sensitive operations."""
+    if not security.verify_password(request.password, current_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    return {"verified": True}

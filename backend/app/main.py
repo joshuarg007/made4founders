@@ -490,6 +490,78 @@ def get_businesses_tree(
     return build_business_tree(businesses)
 
 
+def calculate_health_scores(db: Session, business: Business, org_id: int) -> dict:
+    """Calculate health scores based on actual data"""
+
+    # Compliance: Based on checklist completion
+    total_checklist = db.query(ChecklistProgress).filter(
+        ChecklistProgress.organization_id == org_id,
+        ChecklistProgress.business_id == business.id
+    ).count()
+    completed_checklist = db.query(ChecklistProgress).filter(
+        ChecklistProgress.organization_id == org_id,
+        ChecklistProgress.business_id == business.id,
+        ChecklistProgress.is_completed == True
+    ).count()
+    # Also count org-level items
+    org_checklist = db.query(ChecklistProgress).filter(
+        ChecklistProgress.organization_id == org_id,
+        ChecklistProgress.business_id == None
+    ).count()
+    org_completed = db.query(ChecklistProgress).filter(
+        ChecklistProgress.organization_id == org_id,
+        ChecklistProgress.business_id == None,
+        ChecklistProgress.is_completed == True
+    ).count()
+    total_checklist += org_checklist
+    completed_checklist += org_completed
+
+    # Base compliance on required items (assume 20 required items as baseline)
+    compliance = min(100, int((completed_checklist / max(20, total_checklist)) * 100)) if total_checklist > 0 else min(100, completed_checklist * 5)
+
+    # Financial: Based on metrics tracked
+    metrics_count = db.query(Metric).filter(
+        Metric.organization_id == org_id,
+        Metric.business_id == business.id
+    ).count()
+    # Also org-level metrics
+    org_metrics = db.query(Metric).filter(
+        Metric.organization_id == org_id,
+        Metric.business_id == None
+    ).count()
+    metrics_count += org_metrics
+    # Each metric adds 10 points, max 100
+    financial = min(100, metrics_count * 10)
+
+    # Operations: Based on task completion
+    total_tasks = db.query(Task).filter(
+        Task.business_id == business.id
+    ).count()
+    completed_tasks = db.query(Task).join(TaskColumn).filter(
+        Task.business_id == business.id,
+        TaskColumn.name.ilike('%done%')
+    ).count()
+    operations = int((completed_tasks / max(1, total_tasks)) * 100) if total_tasks > 0 else 50
+
+    # Growth: Based on level and XP
+    # Level 1 = 20, each level adds 8 points up to 100
+    growth = min(100, 20 + (business.level - 1) * 8)
+    # Add streak bonus
+    if business.current_streak > 0:
+        growth = min(100, growth + min(20, business.current_streak * 2))
+
+    # Overall score: weighted average
+    overall = int(compliance * 0.3 + financial * 0.2 + operations * 0.25 + growth * 0.25)
+
+    return {
+        'health_score': overall,
+        'health_compliance': compliance,
+        'health_financial': financial,
+        'health_operations': operations,
+        'health_growth': growth
+    }
+
+
 @app.get("/api/businesses/current", response_model=BusinessResponse)
 def get_current_business(
     current_user: User = Depends(get_current_user),
@@ -504,6 +576,16 @@ def get_current_business(
     ).first()
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
+
+    # Calculate and update health scores
+    health = calculate_health_scores(db, business, current_user.organization_id)
+    business.health_score = health['health_score']
+    business.health_compliance = health['health_compliance']
+    business.health_financial = health['health_financial']
+    business.health_operations = health['health_operations']
+    business.health_growth = health['health_growth']
+    db.commit()
+
     return business
 
 
