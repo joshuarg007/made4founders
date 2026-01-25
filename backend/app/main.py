@@ -6634,7 +6634,10 @@ def get_metric(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    metric = db.query(Metric).filter(Metric.id == metric_id).first()
+    metric = db.query(Metric).filter(
+        Metric.id == metric_id,
+        Metric.organization_id == current_user.organization_id
+    ).first()
     if not metric:
         raise HTTPException(status_code=404, detail="Metric not found")
     return metric
@@ -6648,7 +6651,10 @@ def update_metric(
     db: Session = Depends(get_db)
 ):
     """Update a metric (editor/admin only)."""
-    db_metric = db.query(Metric).filter(Metric.id == metric_id).first()
+    db_metric = db.query(Metric).filter(
+        Metric.id == metric_id,
+        Metric.organization_id == current_user.organization_id
+    ).first()
     if not db_metric:
         raise HTTPException(status_code=404, detail="Metric not found")
 
@@ -6667,7 +6673,10 @@ def delete_metric(
     db: Session = Depends(get_db)
 ):
     """Delete a metric (editor/admin only)."""
-    metric = db.query(Metric).filter(Metric.id == metric_id).first()
+    metric = db.query(Metric).filter(
+        Metric.id == metric_id,
+        Metric.organization_id == current_user.organization_id
+    ).first()
     if not metric:
         raise HTTPException(status_code=404, detail="Metric not found")
     db.delete(metric)
@@ -6683,13 +6692,18 @@ def get_latest_metrics_summary(
     """Get the latest value for each metric type with change from previous."""
     from sqlalchemy import func, desc
 
-    # Get all unique metric types
-    metric_types = db.query(Metric.metric_type, Metric.name).distinct().all()
+    org_id = current_user.organization_id
+
+    # Get all unique metric types for this organization
+    metric_types = db.query(Metric.metric_type, Metric.name).filter(
+        Metric.organization_id == org_id
+    ).distinct().all()
 
     summaries = []
     for metric_type, name in metric_types:
         # Get the two most recent values for this metric type
         recent = db.query(Metric).filter(
+            Metric.organization_id == org_id,
             Metric.metric_type == metric_type
         ).order_by(desc(Metric.date)).limit(2).all()
 
@@ -6739,6 +6753,7 @@ def get_metric_chart_data(
     start_date = datetime.utcnow() - timedelta(days=months * 30)
 
     metrics = db.query(Metric).filter(
+        Metric.organization_id == current_user.organization_id,
         Metric.metric_type == metric_type,
         Metric.date >= start_date
     ).order_by(Metric.date).all()
@@ -6796,23 +6811,28 @@ def get_analytics_dashboard(
     """Get comprehensive analytics dashboard data."""
     from sqlalchemy import func, desc
 
+    org_id = current_user.organization_id
     days = get_period_days(period)
     start_date = datetime.utcnow() - timedelta(days=days)
     prev_start = start_date - timedelta(days=days)
     prev_end = start_date
 
-    # Get all metrics in period
+    # Get all metrics in period for this organization
     current_metrics = db.query(Metric).filter(
+        Metric.organization_id == org_id,
         Metric.date >= start_date
     ).all()
 
     prev_metrics = db.query(Metric).filter(
+        Metric.organization_id == org_id,
         Metric.date >= prev_start,
         Metric.date < prev_end
     ).all()
 
-    # Get unique metric types
-    metric_types = db.query(Metric.metric_type).distinct().all()
+    # Get unique metric types for this organization
+    metric_types = db.query(Metric.metric_type).filter(
+        Metric.organization_id == org_id
+    ).distinct().all()
     metric_types = [m[0] for m in metric_types]
 
     # Calculate trends per metric type
@@ -6824,12 +6844,14 @@ def get_analytics_dashboard(
     for mt in metric_types:
         # Get latest value for current period
         current = db.query(Metric).filter(
+            Metric.organization_id == org_id,
             Metric.metric_type == mt,
             Metric.date >= start_date
         ).order_by(desc(Metric.date)).first()
 
         # Get latest value for previous period
         previous = db.query(Metric).filter(
+            Metric.organization_id == org_id,
             Metric.metric_type == mt,
             Metric.date >= prev_start,
             Metric.date < prev_end
@@ -6870,6 +6892,7 @@ def get_analytics_dashboard(
     # Build financial health
     def get_latest_value(metric_type: str) -> float | None:
         m = db.query(Metric).filter(
+            Metric.organization_id == org_id,
             Metric.metric_type == metric_type
         ).order_by(desc(Metric.date)).first()
         return parse_metric_value(m.value) if m else None
@@ -6977,6 +7000,7 @@ def get_multi_metric_chart(
     db: Session = Depends(get_db)
 ):
     """Get chart data for multiple metrics at once."""
+    org_id = current_user.organization_id
     types = [t.strip() for t in metric_types.split(',')]
     days = get_period_days(period)
     start_date = datetime.utcnow() - timedelta(days=days)
@@ -6984,6 +7008,7 @@ def get_multi_metric_chart(
     result = {}
     for mt in types:
         metrics = db.query(Metric).filter(
+            Metric.organization_id == org_id,
             Metric.metric_type == mt,
             Metric.date >= start_date
         ).order_by(Metric.date).all()
@@ -7008,7 +7033,8 @@ def get_metric_goals(
     db: Session = Depends(get_db)
 ):
     """Get all metric goals."""
-    query = db.query(MetricGoal)
+    org_id = current_user.organization_id
+    query = db.query(MetricGoal).filter(MetricGoal.organization_id == org_id)
     if not include_achieved:
         query = query.filter(MetricGoal.is_achieved == False)
 
@@ -7018,6 +7044,7 @@ def get_metric_goals(
     for g in goals:
         # Get current value
         latest = db.query(Metric).filter(
+            Metric.organization_id == org_id,
             Metric.metric_type == g.metric_type
         ).order_by(Metric.date.desc()).first()
 
@@ -7053,7 +7080,9 @@ def create_metric_goal(
     if current_user.role not in ['admin', 'editor']:
         raise HTTPException(status_code=403, detail="Not authorized")
 
+    org_id = current_user.organization_id
     db_goal = MetricGoal(
+        organization_id=org_id,
         metric_type=goal.metric_type,
         target_value=goal.target_value,
         target_date=goal.target_date,
@@ -7067,6 +7096,7 @@ def create_metric_goal(
 
     # Get current value
     latest = db.query(Metric).filter(
+        Metric.organization_id == org_id,
         Metric.metric_type == goal.metric_type
     ).order_by(Metric.date.desc()).first()
 
@@ -7101,7 +7131,11 @@ def update_metric_goal(
     if current_user.role not in ['admin', 'editor']:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    db_goal = db.query(MetricGoal).filter(MetricGoal.id == goal_id).first()
+    org_id = current_user.organization_id
+    db_goal = db.query(MetricGoal).filter(
+        MetricGoal.id == goal_id,
+        MetricGoal.organization_id == org_id
+    ).first()
     if not db_goal:
         raise HTTPException(status_code=404, detail="Goal not found")
 
@@ -7114,6 +7148,7 @@ def update_metric_goal(
 
     # Get current value
     latest = db.query(Metric).filter(
+        Metric.organization_id == org_id,
         Metric.metric_type == db_goal.metric_type
     ).order_by(Metric.date.desc()).first()
 
@@ -7147,7 +7182,10 @@ def delete_metric_goal(
     if current_user.role not in ['admin', 'editor']:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    db_goal = db.query(MetricGoal).filter(MetricGoal.id == goal_id).first()
+    db_goal = db.query(MetricGoal).filter(
+        MetricGoal.id == goal_id,
+        MetricGoal.organization_id == current_user.organization_id
+    ).first()
     if not db_goal:
         raise HTTPException(status_code=404, detail="Goal not found")
 
