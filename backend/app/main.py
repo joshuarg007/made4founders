@@ -4101,6 +4101,7 @@ def get_daily_brief(current_user: User = Depends(get_current_user), db: Session 
     The Daily Brief - everything a founder needs to know today.
     Categorized by urgency: overdue, today, this_week, heads_up
     """
+    org_id = current_user.organization_id
     now = datetime.utcnow()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
@@ -4108,23 +4109,29 @@ def get_daily_brief(current_user: User = Depends(get_current_user), db: Session 
     month_end = today_start + timedelta(days=30)
     ninety_days_ago = now - timedelta(days=90)
 
-    # Get business info for personalization
-    business_info = db.query(BusinessInfo).first()
+    # Get business info for personalization (filtered by org)
+    business_info = db.query(BusinessInfo).filter(BusinessInfo.organization_id == org_id).first()
     company_name = business_info.legal_name or business_info.dba_name if business_info else None
+
+    # Get task boards for this org (to filter tasks)
+    org_boards = db.query(TaskBoard.id).filter(TaskBoard.organization_id == org_id).subquery()
 
     # OVERDUE - Past due, needs immediate attention
     overdue_deadlines = db.query(Deadline).filter(
+        Deadline.organization_id == org_id,
         Deadline.is_completed == False,
         Deadline.due_date < today_start
     ).order_by(Deadline.due_date).all()
 
     expired_documents = db.query(Document).filter(
+        Document.organization_id == org_id,
         Document.expiration_date != None,
         Document.expiration_date < today_start
     ).order_by(Document.expiration_date).all()
 
     # TODAY - Due today
     today_deadlines = db.query(Deadline).filter(
+        Deadline.organization_id == org_id,
         Deadline.is_completed == False,
         Deadline.due_date >= today_start,
         Deadline.due_date < today_end
@@ -4132,12 +4139,14 @@ def get_daily_brief(current_user: User = Depends(get_current_user), db: Session 
 
     # THIS WEEK - Due in next 7 days (excluding today)
     week_deadlines = db.query(Deadline).filter(
+        Deadline.organization_id == org_id,
         Deadline.is_completed == False,
         Deadline.due_date >= today_end,
         Deadline.due_date < week_end
     ).order_by(Deadline.due_date).all()
 
     expiring_this_week = db.query(Document).filter(
+        Document.organization_id == org_id,
         Document.expiration_date != None,
         Document.expiration_date >= today_start,
         Document.expiration_date < week_end
@@ -4145,44 +4154,51 @@ def get_daily_brief(current_user: User = Depends(get_current_user), db: Session 
 
     # HEADS UP - Coming in next 30 days (excluding this week)
     upcoming_deadlines = db.query(Deadline).filter(
+        Deadline.organization_id == org_id,
         Deadline.is_completed == False,
         Deadline.due_date >= week_end,
         Deadline.due_date < month_end
     ).order_by(Deadline.due_date).all()
 
     expiring_soon = db.query(Document).filter(
+        Document.organization_id == org_id,
         Document.expiration_date != None,
         Document.expiration_date >= week_end,
         Document.expiration_date < month_end
     ).order_by(Document.expiration_date).all()
 
-    # CONTACTS NEEDING ATTENTION - Not contacted in 90+ days
+    # CONTACTS NEEDING ATTENTION - Not contacted in 90+ days (filtered by org)
     stale_contacts = db.query(Contact).filter(
+        Contact.organization_id == org_id,
         (Contact.last_contacted == None) | (Contact.last_contacted < ninety_days_ago)
     ).order_by(Contact.last_contacted.nullsfirst()).limit(5).all()
 
-    # TASKS - Get tasks with due dates
-    overdue_tasks = db.query(Task).filter(
+    # TASKS - Get tasks with due dates (filtered by org through board)
+    overdue_tasks = db.query(Task).join(TaskColumn).filter(
+        TaskColumn.board_id.in_(org_boards),
         Task.status != "done",
         Task.due_date != None,
         Task.due_date < today_start
     ).order_by(Task.due_date).all()
 
-    today_tasks = db.query(Task).filter(
+    today_tasks = db.query(Task).join(TaskColumn).filter(
+        TaskColumn.board_id.in_(org_boards),
         Task.status != "done",
         Task.due_date != None,
         Task.due_date >= today_start,
         Task.due_date < today_end
     ).order_by(Task.due_date).all()
 
-    week_tasks = db.query(Task).filter(
+    week_tasks = db.query(Task).join(TaskColumn).filter(
+        TaskColumn.board_id.in_(org_boards),
         Task.status != "done",
         Task.due_date != None,
         Task.due_date >= today_end,
         Task.due_date < week_end
     ).order_by(Task.due_date).all()
 
-    upcoming_tasks = db.query(Task).filter(
+    upcoming_tasks = db.query(Task).join(TaskColumn).filter(
+        TaskColumn.board_id.in_(org_boards),
         Task.status != "done",
         Task.due_date != None,
         Task.due_date >= week_end,
