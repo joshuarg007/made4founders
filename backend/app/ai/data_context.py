@@ -221,8 +221,7 @@ class DataContextBuilder:
                 {
                     "title": d.title,
                     "due_date": d.due_date.isoformat(),
-                    "category": d.category,
-                    "priority": d.priority
+                    "type": d.deadline_type
                 }
                 for d in upcoming_deadlines
             ],

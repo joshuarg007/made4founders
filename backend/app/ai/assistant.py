@@ -15,6 +15,7 @@ from .llm_client import parse_json_response, LLMResponse
 from .providers import get_fallback_client
 from .prompts import ASSISTANT_SYSTEM_PROMPT, ASSISTANT_PROMPTS, detect_intent
 from .data_context import build_context, format_context_for_prompt
+from .smart_responses import get_smart_response
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +45,23 @@ class BusinessAssistant:
         Returns:
             Dict with response, data_cards, and suggested_actions
         """
+        # Try smart response first (fast, reliable, no AI needed)
+        smart_result = get_smart_response(self.db, self.organization_id, message)
+        if smart_result:
+            logger.info(f"Using smart response for: {message[:50]}...")
+            return {
+                "response": smart_result["response"],
+                "data_cards": smart_result.get("data_cards", []),
+                "suggested_actions": smart_result.get("suggested_actions", []),
+                "tokens_used": 0,
+                "model": "smart_response",
+                "intent": smart_result.get("intent", "general")
+            }
+
+        # Fall back to AI for complex queries
         # Detect intent from message
         intent = detect_intent(message)
-        logger.info(f"Detected intent: {intent} for message: {message[:50]}...")
+        logger.info(f"Using AI for intent: {intent}, message: {message[:50]}...")
 
         # Build relevant context
         context = build_context(self.db, self.organization_id, intent, message)
