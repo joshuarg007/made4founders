@@ -397,8 +397,8 @@ def format_context_for_prompt(context: Dict[str, Any]) -> str:
     if "financial" in context:
         fin = context["financial"]
         parts.append("FINANCIAL STATUS:")
-        parts.append(f"  Cash Position: ${fin.get('total_cash', 0):,.2f}")
-        parts.append(f"  Monthly Burn Rate: ${fin.get('monthly_burn', 0):,.2f}")
+        parts.append(f"  Cash Position: ${float(fin.get('total_cash', 0) or 0):,.2f}")
+        parts.append(f"  Monthly Burn Rate: ${float(fin.get('monthly_burn', 0) or 0):,.2f}")
         if fin.get('runway_months'):
             parts.append(f"  Runway: {fin['runway_months']} months")
         parts.append("")
@@ -407,9 +407,9 @@ def format_context_for_prompt(context: Dict[str, Any]) -> str:
         rev = context["revenue"]
         parts.append("REVENUE METRICS:")
         if rev.get('mrr'):
-            parts.append(f"  MRR: ${rev['mrr']:,.2f}")
+            parts.append(f"  MRR: ${float(rev['mrr']):,.2f}")
         if rev.get('arr'):
-            parts.append(f"  ARR: ${rev['arr']:,.2f}")
+            parts.append(f"  ARR: ${float(rev['arr']):,.2f}")
         if rev.get('total_customers'):
             parts.append(f"  Customers: {rev['total_customers']}")
         parts.append("")
@@ -418,10 +418,10 @@ def format_context_for_prompt(context: Dict[str, Any]) -> str:
         cap = context["cap_table"]
         parts.append("CAP TABLE:")
         parts.append(f"  Total Shareholders: {cap.get('total_shareholders', 0)}")
-        parts.append(f"  Total Shares Issued: {cap.get('total_granted_shares', 0):,}")
+        parts.append(f"  Total Shares Issued: {int(cap.get('total_granted_shares', 0) or 0):,}")
         if cap.get('ownership_by_type'):
             for stype, shares in cap['ownership_by_type'].items():
-                parts.append(f"  {stype.title()}: {shares:,} shares")
+                parts.append(f"  {stype.title()}: {int(shares or 0):,} shares")
         parts.append("")
 
     if "compliance" in context:
@@ -442,9 +442,9 @@ def format_context_for_prompt(context: Dict[str, Any]) -> str:
         else:
             parts.append("BUDGET:")
             parts.append(f"  Period: {budget.get('period', 'N/A')}")
-            parts.append(f"  Total Budget: ${budget.get('total_budget', 0):,.2f}")
-            parts.append(f"  Total Spent: ${budget.get('total_spent', 0):,.2f}")
-            parts.append(f"  Variance: ${budget.get('variance', 0):,.2f} ({budget.get('variance_percent', 0)}%)")
+            parts.append(f"  Total Budget: ${float(budget.get('total_budget', 0) or 0):,.2f}")
+            parts.append(f"  Total Spent: ${float(budget.get('total_spent', 0) or 0):,.2f}")
+            parts.append(f"  Variance: ${float(budget.get('variance', 0) or 0):,.2f} ({budget.get('variance_percent', 0)}%)")
         parts.append("")
 
     if "team" in context:
