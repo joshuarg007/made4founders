@@ -16,9 +16,11 @@ from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from .database import get_db
-from .models import User, Organization, SubscriptionStatus, SubscriptionTier
+from .models import User, Organization, SubscriptionStatus, SubscriptionTier, OAuthConnection
+from .auth import get_current_user
 from . import security
 
 router = APIRouter()
@@ -141,6 +143,13 @@ def get_unique_slug(db: Session, base_slug: str) -> str:
     return slug
 
 
+def find_user_by_email(db: Session, email: str) -> Optional[User]:
+    """Find user by email using case-insensitive comparison."""
+    if not email:
+        return None
+    return db.query(User).filter(func.lower(User.email) == email.lower()).first()
+
+
 # ============ GOOGLE OAUTH ============
 
 @router.get("/google/login")
@@ -232,8 +241,8 @@ async def google_callback(
     if not email:
         raise HTTPException(status_code=400, detail="Email not provided by Google")
 
-    # Find existing user by email
-    user = db.query(User).filter(User.email == email).first()
+    # Find existing user by email (case-insensitive)
+    user = find_user_by_email(db, email)
 
     # Also check if user exists by OAuth provider ID
     if not user:
@@ -244,7 +253,6 @@ async def google_callback(
 
     # Also check OAuthConnection table for linked Google accounts
     if not user:
-        from .models import OAuthConnection
         oauth_conn = db.query(OAuthConnection).filter(
             OAuthConnection.provider == "google",
             OAuthConnection.provider_user_id == google_id

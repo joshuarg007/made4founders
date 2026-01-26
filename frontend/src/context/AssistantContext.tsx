@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   sendAIMessage,
   getAISuggestions,
   getAIConversations,
+} from '../lib/api';
+import type {
   AIConversationListItem,
   AIChatResponse,
   AIDataCard,

@@ -15,7 +15,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useAssistant } from '../../context/AssistantContext';
-import { AIDataCard, AISuggestedAction } from '../../lib/api';
+import type { AIDataCard, AISuggestedAction } from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
 
 export default function AssistantWidget() {
