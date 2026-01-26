@@ -3,27 +3,24 @@ Unified LLM Client for Ollama.
 
 Provides a consistent interface for AI operations across the application.
 Reuses patterns from the existing summarizer.py.
+
+Note: For multi-provider support, see the providers/ module.
 """
 
 import os
 import json
 import logging
 from typing import Optional, Dict, Any, List
-from dataclasses import dataclass
 
 import httpx
 
+# Import from providers for backwards compatibility
+from .providers.base import LLMResponse, LLMProvider
+
 logger = logging.getLogger(__name__)
 
-
-@dataclass
-class LLMResponse:
-    """Response from LLM."""
-    content: str
-    tokens_used: int
-    model: str
-    success: bool
-    error: Optional[str] = None
+# Re-export LLMResponse for backwards compatibility
+__all__ = ["LLMResponse", "OllamaClient", "parse_json_response", "generate_response"]
 
 
 class OllamaClient:
@@ -35,9 +32,27 @@ class OllamaClient:
         model: Optional[str] = None,
         timeout: float = 120.0
     ):
-        self.base_url = base_url or os.getenv("OLLAMA_URL", "http://localhost:11434")
+        self.base_url = base_url or os.getenv("OLLAMA_HOST", "http://localhost:11434")
         self.model = model or os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
         self.timeout = timeout
+
+    @property
+    def provider_name(self) -> str:
+        """Return provider identifier."""
+        return LLMProvider.OLLAMA.value
+
+    async def is_available(self) -> bool:
+        """
+        Check if Ollama is running and accessible.
+
+        Returns True if we can connect to the Ollama API.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{self.base_url}/api/tags")
+                return response.status_code == 200
+        except Exception:
+            return False
 
     async def generate(
         self,
@@ -84,7 +99,8 @@ class OllamaClient:
                         tokens_used=0,
                         model=self.model,
                         success=False,
-                        error=f"Ollama error: {response.status_code}"
+                        error=f"Ollama error: {response.status_code}",
+                        provider=self.provider_name
                     )
 
                 result = response.json()
@@ -95,7 +111,9 @@ class OllamaClient:
                     content=content,
                     tokens_used=tokens,
                     model=self.model,
-                    success=True
+                    success=True,
+                    provider=self.provider_name,
+                    tokens_output=tokens
                 )
 
         except httpx.ConnectError:
@@ -105,7 +123,8 @@ class OllamaClient:
                 tokens_used=0,
                 model=self.model,
                 success=False,
-                error="Ollama not available. Please ensure Ollama is running."
+                error="Ollama not available. Please ensure Ollama is running.",
+                provider=self.provider_name
             )
         except httpx.TimeoutException:
             logger.error("Ollama request timed out")
@@ -114,7 +133,8 @@ class OllamaClient:
                 tokens_used=0,
                 model=self.model,
                 success=False,
-                error="Request timed out. Please try again."
+                error="Request timed out. Please try again.",
+                provider=self.provider_name
             )
         except Exception as e:
             logger.error(f"Unexpected error in LLM call: {e}")
@@ -123,7 +143,8 @@ class OllamaClient:
                 tokens_used=0,
                 model=self.model,
                 success=False,
-                error=str(e)
+                error=str(e),
+                provider=self.provider_name
             )
 
     def generate_sync(
@@ -161,7 +182,8 @@ class OllamaClient:
                     tokens_used=0,
                     model=self.model,
                     success=False,
-                    error=f"Ollama error: {response.status_code}"
+                    error=f"Ollama error: {response.status_code}",
+                    provider=self.provider_name
                 )
 
             result = response.json()
@@ -172,7 +194,9 @@ class OllamaClient:
                 content=content,
                 tokens_used=tokens,
                 model=self.model,
-                success=True
+                success=True,
+                provider=self.provider_name,
+                tokens_output=tokens
             )
 
         except httpx.ConnectError:
@@ -181,7 +205,8 @@ class OllamaClient:
                 tokens_used=0,
                 model=self.model,
                 success=False,
-                error="Ollama not available"
+                error="Ollama not available",
+                provider=self.provider_name
             )
         except httpx.TimeoutException:
             return LLMResponse(
@@ -189,7 +214,8 @@ class OllamaClient:
                 tokens_used=0,
                 model=self.model,
                 success=False,
-                error="Request timed out"
+                error="Request timed out",
+                provider=self.provider_name
             )
         except Exception as e:
             return LLMResponse(
@@ -197,7 +223,8 @@ class OllamaClient:
                 tokens_used=0,
                 model=self.model,
                 success=False,
-                error=str(e)
+                error=str(e),
+                provider=self.provider_name
             )
 
 

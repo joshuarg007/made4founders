@@ -2,7 +2,7 @@
 AI Business Assistant.
 
 Handles natural language queries about business data.
-Uses Ollama for local LLM processing.
+Uses multi-provider LLM support with automatic fallback.
 """
 
 import logging
@@ -11,7 +11,8 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from .llm_client import OllamaClient, parse_json_response, LLMResponse
+from .llm_client import parse_json_response, LLMResponse
+from .providers import get_fallback_client
 from .prompts import ASSISTANT_SYSTEM_PROMPT, ASSISTANT_PROMPTS, detect_intent
 from .data_context import build_context, format_context_for_prompt
 
@@ -25,7 +26,8 @@ class BusinessAssistant:
         self.db = db
         self.organization_id = organization_id
         self.user_id = user_id
-        self.client = OllamaClient()
+        # Use fallback client with org preferences
+        self.client = get_fallback_client(db, organization_id, prefer_local=True)
 
     async def chat(
         self,

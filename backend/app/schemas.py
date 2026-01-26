@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Dict
 from datetime import datetime, date
 
 
@@ -3156,14 +3156,56 @@ class CompetitorDigest(BaseModel):
     action_items: List[str]
 
 
-# AI Status
+# AI Status and Providers
+class AIProviderStatus(BaseModel):
+    """Status of a single LLM provider."""
+    provider: str
+    available: bool
+    configured: bool
+    model: str
+
+
+class AIProviderUsage(BaseModel):
+    """Usage stats for a single provider."""
+    requests: int = 0
+    tokens: int = 0
+    cost: float = 0.0
+
+
 class AIStatus(BaseModel):
-    """AI feature status."""
+    """AI feature status - multi-provider support."""
+    # Legacy field for backwards compatibility
     ollama_available: bool
     model: str
+
+    # Multi-provider fields - dict with provider name as key
+    providers: Dict[str, AIProviderStatus] = {}
+    preferred_provider: Optional[str] = None
+    fallback_enabled: bool = True
+
+    # Usage
     ai_usage_this_month: int
     ai_usage_limit: Optional[int] = None
+    usage_by_provider: Dict[str, AIProviderUsage] = {}
+
+    # Features
     features_enabled: dict
+
+
+class AIProviderPreference(BaseModel):
+    """Request to set preferred AI provider."""
+    provider: str  # ollama, openai, anthropic
+
+
+class AIUsageResponse(BaseModel):
+    """Detailed AI usage statistics."""
+    total_requests: int
+    total_tokens: int
+    total_cost: float
+    by_provider: Dict[str, AIProviderUsage]
+    by_feature: Dict[str, int]
+    period_start: datetime
+    period_end: datetime
 
 
 # =============================================================================
@@ -3230,3 +3272,156 @@ class TranscriptCreateTasksResponse(BaseModel):
     transcript_id: int
     tasks_created: int
     task_ids: List[int]
+
+
+# ============ Collaboration Schemas ============
+
+# --- Comments ---
+
+class CommentCreate(BaseModel):
+    """Create a new comment on any entity."""
+    entity_type: str
+    entity_id: int
+    content: str
+    parent_id: Optional[int] = None
+
+
+class CommentUpdate(BaseModel):
+    """Update a comment."""
+    content: str
+
+
+class CommentResponse(BaseModel):
+    """Comment response with user info."""
+    id: int
+    organization_id: int
+    entity_type: str
+    entity_id: int
+    user_id: int
+    user: Optional[UserBrief] = None
+    content: str
+    is_edited: bool
+    mentioned_user_ids: Optional[List[int]] = None
+    mentioned_users: Optional[List[UserBrief]] = None
+    parent_id: Optional[int] = None
+    reply_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CommentCountsRequest(BaseModel):
+    """Request for batch comment counts."""
+    entities: List[dict]  # [{"entity_type": "task", "entity_id": 1}, ...]
+
+
+class CommentCountsResponse(BaseModel):
+    """Response for batch comment counts."""
+    counts: dict  # {"task:1": 5, "deadline:2": 3}
+
+
+# --- Notifications ---
+
+class NotificationResponse(BaseModel):
+    """Notification response."""
+    id: int
+    notification_type: str
+    title: str
+    message: Optional[str] = None
+    entity_type: Optional[str] = None
+    entity_id: Optional[int] = None
+    actor: Optional[UserBrief] = None
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class NotificationListResponse(BaseModel):
+    """Paginated notification list."""
+    items: List[NotificationResponse]
+    unread_count: int
+    total_count: int
+
+
+class MarkNotificationsReadRequest(BaseModel):
+    """Mark notifications as read."""
+    notification_ids: Optional[List[int]] = None
+    all: bool = False
+
+
+# --- Activity Feed ---
+
+class ActivityResponse(BaseModel):
+    """Activity feed item response."""
+    id: int
+    user_id: int
+    user: Optional[UserBrief] = None
+    activity_type: str
+    description: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[int] = None
+    entity_title: Optional[str] = None
+    extra_data: Optional[dict] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ActivityListResponse(BaseModel):
+    """Paginated activity list."""
+    items: List[ActivityResponse]
+    total_count: int
+
+
+# --- Guest Users ---
+
+class GuestUserCreate(BaseModel):
+    """Invite a guest user."""
+    email: str
+    name: Optional[str] = None
+    guest_type: str = "other"
+    permissions: Optional[dict] = None  # {"data_room": ["view"], ...}
+    shareholder_id: Optional[int] = None
+
+
+class GuestUserUpdate(BaseModel):
+    """Update a guest user."""
+    name: Optional[str] = None
+    guest_type: Optional[str] = None
+    permissions: Optional[dict] = None
+    is_active: Optional[bool] = None
+
+
+class GuestUserResponse(BaseModel):
+    """Guest user response."""
+    id: int
+    email: str
+    name: Optional[str] = None
+    guest_type: str
+    shareholder_id: Optional[int] = None
+    shareholder_name: Optional[str] = None
+    permissions: Optional[dict] = None
+    is_active: bool
+    last_accessed_at: Optional[datetime] = None
+    invited_at: datetime
+    invite_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class GuestLoginRequest(BaseModel):
+    """Guest login via magic link token."""
+    token: str
+
+
+class GuestLoginResponse(BaseModel):
+    """Guest login response."""
+    access_token: str
+    token_type: str = "bearer"
+    guest: GuestUserResponse

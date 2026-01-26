@@ -21,7 +21,7 @@ from .auth import get_current_user
 from .models import (
     User, Organization, AIConversation, AIMessage,
     Competitor, CompetitorUpdate, DocumentSummary, Document,
-    MeetingTranscript, Task, TaskBoard, TaskColumn
+    MeetingTranscript, Task, TaskBoard, TaskColumn, LLMUsage
 )
 from .schemas import (
     AIChatRequest, AIChatResponse, AIMessageResponse,
@@ -29,7 +29,8 @@ from .schemas import (
     DocumentSummaryResponse, DeadlineExtractionResponse,
     CompetitorCreate, CompetitorUpdate as CompetitorUpdateSchema,
     CompetitorResponse, CompetitorUpdateResponse, CompetitorDigest,
-    AIStatus, ExtractedDate, KeyTerm,
+    AIStatus, AIProviderStatus, AIProviderUsage, AIProviderPreference,
+    AIUsageResponse, ExtractedDate, KeyTerm,
     TranscriptActionItem, TranscriptDecision, TranscriptSpeaker,
     TranscriptActionItemsResponse, TranscriptDecisionsResponse,
     TranscriptSpeakerAnalysisResponse, TranscriptCreateTasksRequest,
@@ -37,6 +38,7 @@ from .schemas import (
 )
 from .ai.assistant import process_chat_message, get_context_suggestions
 from .ai.llm_client import OllamaClient
+from .ai.providers import OpenAIClient, AnthropicClient, CloudflareAIClient, LLMProvider
 
 logger = logging.getLogger(__name__)
 
@@ -96,31 +98,206 @@ async def get_ai_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get AI feature status and availability."""
+    """Get AI feature status and availability for all providers."""
+    import httpx
+    from .models import LLMUsage
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+
+    providers = {}
+
     # Check Ollama availability
-    client = OllamaClient()
+    ollama_client = OllamaClient()
     try:
-        import httpx
-        response = httpx.get(f"{client.base_url}/api/tags", timeout=5.0)
+        response = httpx.get(f"{ollama_client.base_url}/api/tags", timeout=5.0)
         ollama_available = response.status_code == 200
     except Exception:
         ollama_available = False
 
-    # Get usage stats
+    providers["ollama"] = AIProviderStatus(
+        provider=LLMProvider.OLLAMA.value,
+        available=ollama_available,
+        configured=True,  # Ollama is always "configured" (no API key needed)
+        model=ollama_client.model
+    )
+
+    # Check Cloudflare Workers AI availability
+    cloudflare_client = CloudflareAIClient()
+    cloudflare_configured = bool(os.getenv("CLOUDFLARE_ACCOUNT_ID")) and bool(os.getenv("CLOUDFLARE_API_TOKEN"))
+    cloudflare_available = cloudflare_configured  # Assume available if configured
+    providers["cloudflare"] = AIProviderStatus(
+        provider=LLMProvider.CLOUDFLARE.value,
+        available=cloudflare_available,
+        configured=cloudflare_configured,
+        model=cloudflare_client.model
+    )
+
+    # Check OpenAI availability
+    openai_client = OpenAIClient()
+    openai_configured = bool(os.getenv("OPENAI_API_KEY"))
+    openai_available = openai_configured  # Assume available if configured
+    providers["openai"] = AIProviderStatus(
+        provider=LLMProvider.OPENAI.value,
+        available=openai_available,
+        configured=openai_configured,
+        model=openai_client.model
+    )
+
+    # Check Anthropic availability
+    anthropic_client = AnthropicClient()
+    anthropic_configured = bool(os.getenv("ANTHROPIC_API_KEY"))
+    anthropic_available = anthropic_configured  # Assume available if configured
+    providers["anthropic"] = AIProviderStatus(
+        provider=LLMProvider.ANTHROPIC.value,
+        available=anthropic_available,
+        configured=anthropic_configured,
+        model=anthropic_client.model
+    )
+
+    # Get organization and preferences
     org = db.query(Organization).filter(
         Organization.id == current_user.organization_id
     ).first()
 
+    preferred_provider = None
+    if org and org.settings:
+        preferred_provider = org.settings.get("llm_provider")
+
+    # Get usage stats by provider (this month)
+    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    usage_by_provider = {}
+
+    try:
+        usage_stats = db.query(
+            LLMUsage.provider,
+            func.count(LLMUsage.id).label("requests"),
+            func.sum(LLMUsage.tokens_input + LLMUsage.tokens_output).label("tokens"),
+            func.sum(LLMUsage.estimated_cost).label("cost")
+        ).filter(
+            LLMUsage.organization_id == current_user.organization_id,
+            LLMUsage.created_at >= month_start
+        ).group_by(LLMUsage.provider).all()
+
+        for stat in usage_stats:
+            usage_by_provider[stat.provider] = AIProviderUsage(
+                requests=stat.requests or 0,
+                tokens=int(stat.tokens or 0),
+                cost=float(stat.cost or 0)
+            )
+    except Exception as e:
+        logger.warning(f"Failed to get usage stats: {e}")
+
+    fallback_enabled = os.getenv("LLM_ENABLE_FALLBACK", "true").lower() == "true"
+
     return AIStatus(
         ollama_available=ollama_available,
-        model=client.model,
+        model=ollama_client.model,
+        providers=providers,
+        preferred_provider=preferred_provider,
+        fallback_enabled=fallback_enabled,
         ai_usage_this_month=org.ai_summaries_used or 0 if org else 0,
-        ai_usage_limit=None,  # No hard limit for now
+        ai_usage_limit=None,
+        usage_by_provider=usage_by_provider,
         features_enabled={
             "assistant": os.getenv("AI_ASSISTANT_ENABLED", "true").lower() == "true",
             "document_summary": os.getenv("AI_DOCUMENT_SUMMARY_ENABLED", "true").lower() == "true",
             "competitor_monitor": os.getenv("AI_COMPETITOR_MONITOR_ENABLED", "true").lower() == "true",
         }
+    )
+
+
+@router.put("/provider")
+async def set_ai_provider(
+    data: AIProviderPreference,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Set the preferred AI provider for the organization."""
+    valid_providers = [p.value for p in LLMProvider]
+    if data.provider not in valid_providers:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid provider. Must be one of: {', '.join(valid_providers)}"
+        )
+
+    org = db.query(Organization).filter(
+        Organization.id == current_user.organization_id
+    ).first()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Update org settings
+    if not org.settings:
+        org.settings = {}
+    org.settings["llm_provider"] = data.provider
+    db.commit()
+
+    return {"status": "success", "provider": data.provider}
+
+
+@router.get("/usage", response_model=AIUsageResponse)
+async def get_ai_usage(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get detailed AI usage statistics for the current month."""
+    from .models import LLMUsage
+    from sqlalchemy import func
+    from datetime import datetime
+
+    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_end = datetime.utcnow()
+
+    # Get usage by provider
+    provider_stats = db.query(
+        LLMUsage.provider,
+        func.count(LLMUsage.id).label("requests"),
+        func.sum(LLMUsage.tokens_input + LLMUsage.tokens_output).label("tokens"),
+        func.sum(LLMUsage.estimated_cost).label("cost")
+    ).filter(
+        LLMUsage.organization_id == current_user.organization_id,
+        LLMUsage.created_at >= month_start
+    ).group_by(LLMUsage.provider).all()
+
+    by_provider = {}
+    total_requests = 0
+    total_tokens = 0
+    total_cost = 0.0
+
+    for stat in provider_stats:
+        requests = stat.requests or 0
+        tokens = int(stat.tokens or 0)
+        cost = float(stat.cost or 0)
+
+        by_provider[stat.provider] = AIProviderUsage(
+            requests=requests,
+            tokens=tokens,
+            cost=cost
+        )
+        total_requests += requests
+        total_tokens += tokens
+        total_cost += cost
+
+    # Get usage by feature
+    feature_stats = db.query(
+        LLMUsage.feature,
+        func.count(LLMUsage.id).label("count")
+    ).filter(
+        LLMUsage.organization_id == current_user.organization_id,
+        LLMUsage.created_at >= month_start
+    ).group_by(LLMUsage.feature).all()
+
+    by_feature = {stat.feature or "unknown": stat.count for stat in feature_stats}
+
+    return AIUsageResponse(
+        total_requests=total_requests,
+        total_tokens=total_tokens,
+        total_cost=total_cost,
+        by_provider=by_provider,
+        by_feature=by_feature,
+        period_start=month_start,
+        period_end=month_end
     )
 
 

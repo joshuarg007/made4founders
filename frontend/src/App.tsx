@@ -23,6 +23,7 @@ const Privacy = lazy(() => import('./pages/public/Privacy'))
 const Terms = lazy(() => import('./pages/public/Terms'))
 const Security = lazy(() => import('./pages/public/Security'))
 const Contact = lazy(() => import('./pages/public/Contact'))
+const FacebookDataDeletion = lazy(() => import('./pages/FacebookDataDeletion'))
 
 // Auth pages
 const Login = lazy(() => import('./pages/Login'))
@@ -46,12 +47,23 @@ const SocialHub = lazy(() => import('./pages/SocialHub'))
 const Insights = lazy(() => import('./pages/Insights'))
 const Offerings = lazy(() => import('./pages/Offerings'))
 const Finance = lazy(() => import('./pages/Finance'))
+const FinancialDashboard = lazy(() => import('./pages/FinancialDashboard'))
+const RevenueDashboard = lazy(() => import('./pages/RevenueDashboard'))
+const CapTable = lazy(() => import('./pages/CapTable'))
+const InvestorUpdates = lazy(() => import('./pages/InvestorUpdates'))
+const DataRoom = lazy(() => import('./pages/DataRoom'))
+const Budget = lazy(() => import('./pages/Budget'))
+const Invoices = lazy(() => import('./pages/Invoices'))
+const Team = lazy(() => import('./pages/Team'))
 const Vault = lazy(() => import('./pages/Vault'))
 const Leaderboard = lazy(() => import('./pages/Leaderboard'))
 const Businesses = lazy(() => import('./pages/Businesses'))
 const Marketplaces = lazy(() => import('./pages/Marketplaces'))
 const Integrations = lazy(() => import('./pages/Integrations'))
 const Settings = lazy(() => import('./pages/Settings'))
+const ActivityFeed = lazy(() => import('./pages/ActivityFeed'))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
+const GuestAccessManager = lazy(() => import('./pages/GuestAccessManager'))
 
 function App() {
   return (
@@ -72,6 +84,9 @@ function App() {
           <Route path="/security" element={<Security />} />
           <Route path="/contact" element={<Contact />} />
         </Route>
+
+        {/* Standalone public pages */}
+        <Route path="/facebook-oauth-data-deletion" element={<FacebookDataDeletion />} />
 
         {/* Auth pages (separate from public layout for cleaner UX) */}
         <Route path="/login" element={<Login />} />
@@ -105,12 +120,25 @@ function App() {
           <Route path="insights" element={<Insights />} />
           <Route path="offerings" element={<Offerings />} />
           <Route path="finance" element={<Finance />} />
+          <Route path="financial-dashboard" element={<FinancialDashboard />} />
+          <Route path="revenue" element={<RevenueDashboard />} />
+          <Route path="cap-table" element={<CapTable />} />
+          <Route path="investor-updates" element={<InvestorUpdates />} />
+          <Route path="data-room" element={<DataRoom />} />
+          <Route path="budget" element={<Budget />} />
+          <Route path="invoices" element={<Invoices />} />
+          <Route path="team" element={<Team />} />
           <Route path="vault" element={<Vault />} />
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="businesses" element={<Businesses />} />
           <Route path="integrations" element={<Integrations />} />
           <Route path="marketplaces" element={<Marketplaces />} />
           <Route path="settings" element={<Settings />} />
+
+          {/* Collaboration */}
+          <Route path="activity" element={<ActivityFeed />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="guests" element={<GuestAccessManager />} />
         </Route>
 
         {/* Redirect old routes to new structure */}

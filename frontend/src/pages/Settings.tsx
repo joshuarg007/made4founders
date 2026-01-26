@@ -30,6 +30,10 @@ import {
   EyeOff,
   FileText,
   RefreshCw,
+  Bot,
+  Server,
+  Cloud,
+  DollarSign,
 } from 'lucide-react';
 import {
   getSubscriptionStatus,
@@ -45,9 +49,14 @@ import {
   getAuditLogStats,
   exportAuditLogs,
   exportAllData,
+  getAIStatus,
+  setAIProvider,
+  getAIUsage,
   type SubscriptionStatus,
   type AuditLogEntry,
   type AuditLogStats,
+  type AIStatus,
+  type AIUsageStats,
 } from '../lib/api';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
@@ -138,9 +147,16 @@ export default function Settings() {
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
 
+  // AI Provider settings state
+  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
+  const [aiUsage, setAiUsage] = useState<AIUsageStats | null>(null);
+  const [aiLoading, setAiLoading] = useState(true);
+  const [aiSaving, setAiSaving] = useState(false);
+
   useEffect(() => {
     loadSubscription();
     loadMfaStatus();
+    loadAIData();
 
     // Load audit logs for admins
     if (user?.role === 'admin') {
@@ -195,6 +211,35 @@ export default function Settings() {
       setAuditError('Failed to load audit logs');
     } finally {
       setAuditLoading(false);
+    }
+  };
+
+  const loadAIData = async () => {
+    setAiLoading(true);
+    try {
+      const [status, usage] = await Promise.all([
+        getAIStatus(),
+        getAIUsage(30)
+      ]);
+      setAiStatus(status);
+      setAiUsage(usage);
+    } catch (err) {
+      console.error('Failed to load AI status:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleSetAIProvider = async (provider: string) => {
+    setAiSaving(true);
+    try {
+      await setAIProvider(provider);
+      setSuccessMessage(`AI provider preference set to ${provider}`);
+      await loadAIData();
+    } catch (err) {
+      setError('Failed to update AI provider preference');
+    } finally {
+      setAiSaving(false);
     }
   };
 
@@ -1215,6 +1260,300 @@ export default function Settings() {
             </select>
           </div>
         </div>
+      </div>
+
+      {/* AI Provider Settings */}
+      <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 flex items-center justify-center">
+            <Bot className="w-5 h-5 text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">AI Provider</h2>
+            <p className="text-sm text-gray-500">Configure AI assistant providers</p>
+          </div>
+        </div>
+
+        {aiLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : aiStatus ? (
+          <div className="space-y-6">
+            {/* Provider Status */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-gray-400">Available Providers</h3>
+              <div className="grid gap-3">
+                {/* Ollama (Local) */}
+                <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      aiStatus.providers?.ollama?.available ? 'bg-green-500/20' : 'bg-white/5'
+                    }`}>
+                      <Server className={`w-5 h-5 ${
+                        aiStatus.providers?.ollama?.available ? 'text-green-400' : 'text-gray-500'
+                      }`} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-white flex items-center gap-2">
+                        Ollama (Local)
+                        {aiStatus.preferred_provider === 'ollama' && (
+                          <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">Preferred</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {aiStatus.providers?.ollama?.model || 'qwen2.5:7b'} - Free, runs locally
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {aiStatus.providers?.ollama?.available ? (
+                      <span className="px-2.5 py-1 text-xs bg-green-500/20 text-green-400 rounded-full flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Running
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 text-xs bg-yellow-500/20 text-yellow-400 rounded-full">
+                        Not available
+                      </span>
+                    )}
+                    {aiStatus.preferred_provider !== 'ollama' && (
+                      <button
+                        onClick={() => handleSetAIProvider('ollama')}
+                        disabled={aiSaving}
+                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                      >
+                        Set Preferred
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Cloudflare Workers AI */}
+                <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      aiStatus.providers?.cloudflare?.configured ? 'bg-orange-500/20' : 'bg-white/5'
+                    }`}>
+                      <Cloud className={`w-5 h-5 ${
+                        aiStatus.providers?.cloudflare?.configured ? 'text-orange-400' : 'text-gray-500'
+                      }`} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-white flex items-center gap-2">
+                        Cloudflare Workers AI
+                        {aiStatus.preferred_provider === 'cloudflare' && (
+                          <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">Preferred</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {aiStatus.providers?.cloudflare?.model || 'llama-3.2-3b'} - Free (10k/day)
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {aiStatus.providers?.cloudflare?.configured ? (
+                      <span className="px-2.5 py-1 text-xs bg-green-500/20 text-green-400 rounded-full flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Configured
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 text-xs bg-gray-500/20 text-gray-400 rounded-full">
+                        Not configured
+                      </span>
+                    )}
+                    {aiStatus.providers?.cloudflare?.configured && aiStatus.preferred_provider !== 'cloudflare' && (
+                      <button
+                        onClick={() => handleSetAIProvider('cloudflare')}
+                        disabled={aiSaving}
+                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                      >
+                        Set Preferred
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* OpenAI */}
+                <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      aiStatus.providers?.openai?.configured ? 'bg-cyan-500/20' : 'bg-white/5'
+                    }`}>
+                      <Cloud className={`w-5 h-5 ${
+                        aiStatus.providers?.openai?.configured ? 'text-cyan-400' : 'text-gray-500'
+                      }`} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-white flex items-center gap-2">
+                        OpenAI
+                        {aiStatus.preferred_provider === 'openai' && (
+                          <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">Preferred</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {aiStatus.providers?.openai?.model || 'gpt-4o-mini'} - Cloud API (paid)
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {aiStatus.providers?.openai?.configured ? (
+                      <span className="px-2.5 py-1 text-xs bg-green-500/20 text-green-400 rounded-full flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Configured
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 text-xs bg-gray-500/20 text-gray-400 rounded-full">
+                        Not configured
+                      </span>
+                    )}
+                    {aiStatus.providers?.openai?.configured && aiStatus.preferred_provider !== 'openai' && (
+                      <button
+                        onClick={() => handleSetAIProvider('openai')}
+                        disabled={aiSaving}
+                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                      >
+                        Set Preferred
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Anthropic */}
+                <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      aiStatus.providers?.anthropic?.configured ? 'bg-orange-500/20' : 'bg-white/5'
+                    }`}>
+                      <Cloud className={`w-5 h-5 ${
+                        aiStatus.providers?.anthropic?.configured ? 'text-orange-400' : 'text-gray-500'
+                      }`} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-white flex items-center gap-2">
+                        Anthropic
+                        {aiStatus.preferred_provider === 'anthropic' && (
+                          <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">Preferred</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {aiStatus.providers?.anthropic?.model || 'claude-3-5-haiku'} - Cloud API
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {aiStatus.providers?.anthropic?.configured ? (
+                      <span className="px-2.5 py-1 text-xs bg-green-500/20 text-green-400 rounded-full flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Configured
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 text-xs bg-gray-500/20 text-gray-400 rounded-full">
+                        Not configured
+                      </span>
+                    )}
+                    {aiStatus.providers?.anthropic?.configured && aiStatus.preferred_provider !== 'anthropic' && (
+                      <button
+                        onClick={() => handleSetAIProvider('anthropic')}
+                        disabled={aiSaving}
+                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                      >
+                        Set Preferred
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fallback Status */}
+            <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    aiStatus.fallback_enabled ? 'bg-blue-500/20' : 'bg-white/5'
+                  }`}>
+                    <RefreshCw className={`w-5 h-5 ${
+                      aiStatus.fallback_enabled ? 'text-blue-400' : 'text-gray-500'
+                    }`} />
+                  </div>
+                  <div>
+                    <div className="font-medium text-white">Automatic Fallback</div>
+                    <div className="text-sm text-gray-400">
+                      {aiStatus.fallback_enabled
+                        ? 'Will try other providers if preferred is unavailable'
+                        : 'Fallback disabled - only preferred provider used'}
+                    </div>
+                  </div>
+                </div>
+                <span className={`px-2.5 py-1 text-xs rounded-full ${
+                  aiStatus.fallback_enabled
+                    ? 'bg-blue-500/20 text-blue-400'
+                    : 'bg-gray-500/20 text-gray-400'
+                }`}>
+                  {aiStatus.fallback_enabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+            </div>
+
+            {/* Usage Stats */}
+            {aiUsage && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-400">Usage This Month</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                    <div className="text-2xl font-bold text-white">{aiUsage.total.total_requests}</div>
+                    <div className="text-xs text-gray-500">Requests</div>
+                  </div>
+                  <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                    <div className="text-2xl font-bold text-cyan-400">
+                      {((aiUsage.total.total_tokens_input + aiUsage.total.total_tokens_output) / 1000).toFixed(1)}k
+                    </div>
+                    <div className="text-xs text-gray-500">Total Tokens</div>
+                  </div>
+                  <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                    <div className="text-2xl font-bold text-green-400">
+                      {aiUsage.total.successful_requests}
+                    </div>
+                    <div className="text-xs text-gray-500">Successful</div>
+                  </div>
+                  <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <DollarSign className="w-4 h-4 text-amber-400" />
+                      <span className="text-2xl font-bold text-amber-400">
+                        {aiUsage.total.total_estimated_cost.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500">Est. Cost</div>
+                  </div>
+                </div>
+
+                {/* By Provider Breakdown */}
+                {Object.keys(aiUsage.by_provider).length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-xs font-medium text-gray-500 mb-2">By Provider</h4>
+                    <div className="space-y-2">
+                      {Object.entries(aiUsage.by_provider).map(([provider, usage]) => (
+                        <div key={provider} className="flex items-center justify-between p-2 bg-[#0f1117] rounded border border-white/5">
+                          <span className="text-sm text-gray-300 capitalize">{provider}</span>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>{usage.total_requests} requests</span>
+                            <span>{((usage.total_tokens_input + usage.total_tokens_output) / 1000).toFixed(1)}k tokens</span>
+                            <span className="text-amber-400">${usage.total_estimated_cost.toFixed(3)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            Failed to load AI provider status
+          </div>
+        )}
       </div>
 
       {/* Data Management */}

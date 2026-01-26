@@ -198,7 +198,9 @@ class CompetitorMonitor:
         self,
         competitor_name: str,
         updates: Dict[str, Any],
-        user_focus: str = ""
+        user_focus: str = "",
+        db=None,
+        organization_id: int = None
     ) -> Dict[str, Any]:
         """
         Analyze competitor updates with AI.
@@ -207,11 +209,14 @@ class CompetitorMonitor:
             competitor_name: Name of the competitor
             updates: Dict with news and rss_entries
             user_focus: User's business focus for relevance scoring
+            db: Database session for provider preferences
+            organization_id: Organization ID for preferences
 
         Returns:
             Analysis results
         """
-        from .llm_client import OllamaClient, parse_json_response
+        from .llm_client import parse_json_response
+        from .providers import get_fallback_client
         from .prompts import COMPETITOR_PROMPTS
 
         all_articles = updates.get("news", []) + updates.get("rss_entries", [])
@@ -239,7 +244,8 @@ class CompetitorMonitor:
             articles=articles_text
         )
 
-        client = OllamaClient()
+        # Use fallback client with preference for local (cost savings)
+        client = get_fallback_client(db, organization_id, prefer_local=True)
         response = await client.generate(
             prompt=prompt,
             temperature=0.3,

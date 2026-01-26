@@ -3628,3 +3628,270 @@ class DocumentSummary(Base):
 
     # Relationships
     document = relationship("Document", backref="ai_summaries")
+
+
+# ============ COLLABORATION MODELS ============
+
+class EntityType(str, enum.Enum):
+    """Entity types that can have comments, activity, etc."""
+    TASK = "task"
+    DEADLINE = "deadline"
+    DOCUMENT = "document"
+    CONTACT = "contact"
+    METRIC = "metric"
+    MEETING = "meeting"
+    INVESTOR_UPDATE = "investor_update"
+    DATA_ROOM_DOCUMENT = "data_room_document"
+    DATA_ROOM_FOLDER = "data_room_folder"
+
+
+class Comment(Base):
+    """
+    Polymorphic comments on any entity.
+
+    Replaces entity-specific comment tables (TaskComment) with a single
+    flexible model that can attach to any entity type.
+    """
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Polymorphic reference to any entity
+    entity_type = Column(String(50), nullable=False, index=True)
+    entity_id = Column(Integer, nullable=False, index=True)
+
+    # Comment author
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Content
+    content = Column(Text, nullable=False)
+    is_edited = Column(Boolean, default=False)
+
+    # @mentions - JSON array of user IDs mentioned in the comment
+    mentioned_user_ids = Column(JSON, nullable=True)
+
+    # Threading support - parent comment for replies
+    parent_id = Column(Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="comments")
+    parent = relationship("Comment", remote_side=[id], backref="replies")
+    organization = relationship("Organization", backref="comments")
+
+    __table_args__ = (
+        Index('ix_comment_entity', 'organization_id', 'entity_type', 'entity_id'),
+    )
+
+
+class NotificationType(str, enum.Enum):
+    """Types of in-app notifications."""
+    MENTION = "mention"
+    COMMENT_REPLY = "comment_reply"
+    TASK_ASSIGNED = "task_assigned"
+    TASK_COMPLETED = "task_completed"
+    DEADLINE_REMINDER = "deadline_reminder"
+    DOCUMENT_SHARED = "document_shared"
+    INVESTOR_UPDATE_SENT = "investor_update_sent"
+    GUEST_ACCESS_GRANTED = "guest_access_granted"
+
+
+class Notification(Base):
+    """
+    In-app notifications for users.
+
+    Tracks mentions, assignments, reminders, and other events
+    that users should be alerted about.
+    """
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Notification content
+    notification_type = Column(String(50), nullable=False)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=True)
+
+    # Related entity (optional)
+    entity_type = Column(String(50), nullable=True)
+    entity_id = Column(Integer, nullable=True)
+
+    # Actor who triggered this notification
+    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Status
+    is_read = Column(Boolean, default=False)
+    read_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], backref="notifications")
+    actor = relationship("User", foreign_keys=[actor_user_id])
+
+    __table_args__ = (
+        Index('ix_notification_user_unread', 'user_id', 'is_read'),
+    )
+
+
+class ActivityType(str, enum.Enum):
+    """Types of activities tracked in the organization feed."""
+    COMMENT_CREATED = "comment_created"
+    TASK_CREATED = "task_created"
+    TASK_COMPLETED = "task_completed"
+    TASK_ASSIGNED = "task_assigned"
+    DOCUMENT_UPLOADED = "document_uploaded"
+    DEADLINE_CREATED = "deadline_created"
+    DEADLINE_COMPLETED = "deadline_completed"
+    METRIC_UPDATED = "metric_updated"
+    CONTACT_ADDED = "contact_added"
+    INVESTOR_UPDATE_SENT = "investor_update_sent"
+    USER_JOINED = "user_joined"
+    MENTION = "mention"
+    GUEST_INVITED = "guest_invited"
+
+
+class Activity(Base):
+    """
+    Organization-wide activity feed.
+
+    Records all significant actions for display in the activity stream.
+    Used for transparency and tracking what's happening across the organization.
+    """
+    __tablename__ = "activities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Who did it
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # What happened
+    activity_type = Column(String(50), nullable=False, index=True)
+    description = Column(Text, nullable=False)
+
+    # What it relates to
+    entity_type = Column(String(50), nullable=True)
+    entity_id = Column(Integer, nullable=True)
+    entity_title = Column(String(255), nullable=True)  # Cached for display without joins
+
+    # Additional context (JSON for flexibility)
+    extra_data = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="activities")
+    organization = relationship("Organization", backref="activities")
+
+    __table_args__ = (
+        Index('ix_activity_org_created', 'organization_id', 'created_at'),
+    )
+
+
+class GuestType(str, enum.Enum):
+    """Types of guest users (external stakeholders)."""
+    INVESTOR = "investor"
+    ADVISOR = "advisor"
+    LAWYER = "lawyer"
+    ACCOUNTANT = "accountant"
+    BOARD_MEMBER = "board_member"
+    CONTRACTOR = "contractor"
+    OTHER = "other"
+
+
+class GuestUser(Base):
+    """
+    External users with limited access (investors, advisors, lawyers).
+
+    Guests authenticate via magic link (token) and can only access
+    resources explicitly shared with them via the permissions field.
+    """
+    __tablename__ = "guest_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Identity
+    email = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=True)
+    guest_type = Column(String(50), default=GuestType.OTHER.value)
+
+    # Link to shareholder if this guest is an investor
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="SET NULL"), nullable=True)
+
+    # Authentication via magic link
+    access_token = Column(String(64), unique=True, nullable=False, index=True)
+    token_expires_at = Column(DateTime, nullable=True)
+
+    # Permissions - JSON object defining what they can access
+    # Example: {"data_room": ["view"], "investor_updates": ["view"], "cap_table": ["view"]}
+    permissions = Column(JSON, nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    last_accessed_at = Column(DateTime, nullable=True)
+
+    # Invite tracking
+    invited_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    invited_at = Column(DateTime, default=datetime.utcnow)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="guest_users")
+    shareholder = relationship("Shareholder", backref="guest_user")
+    invited_by = relationship("User", backref="invited_guests")
+
+    __table_args__ = (
+        Index('ix_guest_org_email', 'organization_id', 'email', unique=True),
+    )
+
+
+class LLMUsage(Base):
+    """
+    Track LLM API usage for cost monitoring and analytics.
+
+    Records every LLM request with provider, model, tokens, and cost.
+    """
+    __tablename__ = "llm_usage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Provider info
+    provider = Column(String(50), nullable=False)  # ollama, openai, anthropic
+    model = Column(String(100), nullable=False)
+
+    # Feature that made the request
+    feature = Column(String(100), nullable=True)  # assistant, document_summary, competitor_analysis, etc.
+
+    # Token usage
+    tokens_input = Column(Integer, default=0)
+    tokens_output = Column(Integer, default=0)
+
+    # Cost estimation (in USD)
+    estimated_cost = Column(Float, default=0.0)
+
+    # Result
+    success = Column(Boolean, default=True)
+    error_message = Column(Text, nullable=True)
+
+    # Timing
+    processing_time_ms = Column(Integer, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="llm_usage_records")
+
+    __table_args__ = (
+        Index('ix_llm_usage_org_date', 'organization_id', 'created_at'),
+        Index('ix_llm_usage_provider', 'provider'),
+    )

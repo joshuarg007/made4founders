@@ -127,7 +127,9 @@ def extract_txt_text(file_path: str) -> str:
 
 async def summarize_document(
     text: str,
-    max_chars: int = 50000
+    max_chars: int = 50000,
+    db=None,
+    organization_id: int = None
 ) -> Optional[Dict[str, Any]]:
     """
     Generate an AI summary of document text.
@@ -135,11 +137,14 @@ async def summarize_document(
     Args:
         text: Document text content
         max_chars: Maximum characters to process
+        db: Database session for provider preferences
+        organization_id: Organization ID for preferences
 
     Returns:
         Dict with summary, key_terms, dates, risk_flags, etc.
     """
-    from .llm_client import OllamaClient, parse_json_response
+    from .llm_client import parse_json_response
+    from .providers import get_fallback_client
     from .prompts import DOCUMENT_PROMPTS
 
     if not text or len(text.strip()) < 50:
@@ -149,7 +154,8 @@ async def summarize_document(
     if len(text) > max_chars:
         text = text[:max_chars] + "\n\n[Document truncated for summarization]"
 
-    client = OllamaClient()
+    # Use fallback client with preference for local (cost savings)
+    client = get_fallback_client(db, organization_id, prefer_local=True)
     prompt = DOCUMENT_PROMPTS["summarize"].format(content=text)
 
     start_time = time.time()
@@ -184,7 +190,9 @@ async def summarize_document(
 
 async def extract_deadlines_from_text(
     text: str,
-    max_chars: int = 30000
+    max_chars: int = 30000,
+    db=None,
+    organization_id: int = None
 ) -> Optional[Dict[str, Any]]:
     """
     Extract dates and deadlines from document text.
@@ -192,11 +200,14 @@ async def extract_deadlines_from_text(
     Args:
         text: Document text content
         max_chars: Maximum characters to process
+        db: Database session for provider preferences
+        organization_id: Organization ID for preferences
 
     Returns:
         Dict with deadlines and recurring_dates
     """
-    from .llm_client import OllamaClient, parse_json_response
+    from .llm_client import parse_json_response
+    from .providers import get_fallback_client
     from .prompts import DOCUMENT_PROMPTS
 
     if not text or len(text.strip()) < 20:
@@ -206,7 +217,8 @@ async def extract_deadlines_from_text(
     if len(text) > max_chars:
         text = text[:max_chars] + "\n\n[Document truncated]"
 
-    client = OllamaClient()
+    # Use fallback client with preference for local (cost savings)
+    client = get_fallback_client(db, organization_id, prefer_local=True)
     prompt = DOCUMENT_PROMPTS["extract_deadlines"].format(content=text)
 
     response = await client.generate(

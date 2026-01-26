@@ -1235,24 +1235,29 @@ export const moveTask = (task_id: number, target_column_id: number, target_posit
     body: JSON.stringify({ task_id, target_column_id, target_position })
   });
 
-// Comments API
+// Task Comments API (legacy - uses old task-specific endpoints)
 export const getTaskComments = (taskId: number) =>
   fetchApi<TaskComment[]>(`/tasks/${taskId}/comments`);
 
-export const createComment = (task_id: number, content: string) =>
+export const createTaskComment = (task_id: number, content: string) =>
   fetchApi<TaskComment>('/comments', {
     method: 'POST',
     body: JSON.stringify({ task_id, content })
   });
 
-export const updateComment = (id: number, content: string) =>
+export const updateTaskComment = (id: number, content: string) =>
   fetchApi<TaskComment>(`/comments/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ content })
   });
 
-export const deleteComment = (id: number) =>
+export const deleteTaskComment = (id: number) =>
   fetchApi<{ ok: boolean }>(`/comments/${id}`, { method: 'DELETE' });
+
+// Backwards compatibility aliases
+export const createComment = createTaskComment;
+export const updateComment = updateTaskComment;
+export const deleteComment = deleteTaskComment;
 
 // Time Tracking API
 export const getTimeEntries = (taskId: number) =>
@@ -3669,12 +3674,38 @@ export interface AISuggestionsResponse {
   context: string;
 }
 
+export interface AIProviderStatus {
+  available: boolean;
+  model: string;
+  configured: boolean;
+}
+
+export interface AIProviderUsage {
+  total_requests: number;
+  total_tokens_input: number;
+  total_tokens_output: number;
+  total_estimated_cost: number;
+  successful_requests: number;
+  failed_requests: number;
+}
+
 export interface AIStatus {
   ollama_available: boolean;
   model: string;
   ai_usage_this_month: number;
   ai_usage_limit?: number;
   features_enabled: Record<string, boolean>;
+  providers: Record<string, AIProviderStatus>;
+  preferred_provider: string;
+  fallback_enabled: boolean;
+}
+
+export interface AIUsageStats {
+  period_start: string;
+  period_end: string;
+  by_provider: Record<string, AIProviderUsage>;
+  by_feature: Record<string, AIProviderUsage>;
+  total: AIProviderUsage;
 }
 
 // Competitor Types
@@ -3762,6 +3793,15 @@ export const archiveAIConversation = (id: number) =>
 
 export const getAISuggestions = (currentPage = '') =>
   fetchApi<AISuggestionsResponse>(`/ai/suggestions?current_page=${encodeURIComponent(currentPage)}`);
+
+export const setAIProvider = (provider: string) =>
+  fetchApi<{ message: string; preferred_provider: string }>('/ai/provider', {
+    method: 'PUT',
+    body: JSON.stringify({ provider }),
+  });
+
+export const getAIUsage = (days = 30) =>
+  fetchApi<AIUsageStats>(`/ai/usage?days=${days}`);
 
 // Document AI API
 export const summarizeDocument = (documentId: number) =>
@@ -3902,5 +3942,204 @@ export const createTasksFromTranscript = (
       action_item_indices: actionItemIndices,
     }),
   });
+
+
+// ============ Collaboration: Comments ============
+
+export interface Comment {
+  id: number;
+  organization_id: number;
+  entity_type: string;
+  entity_id: number;
+  user_id: number;
+  user: UserBrief | null;
+  content: string;
+  is_edited: boolean;
+  mentioned_user_ids: number[] | null;
+  mentioned_users: UserBrief[] | null;
+  parent_id: number | null;
+  reply_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getEntityComments = (entityType: string, entityId: number) =>
+  fetchApi<Comment[]>(`/comments?entity_type=${entityType}&entity_id=${entityId}`);
+
+export const createEntityComment = (data: {
+  entity_type: string;
+  entity_id: number;
+  content: string;
+  parent_id?: number;
+}) =>
+  fetchApi<Comment>('/comments', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateEntityComment = (id: number, content: string) =>
+  fetchApi<Comment>(`/comments/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ content }),
+  });
+
+export const deleteEntityComment = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/comments/${id}`, { method: 'DELETE' });
+
+export const getCommentCounts = (entities: Array<{ entity_type: string; entity_id: number }>) =>
+  fetchApi<{ counts: Record<string, number> }>('/comments/counts', {
+    method: 'POST',
+    body: JSON.stringify({ entities }),
+  });
+
+export const searchUsersForMention = (query: string) =>
+  fetchApi<UserBrief[]>(`/comments/users/search?q=${encodeURIComponent(query)}`);
+
+
+// ============ Collaboration: Notifications ============
+
+export interface Notification {
+  id: number;
+  notification_type: string;
+  title: string;
+  message: string | null;
+  entity_type: string | null;
+  entity_id: number | null;
+  actor: UserBrief | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationListResponse {
+  items: Notification[];
+  unread_count: number;
+  total_count: number;
+}
+
+export const getNotifications = (params?: { unread_only?: boolean; limit?: number; offset?: number }) => {
+  const searchParams = new URLSearchParams();
+  if (params?.unread_only) searchParams.set('unread_only', 'true');
+  if (params?.limit) searchParams.set('limit', String(params.limit));
+  if (params?.offset) searchParams.set('offset', String(params.offset));
+  return fetchApi<NotificationListResponse>(`/notifications?${searchParams.toString()}`);
+};
+
+export const getUnreadNotificationCount = () =>
+  fetchApi<{ count: number }>('/notifications/unread-count');
+
+export const markNotificationsRead = (notificationIds?: number[]) =>
+  fetchApi<{ marked_count: number }>('/notifications/mark-read', {
+    method: 'POST',
+    body: JSON.stringify(notificationIds ? { notification_ids: notificationIds } : { all: true }),
+  });
+
+export const deleteNotification = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/notifications/${id}`, { method: 'DELETE' });
+
+export const clearNotifications = (readOnly: boolean = true) =>
+  fetchApi<{ deleted_count: number }>(`/notifications?read_only=${readOnly}`, { method: 'DELETE' });
+
+
+// ============ Collaboration: Activity Feed ============
+
+export interface Activity {
+  id: number;
+  user_id: number;
+  user: UserBrief | null;
+  activity_type: string;
+  description: string;
+  entity_type: string | null;
+  entity_id: number | null;
+  entity_title: string | null;
+  extra_data: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface ActivityListResponse {
+  items: Activity[];
+  total_count: number;
+}
+
+export const getActivityFeed = (params?: {
+  limit?: number;
+  offset?: number;
+  entity_type?: string;
+  user_id?: number;
+  activity_type?: string;
+}) => {
+  const searchParams = new URLSearchParams();
+  if (params?.limit) searchParams.set('limit', String(params.limit));
+  if (params?.offset) searchParams.set('offset', String(params.offset));
+  if (params?.entity_type) searchParams.set('entity_type', params.entity_type);
+  if (params?.user_id) searchParams.set('user_id', String(params.user_id));
+  if (params?.activity_type) searchParams.set('activity_type', params.activity_type);
+  return fetchApi<ActivityListResponse>(`/activity?${searchParams.toString()}`);
+};
+
+export const getEntityActivity = (entityType: string, entityId: number, limit: number = 20) =>
+  fetchApi<Activity[]>(`/activity/entity/${entityType}/${entityId}?limit=${limit}`);
+
+export const getActivityTypes = () =>
+  fetchApi<{ types: string[] }>('/activity/types');
+
+
+// ============ Collaboration: Guest Access ============
+
+export interface GuestUser {
+  id: number;
+  email: string;
+  name: string | null;
+  guest_type: string;
+  shareholder_id: number | null;
+  shareholder_name: string | null;
+  permissions: Record<string, string[]> | null;
+  is_active: boolean;
+  last_accessed_at: string | null;
+  invited_at: string;
+  invite_url: string | null;
+}
+
+export const getGuestUsers = (params?: { guest_type?: string; is_active?: boolean }) => {
+  const searchParams = new URLSearchParams();
+  if (params?.guest_type) searchParams.set('guest_type', params.guest_type);
+  if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active));
+  return fetchApi<GuestUser[]>(`/guests?${searchParams.toString()}`);
+};
+
+export const inviteGuestUser = (data: {
+  email: string;
+  name?: string;
+  guest_type: string;
+  permissions?: Record<string, string[]>;
+  shareholder_id?: number;
+}) =>
+  fetchApi<GuestUser>('/guests/invite', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const getGuestUser = (id: number) =>
+  fetchApi<GuestUser>(`/guests/${id}`);
+
+export const updateGuestUser = (id: number, data: {
+  name?: string;
+  guest_type?: string;
+  permissions?: Record<string, string[]>;
+  is_active?: boolean;
+}) =>
+  fetchApi<GuestUser>(`/guests/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const revokeGuestAccess = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/guests/${id}`, { method: 'DELETE' });
+
+export const resendGuestInvite = (id: number) =>
+  fetchApi<{ ok: boolean; expires_at: string }>(`/guests/${id}/resend-invite`, { method: 'POST' });
+
+export const getGuestTypes = () =>
+  fetchApi<{ types: Array<{ value: string; label: string }> }>('/guests/types/list');
+
 
 export default api;
