@@ -384,12 +384,26 @@ async def chat_with_assistant(
     # Track AI usage
     increment_ai_usage(db, current_user.organization_id)
 
+    # Filter out invalid data cards (must be dicts with required fields)
+    raw_cards = result.get("data_cards", [])
+    valid_cards = []
+    for card in raw_cards:
+        if isinstance(card, dict) and "type" in card and "title" in card:
+            valid_cards.append(card)
+
+    # Filter out invalid suggested actions
+    raw_actions = result.get("suggested_actions", [])
+    valid_actions = []
+    for action in raw_actions:
+        if isinstance(action, dict) and "label" in action and "action" in action:
+            valid_actions.append(action)
+
     return AIChatResponse(
         response=result["response"],
         conversation_id=conversation.id,
         message_id=assistant_message.id,
-        data_cards=result.get("data_cards", []),
-        suggested_actions=result.get("suggested_actions", []),
+        data_cards=valid_cards,
+        suggested_actions=valid_actions,
         tokens_used=result.get("tokens_used", 0),
         model=result.get("model", "unknown")
     )
