@@ -1624,3 +1624,1609 @@ class ContactSubmissionCreate(BaseModel):
     subject: Optional[str] = None
     message: str
     source: Optional[str] = None
+
+
+# ============ Cap Table Schemas ============
+
+# Shareholder schemas
+class ShareholderBase(BaseModel):
+    name: str
+    email: Optional[str] = None
+    shareholder_type: str = "other"  # founder, investor, employee, advisor, board_member, other
+    contact_id: Optional[int] = None
+    title: Optional[str] = None
+    company: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ShareholderCreate(ShareholderBase):
+    pass
+
+
+class ShareholderUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    shareholder_type: Optional[str] = None
+    contact_id: Optional[int] = None
+    title: Optional[str] = None
+    company: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ShareholderResponse(ShareholderBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    # Computed fields (populated by API)
+    total_shares: Optional[int] = 0
+    total_options: Optional[int] = 0
+    ownership_percentage: Optional[float] = 0.0
+    fully_diluted_percentage: Optional[float] = 0.0
+
+    class Config:
+        from_attributes = True
+
+
+# Share Class schemas
+class ShareClassBase(BaseModel):
+    name: str
+    class_type: str = "common"  # common, preferred
+    prefix: Optional[str] = None
+    authorized_shares: Optional[int] = None
+    par_value: float = 0.0001
+    price_per_share: Optional[float] = None
+    liquidation_preference: float = 1.0
+    participation_cap: Optional[float] = None
+    is_participating: bool = False
+    dividend_rate: Optional[float] = None
+    is_cumulative_dividend: bool = False
+    conversion_ratio: float = 1.0
+    is_auto_convert_on_ipo: bool = True
+    anti_dilution_type: Optional[str] = None
+    votes_per_share: float = 1.0
+    board_seats: int = 0
+    notes: Optional[str] = None
+    display_order: int = 0
+
+
+class ShareClassCreate(ShareClassBase):
+    pass
+
+
+class ShareClassUpdate(BaseModel):
+    name: Optional[str] = None
+    class_type: Optional[str] = None
+    prefix: Optional[str] = None
+    authorized_shares: Optional[int] = None
+    par_value: Optional[float] = None
+    price_per_share: Optional[float] = None
+    liquidation_preference: Optional[float] = None
+    participation_cap: Optional[float] = None
+    is_participating: Optional[bool] = None
+    dividend_rate: Optional[float] = None
+    is_cumulative_dividend: Optional[bool] = None
+    conversion_ratio: Optional[float] = None
+    is_auto_convert_on_ipo: Optional[bool] = None
+    anti_dilution_type: Optional[str] = None
+    votes_per_share: Optional[float] = None
+    board_seats: Optional[int] = None
+    notes: Optional[str] = None
+    display_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class ShareClassResponse(ShareClassBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    # Computed
+    issued_shares: Optional[int] = 0
+    outstanding_options: Optional[int] = 0
+
+    class Config:
+        from_attributes = True
+
+
+# Equity Grant schemas
+class EquityGrantBase(BaseModel):
+    shareholder_id: int
+    share_class_id: int
+    shares: int
+    price_per_share: Optional[float] = None
+    grant_date: date
+    certificate_number: Optional[str] = None
+    vesting_schedule: str = "immediate"
+    vesting_start_date: Optional[date] = None
+    vesting_end_date: Optional[date] = None
+    cliff_months: int = 0
+    vesting_period_months: int = 0
+    custom_vesting_schedule: Optional[str] = None
+    has_repurchase_right: bool = False
+    repurchase_price: Optional[float] = None
+    filed_83b: bool = False
+    filed_83b_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class EquityGrantCreate(EquityGrantBase):
+    pass
+
+
+class EquityGrantUpdate(BaseModel):
+    shareholder_id: Optional[int] = None
+    share_class_id: Optional[int] = None
+    shares: Optional[int] = None
+    price_per_share: Optional[float] = None
+    grant_date: Optional[date] = None
+    certificate_number: Optional[str] = None
+    vesting_schedule: Optional[str] = None
+    vesting_start_date: Optional[date] = None
+    vesting_end_date: Optional[date] = None
+    cliff_months: Optional[int] = None
+    vesting_period_months: Optional[int] = None
+    custom_vesting_schedule: Optional[str] = None
+    has_repurchase_right: Optional[bool] = None
+    repurchase_price: Optional[float] = None
+    filed_83b: Optional[bool] = None
+    filed_83b_date: Optional[date] = None
+    status: Optional[str] = None
+    cancelled_date: Optional[date] = None
+    cancelled_shares: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class EquityGrantResponse(EquityGrantBase):
+    id: int
+    status: str
+    cancelled_date: Optional[date] = None
+    cancelled_shares: int
+    created_at: datetime
+    updated_at: datetime
+    # Joined data
+    shareholder_name: Optional[str] = None
+    share_class_name: Optional[str] = None
+    # Computed
+    vested_shares: Optional[int] = 0
+    unvested_shares: Optional[int] = 0
+
+    class Config:
+        from_attributes = True
+
+
+# Stock Option schemas
+class StockOptionBase(BaseModel):
+    shareholder_id: int
+    share_class_id: int
+    option_type: str = "ISO"  # ISO, NSO
+    shares_granted: int
+    exercise_price: float
+    grant_date: date
+    expiration_date: Optional[date] = None
+    vesting_schedule: str = "standard_4y_1y_cliff"
+    vesting_start_date: Optional[date] = None
+    cliff_months: int = 12
+    vesting_period_months: int = 48
+    custom_vesting_schedule: Optional[str] = None
+    allows_early_exercise: bool = False
+    notes: Optional[str] = None
+
+
+class StockOptionCreate(StockOptionBase):
+    pass
+
+
+class StockOptionUpdate(BaseModel):
+    shareholder_id: Optional[int] = None
+    share_class_id: Optional[int] = None
+    option_type: Optional[str] = None
+    shares_granted: Optional[int] = None
+    exercise_price: Optional[float] = None
+    grant_date: Optional[date] = None
+    expiration_date: Optional[date] = None
+    vesting_schedule: Optional[str] = None
+    vesting_start_date: Optional[date] = None
+    cliff_months: Optional[int] = None
+    vesting_period_months: Optional[int] = None
+    custom_vesting_schedule: Optional[str] = None
+    shares_exercised: Optional[int] = None
+    shares_cancelled: Optional[int] = None
+    allows_early_exercise: Optional[bool] = None
+    early_exercised_shares: Optional[int] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class StockOptionResponse(StockOptionBase):
+    id: int
+    shares_exercised: int
+    shares_cancelled: int
+    early_exercised_shares: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    # Joined data
+    shareholder_name: Optional[str] = None
+    share_class_name: Optional[str] = None
+    # Computed
+    vested_options: Optional[int] = 0
+    unvested_options: Optional[int] = 0
+    exercisable_options: Optional[int] = 0
+
+    class Config:
+        from_attributes = True
+
+
+# SAFE Note schemas
+class SafeNoteBase(BaseModel):
+    shareholder_id: int
+    safe_type: str = "post_money"  # post_money, pre_money, mfn
+    investment_amount: float
+    valuation_cap: Optional[float] = None
+    discount_rate: Optional[float] = None
+    has_mfn: bool = False
+    has_pro_rata: bool = False
+    signed_date: date
+    document_id: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class SafeNoteCreate(SafeNoteBase):
+    pass
+
+
+class SafeNoteUpdate(BaseModel):
+    shareholder_id: Optional[int] = None
+    safe_type: Optional[str] = None
+    investment_amount: Optional[float] = None
+    valuation_cap: Optional[float] = None
+    discount_rate: Optional[float] = None
+    has_mfn: Optional[bool] = None
+    has_pro_rata: Optional[bool] = None
+    signed_date: Optional[date] = None
+    is_converted: Optional[bool] = None
+    converted_date: Optional[date] = None
+    converted_shares: Optional[int] = None
+    converted_share_class_id: Optional[int] = None
+    conversion_price: Optional[float] = None
+    document_id: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class SafeNoteResponse(SafeNoteBase):
+    id: int
+    is_converted: bool
+    converted_date: Optional[date] = None
+    converted_shares: Optional[int] = None
+    converted_share_class_id: Optional[int] = None
+    conversion_price: Optional[float] = None
+    created_at: datetime
+    updated_at: datetime
+    # Joined
+    shareholder_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# Convertible Note schemas
+class ConvertibleNoteBase(BaseModel):
+    shareholder_id: int
+    principal_amount: float
+    interest_rate: float
+    valuation_cap: Optional[float] = None
+    discount_rate: Optional[float] = None
+    issue_date: date
+    maturity_date: date
+    qualified_financing_amount: Optional[float] = None
+    document_id: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class ConvertibleNoteCreate(ConvertibleNoteBase):
+    pass
+
+
+class ConvertibleNoteUpdate(BaseModel):
+    shareholder_id: Optional[int] = None
+    principal_amount: Optional[float] = None
+    interest_rate: Optional[float] = None
+    valuation_cap: Optional[float] = None
+    discount_rate: Optional[float] = None
+    issue_date: Optional[date] = None
+    maturity_date: Optional[date] = None
+    qualified_financing_amount: Optional[float] = None
+    is_converted: Optional[bool] = None
+    converted_date: Optional[date] = None
+    converted_shares: Optional[int] = None
+    converted_share_class_id: Optional[int] = None
+    conversion_price: Optional[float] = None
+    accrued_interest_at_conversion: Optional[float] = None
+    document_id: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class ConvertibleNoteResponse(ConvertibleNoteBase):
+    id: int
+    is_converted: bool
+    converted_date: Optional[date] = None
+    converted_shares: Optional[int] = None
+    converted_share_class_id: Optional[int] = None
+    conversion_price: Optional[float] = None
+    accrued_interest_at_conversion: Optional[float] = None
+    created_at: datetime
+    updated_at: datetime
+    # Joined
+    shareholder_name: Optional[str] = None
+    # Computed
+    accrued_interest: Optional[float] = 0.0
+    total_owed: Optional[float] = 0.0
+
+    class Config:
+        from_attributes = True
+
+
+# Funding Round schemas
+class FundingRoundBase(BaseModel):
+    name: str
+    round_type: Optional[str] = None  # pre_seed, seed, series_a, etc.
+    pre_money_valuation: Optional[float] = None
+    post_money_valuation: Optional[float] = None
+    amount_raised: Optional[float] = None
+    target_amount: Optional[float] = None
+    price_per_share: Optional[float] = None
+    lead_investor_id: Optional[int] = None
+    announced_date: Optional[date] = None
+    closed_date: Optional[date] = None
+    status: str = "planned"  # planned, in_progress, closed, cancelled
+    notes: Optional[str] = None
+
+
+class FundingRoundCreate(FundingRoundBase):
+    pass
+
+
+class FundingRoundUpdate(BaseModel):
+    name: Optional[str] = None
+    round_type: Optional[str] = None
+    pre_money_valuation: Optional[float] = None
+    post_money_valuation: Optional[float] = None
+    amount_raised: Optional[float] = None
+    target_amount: Optional[float] = None
+    price_per_share: Optional[float] = None
+    lead_investor_id: Optional[int] = None
+    announced_date: Optional[date] = None
+    closed_date: Optional[date] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class FundingRoundResponse(FundingRoundBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    # Joined
+    lead_investor_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# 409A Valuation Schemas
+class Valuation409ABase(BaseModel):
+    valuation_date: date
+    effective_date: date
+    expiration_date: date
+    fmv_per_share: float
+    total_common_shares: Optional[int] = None
+    implied_company_value: Optional[float] = None
+    provider_name: Optional[str] = None
+    provider_type: str = "external"  # external, internal
+    report_document_id: Optional[int] = None
+    status: str = "draft"  # draft, pending_review, final, superseded
+    valuation_method: Optional[str] = None  # OPM, PWERM, Backsolve
+    discount_for_lack_of_marketability: Optional[float] = None
+    trigger_event: Optional[str] = None  # annual, funding_round, material_event, initial
+    notes: Optional[str] = None
+
+
+class Valuation409ACreate(Valuation409ABase):
+    pass
+
+
+class Valuation409AUpdate(BaseModel):
+    valuation_date: Optional[date] = None
+    effective_date: Optional[date] = None
+    expiration_date: Optional[date] = None
+    fmv_per_share: Optional[float] = None
+    total_common_shares: Optional[int] = None
+    implied_company_value: Optional[float] = None
+    provider_name: Optional[str] = None
+    provider_type: Optional[str] = None
+    report_document_id: Optional[int] = None
+    status: Optional[str] = None
+    valuation_method: Optional[str] = None
+    discount_for_lack_of_marketability: Optional[float] = None
+    trigger_event: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class Valuation409AResponse(Valuation409ABase):
+    id: int
+    created_by_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    # Computed fields
+    is_expired: Optional[bool] = None
+    days_until_expiration: Optional[int] = None
+    created_by_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# Cap Table Summary
+class CapTableSummary(BaseModel):
+    """Overall cap table summary with ownership breakdown."""
+    total_authorized_shares: int
+    total_issued_shares: int
+    total_outstanding_options: int
+    total_reserved_options: int  # Option pool
+    fully_diluted_shares: int
+
+    # Ownership by type
+    founders_percentage: float
+    investors_percentage: float
+    employees_percentage: float
+    option_pool_percentage: float
+
+    # Valuation
+    latest_price_per_share: Optional[float] = None
+    implied_valuation: Optional[float] = None
+
+    # Convertibles
+    total_safe_amount: float
+    total_convertible_amount: float
+
+    # By share class
+    share_class_breakdown: List[dict] = []
+
+    # Top shareholders
+    top_shareholders: List[dict] = []
+
+
+class DilutionScenario(BaseModel):
+    """What-if modeling for dilution."""
+    new_money: float
+    pre_money_valuation: float
+    option_pool_increase: float = 0.0  # Additional pool %
+
+    # Outputs (computed)
+    post_money_valuation: Optional[float] = None
+    new_shares_issued: Optional[int] = None
+    new_investor_percentage: Optional[float] = None
+    founder_dilution: Optional[float] = None
+    existing_investor_dilution: Optional[float] = None
+
+
+# ============ Investor Update Schemas ============
+
+class InvestorUpdateBase(BaseModel):
+    title: str
+    subject_line: Optional[str] = None
+    greeting: Optional[str] = None
+    highlights: Optional[List[str]] = None  # Key bullet points
+    body_content: Optional[str] = None
+    closing: Optional[str] = None
+    signature_name: Optional[str] = None
+    signature_title: Optional[str] = None
+    included_metrics: Optional[List[str]] = None  # ['mrr', 'runway', 'cash', ...]
+    recipient_types: Optional[List[str]] = None  # ['investor', 'board_member']
+    recipient_ids: Optional[List[int]] = None  # Specific shareholder IDs
+
+
+class InvestorUpdateCreate(InvestorUpdateBase):
+    pass
+
+
+class InvestorUpdateUpdate(BaseModel):
+    title: Optional[str] = None
+    subject_line: Optional[str] = None
+    greeting: Optional[str] = None
+    highlights: Optional[List[str]] = None
+    body_content: Optional[str] = None
+    closing: Optional[str] = None
+    signature_name: Optional[str] = None
+    signature_title: Optional[str] = None
+    included_metrics: Optional[List[str]] = None
+    recipient_types: Optional[List[str]] = None
+    recipient_ids: Optional[List[int]] = None
+    scheduled_at: Optional[datetime] = None
+
+
+class InvestorUpdateRecipientResponse(BaseModel):
+    id: int
+    shareholder_id: Optional[int] = None
+    email: str
+    name: Optional[str] = None
+    status: str
+    sent_at: Optional[datetime] = None
+    opened_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class InvestorUpdateResponse(InvestorUpdateBase):
+    id: int
+    status: str
+    scheduled_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
+    recipient_count: int
+    sent_count: int
+    failed_count: int
+    opened_count: int
+    created_by_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InvestorUpdateWithRecipients(InvestorUpdateResponse):
+    recipients: List[InvestorUpdateRecipientResponse] = []
+
+
+class InvestorUpdatePreview(BaseModel):
+    """Preview of what the email will look like."""
+    subject: str
+    html_content: str
+    recipient_count: int
+    recipients: List[dict] = []  # [{name, email, type}]
+
+
+class InvestorUpdateMetrics(BaseModel):
+    """Metrics that can be included in an investor update."""
+    mrr: Optional[float] = None
+    arr: Optional[float] = None
+    runway_months: Optional[float] = None
+    cash_on_hand: Optional[float] = None
+    burn_rate: Optional[float] = None
+    customers: Optional[int] = None
+    revenue: Optional[float] = None
+    growth_rate: Optional[float] = None  # MoM growth %
+
+
+# ============================================
+# DATA ROOM SCHEMAS
+# ============================================
+
+class DataRoomFolderBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    parent_id: Optional[int] = None
+    display_order: int = 0
+    visibility: str = "internal"  # internal, investors, custom
+
+
+class DataRoomFolderCreate(DataRoomFolderBase):
+    pass
+
+
+class DataRoomFolderUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    parent_id: Optional[int] = None
+    display_order: Optional[int] = None
+    visibility: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class DataRoomFolderResponse(DataRoomFolderBase):
+    id: int
+    organization_id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    document_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class DataRoomFolderWithChildren(DataRoomFolderResponse):
+    children: List["DataRoomFolderWithChildren"] = []
+    documents: List["DataRoomDocumentResponse"] = []
+
+
+class DataRoomDocumentBase(BaseModel):
+    document_id: int
+    folder_id: Optional[int] = None
+    display_name: Optional[str] = None
+    display_order: int = 0
+    visibility: str = "internal"
+
+
+class DataRoomDocumentCreate(DataRoomDocumentBase):
+    pass
+
+
+class DataRoomDocumentUpdate(BaseModel):
+    folder_id: Optional[int] = None
+    display_name: Optional[str] = None
+    display_order: Optional[int] = None
+    visibility: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class DataRoomDocumentResponse(DataRoomDocumentBase):
+    id: int
+    organization_id: int
+    view_count: int
+    download_count: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    # From linked document
+    document_name: Optional[str] = None
+    document_category: Optional[str] = None
+    file_path: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ShareableLinkBase(BaseModel):
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    folder_id: Optional[int] = None
+    document_id: Optional[int] = None
+    shareholder_id: Optional[int] = None
+    expires_at: Optional[datetime] = None
+    access_limit: Optional[int] = None
+
+
+class ShareableLinkCreate(ShareableLinkBase):
+    password: Optional[str] = None  # Plain text, will be hashed
+
+
+class ShareableLinkUpdate(BaseModel):
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    expires_at: Optional[datetime] = None
+    access_limit: Optional[int] = None
+    is_active: Optional[bool] = None
+    password: Optional[str] = None  # New password (optional)
+
+
+class ShareableLinkResponse(BaseModel):
+    id: int
+    organization_id: int
+    folder_id: Optional[int] = None
+    document_id: Optional[int] = None
+    shareholder_id: Optional[int] = None
+    token: str
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    has_password: bool = False
+    expires_at: Optional[datetime] = None
+    access_limit: Optional[int] = None
+    current_accesses: int
+    is_active: bool
+    created_by_id: Optional[int] = None
+    created_at: datetime
+    # Enriched data
+    folder_name: Optional[str] = None
+    document_name: Optional[str] = None
+    shareholder_name: Optional[str] = None
+    url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DataRoomAccessBase(BaseModel):
+    folder_id: Optional[int] = None
+    document_id: Optional[int] = None
+    shareable_link_id: Optional[int] = None
+    user_id: Optional[int] = None
+    shareholder_id: Optional[int] = None
+    access_type: str  # view, download
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+
+
+class DataRoomAccessResponse(DataRoomAccessBase):
+    id: int
+    organization_id: int
+    created_at: datetime
+    # Enriched data
+    folder_name: Optional[str] = None
+    document_name: Optional[str] = None
+    user_email: Optional[str] = None
+    shareholder_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DataRoomStats(BaseModel):
+    """Summary statistics for the data room."""
+    total_folders: int
+    total_documents: int
+    total_views: int
+    total_downloads: int
+    active_links: int
+    recent_accesses: List[DataRoomAccessResponse] = []
+
+
+class PublicDataRoomView(BaseModel):
+    """What external users see when accessing via shareable link."""
+    folder_name: Optional[str] = None
+    documents: List[dict] = []  # [{id, name, category, can_download}]
+    expires_at: Optional[datetime] = None
+    requires_password: bool = False
+    shareholder_name: Optional[str] = None  # Who this link is for
+
+
+# Update forward refs
+DataRoomFolderWithChildren.model_rebuild()
+
+
+# ============================================
+# BUDGET SCHEMAS
+# ============================================
+
+class BudgetCategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+    parent_id: Optional[int] = None
+    display_order: int = 0
+    plaid_categories: Optional[List[str]] = None
+    merchant_keywords: Optional[List[str]] = None
+
+
+class BudgetCategoryCreate(BudgetCategoryBase):
+    pass
+
+
+class BudgetCategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+    parent_id: Optional[int] = None
+    display_order: Optional[int] = None
+    plaid_categories: Optional[List[str]] = None
+    merchant_keywords: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+
+
+class BudgetCategoryResponse(BudgetCategoryBase):
+    id: int
+    organization_id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetLineItemBase(BaseModel):
+    category_id: int
+    budgeted_amount: float
+    notes: Optional[str] = None
+
+
+class BudgetLineItemCreate(BudgetLineItemBase):
+    pass
+
+
+class BudgetLineItemUpdate(BaseModel):
+    budgeted_amount: Optional[float] = None
+    notes: Optional[str] = None
+
+
+class BudgetLineItemResponse(BudgetLineItemBase):
+    id: int
+    organization_id: int
+    budget_period_id: int
+    actual_amount: float
+    transaction_count: int
+    variance_amount: Optional[float] = None
+    variance_percent: Optional[float] = None
+    status: str
+    last_calculated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    # Enriched
+    category_name: Optional[str] = None
+    category_color: Optional[str] = None
+    category_icon: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetPeriodBase(BaseModel):
+    period_type: str  # monthly, quarterly, annual
+    start_date: date
+    end_date: date
+    name: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class BudgetPeriodCreate(BudgetPeriodBase):
+    line_items: Optional[List[BudgetLineItemCreate]] = None
+
+
+class BudgetPeriodUpdate(BaseModel):
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class BudgetPeriodResponse(BudgetPeriodBase):
+    id: int
+    organization_id: int
+    total_budget: float
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetPeriodWithLineItems(BudgetPeriodResponse):
+    line_items: List[BudgetLineItemResponse] = []
+
+
+class BudgetVarianceReport(BaseModel):
+    """Budget vs Actual variance report."""
+    period: BudgetPeriodResponse
+    total_budgeted: float
+    total_actual: float
+    total_variance: float
+    variance_percent: float
+    status: str  # on_track, warning, over
+    days_elapsed: int
+    days_remaining: int
+    percent_through: float
+    line_items: List[BudgetLineItemResponse] = []
+
+
+class BudgetForecast(BaseModel):
+    """Projected spending forecast."""
+    period: BudgetPeriodResponse
+    days_elapsed: int
+    days_remaining: int
+    percent_through: float
+    daily_burn_rate: float
+    projected_total: float
+    projected_variance: float
+    risk_level: str  # safe, warning, critical
+    at_risk_categories: List[str] = []
+
+
+class BudgetSummary(BaseModel):
+    """Quick summary for dashboard."""
+    current_period: Optional[BudgetPeriodResponse] = None
+    total_budgeted: float
+    total_spent: float
+    remaining: float
+    percent_spent: float
+    days_remaining: int
+    status: str
+    top_categories: List[dict] = []  # [{name, spent, budget, percent}]
+
+
+# ============================================
+# INVOICE SCHEMAS
+# ============================================
+
+class InvoiceLineItemBase(BaseModel):
+    description: str
+    quantity: float = 1.0
+    unit_price: float
+    product_id: Optional[int] = None
+
+
+class InvoiceLineItemCreate(InvoiceLineItemBase):
+    pass
+
+
+class InvoiceLineItemResponse(InvoiceLineItemBase):
+    id: int
+    invoice_id: int
+    amount: float
+    sort_order: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InvoicePaymentBase(BaseModel):
+    amount: float
+    payment_date: date
+    payment_method: str
+    notes: Optional[str] = None
+
+
+class InvoicePaymentCreate(InvoicePaymentBase):
+    stripe_payment_intent_id: Optional[str] = None
+
+
+class InvoicePaymentResponse(InvoicePaymentBase):
+    id: int
+    invoice_id: int
+    stripe_payment_intent_id: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceBase(BaseModel):
+    contact_id: int
+    due_date: date
+    notes: Optional[str] = None
+    terms: Optional[str] = None
+    tax_rate: float = 0.0
+
+
+class InvoiceCreate(InvoiceBase):
+    line_items: List[InvoiceLineItemCreate]
+
+
+class InvoiceUpdate(BaseModel):
+    due_date: Optional[date] = None
+    notes: Optional[str] = None
+    terms: Optional[str] = None
+    tax_rate: Optional[float] = None
+    status: Optional[str] = None
+
+
+class InvoiceResponse(BaseModel):
+    id: int
+    organization_id: int
+    business_id: Optional[int] = None
+    contact_id: int
+    invoice_number: str
+    issue_date: date
+    due_date: date
+    subtotal: float
+    tax_rate: float
+    tax_amount: float
+    total_amount: float
+    status: str
+    payment_method: Optional[str] = None
+    paid_at: Optional[datetime] = None
+    paid_amount: float
+    notes: Optional[str] = None
+    terms: Optional[str] = None
+    email_sent_at: Optional[datetime] = None
+    viewed_at: Optional[datetime] = None
+    created_by_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    # Enriched data
+    contact_name: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_company: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceWithLineItems(InvoiceResponse):
+    line_items: List[InvoiceLineItemResponse] = []
+    payments: List[InvoicePaymentResponse] = []
+
+
+class InvoiceSummary(BaseModel):
+    """Invoice dashboard summary."""
+    total_outstanding: float
+    total_overdue: float
+    total_paid_this_month: float
+    invoice_count: int
+    overdue_count: int
+    recent_invoices: List[InvoiceResponse] = []
+
+
+# ============================================================================
+# TEAM MANAGEMENT SCHEMAS
+# ============================================================================
+
+# Employee Schemas
+class EmployeeBase(BaseModel):
+    first_name: str
+    last_name: str
+    preferred_name: Optional[str] = None
+    email: str
+    personal_email: Optional[str] = None
+    phone: Optional[str] = None
+    employee_number: Optional[str] = None
+    employment_type: str = "full_time"
+    employment_status: str = "active"
+    title: Optional[str] = None
+    department: Optional[str] = None
+    manager_id: Optional[int] = None
+    hire_date: Optional[date] = None
+    start_date: Optional[date] = None
+    salary_cents: Optional[int] = None
+    salary_frequency: Optional[str] = None
+    hourly_rate_cents: Optional[int] = None
+    work_location: Optional[str] = None
+    office_location: Optional[str] = None
+    timezone: Optional[str] = None
+    is_contractor: bool = False
+    tax_classification: Optional[str] = None
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    notes: Optional[str] = None
+    user_id: Optional[int] = None
+    shareholder_id: Optional[int] = None
+    contact_id: Optional[int] = None
+
+
+class EmployeeCreate(EmployeeBase):
+    pass
+
+
+class EmployeeUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    preferred_name: Optional[str] = None
+    email: Optional[str] = None
+    personal_email: Optional[str] = None
+    phone: Optional[str] = None
+    employee_number: Optional[str] = None
+    employment_type: Optional[str] = None
+    employment_status: Optional[str] = None
+    title: Optional[str] = None
+    department: Optional[str] = None
+    manager_id: Optional[int] = None
+    hire_date: Optional[date] = None
+    start_date: Optional[date] = None
+    termination_date: Optional[date] = None
+    termination_reason: Optional[str] = None
+    salary_cents: Optional[int] = None
+    salary_frequency: Optional[str] = None
+    hourly_rate_cents: Optional[int] = None
+    work_location: Optional[str] = None
+    office_location: Optional[str] = None
+    timezone: Optional[str] = None
+    is_contractor: Optional[bool] = None
+    tax_classification: Optional[str] = None
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    notes: Optional[str] = None
+    user_id: Optional[int] = None
+    shareholder_id: Optional[int] = None
+    contact_id: Optional[int] = None
+
+
+class EmployeeResponse(EmployeeBase):
+    id: int
+    termination_date: Optional[date] = None
+    termination_reason: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    # Computed/joined fields
+    full_name: Optional[str] = None
+    manager_name: Optional[str] = None
+    direct_report_count: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OrgChartNode(BaseModel):
+    """Node in organization chart."""
+    id: int
+    name: str
+    title: Optional[str] = None
+    department: Optional[str] = None
+    avatar_url: Optional[str] = None
+    children: List["OrgChartNode"] = []
+
+
+OrgChartNode.model_rebuild()
+
+
+# PTO Schemas
+class PTOPolicyBase(BaseModel):
+    name: str
+    pto_type: str = "vacation"
+    description: Optional[str] = None
+    annual_days: float = 0
+    requires_approval: bool = True
+    applies_to_contractors: bool = False
+    is_active: bool = True
+
+
+class PTOPolicyCreate(PTOPolicyBase):
+    pass
+
+
+class PTOPolicyUpdate(BaseModel):
+    name: Optional[str] = None
+    pto_type: Optional[str] = None
+    description: Optional[str] = None
+    annual_days: Optional[float] = None
+    requires_approval: Optional[bool] = None
+    applies_to_contractors: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+
+class PTOPolicyResponse(PTOPolicyBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PTOBalanceResponse(BaseModel):
+    id: int
+    employee_id: int
+    policy_id: int
+    available_days: float
+    used_days: float
+    pending_days: float
+    balance_year: int
+    policy_name: Optional[str] = None
+    policy_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PTORequestBase(BaseModel):
+    policy_id: int
+    start_date: date
+    end_date: date
+    days_requested: float
+    notes: Optional[str] = None
+
+
+class PTORequestCreate(PTORequestBase):
+    pass
+
+
+class PTORequestUpdate(BaseModel):
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    days_requested: Optional[float] = None
+    notes: Optional[str] = None
+
+
+class PTORequestResponse(PTORequestBase):
+    id: int
+    employee_id: int
+    status: str
+    reviewed_by_id: Optional[int] = None
+    reviewed_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    # Joined fields
+    employee_name: Optional[str] = None
+    policy_name: Optional[str] = None
+    reviewed_by_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PTOCalendarEntry(BaseModel):
+    """Entry for PTO calendar view."""
+    employee_id: int
+    employee_name: str
+    start_date: date
+    end_date: date
+    days: float
+    policy_type: str
+    status: str
+
+
+# Onboarding Schemas
+class OnboardingTaskTemplate(BaseModel):
+    """Task definition within a template."""
+    name: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    due_days: Optional[int] = None
+    assignee_type: Optional[str] = None
+
+
+class OnboardingTemplateBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    role: Optional[str] = None
+    department: Optional[str] = None
+    employment_type: Optional[str] = None
+    tasks: List[OnboardingTaskTemplate] = []
+    is_default: bool = False
+    is_active: bool = True
+
+
+class OnboardingTemplateCreate(OnboardingTemplateBase):
+    pass
+
+
+class OnboardingTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    role: Optional[str] = None
+    department: Optional[str] = None
+    employment_type: Optional[str] = None
+    tasks: Optional[List[OnboardingTaskTemplate]] = None
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+
+class OnboardingTemplateResponse(OnboardingTemplateBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class OnboardingTaskResponse(BaseModel):
+    id: int
+    checklist_id: int
+    name: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    due_date: Optional[date] = None
+    due_days_after_start: Optional[int] = None
+    assignee_type: Optional[str] = None
+    assigned_to_id: Optional[int] = None
+    is_completed: bool
+    completed_at: Optional[datetime] = None
+    completed_by_id: Optional[int] = None
+    completion_notes: Optional[str] = None
+    sort_order: int
+    # Joined
+    assigned_to_name: Optional[str] = None
+    completed_by_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OnboardingChecklistBase(BaseModel):
+    name: str
+    start_date: date
+    target_completion_date: Optional[date] = None
+
+
+class OnboardingChecklistCreate(OnboardingChecklistBase):
+    employee_id: int
+    template_id: Optional[int] = None
+
+
+class OnboardingChecklistResponse(OnboardingChecklistBase):
+    id: int
+    employee_id: int
+    template_id: Optional[int] = None
+    total_tasks: int
+    completed_tasks: int
+    is_completed: bool
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    # Joined
+    employee_name: Optional[str] = None
+    tasks: List[OnboardingTaskResponse] = []
+    progress_percent: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+# Team Summary
+class TeamSummary(BaseModel):
+    """Team dashboard summary."""
+    total_employees: int
+    active_employees: int
+    contractors: int
+    on_leave: int
+    pending_pto_requests: int
+    active_onboarding: int
+    by_department: dict = {}
+    recent_hires: List[EmployeeResponse] = []
+
+
+# ============================================================================
+# AI FEATURES SCHEMAS
+# ============================================================================
+
+# AI Assistant
+class AIDataCard(BaseModel):
+    """Structured data display for AI responses."""
+    type: str  # metric, chart, table, comparison
+    title: str
+    value: Optional[str] = None
+    trend: Optional[str] = None  # up, down, stable
+    data: Optional[dict] = None  # For charts/tables
+
+
+class AISuggestedAction(BaseModel):
+    """Suggested follow-up action."""
+    label: str
+    action: str  # navigate, query
+    target: str  # URL path or follow-up question
+
+
+class AIChatRequest(BaseModel):
+    """Request to AI assistant."""
+    message: str
+    conversation_id: Optional[int] = None
+    context: Optional[dict] = None  # Additional context (current_page, etc.)
+
+
+class AIChatResponse(BaseModel):
+    """Response from AI assistant."""
+    response: str
+    conversation_id: int
+    message_id: int
+    data_cards: List[AIDataCard] = []
+    suggested_actions: List[AISuggestedAction] = []
+    tokens_used: int
+    model: str
+
+
+class AIMessageResponse(BaseModel):
+    """Individual AI message."""
+    id: int
+    role: str
+    content: str
+    tokens_used: Optional[int] = None
+    model_used: Optional[str] = None
+    data_cards: Optional[List[AIDataCard]] = None
+    suggested_actions: Optional[List[AISuggestedAction]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AIConversationResponse(BaseModel):
+    """AI conversation with messages."""
+    id: int
+    title: Optional[str] = None
+    is_archived: bool
+    created_at: datetime
+    updated_at: datetime
+    messages: List[AIMessageResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+class AIConversationListItem(BaseModel):
+    """AI conversation list item (without full messages)."""
+    id: int
+    title: Optional[str] = None
+    is_archived: bool
+    created_at: datetime
+    updated_at: datetime
+    message_count: int = 0
+    last_message_preview: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AISuggestionsResponse(BaseModel):
+    """Context-aware suggestions for AI assistant."""
+    suggestions: List[str]
+    context: str
+
+
+# Document AI
+class DocumentSummaryRequest(BaseModel):
+    """Request to summarize a document."""
+    document_id: int
+
+
+class ExtractedDate(BaseModel):
+    """Date extracted from document."""
+    description: str
+    date: str  # YYYY-MM-DD
+    type: Optional[str] = None  # deadline, milestone, effective_date
+    requires_action: bool = False
+    confidence: str = "medium"  # high, medium, low
+    source_text: Optional[str] = None
+
+
+class KeyTerm(BaseModel):
+    """Key term extracted from document."""
+    term: str
+    value: str
+
+
+class DocumentSummaryResponse(BaseModel):
+    """AI-generated document summary."""
+    id: int
+    document_id: int
+    summary: Optional[str] = None
+    document_type: Optional[str] = None
+    key_terms: List[KeyTerm] = []
+    extracted_dates: List[ExtractedDate] = []
+    action_items: List[str] = []
+    risk_flags: List[str] = []
+    model_used: Optional[str] = None
+    tokens_used: Optional[int] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DeadlineExtractionResponse(BaseModel):
+    """Extracted deadlines from document."""
+    document_id: int
+    deadlines: List[ExtractedDate]
+    recurring_dates: List[dict] = []
+
+
+# Competitor Monitoring
+class CompetitorBase(BaseModel):
+    """Base competitor schema."""
+    name: str
+    website: Optional[str] = None
+    description: Optional[str] = None
+    keywords: Optional[List[str]] = None
+    rss_urls: Optional[List[str]] = None
+    industry: Optional[str] = None
+
+
+class CompetitorCreate(CompetitorBase):
+    pass
+
+
+class CompetitorUpdate(BaseModel):
+    name: Optional[str] = None
+    website: Optional[str] = None
+    description: Optional[str] = None
+    keywords: Optional[List[str]] = None
+    rss_urls: Optional[List[str]] = None
+    industry: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class CompetitorResponse(CompetitorBase):
+    id: int
+    is_active: bool
+    last_checked_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    update_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class CompetitorUpdateResponse(BaseModel):
+    """News/update about a competitor."""
+    id: int
+    competitor_id: int
+    update_type: str
+    title: str
+    summary: Optional[str] = None
+    source_url: Optional[str] = None
+    source_name: Optional[str] = None
+    relevance_score: Optional[float] = None
+    sentiment: Optional[str] = None
+    is_read: bool
+    is_starred: bool
+    published_at: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CompetitorDigest(BaseModel):
+    """Weekly competitor digest."""
+    summary: str
+    top_developments: List[dict]
+    market_trends: List[str]
+    action_items: List[str]
+
+
+# AI Status
+class AIStatus(BaseModel):
+    """AI feature status."""
+    ollama_available: bool
+    model: str
+    ai_usage_this_month: int
+    ai_usage_limit: Optional[int] = None
+    features_enabled: dict
+
+
+# =============================================================================
+# TRANSCRIPT ANALYSIS SCHEMAS
+# =============================================================================
+
+class TranscriptActionItem(BaseModel):
+    """Structured action item extracted from transcript."""
+    task: str
+    assignee: Optional[str] = None
+    due_date: Optional[str] = None
+    due_description: Optional[str] = None
+    priority: str = "medium"
+    context: Optional[str] = None
+
+
+class TranscriptDecision(BaseModel):
+    """Decision extracted from transcript."""
+    decision: str
+    made_by: Optional[str] = None
+    rationale: Optional[str] = None
+    conditions: List[str] = []
+    follow_ups: List[str] = []
+
+
+class TranscriptSpeaker(BaseModel):
+    """Speaker analysis from transcript."""
+    name: str
+    word_count: int
+    percentage: float
+    main_topics: List[str] = []
+    sentiment: str = "neutral"
+
+
+class TranscriptActionItemsResponse(BaseModel):
+    """Response for action items extraction."""
+    transcript_id: int
+    action_items: List[TranscriptActionItem]
+    total_count: int
+
+
+class TranscriptDecisionsResponse(BaseModel):
+    """Response for decisions extraction."""
+    transcript_id: int
+    decisions: List[TranscriptDecision]
+
+
+class TranscriptSpeakerAnalysisResponse(BaseModel):
+    """Response for speaker analysis."""
+    transcript_id: int
+    speakers: List[TranscriptSpeaker]
+    meeting_dynamics: Optional[str] = None
+    suggestions: List[str] = []
+
+
+class TranscriptCreateTasksRequest(BaseModel):
+    """Request to create tasks from transcript action items."""
+    board_id: int
+    action_item_indices: Optional[List[int]] = None  # If None, create all
+
+
+class TranscriptCreateTasksResponse(BaseModel):
+    """Response for creating tasks from transcript."""
+    transcript_id: int
+    tasks_created: int
+    task_ids: List[int]

@@ -13,8 +13,16 @@ argon2-cffi==23.1.0
 icalendar==5.0.11
 httpx==0.27.0
 stripe==8.0.0
+plaid-python==22.0.0
 pyotp==2.9.0
 qrcode[pil]==7.4.2
 boto3==1.34.0
 sentry-sdk[fastapi]==1.40.0
 psutil==5.9.8
+python-dateutil==2.8.2
+# AI Features
+pypdf2>=3.0.0
+python-docx>=0.8.11
+feedparser>=6.0.10
+dateparser>=1.2.0
+aiohttp>=3.9.0

@@ -33,7 +33,14 @@ from .models import (
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, ZoomConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
     Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting, MeetingTranscript,
-    AuditLog,
+    AuditLog, PlaidItem, PlaidAccount, PlaidTransaction,
+    StripeConnection, StripeCustomerSync, StripeSubscriptionSync,
+    GoogleCalendarConnection, SlackConnection,
+    Shareholder, ShareClass, EquityGrant, StockOption, SafeNote, ConvertibleNote, FundingRound,
+    InvestorUpdate, InvestorUpdateRecipient,
+    DataRoomFolder, DataRoomDocument, ShareableLink, DataRoomAccess,
+    BudgetCategory, BudgetPeriod, BudgetLineItem,
+    Invoice, InvoiceLineItem, InvoicePayment,
     # Junction tables for business taxonomy
     ContactBusiness, DocumentBusiness, CredentialBusiness, WebLinkBusiness,
     ProductOfferedBusiness, ProductUsedBusiness, ServiceBusiness, DeadlineBusiness, MeetingBusiness
@@ -60,6 +67,17 @@ from .audit_logs import router as audit_logs_router
 from .data_export import router as data_export_router
 from .support import router as support_router
 from .analytics import router as analytics_router, AnalyticsEvent
+from .plaid_integration import router as plaid_router
+from .stripe_revenue import router as stripe_revenue_router
+from .google_calendar import router as google_calendar_router
+from .slack_integration import router as slack_router
+from .cap_table import router as cap_table_router
+from .investor_updates import router as investor_updates_router
+from .data_room import router as data_room_router, public_router as data_room_public_router
+from .budget import router as budget_router
+from .invoicing import router as invoicing_router
+from .team import router as team_router
+from .ai_router import router as ai_router
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
     DocumentCreate, DocumentUpdate, DocumentResponse,
@@ -415,6 +433,18 @@ app.include_router(audit_logs_router, prefix="/api/audit-logs", tags=["audit-log
 app.include_router(data_export_router, prefix="/api/export", tags=["export"])
 app.include_router(support_router, prefix="/api/support", tags=["support"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(plaid_router)
+app.include_router(stripe_revenue_router)
+app.include_router(google_calendar_router)
+app.include_router(slack_router)
+app.include_router(cap_table_router)
+app.include_router(investor_updates_router)
+app.include_router(data_room_router)
+app.include_router(data_room_public_router)
+app.include_router(budget_router)
+app.include_router(invoicing_router)
+app.include_router(team_router)
+app.include_router(ai_router)
 
 # Startup validation
 @app.on_event("startup")
@@ -5107,7 +5137,7 @@ def bulk_assign_credential_businesses(
 
 
 @app.get("/api/credentials/{credential_id}/copy/{field}")
-def copy_credential_field(credential_id: int, field: str, index: int = None, key: bytes = Depends(require_vault_unlocked), db: Session = Depends(get_db)):
+def copy_credential_field(credential_id: int, field: str, index: int = None, key: bytes = Depends(require_vault_unlocked), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get a single decrypted field for copying (requires unlock).
 
     For custom fields, use field='custom' and provide index query param.
@@ -5116,7 +5146,10 @@ def copy_credential_field(credential_id: int, field: str, index: int = None, key
     if field not in valid_fields:
         raise HTTPException(status_code=400, detail="Invalid field")
 
-    credential = db.query(Credential).filter(Credential.id == credential_id).first()
+    credential = db.query(Credential).filter(
+        Credential.id == credential_id,
+        Credential.organization_id == current_user.organization_id
+    ).first()
     if not credential:
         raise HTTPException(status_code=404, detail="Credential not found")
 
@@ -5772,6 +5805,23 @@ def get_editor_or_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+def get_task_with_org_check(task_id: int, org_id: int, db: Session) -> Task:
+    """Get a task and verify it belongs to the user's organization via its board."""
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Verify the task's board belongs to the user's organization
+    board = db.query(TaskBoard).filter(
+        TaskBoard.id == task.board_id,
+        TaskBoard.organization_id == org_id
+    ).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    return task
+
+
 # ============ Task Boards ============
 
 @app.get("/api/boards", response_model=List[TaskBoardResponse])
@@ -6185,9 +6235,7 @@ def complete_task(
     db: Session = Depends(get_db)
 ):
     """Mark task as complete. All authenticated users can do this (including viewers)."""
-    db_task = db.query(Task).filter(Task.id == task_id).first()
-    if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    db_task = get_task_with_org_check(task_id, current_user.organization_id, db)
 
     if db_task.status == "done":
         raise HTTPException(status_code=400, detail="Task already completed")
@@ -6241,9 +6289,7 @@ def reopen_task(
     db: Session = Depends(get_db)
 ):
     """Reopen a completed task (editor/admin only)."""
-    db_task = db.query(Task).filter(Task.id == task_id).first()
-    if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    db_task = get_task_with_org_check(task_id, current_user.organization_id, db)
 
     if db_task.status != "done":
         raise HTTPException(status_code=400, detail="Task is not completed")
@@ -6280,11 +6326,13 @@ def move_task(
     db: Session = Depends(get_db)
 ):
     """Move task to different column/position (drag-and-drop)."""
-    db_task = db.query(Task).filter(Task.id == move.task_id).first()
-    if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    db_task = get_task_with_org_check(move.task_id, current_user.organization_id, db)
 
-    target_column = db.query(TaskColumn).filter(TaskColumn.id == move.target_column_id).first()
+    # Verify target column belongs to a board in user's org
+    target_column = db.query(TaskColumn).join(TaskBoard).filter(
+        TaskColumn.id == move.target_column_id,
+        TaskBoard.organization_id == current_user.organization_id
+    ).first()
     if not target_column:
         raise HTTPException(status_code=404, detail="Target column not found")
 
@@ -6341,6 +6389,8 @@ def get_task_comments(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Verify task belongs to user's organization
+    get_task_with_org_check(task_id, current_user.organization_id, db)
     return db.query(TaskComment).filter(TaskComment.task_id == task_id).order_by(TaskComment.created_at).all()
 
 
@@ -6351,9 +6401,7 @@ def create_comment(
     db: Session = Depends(get_db)
 ):
     """Add a comment. All authenticated users can comment."""
-    task = db.query(Task).filter(Task.id == comment.task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    task = get_task_with_org_check(comment.task_id, current_user.organization_id, db)
 
     db_comment = TaskComment(
         task_id=comment.task_id,
@@ -6385,6 +6433,9 @@ def update_comment(
     if not db_comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
+    # Verify the comment's task belongs to user's organization
+    get_task_with_org_check(db_comment.task_id, current_user.organization_id, db)
+
     # Only owner or admin can edit
     if db_comment.user_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Cannot edit this comment")
@@ -6406,6 +6457,9 @@ def delete_comment(
     if not db_comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
+    # Verify the comment's task belongs to user's organization
+    get_task_with_org_check(db_comment.task_id, current_user.organization_id, db)
+
     if db_comment.user_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Cannot delete this comment")
 
@@ -6422,6 +6476,8 @@ def get_time_entries(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Verify task belongs to user's organization
+    get_task_with_org_check(task_id, current_user.organization_id, db)
     return db.query(TimeEntry).filter(TimeEntry.task_id == task_id).order_by(TimeEntry.created_at.desc()).all()
 
 
@@ -6432,9 +6488,7 @@ def create_time_entry(
     db: Session = Depends(get_db)
 ):
     """Create a manual time entry."""
-    task = db.query(Task).filter(Task.id == entry.task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    task = get_task_with_org_check(entry.task_id, current_user.organization_id, db)
 
     db_entry = TimeEntry(
         task_id=entry.task_id,
@@ -6466,9 +6520,7 @@ def start_timer(
     db: Session = Depends(get_db)
 ):
     """Start a timer for a task."""
-    task = db.query(Task).filter(Task.id == timer.task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    task = get_task_with_org_check(timer.task_id, current_user.organization_id, db)
 
     # Check for existing running timer for this user
     existing = db.query(TimeEntry).filter(
@@ -6501,6 +6553,9 @@ def stop_timer(
     db_entry = db.query(TimeEntry).filter(TimeEntry.id == entry_id).first()
     if not db_entry:
         raise HTTPException(status_code=404, detail="Time entry not found")
+
+    # Verify the time entry's task belongs to user's organization
+    get_task_with_org_check(db_entry.task_id, current_user.organization_id, db)
 
     if db_entry.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Cannot stop another user's timer")
@@ -6550,6 +6605,9 @@ def delete_time_entry(
     if not db_entry:
         raise HTTPException(status_code=404, detail="Time entry not found")
 
+    # Verify the time entry's task belongs to user's organization
+    get_task_with_org_check(db_entry.task_id, current_user.organization_id, db)
+
     if db_entry.user_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Cannot delete this entry")
 
@@ -6567,6 +6625,8 @@ def get_task_activity(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Verify task belongs to user's organization
+    get_task_with_org_check(task_id, current_user.organization_id, db)
     return db.query(TaskActivity).filter(
         TaskActivity.task_id == task_id
     ).order_by(TaskActivity.created_at.desc()).limit(limit).all()
@@ -6579,8 +6639,11 @@ def get_users_list(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get list of users for assignment dropdowns."""
-    users = db.query(User).filter(User.is_active == True).order_by(User.name, User.email).all()
+    """Get list of users for assignment dropdowns (same organization only)."""
+    users = db.query(User).filter(
+        User.is_active == True,
+        User.organization_id == current_user.organization_id
+    ).order_by(User.name, User.email).all()
     return users
 
 
@@ -7307,8 +7370,10 @@ def get_bank_accounts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all bank accounts."""
-    return db.query(BankAccount).order_by(BankAccount.is_primary.desc(), BankAccount.institution_name).all()
+    """Get all bank accounts for user's organization."""
+    return db.query(BankAccount).filter(
+        BankAccount.organization_id == current_user.organization_id
+    ).order_by(BankAccount.is_primary.desc(), BankAccount.institution_name).all()
 
 
 @app.post("/api/bank-accounts", response_model=BankAccountResponse)
@@ -7318,7 +7383,10 @@ def create_bank_account(
     db: Session = Depends(get_db)
 ):
     """Create a bank account."""
-    account = BankAccount(**data.model_dump())
+    account = BankAccount(
+        **data.model_dump(),
+        organization_id=current_user.organization_id
+    )
     db.add(account)
     db.commit()
     db.refresh(account)
@@ -7332,7 +7400,10 @@ def get_bank_account(
     db: Session = Depends(get_db)
 ):
     """Get a specific bank account."""
-    account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
+    account = db.query(BankAccount).filter(
+        BankAccount.id == account_id,
+        BankAccount.organization_id == current_user.organization_id
+    ).first()
     if not account:
         raise HTTPException(status_code=404, detail="Bank account not found")
     return account
@@ -7346,7 +7417,10 @@ def update_bank_account(
     db: Session = Depends(get_db)
 ):
     """Update a bank account."""
-    account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
+    account = db.query(BankAccount).filter(
+        BankAccount.id == account_id,
+        BankAccount.organization_id == current_user.organization_id
+    ).first()
     if not account:
         raise HTTPException(status_code=404, detail="Bank account not found")
 
@@ -7366,7 +7440,10 @@ def delete_bank_account(
     db: Session = Depends(get_db)
 ):
     """Delete a bank account."""
-    account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
+    account = db.query(BankAccount).filter(
+        BankAccount.id == account_id,
+        BankAccount.organization_id == current_user.organization_id
+    ).first()
     if not account:
         raise HTTPException(status_code=404, detail="Bank account not found")
 

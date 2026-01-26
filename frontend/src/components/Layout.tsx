@@ -25,10 +25,23 @@ import {
   Plug,
   Menu,
   X,
+  DollarSign,
+  CreditCard,
+  PieChart,
+  Mail,
+  FolderLock,
+  Calculator,
+  Receipt,
+  UsersRound,
+  Network,
+  Palmtree,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { AssistantProvider } from '../context/AssistantContext';
 import Tutorial from './Tutorial';
 import SupportWidget from './SupportWidget';
+import { AssistantWidget } from './AIAssistant';
 import { usePageTracking } from '../hooks/useAnalytics';
 
 interface NavItem {
@@ -122,12 +135,37 @@ const navSections: NavSection[] = [
     },
     items: [
       { to: '/app/offerings', icon: Package, label: 'Catalog' },
-      { to: '/app/finance', icon: Landmark, label: 'Finance' },
+      { to: '/app/financial-dashboard', icon: DollarSign, label: 'Cash & Runway' },
+      { to: '/app/revenue', icon: CreditCard, label: 'Revenue (MRR)' },
+      { to: '/app/cap-table', icon: PieChart, label: 'Cap Table' },
+      { to: '/app/investor-updates', icon: Mail, label: 'Investor Updates' },
+      { to: '/app/data-room', icon: FolderLock, label: 'Data Room' },
+      { to: '/app/budget', icon: Calculator, label: 'Budget' },
+      { to: '/app/invoices', icon: Receipt, label: 'Invoices' },
+      { to: '/app/finance', icon: Landmark, label: 'Accounts' },
+    ],
+  },
+  {
+    id: 'team',
+    label: 'Team',
+    icon: UsersRound,
+    color: {
+      bg: 'bg-amber-500/10',
+      text: 'text-amber-400',
+      activeBg: 'bg-amber-500/20',
+      border: 'border-amber-500/30',
+      hoverText: 'hover:text-amber-400',
+    },
+    items: [
+      { to: '/app/team', icon: UsersRound, label: 'Directory' },
+      { to: '/app/team?tab=org-chart', icon: Network, label: 'Org Chart' },
+      { to: '/app/team?tab=pto', icon: Palmtree, label: 'PTO' },
+      { to: '/app/team?tab=onboarding', icon: ClipboardList, label: 'Onboarding' },
     ],
   },
 ];
 
-export default function Layout() {
+function LayoutContent() {
   const { user, logout, refreshUser } = useAuth();
   const location = useLocation();
 
@@ -348,6 +386,18 @@ export default function Layout() {
 
       {/* Support Widget */}
       <SupportWidget userEmail={user?.email || undefined} userName={user?.name || undefined} />
+
+      {/* AI Assistant Widget */}
+      <AssistantWidget />
     </div>
+  );
+}
+
+// Wrap Layout with AssistantProvider
+export default function LayoutWithAssistant() {
+  return (
+    <AssistantProvider>
+      <LayoutContent />
+    </AssistantProvider>
   );
 }

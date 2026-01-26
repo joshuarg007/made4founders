@@ -1914,4 +1914,1993 @@ export const exportTasksCsv = () =>
 export const exportMetricsCsv = () =>
   downloadFile('/export/metrics', `metrics_${new Date().toISOString().slice(0, 10)}.csv`);
 
+
+// =============== Plaid Integration ===============
+
+export interface PlaidLinkToken {
+  link_token: string;
+  expiration: string;
+}
+
+export interface PlaidAccount {
+  id: number;
+  account_id: string;
+  name: string | null;
+  official_name: string | null;
+  mask: string | null;
+  account_type: string | null;
+  account_subtype: string | null;
+  balance_available: number | null;
+  balance_current: number | null;
+  balance_limit: number | null;
+  iso_currency_code: string;
+  is_active: boolean;
+  institution_name: string | null;
+  last_sync_at: string | null;
+}
+
+export interface PlaidItem {
+  id: number;
+  item_id: string;
+  institution_id: string | null;
+  institution_name: string | null;
+  sync_status: string;
+  last_sync_at: string | null;
+  is_active: boolean;
+  accounts: PlaidAccount[];
+}
+
+export interface PlaidTransaction {
+  id: number;
+  transaction_id: string;
+  amount: number;
+  iso_currency_code: string;
+  date: string;
+  name: string | null;
+  merchant_name: string | null;
+  category: string | null;
+  personal_finance_category: string | null;
+  pending: boolean;
+  custom_category: string | null;
+  notes: string | null;
+  is_excluded: boolean;
+  account_name: string | null;
+}
+
+export interface CashPosition {
+  total_cash: number;
+  total_credit_available: number;
+  total_credit_used: number;
+  accounts: PlaidAccount[];
+  last_updated: string | null;
+}
+
+export interface RunwayData {
+  monthly_burn_rate: number;
+  runway_months: number;
+  total_cash: number;
+  avg_monthly_income: number;
+  avg_monthly_expenses: number;
+  trend: 'improving' | 'stable' | 'declining';
+}
+
+export interface TransactionSummary {
+  total_income: number;
+  total_expenses: number;
+  net: number;
+  by_category: Record<string, number>;
+  period_start: string;
+  period_end: string;
+}
+
+// Plaid API functions
+export const createPlaidLinkToken = () =>
+  fetchApi<PlaidLinkToken>('/plaid/link-token', { method: 'POST' });
+
+export const exchangePlaidPublicToken = (data: {
+  public_token: string;
+  institution_id?: string;
+  institution_name?: string;
+}) =>
+  fetchApi<{ status: string; item_id: number }>('/plaid/exchange-token', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const getPlaidItems = () =>
+  fetchApi<PlaidItem[]>('/plaid/items');
+
+export const disconnectPlaidItem = (itemId: number) =>
+  fetchApi<{ status: string }>(`/plaid/items/${itemId}`, { method: 'DELETE' });
+
+export const syncPlaidItem = (itemId: number) =>
+  fetchApi<{ status: string }>(`/plaid/sync/${itemId}`, { method: 'POST' });
+
+export const getPlaidAccounts = () =>
+  fetchApi<PlaidAccount[]>('/plaid/accounts');
+
+export const getCashPosition = () =>
+  fetchApi<CashPosition>('/plaid/cash-position');
+
+export const getPlaidTransactions = (params?: {
+  days?: number;
+  account_id?: number;
+  category?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  const searchParams = new URLSearchParams();
+  if (params?.days) searchParams.set('days', params.days.toString());
+  if (params?.account_id) searchParams.set('account_id', params.account_id.toString());
+  if (params?.category) searchParams.set('category', params.category);
+  if (params?.limit) searchParams.set('limit', params.limit.toString());
+  if (params?.offset) searchParams.set('offset', params.offset.toString());
+  const query = searchParams.toString();
+  return fetchApi<PlaidTransaction[]>(`/plaid/transactions${query ? `?${query}` : ''}`);
+};
+
+export const getRunwayData = (months?: number) =>
+  fetchApi<RunwayData>(`/plaid/runway${months ? `?months=${months}` : ''}`);
+
+export const getTransactionSummary = (days?: number) =>
+  fetchApi<TransactionSummary>(`/plaid/summary${days ? `?days=${days}` : ''}`);
+
+export const updatePlaidTransaction = (transactionId: number, data: {
+  custom_category?: string;
+  notes?: string;
+  is_excluded?: boolean;
+}) =>
+  fetchApi<{ status: string }>(`/plaid/transactions/${transactionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+
+// =============== Stripe Revenue Integration ===============
+
+export interface StripeConnection {
+  id: number;
+  stripe_account_id: string;
+  account_name: string | null;
+  is_active: boolean;
+  last_sync_at: string | null;
+  sync_status: string;
+  created_at: string;
+}
+
+export interface RevenueMetrics {
+  mrr: number;
+  arr: number;
+  total_revenue_30d: number;
+  total_revenue_90d: number;
+  active_subscriptions: number;
+  total_customers: number;
+  new_customers_30d: number;
+  churned_subscriptions_30d: number;
+  churn_rate: number;
+  average_revenue_per_customer: number;
+  growth_rate_mom: number;
+}
+
+export interface RevenueChartData {
+  labels: string[];
+  mrr: number[];
+  revenue: number[];
+  customers: number[];
+}
+
+export interface SubscriptionBreakdown {
+  plan_name: string;
+  count: number;
+  mrr: number;
+  percentage: number;
+}
+
+export interface TopCustomer {
+  customer_id: string;
+  email: string | null;
+  name: string | null;
+  total_revenue: number;
+  subscription_count: number;
+  status: string;
+}
+
+export interface RevenueDashboard {
+  metrics: RevenueMetrics;
+  chart_data: RevenueChartData;
+  subscription_breakdown: SubscriptionBreakdown[];
+  top_customers: TopCustomer[];
+  last_updated: string | null;
+}
+
+// Stripe Revenue API functions
+export const getStripeConnectUrl = () =>
+  fetchApi<{ url: string }>('/stripe-revenue/connect');
+
+export const stripeOAuthCallback = (code: string, state: string) =>
+  fetchApi<{ status: string; account_name: string }>(
+    `/stripe-revenue/callback?code=${code}&state=${state}`
+  );
+
+export const getStripeConnection = () =>
+  fetchApi<StripeConnection | null>('/stripe-revenue/connection');
+
+export const disconnectStripe = () =>
+  fetchApi<{ status: string }>('/stripe-revenue/disconnect', { method: 'DELETE' });
+
+export const syncStripeData = () =>
+  fetchApi<{ status: string }>('/stripe-revenue/sync', { method: 'POST' });
+
+export const getRevenueMetrics = () =>
+  fetchApi<RevenueMetrics>('/stripe-revenue/metrics');
+
+export const getRevenueChart = (days?: number) =>
+  fetchApi<RevenueChartData>(`/stripe-revenue/chart${days ? `?days=${days}` : ''}`);
+
+export const getSubscriptionBreakdown = () =>
+  fetchApi<SubscriptionBreakdown[]>('/stripe-revenue/breakdown');
+
+export const getTopCustomers = (limit?: number) =>
+  fetchApi<TopCustomer[]>(`/stripe-revenue/top-customers${limit ? `?limit=${limit}` : ''}`);
+
+export const getRevenueDashboard = () =>
+  fetchApi<RevenueDashboard>('/stripe-revenue/dashboard');
+
+
+// =============== Google Calendar Integration ===============
+
+export interface GoogleCalendarConnection {
+  id: number;
+  calendar_id: string;
+  calendar_name: string | null;
+  is_active: boolean;
+  sync_deadlines: boolean;
+  sync_meetings: boolean;
+  last_sync_at: string | null;
+  sync_status: string;
+  created_at: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  description: string | null;
+  location: string | null;
+  source: 'google' | 'm4f';
+  m4f_type: 'deadline' | 'meeting' | null;
+  m4f_id: number | null;
+}
+
+export interface CalendarListItem {
+  id: string;
+  summary: string;
+  primary: boolean;
+  access_role: string;
+}
+
+export interface CalendarSyncSettings {
+  sync_deadlines: boolean;
+  sync_meetings: boolean;
+  calendar_id: string;
+}
+
+// Google Calendar API functions
+export const getGoogleCalendarConnectUrl = () =>
+  fetchApi<{ url: string }>('/google-calendar/connect');
+
+export const getGoogleCalendarConnection = () =>
+  fetchApi<GoogleCalendarConnection | null>('/google-calendar/connection');
+
+export const disconnectGoogleCalendar = () =>
+  fetchApi<{ status: string }>('/google-calendar/disconnect', { method: 'DELETE' });
+
+export const syncGoogleCalendar = () =>
+  fetchApi<{ status: string }>('/google-calendar/sync', { method: 'POST' });
+
+export const updateCalendarSettings = (settings: CalendarSyncSettings) =>
+  fetchApi<{ status: string }>('/google-calendar/settings', {
+    method: 'PATCH',
+    body: JSON.stringify(settings),
+  });
+
+export const getCalendarList = () =>
+  fetchApi<CalendarListItem[]>('/google-calendar/calendars');
+
+export const getCalendarEvents = (days?: number) =>
+  fetchApi<CalendarEvent[]>(`/google-calendar/events${days ? `?days=${days}` : ''}`);
+
+export const pushDeadlineToCalendar = (deadlineId: number) =>
+  fetchApi<{ status: string; event_id: string }>(`/google-calendar/push-deadline/${deadlineId}`, {
+    method: 'POST',
+  });
+
+export const pushMeetingToCalendar = (meetingId: number) =>
+  fetchApi<{ status: string; event_id: string }>(`/google-calendar/push-meeting/${meetingId}`, {
+    method: 'POST',
+  });
+
+
+// =============== Slack Integration ===============
+
+export interface SlackConnection {
+  id: number;
+  team_id: string;
+  team_name: string | null;
+  channel_id: string | null;
+  channel_name: string | null;
+  is_active: boolean;
+  notify_deadlines: boolean;
+  notify_tasks: boolean;
+  notify_metrics: boolean;
+  daily_digest: boolean;
+  daily_digest_time: string | null;
+  created_at: string;
+}
+
+export interface SlackChannel {
+  id: string;
+  name: string;
+  is_private: boolean;
+}
+
+export interface SlackNotificationSettings {
+  channel_id: string;
+  notify_deadlines: boolean;
+  notify_tasks: boolean;
+  notify_metrics: boolean;
+  daily_digest: boolean;
+  daily_digest_time: string;
+}
+
+// Slack API functions
+export const getSlackConnectUrl = () =>
+  fetchApi<{ url: string }>('/slack/connect');
+
+export const getSlackConnection = () =>
+  fetchApi<SlackConnection | null>('/slack/connection');
+
+export const disconnectSlack = () =>
+  fetchApi<{ status: string }>('/slack/disconnect', { method: 'DELETE' });
+
+export const updateSlackSettings = (settings: SlackNotificationSettings) =>
+  fetchApi<{ status: string }>('/slack/settings', {
+    method: 'PATCH',
+    body: JSON.stringify(settings),
+  });
+
+export const getSlackChannels = () =>
+  fetchApi<SlackChannel[]>('/slack/channels');
+
+export const sendSlackTestMessage = (message?: string) =>
+  fetchApi<{ status: string }>('/slack/test', {
+    method: 'POST',
+    body: JSON.stringify({ message }),
+  });
+
+
+// ============================================================================
+// CAP TABLE API
+// ============================================================================
+
+// Shareholder types
+export interface Shareholder {
+  id: number;
+  name: string;
+  email: string | null;
+  shareholder_type: string;
+  contact_id: number | null;
+  title: string | null;
+  company: string | null;
+  phone: string | null;
+  address: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  total_shares: number;
+  total_options: number;
+  ownership_percentage: number;
+  fully_diluted_percentage: number;
+}
+
+export interface ShareClass {
+  id: number;
+  name: string;
+  class_type: string;
+  prefix: string | null;
+  authorized_shares: number | null;
+  par_value: number;
+  price_per_share: number | null;
+  liquidation_preference: number;
+  participation_cap: number | null;
+  is_participating: boolean;
+  dividend_rate: number | null;
+  is_cumulative_dividend: boolean;
+  conversion_ratio: number;
+  is_auto_convert_on_ipo: boolean;
+  anti_dilution_type: string | null;
+  votes_per_share: number;
+  board_seats: number;
+  notes: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  issued_shares: number;
+  outstanding_options: number;
+}
+
+export interface EquityGrant {
+  id: number;
+  shareholder_id: number;
+  share_class_id: number;
+  shares: number;
+  price_per_share: number | null;
+  grant_date: string;
+  certificate_number: string | null;
+  vesting_schedule: string;
+  vesting_start_date: string | null;
+  vesting_end_date: string | null;
+  cliff_months: number;
+  vesting_period_months: number;
+  custom_vesting_schedule: string | null;
+  has_repurchase_right: boolean;
+  repurchase_price: number | null;
+  filed_83b: boolean;
+  filed_83b_date: string | null;
+  notes: string | null;
+  status: string;
+  cancelled_date: string | null;
+  cancelled_shares: number;
+  created_at: string;
+  updated_at: string;
+  shareholder_name: string | null;
+  share_class_name: string | null;
+  vested_shares: number;
+  unvested_shares: number;
+}
+
+export interface StockOption {
+  id: number;
+  shareholder_id: number;
+  share_class_id: number;
+  option_type: string;
+  shares_granted: number;
+  exercise_price: number;
+  grant_date: string;
+  expiration_date: string | null;
+  vesting_schedule: string;
+  vesting_start_date: string | null;
+  cliff_months: number;
+  vesting_period_months: number;
+  custom_vesting_schedule: string | null;
+  allows_early_exercise: boolean;
+  notes: string | null;
+  shares_exercised: number;
+  shares_cancelled: number;
+  early_exercised_shares: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  shareholder_name: string | null;
+  share_class_name: string | null;
+  vested_options: number;
+  unvested_options: number;
+  exercisable_options: number;
+}
+
+export interface SafeNote {
+  id: number;
+  shareholder_id: number;
+  safe_type: string;
+  investment_amount: number;
+  valuation_cap: number | null;
+  discount_rate: number | null;
+  has_mfn: boolean;
+  has_pro_rata: boolean;
+  signed_date: string;
+  document_id: number | null;
+  notes: string | null;
+  is_converted: boolean;
+  converted_date: string | null;
+  converted_shares: number | null;
+  converted_share_class_id: number | null;
+  conversion_price: number | null;
+  created_at: string;
+  updated_at: string;
+  shareholder_name: string | null;
+}
+
+export interface ConvertibleNote {
+  id: number;
+  shareholder_id: number;
+  principal_amount: number;
+  interest_rate: number;
+  valuation_cap: number | null;
+  discount_rate: number | null;
+  issue_date: string;
+  maturity_date: string;
+  qualified_financing_amount: number | null;
+  document_id: number | null;
+  notes: string | null;
+  is_converted: boolean;
+  converted_date: string | null;
+  converted_shares: number | null;
+  converted_share_class_id: number | null;
+  conversion_price: number | null;
+  accrued_interest_at_conversion: number | null;
+  created_at: string;
+  updated_at: string;
+  shareholder_name: string | null;
+  accrued_interest: number;
+  total_owed: number;
+}
+
+export interface FundingRound {
+  id: number;
+  name: string;
+  round_type: string | null;
+  pre_money_valuation: number | null;
+  post_money_valuation: number | null;
+  amount_raised: number | null;
+  target_amount: number | null;
+  price_per_share: number | null;
+  lead_investor_id: number | null;
+  announced_date: string | null;
+  closed_date: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  lead_investor_name: string | null;
+}
+
+export interface CapTableSummary {
+  total_authorized_shares: number;
+  total_issued_shares: number;
+  total_outstanding_options: number;
+  total_reserved_options: number;
+  fully_diluted_shares: number;
+  founders_percentage: number;
+  investors_percentage: number;
+  employees_percentage: number;
+  option_pool_percentage: number;
+  latest_price_per_share: number | null;
+  implied_valuation: number | null;
+  total_safe_amount: number;
+  total_convertible_amount: number;
+  share_class_breakdown: Array<{
+    id: number;
+    name: string;
+    class_type: string;
+    authorized: number;
+    issued: number;
+    price_per_share: number | null;
+  }>;
+  top_shareholders: Array<{
+    id: number;
+    name: string;
+    type: string;
+    shares: number;
+    options: number;
+    percentage: number;
+  }>;
+}
+
+export interface DilutionScenario {
+  new_money: number;
+  pre_money_valuation: number;
+  option_pool_increase: number;
+  post_money_valuation?: number;
+  new_shares_issued?: number;
+  new_investor_percentage?: number;
+  founder_dilution?: number;
+  existing_investor_dilution?: number;
+}
+
+// Cap Table API functions - Shareholders
+export const getShareholders = (type?: string) =>
+  fetchApi<Shareholder[]>(`/cap-table/shareholders${type ? `?shareholder_type=${type}` : ''}`);
+
+export const createShareholder = (data: Partial<Shareholder>) =>
+  fetchApi<Shareholder>('/cap-table/shareholders', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateShareholder = (id: number, data: Partial<Shareholder>) =>
+  fetchApi<Shareholder>(`/cap-table/shareholders/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteShareholder = (id: number) =>
+  fetchApi<{ status: string }>(`/cap-table/shareholders/${id}`, { method: 'DELETE' });
+
+// Cap Table API functions - Share Classes
+export const getShareClasses = () =>
+  fetchApi<ShareClass[]>('/cap-table/share-classes');
+
+export const createShareClass = (data: Partial<ShareClass>) =>
+  fetchApi<ShareClass>('/cap-table/share-classes', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateShareClass = (id: number, data: Partial<ShareClass>) =>
+  fetchApi<ShareClass>(`/cap-table/share-classes/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteShareClass = (id: number) =>
+  fetchApi<{ status: string }>(`/cap-table/share-classes/${id}`, { method: 'DELETE' });
+
+// Cap Table API functions - Equity Grants
+export const getEquityGrants = (shareholderId?: number) =>
+  fetchApi<EquityGrant[]>(`/cap-table/equity-grants${shareholderId ? `?shareholder_id=${shareholderId}` : ''}`);
+
+export const createEquityGrant = (data: Partial<EquityGrant>) =>
+  fetchApi<EquityGrant>('/cap-table/equity-grants', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateEquityGrant = (id: number, data: Partial<EquityGrant>) =>
+  fetchApi<EquityGrant>(`/cap-table/equity-grants/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteEquityGrant = (id: number) =>
+  fetchApi<{ status: string }>(`/cap-table/equity-grants/${id}`, { method: 'DELETE' });
+
+// Cap Table API functions - Stock Options
+export const getStockOptions = (shareholderId?: number) =>
+  fetchApi<StockOption[]>(`/cap-table/stock-options${shareholderId ? `?shareholder_id=${shareholderId}` : ''}`);
+
+export const createStockOption = (data: Partial<StockOption>) =>
+  fetchApi<StockOption>('/cap-table/stock-options', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateStockOption = (id: number, data: Partial<StockOption>) =>
+  fetchApi<StockOption>(`/cap-table/stock-options/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteStockOption = (id: number) =>
+  fetchApi<{ status: string }>(`/cap-table/stock-options/${id}`, { method: 'DELETE' });
+
+export const exerciseOptions = (id: number, sharesToExercise: number) =>
+  fetchApi<{ status: string; shares_exercised: number; equity_grant_id: number }>(
+    `/cap-table/stock-options/${id}/exercise?shares_to_exercise=${sharesToExercise}`,
+    { method: 'POST' }
+  );
+
+// Cap Table API functions - SAFEs
+export const getSafes = (includeConverted?: boolean) =>
+  fetchApi<SafeNote[]>(`/cap-table/safes${includeConverted ? '?include_converted=true' : ''}`);
+
+export const createSafe = (data: Partial<SafeNote>) =>
+  fetchApi<SafeNote>('/cap-table/safes', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateSafe = (id: number, data: Partial<SafeNote>) =>
+  fetchApi<SafeNote>(`/cap-table/safes/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteSafe = (id: number) =>
+  fetchApi<{ status: string }>(`/cap-table/safes/${id}`, { method: 'DELETE' });
+
+// Cap Table API functions - Convertible Notes
+export const getConvertibles = (includeConverted?: boolean) =>
+  fetchApi<ConvertibleNote[]>(`/cap-table/convertibles${includeConverted ? '?include_converted=true' : ''}`);
+
+export const createConvertible = (data: Partial<ConvertibleNote>) =>
+  fetchApi<ConvertibleNote>('/cap-table/convertibles', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateConvertible = (id: number, data: Partial<ConvertibleNote>) =>
+  fetchApi<ConvertibleNote>(`/cap-table/convertibles/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteConvertible = (id: number) =>
+  fetchApi<{ status: string }>(`/cap-table/convertibles/${id}`, { method: 'DELETE' });
+
+// Cap Table API functions - Funding Rounds
+export const getFundingRounds = () =>
+  fetchApi<FundingRound[]>('/cap-table/funding-rounds');
+
+export const createFundingRound = (data: Partial<FundingRound>) =>
+  fetchApi<FundingRound>('/cap-table/funding-rounds', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateFundingRound = (id: number, data: Partial<FundingRound>) =>
+  fetchApi<FundingRound>(`/cap-table/funding-rounds/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteFundingRound = (id: number) =>
+  fetchApi<{ status: string }>(`/cap-table/funding-rounds/${id}`, { method: 'DELETE' });
+
+// Cap Table API functions - Summary & Modeling
+export const getCapTableSummary = () =>
+  fetchApi<CapTableSummary>('/cap-table/summary');
+
+export const modelDilution = (scenario: DilutionScenario) =>
+  fetchApi<DilutionScenario>('/cap-table/model-dilution', {
+    method: 'POST',
+    body: JSON.stringify(scenario),
+  });
+
+
+// 409A Valuations
+export interface Valuation409A {
+  id: number;
+  valuation_date: string;
+  effective_date: string;
+  expiration_date: string;
+  fmv_per_share: number;
+  total_common_shares: number | null;
+  implied_company_value: number | null;
+  provider_name: string | null;
+  provider_type: string;
+  report_document_id: number | null;
+  status: string;
+  valuation_method: string | null;
+  discount_for_lack_of_marketability: number | null;
+  trigger_event: string | null;
+  notes: string | null;
+  created_by_id: number | null;
+  created_at: string;
+  updated_at: string;
+  is_expired: boolean;
+  days_until_expiration: number;
+  created_by_name: string | null;
+}
+
+export const getValuations = (status?: string) =>
+  fetchApi<Valuation409A[]>(`/cap-table/valuations${status ? `?status=${status}` : ''}`);
+
+export const getCurrentValuation = () =>
+  fetchApi<Valuation409A | null>('/cap-table/valuations/current');
+
+export const getValuation = (id: number) =>
+  fetchApi<Valuation409A>(`/cap-table/valuations/${id}`);
+
+export const createValuation = (data: Partial<Valuation409A>) =>
+  fetchApi<Valuation409A>('/cap-table/valuations', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateValuation = (id: number, data: Partial<Valuation409A>) =>
+  fetchApi<Valuation409A>(`/cap-table/valuations/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteValuation = (id: number) =>
+  fetchApi<{ message: string }>(`/cap-table/valuations/${id}`, {
+    method: 'DELETE',
+  });
+
+export const finalizeValuation = (id: number) =>
+  fetchApi<Valuation409A>(`/cap-table/valuations/${id}/finalize`, {
+    method: 'POST',
+  });
+
+
+// ============================================================================
+// INVESTOR UPDATES API
+// ============================================================================
+
+export interface InvestorUpdate {
+  id: number;
+  title: string;
+  subject_line: string | null;
+  greeting: string | null;
+  highlights: string[] | null;
+  body_content: string | null;
+  closing: string | null;
+  signature_name: string | null;
+  signature_title: string | null;
+  included_metrics: string[] | null;
+  recipient_types: string[] | null;
+  recipient_ids: number[] | null;
+  status: string;
+  scheduled_at: string | null;
+  sent_at: string | null;
+  recipient_count: number;
+  sent_count: number;
+  failed_count: number;
+  opened_count: number;
+  created_by_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvestorUpdateMetrics {
+  mrr: number | null;
+  arr: number | null;
+  runway_months: number | null;
+  cash_on_hand: number | null;
+  burn_rate: number | null;
+  customers: number | null;
+  revenue: number | null;
+  growth_rate: number | null;
+}
+
+export interface InvestorUpdateRecipient {
+  id: number;
+  name: string;
+  email: string;
+  type: string;
+  company: string | null;
+  title: string | null;
+}
+
+export interface InvestorUpdatePreview {
+  subject: string;
+  html_content: string;
+  recipient_count: number;
+  recipients: Array<{ name: string; email: string; type: string }>;
+}
+
+// Investor Update API functions
+export const getInvestorUpdates = (status?: string) =>
+  fetchApi<InvestorUpdate[]>(`/investor-updates${status ? `?status=${status}` : ''}`);
+
+export const createInvestorUpdate = (data: Partial<InvestorUpdate>) =>
+  fetchApi<InvestorUpdate>('/investor-updates', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateInvestorUpdate = (id: number, data: Partial<InvestorUpdate>) =>
+  fetchApi<InvestorUpdate>(`/investor-updates/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteInvestorUpdate = (id: number) =>
+  fetchApi<{ status: string }>(`/investor-updates/${id}`, { method: 'DELETE' });
+
+export const getInvestorUpdateMetrics = () =>
+  fetchApi<InvestorUpdateMetrics>('/investor-updates/metrics');
+
+export const getInvestorUpdateRecipients = () =>
+  fetchApi<InvestorUpdateRecipient[]>('/investor-updates/recipients');
+
+export const previewInvestorUpdate = (id: number) =>
+  fetchApi<InvestorUpdatePreview>(`/investor-updates/${id}/preview`, { method: 'POST' });
+
+export const sendInvestorUpdate = (id: number) =>
+  fetchApi<{ status: string; recipient_count: number }>(`/investor-updates/${id}/send`, { method: 'POST' });
+
+export const scheduleInvestorUpdate = (id: number, scheduledAt: string) =>
+  fetchApi<{ status: string; scheduled_at: string }>(`/investor-updates/${id}/schedule?scheduled_at=${scheduledAt}`, { method: 'POST' });
+
+// ============================================
+// DATA ROOM TYPES AND API
+// ============================================
+
+export interface DataRoomFolder {
+  id: number;
+  organization_id: number;
+  name: string;
+  description?: string;
+  parent_id?: number;
+  display_order: number;
+  visibility: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  document_count: number;
+}
+
+export interface DataRoomDocument {
+  id: number;
+  organization_id: number;
+  document_id: number;
+  folder_id?: number;
+  display_name?: string;
+  display_order: number;
+  visibility: string;
+  view_count: number;
+  download_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  document_name?: string;
+  document_category?: string;
+  file_path?: string;
+}
+
+export interface ShareableLink {
+  id: number;
+  organization_id: number;
+  folder_id?: number;
+  document_id?: number;
+  shareholder_id?: number;
+  token: string;
+  name?: string;
+  notes?: string;
+  has_password: boolean;
+  expires_at?: string;
+  access_limit?: number;
+  current_accesses: number;
+  is_active: boolean;
+  created_by_id?: number;
+  created_at: string;
+  folder_name?: string;
+  document_name?: string;
+  shareholder_name?: string;
+  url?: string;
+}
+
+export interface DataRoomAccess {
+  id: number;
+  organization_id: number;
+  folder_id?: number;
+  document_id?: number;
+  shareable_link_id?: number;
+  user_id?: number;
+  shareholder_id?: number;
+  access_type: string;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+  folder_name?: string;
+  document_name?: string;
+  user_email?: string;
+  shareholder_name?: string;
+}
+
+export interface DataRoomStats {
+  total_folders: number;
+  total_documents: number;
+  total_views: number;
+  total_downloads: number;
+  active_links: number;
+  recent_accesses: DataRoomAccess[];
+}
+
+// Data Room Folder API
+export const getDataRoomFolders = (parentId?: number) =>
+  fetchApi<DataRoomFolder[]>(`/data-room/folders${parentId ? `?parent_id=${parentId}` : ''}`);
+
+export const getDataRoomTree = () =>
+  fetchApi<DataRoomFolder[]>('/data-room/folders/tree');
+
+export const createDataRoomFolder = (data: { name: string; description?: string; parent_id?: number; visibility?: string }) =>
+  fetchApi<DataRoomFolder>('/data-room/folders', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateDataRoomFolder = (id: number, data: Partial<DataRoomFolder>) =>
+  fetchApi<DataRoomFolder>(`/data-room/folders/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteDataRoomFolder = (id: number) =>
+  fetchApi<{ message: string }>(`/data-room/folders/${id}`, { method: 'DELETE' });
+
+// Data Room Document API
+export const getDataRoomDocuments = (folderId?: number) =>
+  fetchApi<DataRoomDocument[]>(`/data-room/documents${folderId ? `?folder_id=${folderId}` : ''}`);
+
+export const addDocumentToDataRoom = (data: { document_id: number; folder_id?: number; display_name?: string; visibility?: string }) =>
+  fetchApi<DataRoomDocument>('/data-room/documents', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateDataRoomDocument = (id: number, data: Partial<DataRoomDocument>) =>
+  fetchApi<DataRoomDocument>(`/data-room/documents/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const removeDocumentFromDataRoom = (id: number) =>
+  fetchApi<{ message: string }>(`/data-room/documents/${id}`, { method: 'DELETE' });
+
+// Shareable Links API
+export const getShareableLinks = (folderId?: number, documentId?: number) => {
+  const params = new URLSearchParams();
+  if (folderId) params.append('folder_id', folderId.toString());
+  if (documentId) params.append('document_id', documentId.toString());
+  const query = params.toString();
+  return fetchApi<ShareableLink[]>(`/data-room/links${query ? `?${query}` : ''}`);
+};
+
+export const createShareableLink = (data: {
+  name?: string;
+  folder_id?: number;
+  document_id?: number;
+  shareholder_id?: number;
+  password?: string;
+  expires_at?: string;
+  access_limit?: number;
+}) =>
+  fetchApi<ShareableLink>('/data-room/links', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateShareableLink = (id: number, data: Partial<ShareableLink & { password?: string }>) =>
+  fetchApi<ShareableLink>(`/data-room/links/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const revokeShareableLink = (id: number) =>
+  fetchApi<{ message: string }>(`/data-room/links/${id}`, { method: 'DELETE' });
+
+// Data Room Stats & Analytics
+export const getDataRoomStats = () =>
+  fetchApi<DataRoomStats>('/data-room/stats');
+
+export const getDataRoomAccessLogs = (folderId?: number, documentId?: number, limit?: number) => {
+  const params = new URLSearchParams();
+  if (folderId) params.append('folder_id', folderId.toString());
+  if (documentId) params.append('document_id', documentId.toString());
+  if (limit) params.append('limit', limit.toString());
+  const query = params.toString();
+  return fetchApi<DataRoomAccess[]>(`/data-room/access-logs${query ? `?${query}` : ''}`);
+};
+
+// ============================================
+// BUDGET TYPES AND API
+// ============================================
+
+export interface BudgetCategory {
+  id: number;
+  organization_id: number;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  parent_id?: number;
+  display_order: number;
+  plaid_categories?: string[];
+  merchant_keywords?: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BudgetLineItem {
+  id: number;
+  organization_id: number;
+  budget_period_id: number;
+  category_id: number;
+  budgeted_amount: number;
+  actual_amount: number;
+  transaction_count: number;
+  variance_amount?: number;
+  variance_percent?: number;
+  status: string;
+  notes?: string;
+  last_calculated_at?: string;
+  created_at: string;
+  updated_at: string;
+  category_name?: string;
+  category_color?: string;
+  category_icon?: string;
+}
+
+export interface BudgetPeriod {
+  id: number;
+  organization_id: number;
+  period_type: string;
+  start_date: string;
+  end_date: string;
+  name?: string;
+  notes?: string;
+  total_budget: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  line_items?: BudgetLineItem[];
+}
+
+export interface BudgetVarianceReport {
+  period: BudgetPeriod;
+  total_budgeted: number;
+  total_actual: number;
+  total_variance: number;
+  variance_percent: number;
+  status: string;
+  days_elapsed: number;
+  days_remaining: number;
+  percent_through: number;
+  line_items: BudgetLineItem[];
+}
+
+export interface BudgetForecast {
+  period: BudgetPeriod;
+  days_elapsed: number;
+  days_remaining: number;
+  percent_through: number;
+  daily_burn_rate: number;
+  projected_total: number;
+  projected_variance: number;
+  risk_level: string;
+  at_risk_categories: string[];
+}
+
+export interface BudgetSummary {
+  current_period?: BudgetPeriod;
+  total_budgeted: number;
+  total_spent: number;
+  remaining: number;
+  percent_spent: number;
+  days_remaining: number;
+  status: string;
+  top_categories: Array<{ name: string; spent: number; budget: number; percent: number }>;
+}
+
+// Budget Categories API
+export const getBudgetCategories = () =>
+  fetchApi<BudgetCategory[]>('/budget/categories');
+
+export const createBudgetCategory = (data: Partial<BudgetCategory>) =>
+  fetchApi<BudgetCategory>('/budget/categories', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateBudgetCategory = (id: number, data: Partial<BudgetCategory>) =>
+  fetchApi<BudgetCategory>(`/budget/categories/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteBudgetCategory = (id: number) =>
+  fetchApi<{ message: string }>(`/budget/categories/${id}`, { method: 'DELETE' });
+
+export const initializeDefaultCategories = () =>
+  fetchApi<{ message: string; created: number }>('/budget/categories/initialize-defaults', { method: 'POST' });
+
+// Budget Periods API
+export const getBudgetPeriods = () =>
+  fetchApi<BudgetPeriod[]>('/budget/periods');
+
+export const getCurrentBudgetPeriod = () =>
+  fetchApi<BudgetPeriod>('/budget/periods/current');
+
+export const createBudgetPeriod = (data: {
+  period_type: string;
+  start_date: string;
+  end_date: string;
+  name?: string;
+  notes?: string;
+  line_items?: Array<{ category_id: number; budgeted_amount: number; notes?: string }>;
+}) =>
+  fetchApi<BudgetPeriod>('/budget/periods', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateBudgetPeriod = (id: number, data: Partial<BudgetPeriod>) =>
+  fetchApi<BudgetPeriod>(`/budget/periods/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteBudgetPeriod = (id: number) =>
+  fetchApi<{ message: string }>(`/budget/periods/${id}`, { method: 'DELETE' });
+
+// Budget Line Items API
+export const addBudgetLineItem = (periodId: number, data: { category_id: number; budgeted_amount: number; notes?: string }) =>
+  fetchApi<BudgetLineItem>(`/budget/periods/${periodId}/line-items`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateBudgetLineItem = (periodId: number, itemId: number, data: { budgeted_amount?: number; notes?: string }) =>
+  fetchApi<BudgetLineItem>(`/budget/periods/${periodId}/line-items/${itemId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteBudgetLineItem = (periodId: number, itemId: number) =>
+  fetchApi<{ message: string }>(`/budget/periods/${periodId}/line-items/${itemId}`, { method: 'DELETE' });
+
+// Budget Reports API
+export const calculateBudgetActuals = (periodId: number) =>
+  fetchApi<{ message: string; transactions_processed: number; categories_updated: number }>(
+    `/budget/periods/${periodId}/calculate-actuals`,
+    { method: 'POST' }
+  );
+
+export const getBudgetVarianceReport = (periodId: number) =>
+  fetchApi<BudgetVarianceReport>(`/budget/periods/${periodId}/variance-report`);
+
+export const getBudgetForecast = (periodId: number) =>
+  fetchApi<BudgetForecast>(`/budget/periods/${periodId}/forecast`);
+
+export const getBudgetSummary = () =>
+  fetchApi<BudgetSummary>('/budget/summary');
+
+// ============================================
+// INVOICE TYPES AND API
+// ============================================
+
+export interface InvoiceLineItem {
+  id: number;
+  invoice_id: number;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  product_id?: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface InvoicePayment {
+  id: number;
+  invoice_id: number;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  stripe_payment_intent_id?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface Invoice {
+  id: number;
+  organization_id: number;
+  business_id?: number;
+  contact_id: number;
+  invoice_number: string;
+  issue_date: string;
+  due_date: string;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  total_amount: number;
+  status: string;
+  payment_method?: string;
+  paid_at?: string;
+  paid_amount: number;
+  notes?: string;
+  terms?: string;
+  email_sent_at?: string;
+  viewed_at?: string;
+  created_by_id?: number;
+  created_at: string;
+  updated_at: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_company?: string;
+  line_items?: InvoiceLineItem[];
+  payments?: InvoicePayment[];
+}
+
+export interface InvoiceSummary {
+  total_outstanding: number;
+  total_overdue: number;
+  total_paid_this_month: number;
+  invoice_count: number;
+  overdue_count: number;
+  recent_invoices: Invoice[];
+}
+
+// Invoice API
+export const getInvoices = (status?: string, contactId?: number) => {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  if (contactId) params.append('contact_id', contactId.toString());
+  const query = params.toString();
+  return fetchApi<Invoice[]>(`/invoices${query ? `?${query}` : ''}`);
+};
+
+export const getInvoice = (id: number) =>
+  fetchApi<Invoice>(`/invoices/${id}`);
+
+export const createInvoice = (data: {
+  contact_id: number;
+  due_date: string;
+  notes?: string;
+  terms?: string;
+  tax_rate?: number;
+  line_items: Array<{ description: string; quantity: number; unit_price: number; product_id?: number }>;
+}) =>
+  fetchApi<Invoice>('/invoices', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateInvoice = (id: number, data: Partial<Invoice>) =>
+  fetchApi<Invoice>(`/invoices/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteInvoice = (id: number) =>
+  fetchApi<{ message: string }>(`/invoices/${id}`, { method: 'DELETE' });
+
+export const sendInvoice = (id: number) =>
+  fetchApi<{ message: string; email_sent_at: string }>(`/invoices/${id}/send`, { method: 'POST' });
+
+export const markInvoicePaid = (id: number, paymentMethod?: string) =>
+  fetchApi<{ message: string }>(`/invoices/${id}/mark-paid${paymentMethod ? `?payment_method=${paymentMethod}` : ''}`, { method: 'POST' });
+
+export const recordInvoicePayment = (invoiceId: number, data: {
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  notes?: string;
+}) =>
+  fetchApi<InvoicePayment>(`/invoices/${invoiceId}/payments`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const getInvoiceSummary = () =>
+  fetchApi<InvoiceSummary>('/invoices/summary');
+
+
+// ============================================================================
+// TEAM MANAGEMENT API
+// ============================================================================
+
+// Employee Types
+export interface Employee {
+  id: number;
+  first_name: string;
+  last_name: string;
+  preferred_name: string | null;
+  email: string;
+  personal_email: string | null;
+  phone: string | null;
+  employee_number: string | null;
+  employment_type: string;
+  employment_status: string;
+  title: string | null;
+  department: string | null;
+  manager_id: number | null;
+  hire_date: string | null;
+  start_date: string | null;
+  termination_date: string | null;
+  termination_reason: string | null;
+  salary_cents: number | null;
+  salary_frequency: string | null;
+  hourly_rate_cents: number | null;
+  work_location: string | null;
+  office_location: string | null;
+  timezone: string | null;
+  is_contractor: boolean;
+  tax_classification: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  linkedin_url: string | null;
+  notes: string | null;
+  user_id: number | null;
+  shareholder_id: number | null;
+  contact_id: number | null;
+  created_at: string;
+  updated_at: string;
+  full_name: string;
+  manager_name: string | null;
+  direct_report_count: number;
+}
+
+export interface OrgChartNode {
+  id: number;
+  name: string;
+  title: string | null;
+  department: string | null;
+  avatar_url: string | null;
+  children: OrgChartNode[];
+}
+
+export interface TeamSummary {
+  total_employees: number;
+  active_employees: number;
+  contractors: number;
+  on_leave: number;
+  pending_pto_requests: number;
+  active_onboarding: number;
+  by_department: Record<string, number>;
+  recent_hires: Employee[];
+}
+
+// PTO Types
+export interface PTOPolicy {
+  id: number;
+  name: string;
+  pto_type: string;
+  description: string | null;
+  annual_days: number;
+  requires_approval: boolean;
+  applies_to_contractors: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PTOBalance {
+  id: number;
+  employee_id: number;
+  policy_id: number;
+  available_days: number;
+  used_days: number;
+  pending_days: number;
+  balance_year: number;
+  policy_name: string | null;
+  policy_type: string | null;
+}
+
+export interface PTORequest {
+  id: number;
+  employee_id: number;
+  policy_id: number;
+  start_date: string;
+  end_date: string;
+  days_requested: number;
+  notes: string | null;
+  status: string;
+  reviewed_by_id: number | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  employee_name: string | null;
+  policy_name: string | null;
+  reviewed_by_name: string | null;
+}
+
+export interface PTOCalendarEntry {
+  employee_id: number;
+  employee_name: string;
+  start_date: string;
+  end_date: string;
+  days: number;
+  policy_type: string;
+  status: string;
+}
+
+// Onboarding Types
+export interface OnboardingTaskTemplate {
+  name: string;
+  description?: string;
+  category?: string;
+  due_days?: number;
+  assignee_type?: string;
+}
+
+export interface OnboardingTemplate {
+  id: number;
+  name: string;
+  description: string | null;
+  role: string | null;
+  department: string | null;
+  employment_type: string | null;
+  tasks: OnboardingTaskTemplate[];
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OnboardingTask {
+  id: number;
+  checklist_id: number;
+  name: string;
+  description: string | null;
+  category: string | null;
+  due_date: string | null;
+  due_days_after_start: number | null;
+  assignee_type: string | null;
+  assigned_to_id: number | null;
+  is_completed: boolean;
+  completed_at: string | null;
+  completed_by_id: number | null;
+  completion_notes: string | null;
+  sort_order: number;
+  assigned_to_name: string | null;
+  completed_by_name: string | null;
+}
+
+export interface OnboardingChecklist {
+  id: number;
+  employee_id: number;
+  template_id: number | null;
+  name: string;
+  start_date: string;
+  target_completion_date: string | null;
+  total_tasks: number;
+  completed_tasks: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  employee_name: string | null;
+  tasks: OnboardingTask[];
+  progress_percent: number;
+}
+
+// Team API Functions
+export const getTeamSummary = () =>
+  fetchApi<TeamSummary>('/team/summary');
+
+// Employees
+export const getEmployees = (filters?: {
+  department?: string;
+  employment_type?: string;
+  employment_status?: string;
+  is_contractor?: boolean;
+  search?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (filters?.department) params.set('department', filters.department);
+  if (filters?.employment_type) params.set('employment_type', filters.employment_type);
+  if (filters?.employment_status) params.set('employment_status', filters.employment_status);
+  if (filters?.is_contractor !== undefined) params.set('is_contractor', String(filters.is_contractor));
+  if (filters?.search) params.set('search', filters.search);
+  const query = params.toString();
+  return fetchApi<Employee[]>(`/team/employees${query ? `?${query}` : ''}`);
+};
+
+export const getEmployee = (id: number) =>
+  fetchApi<Employee>(`/team/employees/${id}`);
+
+export const createEmployee = (data: Partial<Employee>) =>
+  fetchApi<Employee>('/team/employees', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateEmployee = (id: number, data: Partial<Employee>) =>
+  fetchApi<Employee>(`/team/employees/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteEmployee = (id: number) =>
+  fetchApi<{ message: string }>(`/team/employees/${id}`, { method: 'DELETE' });
+
+export const getEmployeeEquity = (id: number) =>
+  fetchApi<{
+    has_equity: boolean;
+    shareholder_id?: number;
+    grants: Array<{ id: number; shares: number; share_class_id: number; grant_date: string; status: string }>;
+    options: Array<{ id: number; shares_granted: number; shares_vested: number; shares_exercised: number; strike_price: number; grant_date: string; status: string }>;
+  }>(`/team/employees/${id}/equity`);
+
+export const getOrgChart = () =>
+  fetchApi<OrgChartNode[]>('/team/org-chart');
+
+// PTO
+export const getPTOPolicies = () =>
+  fetchApi<PTOPolicy[]>('/team/pto/policies');
+
+export const createPTOPolicy = (data: Partial<PTOPolicy>) =>
+  fetchApi<PTOPolicy>('/team/pto/policies', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updatePTOPolicy = (id: number, data: Partial<PTOPolicy>) =>
+  fetchApi<PTOPolicy>(`/team/pto/policies/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deletePTOPolicy = (id: number) =>
+  fetchApi<{ message: string }>(`/team/pto/policies/${id}`, { method: 'DELETE' });
+
+export const getMyPTOBalances = () =>
+  fetchApi<PTOBalance[]>('/team/pto/balances');
+
+export const getEmployeePTOBalances = (employeeId: number) =>
+  fetchApi<PTOBalance[]>(`/team/pto/balances/${employeeId}`);
+
+export const initializePTOBalances = (employeeId: number) =>
+  fetchApi<{ message: string }>(`/team/pto/balances/initialize/${employeeId}`, { method: 'POST' });
+
+export const getPTORequests = (filters?: { status?: string; employee_id?: number }) => {
+  const params = new URLSearchParams();
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.employee_id) params.set('employee_id', String(filters.employee_id));
+  const query = params.toString();
+  return fetchApi<PTORequest[]>(`/team/pto/requests${query ? `?${query}` : ''}`);
+};
+
+export const createPTORequest = (data: {
+  policy_id: number;
+  start_date: string;
+  end_date: string;
+  days_requested: number;
+  notes?: string;
+}) =>
+  fetchApi<PTORequest>('/team/pto/requests', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const approvePTORequest = (id: number, review_notes?: string) =>
+  fetchApi<{ message: string }>(`/team/pto/requests/${id}/approve${review_notes ? `?review_notes=${encodeURIComponent(review_notes)}` : ''}`, { method: 'POST' });
+
+export const denyPTORequest = (id: number, review_notes?: string) =>
+  fetchApi<{ message: string }>(`/team/pto/requests/${id}/deny${review_notes ? `?review_notes=${encodeURIComponent(review_notes)}` : ''}`, { method: 'POST' });
+
+export const cancelPTORequest = (id: number) =>
+  fetchApi<{ message: string }>(`/team/pto/requests/${id}`, { method: 'DELETE' });
+
+export const getPTOCalendar = (start_date: string, end_date: string) =>
+  fetchApi<PTOCalendarEntry[]>(`/team/pto/calendar?start_date=${start_date}&end_date=${end_date}`);
+
+// Onboarding
+export const getOnboardingTemplates = () =>
+  fetchApi<OnboardingTemplate[]>('/team/onboarding/templates');
+
+export const createOnboardingTemplate = (data: Partial<OnboardingTemplate>) =>
+  fetchApi<OnboardingTemplate>('/team/onboarding/templates', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateOnboardingTemplate = (id: number, data: Partial<OnboardingTemplate>) =>
+  fetchApi<OnboardingTemplate>(`/team/onboarding/templates/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteOnboardingTemplate = (id: number) =>
+  fetchApi<{ message: string }>(`/team/onboarding/templates/${id}`, { method: 'DELETE' });
+
+export const getOnboardingChecklists = (filters?: { is_completed?: boolean; employee_id?: number }) => {
+  const params = new URLSearchParams();
+  if (filters?.is_completed !== undefined) params.set('is_completed', String(filters.is_completed));
+  if (filters?.employee_id) params.set('employee_id', String(filters.employee_id));
+  const query = params.toString();
+  return fetchApi<OnboardingChecklist[]>(`/team/onboarding/checklists${query ? `?${query}` : ''}`);
+};
+
+export const createOnboardingChecklist = (data: {
+  employee_id: number;
+  template_id?: number;
+  name: string;
+  start_date: string;
+  target_completion_date?: string;
+}) =>
+  fetchApi<OnboardingChecklist>('/team/onboarding/checklists', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const completeOnboardingTask = (taskId: number, notes?: string) =>
+  fetchApi<{ message: string }>(`/team/onboarding/tasks/${taskId}/complete${notes ? `?notes=${encodeURIComponent(notes)}` : ''}`, { method: 'POST' });
+
+// Contractors
+export const getContractors = () =>
+  fetchApi<Employee[]>('/team/contractors');
+
+
+// ============ AI FEATURES ============
+
+// AI Types
+export interface AIDataCard {
+  type: string;
+  title: string;
+  value?: string;
+  trend?: string;
+  data?: Record<string, unknown>;
+}
+
+export interface AISuggestedAction {
+  label: string;
+  action: string;
+  target: string;
+}
+
+export interface AIChatRequest {
+  message: string;
+  conversation_id?: number;
+  context?: Record<string, unknown>;
+}
+
+export interface AIChatResponse {
+  response: string;
+  conversation_id: number;
+  message_id: number;
+  data_cards: AIDataCard[];
+  suggested_actions: AISuggestedAction[];
+  tokens_used: number;
+  model: string;
+}
+
+export interface AIMessage {
+  id: number;
+  role: string;
+  content: string;
+  tokens_used?: number;
+  model_used?: string;
+  data_cards?: AIDataCard[];
+  suggested_actions?: AISuggestedAction[];
+  created_at: string;
+}
+
+export interface AIConversation {
+  id: number;
+  title?: string;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+  messages: AIMessage[];
+}
+
+export interface AIConversationListItem {
+  id: number;
+  title?: string;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+  last_message_preview?: string;
+}
+
+export interface AISuggestionsResponse {
+  suggestions: string[];
+  context: string;
+}
+
+export interface AIStatus {
+  ollama_available: boolean;
+  model: string;
+  ai_usage_this_month: number;
+  ai_usage_limit?: number;
+  features_enabled: Record<string, boolean>;
+}
+
+// Competitor Types
+export interface Competitor {
+  id: number;
+  name: string;
+  website?: string;
+  description?: string;
+  keywords?: string[];
+  rss_urls?: string[];
+  industry?: string;
+  is_active: boolean;
+  last_checked_at?: string;
+  created_at: string;
+  updated_at: string;
+  update_count: number;
+}
+
+export interface CompetitorUpdate {
+  id: number;
+  competitor_id: number;
+  update_type: string;
+  title: string;
+  summary?: string;
+  source_url?: string;
+  source_name?: string;
+  relevance_score?: number;
+  sentiment?: string;
+  is_read: boolean;
+  is_starred: boolean;
+  published_at?: string;
+  created_at: string;
+}
+
+// Document Summary Types
+export interface KeyTerm {
+  term: string;
+  value: string;
+}
+
+export interface ExtractedDate {
+  description: string;
+  date: string;
+  type?: string;
+  requires_action: boolean;
+  confidence: string;
+  source_text?: string;
+}
+
+export interface DocumentSummary {
+  id: number;
+  document_id: number;
+  summary?: string;
+  document_type?: string;
+  key_terms: KeyTerm[];
+  extracted_dates: ExtractedDate[];
+  action_items: string[];
+  risk_flags: string[];
+  model_used?: string;
+  tokens_used?: number;
+  created_at: string;
+}
+
+// AI Assistant API
+export const getAIStatus = () =>
+  fetchApi<AIStatus>('/ai/status');
+
+export const sendAIMessage = (data: AIChatRequest) =>
+  fetchApi<AIChatResponse>('/ai/chat', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const getAIConversations = (includeArchived = false) =>
+  fetchApi<AIConversationListItem[]>(`/ai/conversations?include_archived=${includeArchived}`);
+
+export const getAIConversation = (id: number) =>
+  fetchApi<AIConversation>(`/ai/conversations/${id}`);
+
+export const deleteAIConversation = (id: number) =>
+  fetchApi<{ message: string }>(`/ai/conversations/${id}`, { method: 'DELETE' });
+
+export const archiveAIConversation = (id: number) =>
+  fetchApi<{ message: string }>(`/ai/conversations/${id}/archive`, { method: 'POST' });
+
+export const getAISuggestions = (currentPage = '') =>
+  fetchApi<AISuggestionsResponse>(`/ai/suggestions?current_page=${encodeURIComponent(currentPage)}`);
+
+// Document AI API
+export const summarizeDocument = (documentId: number) =>
+  fetchApi<DocumentSummary>(`/ai/documents/${documentId}/summarize`, { method: 'POST' });
+
+export const extractDeadlines = (documentId: number) =>
+  fetchApi<{ document_id: number; deadlines: ExtractedDate[]; recurring_dates: unknown[] }>(
+    `/ai/documents/${documentId}/extract-deadlines`,
+    { method: 'POST' }
+  );
+
+export const getDocumentSummary = (documentId: number) =>
+  fetchApi<DocumentSummary>(`/ai/documents/${documentId}/summary`);
+
+// Competitor Monitoring API
+export const getCompetitors = (includeInactive = false) =>
+  fetchApi<Competitor[]>(`/ai/competitors?include_inactive=${includeInactive}`);
+
+export const createCompetitor = (data: {
+  name: string;
+  website?: string;
+  description?: string;
+  keywords?: string[];
+  rss_urls?: string[];
+  industry?: string;
+}) =>
+  fetchApi<Competitor>('/ai/competitors', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const getCompetitor = (id: number) =>
+  fetchApi<Competitor>(`/ai/competitors/${id}`);
+
+export const updateCompetitor = (id: number, data: Partial<Competitor>) =>
+  fetchApi<Competitor>(`/ai/competitors/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+
+export const deleteCompetitor = (id: number) =>
+  fetchApi<{ message: string }>(`/ai/competitors/${id}`, { method: 'DELETE' });
+
+export const getCompetitorUpdates = (competitorId: number, filters?: { unread_only?: boolean; limit?: number }) => {
+  const params = new URLSearchParams();
+  if (filters?.unread_only) params.set('unread_only', 'true');
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  const query = params.toString();
+  return fetchApi<CompetitorUpdate[]>(`/ai/competitors/${competitorId}/updates${query ? `?${query}` : ''}`);
+};
+
+export const markCompetitorUpdateRead = (competitorId: number, updateId: number) =>
+  fetchApi<{ message: string }>(`/ai/competitors/${competitorId}/updates/${updateId}/read`, { method: 'POST' });
+
+export const toggleCompetitorUpdateStar = (competitorId: number, updateId: number) =>
+  fetchApi<{ is_starred: boolean }>(`/ai/competitors/${competitorId}/updates/${updateId}/star`, { method: 'POST' });
+
+export const refreshCompetitors = () =>
+  fetchApi<{ message: string; note: string }>('/ai/competitors/refresh', { method: 'POST' });
+
+// =============================================================================
+// TRANSCRIPT ANALYSIS (Enhanced Meeting Transcripts)
+// =============================================================================
+
+export interface TranscriptActionItem {
+  task: string;
+  assignee?: string;
+  due_date?: string;
+  due_description?: string;
+  priority: string;
+  context?: string;
+}
+
+export interface TranscriptDecision {
+  decision: string;
+  made_by?: string;
+  rationale?: string;
+  conditions: string[];
+  follow_ups: string[];
+}
+
+export interface TranscriptSpeaker {
+  name: string;
+  word_count: number;
+  percentage: number;
+  main_topics: string[];
+  sentiment: string;
+}
+
+export interface TranscriptActionItemsResponse {
+  transcript_id: number;
+  action_items: TranscriptActionItem[];
+  total_count: number;
+}
+
+export interface TranscriptDecisionsResponse {
+  transcript_id: number;
+  decisions: TranscriptDecision[];
+}
+
+export interface TranscriptSpeakerAnalysisResponse {
+  transcript_id: number;
+  speakers: TranscriptSpeaker[];
+  meeting_dynamics?: string;
+  suggestions: string[];
+}
+
+export interface TranscriptCreateTasksResponse {
+  transcript_id: number;
+  tasks_created: number;
+  task_ids: number[];
+}
+
+export const extractTranscriptActionItems = (transcriptId: number) =>
+  fetchApi<TranscriptActionItemsResponse>(`/ai/transcripts/${transcriptId}/extract-actions`, {
+    method: 'POST',
+  });
+
+export const extractTranscriptDecisions = (transcriptId: number) =>
+  fetchApi<TranscriptDecisionsResponse>(`/ai/transcripts/${transcriptId}/extract-decisions`, {
+    method: 'POST',
+  });
+
+export const analyzeTranscriptSpeakers = (transcriptId: number) =>
+  fetchApi<TranscriptSpeakerAnalysisResponse>(`/ai/transcripts/${transcriptId}/analyze-speakers`, {
+    method: 'POST',
+  });
+
+export const createTasksFromTranscript = (
+  transcriptId: number,
+  boardId: number,
+  actionItemIndices?: number[]
+) =>
+  fetchApi<TranscriptCreateTasksResponse>(`/ai/transcripts/${transcriptId}/create-tasks`, {
+    method: 'POST',
+    body: JSON.stringify({
+      board_id: boardId,
+      action_item_indices: actionItemIndices,
+    }),
+  });
+
 export default api;

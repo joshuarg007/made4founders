@@ -20,8 +20,21 @@ import {
   Unlink,
   Import,
   ExternalLink,
+  ListTodo,
+  UserCircle,
+  BarChart3,
+  Plus,
+  ArrowRight,
 } from 'lucide-react';
-import api from '../lib/api';
+import api, {
+  extractTranscriptActionItems,
+  extractTranscriptDecisions,
+  analyzeTranscriptSpeakers,
+  createTasksFromTranscript,
+  TranscriptActionItem,
+  TranscriptDecision,
+  TranscriptSpeaker,
+} from '../lib/api';
 
 interface PlatformStatus {
   connected: boolean;
@@ -994,13 +1007,109 @@ function DetailModal({
   onDelete: (id: number) => void;
   onRegenerateSummary: (id: number) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<'summary' | 'transcript'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'analysis' | 'transcript'>('summary');
   const [regenerating, setRegenerating] = useState(false);
+
+  // Enhanced analysis state
+  const [extractingActions, setExtractingActions] = useState(false);
+  const [extractedActions, setExtractedActions] = useState<TranscriptActionItem[]>([]);
+  const [analyzingSpeakers, setAnalyzingSpeakers] = useState(false);
+  const [speakerAnalysis, setSpeakerAnalysis] = useState<{
+    speakers: TranscriptSpeaker[];
+    meeting_dynamics?: string;
+    suggestions: string[];
+  } | null>(null);
+  const [extractingDecisions, setExtractingDecisions] = useState(false);
+  const [extractedDecisions, setExtractedDecisions] = useState<TranscriptDecision[]>([]);
+  const [creatingTasks, setCreatingTasks] = useState(false);
+  const [taskBoardId, setTaskBoardId] = useState<number | null>(null);
+  const [showBoardSelector, setShowBoardSelector] = useState(false);
+  const [taskBoards, setTaskBoards] = useState<{ id: number; name: string }[]>([]);
+  const [tasksCreatedCount, setTasksCreatedCount] = useState<number | null>(null);
 
   const handleRegenerate = async () => {
     setRegenerating(true);
     await onRegenerateSummary(transcript.id);
     setRegenerating(false);
+  };
+
+  const handleExtractActions = async () => {
+    setExtractingActions(true);
+    try {
+      const result = await extractTranscriptActionItems(transcript.id);
+      setExtractedActions(result.action_items);
+    } catch (err) {
+      console.error('Failed to extract actions:', err);
+    } finally {
+      setExtractingActions(false);
+    }
+  };
+
+  const handleExtractDecisions = async () => {
+    setExtractingDecisions(true);
+    try {
+      const result = await extractTranscriptDecisions(transcript.id);
+      setExtractedDecisions(result.decisions);
+    } catch (err) {
+      console.error('Failed to extract decisions:', err);
+    } finally {
+      setExtractingDecisions(false);
+    }
+  };
+
+  const handleAnalyzeSpeakers = async () => {
+    setAnalyzingSpeakers(true);
+    try {
+      const result = await analyzeTranscriptSpeakers(transcript.id);
+      setSpeakerAnalysis({
+        speakers: result.speakers,
+        meeting_dynamics: result.meeting_dynamics,
+        suggestions: result.suggestions,
+      });
+    } catch (err) {
+      console.error('Failed to analyze speakers:', err);
+    } finally {
+      setAnalyzingSpeakers(false);
+    }
+  };
+
+  const handleCreateTasks = async () => {
+    if (!taskBoardId) {
+      // Load boards first
+      try {
+        const res = await api.get('/api/tasks/boards');
+        setTaskBoards(res.data);
+        setShowBoardSelector(true);
+      } catch (err) {
+        console.error('Failed to load boards:', err);
+      }
+      return;
+    }
+
+    setCreatingTasks(true);
+    try {
+      const result = await createTasksFromTranscript(transcript.id, taskBoardId);
+      setTasksCreatedCount(result.tasks_created);
+      setShowBoardSelector(false);
+    } catch (err) {
+      console.error('Failed to create tasks:', err);
+    } finally {
+      setCreatingTasks(false);
+    }
+  };
+
+  const selectBoardAndCreateTasks = async (boardId: number) => {
+    setTaskBoardId(boardId);
+    setCreatingTasks(true);
+    try {
+      const result = await createTasksFromTranscript(transcript.id, boardId);
+      setTasksCreatedCount(result.tasks_created);
+      setShowBoardSelector(false);
+    } catch (err) {
+      console.error('Failed to create tasks:', err);
+    } finally {
+      setCreatingTasks(false);
+    }
   };
 
   const formatDuration = (seconds: number | null) => {
@@ -1012,6 +1121,15 @@ function DetailModal({
       return `${hrs}h ${remainMins}m`;
     }
     return `${mins} minutes`;
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'text-red-400 bg-red-500/20';
+      case 'medium': return 'text-amber-400 bg-amber-500/20';
+      case 'low': return 'text-green-400 bg-green-500/20';
+      default: return 'text-gray-400 bg-gray-500/20';
+    }
   };
 
   return (
@@ -1072,6 +1190,17 @@ function DetailModal({
             >
               <Sparkles className="w-4 h-4 inline mr-2" />
               Summary
+            </button>
+            <button
+              onClick={() => setActiveTab('analysis')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                activeTab === 'analysis'
+                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4 inline mr-2" />
+              AI Analysis
             </button>
             <button
               onClick={() => setActiveTab('transcript')}
@@ -1181,6 +1310,270 @@ function DetailModal({
                   <div className="text-sm text-gray-500">Speakers</div>
                 </div>
               </div>
+            </div>
+          ) : activeTab === 'analysis' ? (
+            <div className="space-y-8">
+              {/* Analysis Actions */}
+              <div className="grid grid-cols-3 gap-4">
+                <button
+                  onClick={handleExtractActions}
+                  disabled={extractingActions}
+                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-amber-500/30 transition text-left group"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                      <ListTodo className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium text-white">Extract Action Items</span>
+                  </div>
+                  <p className="text-sm text-gray-500">Get structured action items with assignees and due dates</p>
+                  {extractingActions && (
+                    <div className="mt-3 flex items-center gap-2 text-amber-400 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Extracting...
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleAnalyzeSpeakers}
+                  disabled={analyzingSpeakers}
+                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition text-left group"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400">
+                      <UserCircle className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium text-white">Speaker Analysis</span>
+                  </div>
+                  <p className="text-sm text-gray-500">Analyze participation time and topics per speaker</p>
+                  {analyzingSpeakers && (
+                    <div className="mt-3 flex items-center gap-2 text-cyan-400 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Analyzing...
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleExtractDecisions}
+                  disabled={extractingDecisions}
+                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition text-left group"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
+                      <Lightbulb className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium text-white">Extract Decisions</span>
+                  </div>
+                  <p className="text-sm text-gray-500">Identify key decisions made during the meeting</p>
+                  {extractingDecisions && (
+                    <div className="mt-3 flex items-center gap-2 text-purple-400 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Extracting...
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              {/* Extracted Action Items */}
+              {extractedActions.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                      <ListTodo className="w-4 h-4 text-amber-400" />
+                      Extracted Action Items ({extractedActions.length})
+                    </h3>
+                    {showBoardSelector ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                          onChange={(e) => selectBoardAndCreateTasks(Number(e.target.value))}
+                          disabled={creatingTasks}
+                        >
+                          <option value="">Select a board...</option>
+                          {taskBoards.map((board) => (
+                            <option key={board.id} value={board.id}>
+                              {board.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => setShowBoardSelector(false)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleCreateTasks}
+                        disabled={creatingTasks}
+                        className="px-3 py-1.5 rounded-lg bg-green-500 text-white hover:bg-green-400 transition text-sm flex items-center gap-2"
+                      >
+                        {creatingTasks ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                        Create Tasks
+                      </button>
+                    )}
+                  </div>
+
+                  {tasksCreatedCount !== null && (
+                    <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Created {tasksCreatedCount} task{tasksCreatedCount !== 1 ? 's' : ''} from action items
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {extractedActions.map((action, i) => (
+                      <div key={i} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            {i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-medium">{action.task}</p>
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                              {action.assignee && action.assignee !== 'Unassigned' && (
+                                <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-xs flex items-center gap-1">
+                                  <UserCircle className="w-3 h-3" />
+                                  {action.assignee}
+                                </span>
+                              )}
+                              {(action.due_date || action.due_description) && (
+                                <span className="px-2 py-0.5 rounded bg-white/10 text-gray-400 text-xs flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {action.due_date || action.due_description}
+                                </span>
+                              )}
+                              <span className={`px-2 py-0.5 rounded text-xs capitalize ${getPriorityColor(action.priority)}`}>
+                                {action.priority}
+                              </span>
+                            </div>
+                            {action.context && (
+                              <p className="text-xs text-gray-500 mt-2 italic">"{action.context}"</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Speaker Analysis Results */}
+              {speakerAnalysis && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <UserCircle className="w-4 h-4 text-cyan-400" />
+                    Speaker Analysis
+                  </h3>
+
+                  {/* Speaker Stats */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    {speakerAnalysis.speakers.map((speaker, i) => (
+                      <div key={i} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-white">{speaker.name}</span>
+                          <span className="text-cyan-400 text-sm">{speaker.percentage.toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-2 mb-3">
+                          <div
+                            className="bg-cyan-500 h-2 rounded-full"
+                            style={{ width: `${Math.min(100, speaker.percentage)}%` }}
+                          />
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {speaker.word_count.toLocaleString()} words • {speaker.sentiment} tone
+                        </div>
+                        {speaker.main_topics.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {speaker.main_topics.map((topic, j) => (
+                              <span key={j} className="px-2 py-0.5 rounded bg-white/10 text-gray-400 text-xs">
+                                {topic}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Meeting Dynamics */}
+                  {speakerAnalysis.meeting_dynamics && (
+                    <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/30 mb-4">
+                      <h4 className="text-sm font-medium text-cyan-400 mb-2">Meeting Dynamics</h4>
+                      <p className="text-gray-300 text-sm">{speakerAnalysis.meeting_dynamics}</p>
+                    </div>
+                  )}
+
+                  {/* Suggestions */}
+                  {speakerAnalysis.suggestions.length > 0 && (
+                    <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Suggestions</h4>
+                      <ul className="space-y-1">
+                        {speakerAnalysis.suggestions.map((suggestion, i) => (
+                          <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
+                            <ArrowRight className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                            {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Extracted Decisions */}
+              {extractedDecisions.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-purple-400" />
+                    Key Decisions ({extractedDecisions.length})
+                  </h3>
+
+                  <div className="space-y-3">
+                    {extractedDecisions.map((decision, i) => (
+                      <div key={i} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                        <p className="text-white font-medium">{decision.decision}</p>
+                        {decision.made_by && (
+                          <p className="text-sm text-gray-400 mt-1">Decided by: {decision.made_by}</p>
+                        )}
+                        {decision.rationale && (
+                          <p className="text-sm text-gray-500 mt-2">
+                            <span className="text-gray-400">Rationale:</span> {decision.rationale}
+                          </p>
+                        )}
+                        {decision.follow_ups.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-white/10">
+                            <p className="text-xs text-gray-400 uppercase mb-2">Follow-ups</p>
+                            <ul className="space-y-1">
+                              {decision.follow_ups.map((followUp, j) => (
+                                <li key={j} className="text-sm text-gray-300 flex items-start gap-2">
+                                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                                  {followUp}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty State */}
+              {extractedActions.length === 0 && !speakerAnalysis && extractedDecisions.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Click the buttons above to run AI analysis on this transcript</p>
+                </div>
+              )}
             </div>
           ) : (
             <div>

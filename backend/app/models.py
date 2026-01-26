@@ -2115,3 +2115,1516 @@ class AuditLog(Base):
     # Relationships
     organization = relationship("Organization", backref="audit_logs")
     user = relationship("User", backref="audit_logs")
+
+
+# ============================================================================
+# PLAID INTEGRATION MODELS
+# ============================================================================
+
+class PlaidItem(Base):
+    """Plaid Item - represents a connection to a financial institution via Plaid."""
+    __tablename__ = "plaid_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    # Plaid identifiers
+    item_id = Column(String(100), unique=True, nullable=False, index=True)
+    access_token = Column(String(255), nullable=False)  # Encrypted in production
+
+    # Institution info
+    institution_id = Column(String(50), nullable=True)
+    institution_name = Column(String(255), nullable=True)
+
+    # Sync state
+    cursor = Column(String(255), nullable=True)  # For transactions sync
+    last_sync_at = Column(DateTime, nullable=True)
+    sync_status = Column(String(50), default="pending")  # pending, syncing, synced, error
+    sync_error = Column(Text, nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    consent_expires_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="plaid_items")
+    accounts = relationship("PlaidAccount", back_populates="plaid_item", cascade="all, delete-orphan")
+
+
+class PlaidAccount(Base):
+    """Plaid Account - individual bank account linked via Plaid."""
+    __tablename__ = "plaid_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    plaid_item_id = Column(Integer, ForeignKey("plaid_items.id", ondelete="CASCADE"), nullable=False)
+
+    # Plaid identifiers
+    account_id = Column(String(100), unique=True, nullable=False, index=True)
+
+    # Account info
+    name = Column(String(255), nullable=True)
+    official_name = Column(String(255), nullable=True)
+    mask = Column(String(4), nullable=True)  # Last 4 digits
+    account_type = Column(String(50), nullable=True)  # depository, credit, loan, investment, other
+    account_subtype = Column(String(50), nullable=True)  # checking, savings, credit card, etc.
+
+    # Balances (updated on sync)
+    balance_available = Column(Float, nullable=True)
+    balance_current = Column(Float, nullable=True)
+    balance_limit = Column(Float, nullable=True)  # For credit accounts
+    iso_currency_code = Column(String(3), default="USD")
+
+    # Status
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="plaid_accounts")
+    plaid_item = relationship("PlaidItem", back_populates="accounts")
+    transactions = relationship("PlaidTransaction", back_populates="account", cascade="all, delete-orphan")
+
+
+class PlaidTransaction(Base):
+    """Plaid Transaction - synced from bank via Plaid."""
+    __tablename__ = "plaid_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    plaid_account_id = Column(Integer, ForeignKey("plaid_accounts.id", ondelete="CASCADE"), nullable=False)
+
+    # Plaid identifiers
+    transaction_id = Column(String(100), unique=True, nullable=False, index=True)
+
+    # Transaction details
+    amount = Column(Float, nullable=False)  # Positive for debits, negative for credits
+    iso_currency_code = Column(String(3), default="USD")
+    date = Column(Date, nullable=False, index=True)
+    datetime_posted = Column(DateTime, nullable=True)
+
+    # Merchant/payee info
+    name = Column(String(255), nullable=True)
+    merchant_name = Column(String(255), nullable=True)
+
+    # Categorization
+    category = Column(String(255), nullable=True)  # Primary category
+    category_detailed = Column(String(255), nullable=True)  # Detailed category
+    personal_finance_category = Column(String(100), nullable=True)  # Plaid's PFC
+
+    # Status
+    pending = Column(Boolean, default=False)
+
+    # Location (optional)
+    location_city = Column(String(100), nullable=True)
+    location_state = Column(String(50), nullable=True)
+
+    # User categorization override
+    custom_category = Column(String(100), nullable=True)
+    notes = Column(Text, nullable=True)
+    is_excluded = Column(Boolean, default=False)  # Exclude from calculations
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="plaid_transactions")
+    account = relationship("PlaidAccount", back_populates="transactions")
+
+
+# ============================================================================
+# STRIPE REVENUE INTEGRATION MODELS
+# ============================================================================
+
+class StripeConnection(Base):
+    """Connected Stripe account for revenue tracking."""
+    __tablename__ = "stripe_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+
+    # Stripe identifiers
+    stripe_account_id = Column(String(100), unique=True, nullable=False, index=True)
+    access_token = Column(String(255), nullable=False)
+    refresh_token = Column(String(255), nullable=True)
+
+    # Account info
+    account_name = Column(String(255), nullable=True)
+
+    # Sync state
+    last_sync_at = Column(DateTime, nullable=True)
+    sync_status = Column(String(50), default="pending")  # pending, syncing, synced, error
+    sync_error = Column(Text, nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="stripe_connections")
+    customers = relationship("StripeCustomerSync", back_populates="connection", cascade="all, delete-orphan")
+    subscriptions = relationship("StripeSubscriptionSync", back_populates="connection", cascade="all, delete-orphan")
+
+
+class StripeCustomerSync(Base):
+    """Synced Stripe customer data."""
+    __tablename__ = "stripe_customers_sync"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    stripe_connection_id = Column(Integer, ForeignKey("stripe_connections.id", ondelete="CASCADE"), nullable=False)
+
+    # Stripe identifiers
+    stripe_customer_id = Column(String(100), nullable=False, index=True)
+
+    # Customer info
+    email = Column(String(255), nullable=True)
+    name = Column(String(255), nullable=True)
+
+    # Timestamps
+    customer_created_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="stripe_customers")
+    connection = relationship("StripeConnection", back_populates="customers")
+
+
+class StripeSubscriptionSync(Base):
+    """Synced Stripe subscription data for MRR/ARR calculation."""
+    __tablename__ = "stripe_subscriptions_sync"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    stripe_connection_id = Column(Integer, ForeignKey("stripe_connections.id", ondelete="CASCADE"), nullable=False)
+
+    # Stripe identifiers
+    stripe_subscription_id = Column(String(100), nullable=False, index=True)
+    stripe_customer_id = Column(String(100), nullable=True, index=True)
+
+    # Subscription details
+    status = Column(String(50), nullable=False)  # active, canceled, past_due, etc.
+    plan_name = Column(String(255), nullable=True)
+    mrr = Column(Float, default=0.0)  # Monthly recurring revenue for this subscription
+
+    # Timestamps
+    subscription_created_at = Column(DateTime, nullable=True)
+    current_period_end = Column(DateTime, nullable=True)
+    canceled_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="stripe_subscriptions")
+    connection = relationship("StripeConnection", back_populates="subscriptions")
+
+
+# ============================================================================
+# GOOGLE CALENDAR INTEGRATION MODEL
+# ============================================================================
+
+class GoogleCalendarConnection(Base):
+    """Connected Google Calendar for syncing deadlines and meetings."""
+    __tablename__ = "google_calendar_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # OAuth tokens
+    access_token = Column(String(500), nullable=False)
+    refresh_token = Column(String(500), nullable=True)
+    token_expires_at = Column(DateTime, nullable=True)
+
+    # Calendar info
+    calendar_id = Column(String(255), default="primary")
+    calendar_name = Column(String(255), nullable=True)
+
+    # Sync settings
+    sync_deadlines = Column(Boolean, default=True)
+    sync_meetings = Column(Boolean, default=True)
+
+    # Sync state
+    last_sync_at = Column(DateTime, nullable=True)
+    sync_status = Column(String(50), default="pending")  # pending, syncing, synced, error
+    sync_error = Column(Text, nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="google_calendar_connections")
+    user = relationship("User", backref="google_calendar_connections")
+
+
+# ============================================================================
+# SLACK INTEGRATION MODEL
+# ============================================================================
+
+class SlackConnection(Base):
+    """Connected Slack workspace for notifications."""
+    __tablename__ = "slack_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Slack identifiers
+    team_id = Column(String(50), nullable=False, index=True)
+    team_name = Column(String(255), nullable=True)
+    bot_user_id = Column(String(50), nullable=True)
+
+    # OAuth tokens
+    access_token = Column(String(500), nullable=False)
+    webhook_url = Column(String(500), nullable=True)
+
+    # Channel settings
+    channel_id = Column(String(50), nullable=True)
+    channel_name = Column(String(255), nullable=True)
+
+    # Notification settings
+    notify_deadlines = Column(Boolean, default=True)
+    notify_tasks = Column(Boolean, default=True)
+    notify_metrics = Column(Boolean, default=True)
+    daily_digest = Column(Boolean, default=True)
+    daily_digest_time = Column(String(5), default="09:00")  # HH:MM format
+
+    # Status
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="slack_connections")
+    user = relationship("User", backref="slack_connections")
+
+
+# ============================================================================
+# CAP TABLE MODELS
+# ============================================================================
+
+class ShareholderType(str, enum.Enum):
+    FOUNDER = "founder"
+    INVESTOR = "investor"
+    EMPLOYEE = "employee"
+    ADVISOR = "advisor"
+    BOARD_MEMBER = "board_member"
+    OTHER = "other"
+
+
+class ShareClassType(str, enum.Enum):
+    COMMON = "common"
+    PREFERRED = "preferred"
+
+
+class VestingScheduleType(str, enum.Enum):
+    STANDARD_4Y_1Y_CLIFF = "standard_4y_1y_cliff"  # 4 years, 1 year cliff
+    IMMEDIATE = "immediate"  # Fully vested
+    CUSTOM = "custom"
+
+
+class SafeType(str, enum.Enum):
+    POST_MONEY = "post_money"
+    PRE_MONEY = "pre_money"
+    MFN = "mfn"  # Most Favored Nation
+
+
+class Shareholder(Base):
+    """Investor, founder, employee, or advisor who holds equity."""
+    __tablename__ = "shareholders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Basic info
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
+    shareholder_type = Column(String(50), default="other")  # ShareholderType
+
+    # Optional link to existing contact
+    contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="SET NULL"), nullable=True)
+
+    # Additional details
+    title = Column(String(255), nullable=True)  # e.g., "CEO", "Lead Investor"
+    company = Column(String(255), nullable=True)  # e.g., "Sequoia Capital"
+    phone = Column(String(50), nullable=True)
+    address = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="shareholders")
+    contact = relationship("Contact", backref="shareholder_profiles")
+    equity_grants = relationship("EquityGrant", back_populates="shareholder", cascade="all, delete-orphan")
+    stock_options = relationship("StockOption", back_populates="shareholder", cascade="all, delete-orphan")
+    safe_notes = relationship("SafeNote", back_populates="shareholder", cascade="all, delete-orphan")
+    convertible_notes = relationship("ConvertibleNote", back_populates="shareholder", cascade="all, delete-orphan")
+
+
+class ShareClass(Base):
+    """Share class definition (Common, Series A, Series B, etc.)."""
+    __tablename__ = "share_classes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(100), nullable=False)  # e.g., "Common", "Series A Preferred"
+    class_type = Column(String(50), default="common")  # ShareClassType
+    prefix = Column(String(10), nullable=True)  # e.g., "CS" for Common Stock
+
+    # Share details
+    authorized_shares = Column(Integer, nullable=True)  # Total authorized
+    par_value = Column(Float, default=0.0001)  # Par value per share
+    price_per_share = Column(Float, nullable=True)  # Current/issue price
+
+    # Preferred stock terms
+    liquidation_preference = Column(Float, default=1.0)  # 1x, 2x, etc.
+    participation_cap = Column(Float, nullable=True)  # Cap on participation
+    is_participating = Column(Boolean, default=False)  # Participating preferred?
+    dividend_rate = Column(Float, nullable=True)  # Annual dividend %
+    is_cumulative_dividend = Column(Boolean, default=False)
+
+    # Conversion
+    conversion_ratio = Column(Float, default=1.0)  # Preferred to common ratio
+    is_auto_convert_on_ipo = Column(Boolean, default=True)
+
+    # Anti-dilution
+    anti_dilution_type = Column(String(50), nullable=True)  # broad_based, narrow_based, full_ratchet
+
+    # Voting
+    votes_per_share = Column(Float, default=1.0)
+
+    # Board seats
+    board_seats = Column(Integer, default=0)
+
+    notes = Column(Text, nullable=True)
+    display_order = Column(Integer, default=0)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="share_classes")
+    equity_grants = relationship("EquityGrant", back_populates="share_class")
+    stock_options = relationship("StockOption", back_populates="share_class")
+
+
+class EquityGrant(Base):
+    """Actual equity ownership (issued shares)."""
+    __tablename__ = "equity_grants"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="CASCADE"), nullable=False)
+    share_class_id = Column(Integer, ForeignKey("share_classes.id", ondelete="RESTRICT"), nullable=False)
+
+    # Grant details
+    shares = Column(Integer, nullable=False)  # Number of shares
+    price_per_share = Column(Float, nullable=True)  # Price paid per share
+    grant_date = Column(Date, nullable=False)
+    certificate_number = Column(String(50), nullable=True)
+
+    # Vesting
+    vesting_schedule = Column(String(50), default="immediate")  # VestingScheduleType
+    vesting_start_date = Column(Date, nullable=True)
+    vesting_end_date = Column(Date, nullable=True)
+    cliff_months = Column(Integer, default=0)
+    vesting_period_months = Column(Integer, default=0)
+
+    # For custom vesting - JSON array of {date, shares_vested}
+    custom_vesting_schedule = Column(Text, nullable=True)
+
+    # Repurchase rights
+    has_repurchase_right = Column(Boolean, default=False)
+    repurchase_price = Column(Float, nullable=True)
+
+    # 83(b) election
+    filed_83b = Column(Boolean, default=False)
+    filed_83b_date = Column(Date, nullable=True)
+
+    # Status
+    status = Column(String(50), default="active")  # active, cancelled, repurchased
+    cancelled_date = Column(Date, nullable=True)
+    cancelled_shares = Column(Integer, default=0)
+
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="equity_grants")
+    shareholder = relationship("Shareholder", back_populates="equity_grants")
+    share_class = relationship("ShareClass", back_populates="equity_grants")
+
+
+class StockOption(Base):
+    """Stock option grants (ISO, NSO)."""
+    __tablename__ = "stock_options"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="CASCADE"), nullable=False)
+    share_class_id = Column(Integer, ForeignKey("share_classes.id", ondelete="RESTRICT"), nullable=False)
+
+    # Option details
+    option_type = Column(String(10), default="ISO")  # ISO, NSO
+    shares_granted = Column(Integer, nullable=False)
+    exercise_price = Column(Float, nullable=False)  # Strike price
+    grant_date = Column(Date, nullable=False)
+    expiration_date = Column(Date, nullable=True)  # Usually 10 years from grant
+
+    # Vesting
+    vesting_schedule = Column(String(50), default="standard_4y_1y_cliff")
+    vesting_start_date = Column(Date, nullable=True)
+    cliff_months = Column(Integer, default=12)
+    vesting_period_months = Column(Integer, default=48)
+
+    # Custom vesting - JSON array
+    custom_vesting_schedule = Column(Text, nullable=True)
+
+    # Exercise tracking
+    shares_exercised = Column(Integer, default=0)
+    shares_cancelled = Column(Integer, default=0)
+
+    # Early exercise
+    allows_early_exercise = Column(Boolean, default=False)
+    early_exercised_shares = Column(Integer, default=0)
+
+    # Status
+    status = Column(String(50), default="active")  # active, exercised, cancelled, expired
+
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="stock_options")
+    shareholder = relationship("Shareholder", back_populates="stock_options")
+    share_class = relationship("ShareClass", back_populates="stock_options")
+
+
+class SafeNote(Base):
+    """SAFE (Simple Agreement for Future Equity) tracking."""
+    __tablename__ = "safe_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="CASCADE"), nullable=False)
+
+    # SAFE details
+    safe_type = Column(String(50), default="post_money")  # SafeType
+    investment_amount = Column(Float, nullable=False)
+    valuation_cap = Column(Float, nullable=True)  # Post-money valuation cap
+    discount_rate = Column(Float, nullable=True)  # e.g., 0.20 for 20% discount
+
+    # MFN clause
+    has_mfn = Column(Boolean, default=False)
+
+    # Pro-rata rights
+    has_pro_rata = Column(Boolean, default=False)
+
+    # Dates
+    signed_date = Column(Date, nullable=False)
+
+    # Conversion tracking
+    is_converted = Column(Boolean, default=False)
+    converted_date = Column(Date, nullable=True)
+    converted_shares = Column(Integer, nullable=True)
+    converted_share_class_id = Column(Integer, nullable=True)
+    conversion_price = Column(Float, nullable=True)
+
+    # Document reference
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
+
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="safe_notes")
+    shareholder = relationship("Shareholder", back_populates="safe_notes")
+
+
+class ConvertibleNote(Base):
+    """Convertible promissory note tracking."""
+    __tablename__ = "convertible_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="CASCADE"), nullable=False)
+
+    # Note details
+    principal_amount = Column(Float, nullable=False)
+    interest_rate = Column(Float, nullable=False)  # Annual rate, e.g., 0.05 for 5%
+    valuation_cap = Column(Float, nullable=True)
+    discount_rate = Column(Float, nullable=True)  # e.g., 0.20 for 20%
+
+    # Dates
+    issue_date = Column(Date, nullable=False)
+    maturity_date = Column(Date, nullable=False)
+
+    # Qualified financing threshold
+    qualified_financing_amount = Column(Float, nullable=True)
+
+    # Conversion tracking
+    is_converted = Column(Boolean, default=False)
+    converted_date = Column(Date, nullable=True)
+    converted_shares = Column(Integer, nullable=True)
+    converted_share_class_id = Column(Integer, nullable=True)
+    conversion_price = Column(Float, nullable=True)
+    accrued_interest_at_conversion = Column(Float, nullable=True)
+
+    # Document reference
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
+
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="convertible_notes")
+    shareholder = relationship("Shareholder", back_populates="convertible_notes")
+
+
+class FundingRound(Base):
+    """Track funding rounds for historical reference."""
+    __tablename__ = "funding_rounds"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(100), nullable=False)  # e.g., "Seed", "Series A"
+    round_type = Column(String(50), nullable=True)  # pre_seed, seed, series_a, series_b, etc.
+
+    # Valuation
+    pre_money_valuation = Column(Float, nullable=True)
+    post_money_valuation = Column(Float, nullable=True)
+
+    # Amount
+    amount_raised = Column(Float, nullable=True)
+    target_amount = Column(Float, nullable=True)
+
+    # Price
+    price_per_share = Column(Float, nullable=True)
+
+    # Lead investor
+    lead_investor_id = Column(Integer, ForeignKey("shareholders.id", ondelete="SET NULL"), nullable=True)
+
+    # Dates
+    announced_date = Column(Date, nullable=True)
+    closed_date = Column(Date, nullable=True)
+
+    # Status
+    status = Column(String(50), default="planned")  # planned, in_progress, closed, cancelled
+
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="funding_rounds")
+    lead_investor = relationship("Shareholder", foreign_keys=[lead_investor_id])
+
+
+class Valuation409A(Base):
+    """409A valuation tracking for stock option pricing."""
+    __tablename__ = "valuations_409a"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Valuation details
+    valuation_date = Column(Date, nullable=False)  # Date of the valuation
+    effective_date = Column(Date, nullable=False)  # When the valuation becomes effective
+    expiration_date = Column(Date, nullable=False)  # 12 months from effective date typically
+
+    # Fair market value
+    fmv_per_share = Column(Float, nullable=False)  # Fair Market Value per common share
+    total_common_shares = Column(Integer, nullable=True)  # Total common shares at time of valuation
+    implied_company_value = Column(Float, nullable=True)  # Total implied value
+
+    # Valuation provider
+    provider_name = Column(String(200), nullable=True)  # e.g., "Carta", "Eqvista", "Internal"
+    provider_type = Column(String(50), default="external")  # external, internal
+
+    # Report reference
+    report_document_id = Column(Integer, ForeignKey("data_room_documents.id", ondelete="SET NULL"), nullable=True)
+
+    # Status
+    status = Column(String(50), default="draft")  # draft, pending_review, final, superseded
+
+    # Methodology
+    valuation_method = Column(String(100), nullable=True)  # e.g., "OPM", "PWERM", "Backsolve"
+    discount_for_lack_of_marketability = Column(Float, nullable=True)  # DLOM percentage
+
+    # Triggering event (what prompted this valuation)
+    trigger_event = Column(String(100), nullable=True)  # annual, funding_round, material_event, initial
+
+    notes = Column(Text, nullable=True)
+
+    created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="valuations_409a")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    report_document = relationship("DataRoomDocument", foreign_keys=[report_document_id])
+
+
+# ============================================================================
+# INVESTOR UPDATE MODELS
+# ============================================================================
+
+class InvestorUpdateStatus(str, enum.Enum):
+    DRAFT = "draft"
+    SCHEDULED = "scheduled"
+    SENDING = "sending"
+    SENT = "sent"
+    FAILED = "failed"
+
+
+class InvestorUpdate(Base):
+    """Investor update email campaigns."""
+    __tablename__ = "investor_updates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Update content
+    title = Column(String(255), nullable=False)  # e.g., "Q4 2025 Update"
+    subject_line = Column(String(255), nullable=True)  # Email subject
+    greeting = Column(String(500), nullable=True)  # Opening greeting
+    highlights = Column(Text, nullable=True)  # Key highlights (JSON array)
+    body_content = Column(Text, nullable=True)  # Main content (HTML)
+    closing = Column(Text, nullable=True)  # Closing remarks
+    signature_name = Column(String(255), nullable=True)  # Sender name
+    signature_title = Column(String(255), nullable=True)  # Sender title
+
+    # Metrics to include (JSON array of metric types)
+    included_metrics = Column(Text, nullable=True)  # ['mrr', 'runway', 'cash', ...]
+
+    # Recipient filtering
+    recipient_types = Column(Text, nullable=True)  # JSON: ['investor', 'board_member']
+    recipient_ids = Column(Text, nullable=True)  # JSON: specific shareholder IDs, or null for all matching types
+
+    # Status and scheduling
+    status = Column(String(50), default="draft")  # InvestorUpdateStatus
+    scheduled_at = Column(DateTime, nullable=True)
+    sent_at = Column(DateTime, nullable=True)
+
+    # Stats
+    recipient_count = Column(Integer, default=0)
+    sent_count = Column(Integer, default=0)
+    failed_count = Column(Integer, default=0)
+    opened_count = Column(Integer, default=0)
+
+    # Creator
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="investor_updates")
+    created_by = relationship("User", backref="investor_updates")
+    recipients = relationship("InvestorUpdateRecipient", back_populates="investor_update", cascade="all, delete-orphan")
+
+
+class InvestorUpdateRecipient(Base):
+    """Individual recipient tracking for investor updates."""
+    __tablename__ = "investor_update_recipients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    investor_update_id = Column(Integer, ForeignKey("investor_updates.id", ondelete="CASCADE"), nullable=False, index=True)
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="SET NULL"), nullable=True)
+
+    # Recipient info (stored for historical record even if shareholder deleted)
+    email = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=True)
+
+    # Delivery tracking
+    status = Column(String(50), default="pending")  # pending, sent, failed, bounced
+    sent_at = Column(DateTime, nullable=True)
+    error_message = Column(Text, nullable=True)
+
+    # Engagement tracking (optional)
+    opened_at = Column(DateTime, nullable=True)
+    clicked_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    investor_update = relationship("InvestorUpdate", back_populates="recipients")
+    shareholder = relationship("Shareholder", backref="update_recipients")
+
+
+# ============================================
+# DATA ROOM MODELS
+# ============================================
+
+class DataRoomFolder(Base):
+    """Folders for organizing data room documents."""
+    __tablename__ = "data_room_folders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    # Hierarchy
+    parent_id = Column(Integer, ForeignKey("data_room_folders.id", ondelete="CASCADE"), nullable=True, index=True)
+    display_order = Column(Integer, default=0)
+
+    # Access control
+    visibility = Column(String(50), default="internal")  # internal, investors, custom
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="data_room_folders")
+    parent = relationship("DataRoomFolder", remote_side=[id], backref="children")
+    documents = relationship("DataRoomDocument", back_populates="folder", cascade="all, delete-orphan")
+
+
+class DataRoomDocument(Base):
+    """Documents added to the data room."""
+    __tablename__ = "data_room_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Link to existing document
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Folder placement
+    folder_id = Column(Integer, ForeignKey("data_room_folders.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    # Data room specific
+    display_name = Column(String(255), nullable=True)  # Override document name for data room
+    display_order = Column(Integer, default=0)
+    visibility = Column(String(50), default="internal")  # internal, investors, custom
+
+    # Stats
+    view_count = Column(Integer, default=0)
+    download_count = Column(Integer, default=0)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="data_room_documents")
+    document = relationship("Document", backref="data_room_entries")
+    folder = relationship("DataRoomFolder", back_populates="documents")
+
+
+class ShareableLink(Base):
+    """Shareable links for data room access."""
+    __tablename__ = "shareable_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # What is being shared
+    folder_id = Column(Integer, ForeignKey("data_room_folders.id", ondelete="CASCADE"), nullable=True)
+    document_id = Column(Integer, ForeignKey("data_room_documents.id", ondelete="CASCADE"), nullable=True)
+
+    # Link token (URL-safe)
+    token = Column(String(64), unique=True, nullable=False, index=True)
+
+    # Optional: link for specific shareholder
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="SET NULL"), nullable=True)
+
+    # Security
+    password_hash = Column(String(255), nullable=True)  # Optional password
+    expires_at = Column(DateTime, nullable=True)
+    access_limit = Column(Integer, nullable=True)  # Max accesses
+    current_accesses = Column(Integer, default=0)
+
+    # Link name/purpose
+    name = Column(String(255), nullable=True)
+    notes = Column(Text, nullable=True)
+
+    # Creator
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="shareable_links")
+    folder = relationship("DataRoomFolder", backref="shareable_links")
+    data_room_document = relationship("DataRoomDocument", backref="shareable_links")
+    shareholder = relationship("Shareholder", backref="data_room_links")
+    created_by = relationship("User", backref="created_shareable_links")
+    access_logs = relationship("DataRoomAccess", back_populates="shareable_link", cascade="all, delete-orphan")
+
+
+class DataRoomAccess(Base):
+    """Audit trail for data room views and downloads."""
+    __tablename__ = "data_room_access"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # What was accessed
+    folder_id = Column(Integer, ForeignKey("data_room_folders.id", ondelete="SET NULL"), nullable=True)
+    document_id = Column(Integer, ForeignKey("data_room_documents.id", ondelete="SET NULL"), nullable=True)
+
+    # How it was accessed
+    shareable_link_id = Column(Integer, ForeignKey("shareable_links.id", ondelete="SET NULL"), nullable=True)
+
+    # Who accessed (either internal user or external via shareholder)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="SET NULL"), nullable=True)
+
+    # Access type
+    access_type = Column(String(50), nullable=False)  # view, download
+
+    # Client info
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="data_room_access_logs")
+    folder = relationship("DataRoomFolder", backref="access_logs")
+    data_room_document = relationship("DataRoomDocument", backref="access_logs")
+    shareable_link = relationship("ShareableLink", back_populates="access_logs")
+    user = relationship("User", backref="data_room_access")
+    shareholder = relationship("Shareholder", backref="data_room_access")
+
+
+# ============================================
+# BUDGET MODELS
+# ============================================
+
+class BudgetCategory(Base):
+    """Budget spending categories (e.g., 'Marketing', 'Payroll', 'Software')."""
+    __tablename__ = "budget_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Category info
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    color = Column(String(20), nullable=True)  # For UI: "#FF5733"
+    icon = Column(String(50), nullable=True)  # lucide icon name
+
+    # Hierarchy
+    parent_id = Column(Integer, ForeignKey("budget_categories.id", ondelete="CASCADE"), nullable=True)
+    display_order = Column(Integer, default=0)
+
+    # Transaction mapping (JSON arrays)
+    plaid_categories = Column(Text, nullable=True)  # ["FOOD_AND_DRINK", "SHOPPING"]
+    merchant_keywords = Column(Text, nullable=True)  # ["AWS", "Google Cloud", "Stripe"]
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="budget_categories")
+    parent = relationship("BudgetCategory", remote_side=[id], backref="children")
+    line_items = relationship("BudgetLineItem", back_populates="category", cascade="all, delete-orphan")
+
+
+class BudgetPeriod(Base):
+    """Budget for a specific time period (monthly, quarterly, annual)."""
+    __tablename__ = "budget_periods"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Period definition
+    period_type = Column(String(20), nullable=False)  # monthly, quarterly, annual
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+
+    # Metadata
+    name = Column(String(100), nullable=True)  # "Q1 2025 Budget"
+    notes = Column(Text, nullable=True)
+
+    # Total budget amount (sum of line items)
+    total_budget = Column(Float, default=0.0)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="budget_periods")
+    line_items = relationship("BudgetLineItem", back_populates="period", cascade="all, delete-orphan")
+
+
+class BudgetLineItem(Base):
+    """Individual budget line (category + amount for a period)."""
+    __tablename__ = "budget_line_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    budget_period_id = Column(Integer, ForeignKey("budget_periods.id", ondelete="CASCADE"), nullable=False, index=True)
+    category_id = Column(Integer, ForeignKey("budget_categories.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Budget amount
+    budgeted_amount = Column(Float, nullable=False)
+
+    # Actual tracking (updated via calculation)
+    actual_amount = Column(Float, default=0.0)
+    transaction_count = Column(Integer, default=0)
+
+    # Variance calculation
+    variance_amount = Column(Float, nullable=True)  # budgeted - actual
+    variance_percent = Column(Float, nullable=True)  # (variance / budgeted) * 100
+    status = Column(String(20), default="on_track")  # on_track, warning, over
+
+    # Tracking
+    notes = Column(Text, nullable=True)
+    last_calculated_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="budget_line_items")
+    period = relationship("BudgetPeriod", back_populates="line_items")
+    category = relationship("BudgetCategory", back_populates="line_items")
+
+
+# ============================================
+# INVOICE MODELS
+# ============================================
+
+class Invoice(Base):
+    """Invoice for billing contacts/clients."""
+    __tablename__ = "invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
+
+    # Billing contact
+    contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="RESTRICT"), nullable=False, index=True)
+
+    # Invoice metadata
+    invoice_number = Column(String(50), nullable=False, index=True)
+    issue_date = Column(Date, nullable=False)
+    due_date = Column(Date, nullable=False)
+
+    # Amount tracking
+    subtotal = Column(Float, default=0.0)
+    tax_rate = Column(Float, default=0.0)  # As percentage (e.g., 8.25 for 8.25%)
+    tax_amount = Column(Float, default=0.0)
+    total_amount = Column(Float, default=0.0)
+
+    # Payment status
+    status = Column(String(50), default="draft")  # draft, sent, viewed, paid, overdue, cancelled
+    payment_method = Column(String(50), nullable=True)
+    paid_at = Column(DateTime, nullable=True)
+    paid_amount = Column(Float, default=0.0)
+
+    # Tracking
+    notes = Column(Text, nullable=True)
+    terms = Column(Text, nullable=True)  # Payment terms
+    email_sent_at = Column(DateTime, nullable=True)
+    viewed_at = Column(DateTime, nullable=True)
+    last_reminder_at = Column(DateTime, nullable=True)
+
+    # Creator
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="invoices")
+    business = relationship("Business", backref="invoices")
+    contact = relationship("Contact", backref="invoices")
+    created_by = relationship("User", backref="created_invoices")
+    line_items = relationship("InvoiceLineItem", back_populates="invoice", cascade="all, delete-orphan")
+    payments = relationship("InvoicePayment", back_populates="invoice", cascade="all, delete-orphan")
+
+
+class InvoiceLineItem(Base):
+    """Line item on an invoice."""
+    __tablename__ = "invoice_line_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Item details
+    description = Column(String(500), nullable=False)
+    quantity = Column(Float, default=1.0)
+    unit_price = Column(Float, nullable=False)
+    amount = Column(Float, nullable=False)  # quantity * unit_price
+
+    # Optional: link to product/service
+    product_id = Column(Integer, ForeignKey("products_offered.id", ondelete="SET NULL"), nullable=True)
+
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    invoice = relationship("Invoice", back_populates="line_items")
+    product = relationship("ProductOffered", backref="invoice_line_items")
+
+
+class InvoicePayment(Base):
+    """Payment record for an invoice (supports partial payments)."""
+    __tablename__ = "invoice_payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    amount = Column(Float, nullable=False)
+    payment_date = Column(Date, nullable=False)
+    payment_method = Column(String(50), nullable=False)  # stripe, check, cash, bank_transfer, other
+
+    # Optional Stripe reference
+    stripe_payment_intent_id = Column(String(100), nullable=True)
+
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    invoice = relationship("Invoice", back_populates="payments")
+
+
+# ============================================================================
+# TEAM MANAGEMENT MODELS
+# ============================================================================
+
+class EmploymentType(str, enum.Enum):
+    FULL_TIME = "full_time"
+    PART_TIME = "part_time"
+    CONTRACTOR = "contractor"
+    INTERN = "intern"
+    CONSULTANT = "consultant"
+
+
+class EmploymentStatus(str, enum.Enum):
+    ACTIVE = "active"
+    ON_LEAVE = "on_leave"
+    TERMINATED = "terminated"
+    PENDING = "pending"
+
+
+class Employee(Base):
+    """Employee/team member record."""
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Basic Info
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    preferred_name = Column(String(100), nullable=True)
+    email = Column(String(255), nullable=False)
+    personal_email = Column(String(255), nullable=True)
+    phone = Column(String(50), nullable=True)
+
+    # Links to other entities
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    shareholder_id = Column(Integer, ForeignKey("shareholders.id", ondelete="SET NULL"), nullable=True)
+    contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="SET NULL"), nullable=True)
+
+    # Employment Details
+    employee_number = Column(String(50), nullable=True)
+    employment_type = Column(String(50), default=EmploymentType.FULL_TIME.value)
+    employment_status = Column(String(50), default=EmploymentStatus.ACTIVE.value)
+
+    # Role & Position
+    title = Column(String(255), nullable=True)
+    department = Column(String(100), nullable=True)
+    manager_id = Column(Integer, ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
+
+    # Dates
+    hire_date = Column(Date, nullable=True)
+    start_date = Column(Date, nullable=True)
+    termination_date = Column(Date, nullable=True)
+    termination_reason = Column(Text, nullable=True)
+
+    # Compensation (stored in cents for precision)
+    salary_cents = Column(Integer, nullable=True)
+    salary_frequency = Column(String(20), nullable=True)  # annual, hourly, monthly
+    hourly_rate_cents = Column(Integer, nullable=True)
+
+    # Location
+    work_location = Column(String(50), nullable=True)  # remote, office, hybrid
+    office_location = Column(String(255), nullable=True)
+    timezone = Column(String(50), nullable=True)
+
+    # Contractor/1099 Info
+    is_contractor = Column(Boolean, default=False)
+    tax_classification = Column(String(50), nullable=True)  # W-2, 1099
+
+    # Profile
+    avatar_url = Column(String(500), nullable=True)
+    bio = Column(Text, nullable=True)
+    linkedin_url = Column(String(500), nullable=True)
+
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="employees")
+    manager = relationship("Employee", remote_side=[id], backref="direct_reports")
+    user = relationship("User", backref="employee_profile")
+    shareholder = relationship("Shareholder", backref="employee_profile")
+    contact = relationship("Contact", backref="employee_profile")
+
+
+class PTOPolicy(Base):
+    """PTO policy defining allowance rules."""
+    __tablename__ = "pto_policies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(100), nullable=False)  # e.g., "Vacation", "Sick Leave"
+    pto_type = Column(String(50), default="vacation")  # vacation, sick, personal, other
+    description = Column(Text, nullable=True)
+
+    # Simple allowance (days per year)
+    annual_days = Column(Float, default=0)
+    requires_approval = Column(Boolean, default=True)
+
+    # Applicability
+    applies_to_contractors = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="pto_policies")
+
+
+class PTOBalance(Base):
+    """PTO balance for an employee."""
+    __tablename__ = "pto_balances"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    policy_id = Column(Integer, ForeignKey("pto_policies.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Balances (in days)
+    available_days = Column(Float, default=0)
+    used_days = Column(Float, default=0)
+    pending_days = Column(Float, default=0)  # Requested but not yet taken
+
+    balance_year = Column(Integer, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="pto_balances")
+    employee = relationship("Employee", backref="pto_balances")
+    policy = relationship("PTOPolicy", backref="balances")
+
+
+class PTORequestStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    DENIED = "denied"
+    CANCELLED = "cancelled"
+
+
+class PTORequest(Base):
+    """PTO request from an employee."""
+    __tablename__ = "pto_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    policy_id = Column(Integer, ForeignKey("pto_policies.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Request details
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    days_requested = Column(Float, nullable=False)
+    notes = Column(Text, nullable=True)
+
+    # Status
+    status = Column(String(50), default=PTORequestStatus.PENDING.value)
+    reviewed_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    review_notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="pto_requests")
+    employee = relationship("Employee", backref="pto_requests")
+    policy = relationship("PTOPolicy", backref="requests")
+    reviewed_by = relationship("User", backref="pto_reviews")
+
+
+class OnboardingTemplate(Base):
+    """Reusable onboarding checklist template."""
+    __tablename__ = "onboarding_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    # Targeting
+    role = Column(String(100), nullable=True)
+    department = Column(String(100), nullable=True)
+    employment_type = Column(String(50), nullable=True)
+
+    # Template content (JSON array of task definitions)
+    tasks_json = Column(Text, nullable=True)  # JSON: [{name, description, category, due_days}]
+
+    is_default = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="onboarding_templates")
+
+
+class OnboardingChecklist(Base):
+    """Onboarding checklist instance for a specific employee."""
+    __tablename__ = "onboarding_checklists"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    template_id = Column(Integer, ForeignKey("onboarding_templates.id", ondelete="SET NULL"), nullable=True)
+
+    name = Column(String(255), nullable=False)
+    start_date = Column(Date, nullable=False)
+    target_completion_date = Column(Date, nullable=True)
+
+    # Progress
+    total_tasks = Column(Integer, default=0)
+    completed_tasks = Column(Integer, default=0)
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="onboarding_checklists")
+    employee = relationship("Employee", backref="onboarding_checklists")
+    template = relationship("OnboardingTemplate", backref="checklists")
+
+
+class OnboardingTask(Base):
+    """Individual task in an onboarding checklist."""
+    __tablename__ = "onboarding_tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    checklist_id = Column(Integer, ForeignKey("onboarding_checklists.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(50), nullable=True)  # IT, HR, Training, etc.
+
+    # Timing
+    due_date = Column(Date, nullable=True)
+    due_days_after_start = Column(Integer, nullable=True)
+
+    # Assignment
+    assignee_type = Column(String(50), nullable=True)  # employee, manager, hr, it
+    assigned_to_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    # Completion
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+    completed_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    completion_notes = Column(Text, nullable=True)
+
+    sort_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    checklist = relationship("OnboardingChecklist", backref="tasks")
+    assigned_to = relationship("User", foreign_keys=[assigned_to_id], backref="assigned_onboarding_tasks")
+    completed_by = relationship("User", foreign_keys=[completed_by_id], backref="completed_onboarding_tasks")
+
+
+# ============================================================================
+# AI FEATURES MODELS
+# ============================================================================
+
+class AIConversation(Base):
+    """AI assistant conversation history."""
+    __tablename__ = "ai_conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    title = Column(String(255), nullable=True)  # Auto-generated from first message
+    is_archived = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="ai_conversations")
+    user = relationship("User", backref="ai_conversations")
+
+
+class AIMessage(Base):
+    """Individual messages in AI conversation."""
+    __tablename__ = "ai_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("ai_conversations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    role = Column(String(20), nullable=False)  # user, assistant
+    content = Column(Text, nullable=False)
+
+    # Response metadata
+    tokens_used = Column(Integer, nullable=True)
+    model_used = Column(String(50), nullable=True)
+    data_cards = Column(JSON, nullable=True)  # Structured data for rich display
+    suggested_actions = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    conversation = relationship("AIConversation", backref="messages")
+
+
+class Competitor(Base):
+    """Tracked competitors for monitoring."""
+    __tablename__ = "competitors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(255), nullable=False)
+    website = Column(String(500), nullable=True)
+    description = Column(Text, nullable=True)
+
+    # Monitoring configuration
+    keywords = Column(JSON, nullable=True)  # ["payments", "fintech"]
+    rss_urls = Column(JSON, nullable=True)  # RSS feeds to monitor
+    news_api_query = Column(String(500), nullable=True)  # Custom NewsAPI query
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    last_checked_at = Column(DateTime, nullable=True)
+
+    # Metadata
+    industry = Column(String(100), nullable=True)
+    founded_year = Column(Integer, nullable=True)
+    headquarters = Column(String(255), nullable=True)
+    employee_count = Column(String(50), nullable=True)  # "10-50", "100-500", etc.
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="competitors")
+
+
+class CompetitorUpdate(Base):
+    """News and updates about competitors."""
+    __tablename__ = "competitor_updates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    competitor_id = Column(Integer, ForeignKey("competitors.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    update_type = Column(String(50), nullable=False)  # news, product, funding, hiring, partnership
+    title = Column(String(500), nullable=False)
+    summary = Column(Text, nullable=True)
+    content = Column(Text, nullable=True)
+
+    # Source
+    source_url = Column(String(1000), nullable=True)
+    source_name = Column(String(255), nullable=True)
+
+    # Analysis
+    relevance_score = Column(Float, nullable=True)  # 0.0 - 1.0
+    sentiment = Column(String(20), nullable=True)  # positive, neutral, negative
+    ai_summary = Column(Text, nullable=True)
+
+    # Status
+    is_read = Column(Boolean, default=False)
+    is_starred = Column(Boolean, default=False)
+
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    competitor = relationship("Competitor", backref="updates")
+
+
+class DocumentSummary(Base):
+    """AI-generated document summaries and extractions."""
+    __tablename__ = "document_summaries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Summary content
+    summary = Column(Text, nullable=True)
+    document_type = Column(String(50), nullable=True)  # contract, term_sheet, invoice, report, legal, other
+
+    # Extracted data
+    key_terms = Column(JSON, nullable=True)  # [{"term": "...", "value": "..."}]
+    extracted_dates = Column(JSON, nullable=True)  # [{"description": "...", "date": "YYYY-MM-DD"}]
+    action_items = Column(JSON, nullable=True)  # ["action 1", "action 2"]
+    risk_flags = Column(JSON, nullable=True)  # ["risk 1", "risk 2"]
+
+    # Generation metadata
+    model_used = Column(String(50), nullable=True)
+    tokens_used = Column(Integer, nullable=True)
+    processing_time_ms = Column(Integer, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    document = relationship("Document", backref="ai_summaries")
