@@ -44,7 +44,7 @@ const plans = [
       { name: '1 user', included: true },
       { name: '3 businesses', included: true },
       { name: 'Document storage (10GB)', included: true },
-      { name: 'Full checklist (98 items)', included: true },
+      { name: 'Full checklist (96 items)', included: true },
       { name: '250 contacts', included: true },
       { name: '100 deadlines', included: true },
       { name: 'Vault (100 credentials)', included: true },

@@ -15,7 +15,7 @@ Made4Founders is a self-hosted business operations dashboard that consolidates c
 | Module | Description |
 |--------|-------------|
 | **Dashboard** | Daily Brief with stats, deadlines, and key metrics at a glance |
-| **Business Checklist** | 98 compliance items across 11 categories (Entity, Federal, State, Cybersecurity, etc.) |
+| **Business Checklist** | 96 compliance items across 11 categories (Entity, Federal, State, Cybersecurity, etc.) |
 | **Business Library** | Knowledge base for storing business information |
 | **Documents** | Secure file upload/download with missing file detection and re-upload capability |
 | **Services** | Track external services, subscriptions, and logins |

@@ -6,6 +6,103 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+### Added - Plaid Integration (Phase 1)
+- **Plaid Link** - Connect bank accounts via Plaid Link UI
+- **Real-time balances** - View balances across all linked accounts
+- **Transaction sync** - Automatic transaction import with categories
+- **Cash position dashboard** - Aggregated view of all cash accounts
+- **Runway calculator** - Automatic runway calculation from transaction data
+- **Burn rate trending** - Track if burn is improving, stable, or declining
+- **Transaction categorization** - Custom categories and notes on transactions
+- **Multi-bank support** - Link multiple banks/institutions
+
+### Added - Stripe Revenue Integration (Phase 1)
+- **Stripe Connect OAuth** - Connect user's Stripe account (read-only)
+- **MRR/ARR tracking** - Automatic calculation from subscriptions
+- **Churn rate** - Monthly churn calculation
+- **Subscription breakdown** - Revenue by plan
+- **Top customers** - Highest revenue customers
+- **Growth tracking** - Month-over-month growth rate
+- **Customer metrics** - ARPC, new customers, churned
+
+### Added - Financial Dashboard
+- `/app/financial-dashboard` - Cash position and runway from Plaid
+- `/app/revenue` - MRR, ARR, and subscription metrics from Stripe
+- Real-time cash position widget
+- Runway months with trend indicator
+- Monthly burn rate (3-month average)
+- MRR trend chart
+- Subscription plan breakdown
+- Top customers by revenue
+
+### Added - Google Calendar Integration (Phase 1)
+- **Google Calendar OAuth** - Connect your Google Calendar
+- **Two-way sync** - Deadlines and meetings sync to calendar
+- **Calendar selection** - Choose which calendar to sync to
+- **Sync settings** - Toggle deadline/meeting sync independently
+- **Upcoming events** - View synced events in integrations page
+- **Push to calendar** - Manually push individual items
+
+### Added - Slack Integration (Phase 1)
+- **Slack OAuth** - Connect your Slack workspace
+- **Channel selection** - Choose which channel receives notifications
+- **Deadline alerts** - Get notified about upcoming deadlines
+- **Task updates** - Notifications when tasks are created/completed
+- **Metric alerts** - Alerts when key metrics change
+- **Daily digest** - Morning summary with configurable time
+- **Test messages** - Send test notifications to verify setup
+- **Rich formatting** - Block Kit formatted messages
+
+### Added - Cap Table (Phase 3)
+- **Shareholders** - Track founders, investors, employees, advisors
+- **Share Classes** - Common and preferred stock with full terms
+- **Equity Grants** - Issue shares with vesting schedules
+- **Stock Options** - ISO/NSO grants with exercise tracking
+- **SAFEs** - Post-money, pre-money, and MFN SAFEs
+- **Convertible Notes** - Track principal, interest, and maturity
+- **Funding Rounds** - Pre-seed through Series C tracking
+- **Cap Table Summary** - Ownership breakdown and top shareholders
+- **Dilution Modeling** - What-if scenarios for new funding rounds
+- **Vesting Calculator** - Automatic vesting calculation
+
+### Planned - Phase 2 Features
+- Budget vs. actuals comparison
+- Invoice generation
+- Financial alerts (runway < 6 months)
+
+---
+
+## [1.6.0] - 2026-01-25
+
+### Security - Critical IDOR Fixes
+- **CRITICAL**: Fixed 35 IDOR vulnerabilities across all API endpoints
+- Fixed cross-organization data leakage in metrics/analytics dashboard
+- Fixed task/comment/time-entry cross-tenant access
+- Fixed bank accounts accessible without org filter
+- Fixed users-list returning all users across organizations
+- Fixed credential copy endpoint missing org check
+- Added `get_task_with_org_check()` helper for task validation
+- Added XSS prevention with DOMPurify sanitization
+- Fixed rate limiter bypass via X-Forwarded-For spoofing
+- Added OAuth state expiration (10 minutes) and cleanup
+- Fixed timing attacks with secrets.compare_digest
+- Added API key encryption for email integrations (Fernet)
+- Enforced SECRET_KEY minimum length in production
+- Strengthened CSP headers (removed unsafe-inline/eval)
+
+### Added
+- Security scanning infrastructure (`security-scan/`)
+- 11 custom Nuclei templates for M4F-specific vulnerabilities
+- 5 security scanning scripts (full-audit, scan-local, scan-production, idor-scanner, get-auth-token)
+- Comprehensive API endpoint wordlist for fuzzing
+
+### Changed
+- All 143 security tests now passing
+
+---
+
 ## [1.5.0] - 2026-01-25
 
 ### Added - Production Readiness Release
@@ -133,7 +230,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Path traversal protection
 
 #### Checklist Redesign
-- 98 items across 11 categories
+- 96 items across 11 categories
 - Added: Government Contracting, Cybersecurity, Insurance
 - Compact grid layout with search/filter
 

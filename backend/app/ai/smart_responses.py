@@ -1236,7 +1236,7 @@ def handle_checklist(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     ).all()
 
     completed = sum(1 for p in progress if p.is_completed)
-    total = len(progress) if progress else 98  # Default checklist size
+    total = 96  # Fixed total - matches frontend checklist items
     percentage = (completed / total * 100) if total > 0 else 0
 
     # Progress bar
@@ -1447,13 +1447,15 @@ def handle_pto(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     if pending:
         parts.append(f"**{len(pending)} Pending Requests:**")
         for p in pending[:5]:
-            parts.append(f"• {p.employee.name if p.employee else 'Unknown'}: {p.start_date.strftime('%b %d')} - {p.end_date.strftime('%b %d')}")
+            emp_name = f"{p.employee.first_name} {p.employee.last_name}" if p.employee else "Unknown"
+            parts.append(f"• {emp_name}: {p.start_date.strftime('%b %d')} - {p.end_date.strftime('%b %d')}")
         parts.append("")
 
     if approved_upcoming:
         parts.append(f"**{len(approved_upcoming)} Upcoming Approved:**")
         for p in approved_upcoming[:5]:
-            parts.append(f"• {p.employee.name if p.employee else 'Unknown'}: {p.start_date.strftime('%b %d')} - {p.end_date.strftime('%b %d')}")
+            emp_name = f"{p.employee.first_name} {p.employee.last_name}" if p.employee else "Unknown"
+            parts.append(f"• {emp_name}: {p.start_date.strftime('%b %d')} - {p.end_date.strftime('%b %d')}")
 
     if not pending and not approved_upcoming:
         parts.append("✅ No pending PTO requests and no upcoming time off scheduled.")

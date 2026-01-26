@@ -1,259 +1,268 @@
-# Made4Founders Development Roadmap
+# Made4Founders Product Roadmap
 
-> Last Updated: 2026-01-17
-
-## Overview
-
-Made4Founders is a comprehensive command center for startup founders, providing tools for business management, compliance tracking, document storage, analytics, and marketing automation.
+> **Last Updated:** 2026-01-25
+>
+> **Vision:** "Command Center for Solo Founders" - The all-in-one platform for 1-5 person startups
 
 ---
 
-## CRITICAL: Production Readiness Issues
+## Product Differentiators
 
-> **These issues MUST be fixed before production deployment**
-
-### Security Audit Findings (2026-01-16)
-
-#### P0: CRITICAL - Missing Authentication
-
-**~40+ API endpoints lack authentication**, allowing anyone to read/write business data:
-
-| Resource | Endpoints Missing Auth | Status |
-|----------|----------------------|--------|
-| Services | GET, POST, PATCH, DELETE `/api/services/*` | FIX REQUIRED |
-| Documents | GET, POST, PATCH, DELETE `/api/documents/*` (list/create/get/update/delete) | FIX REQUIRED |
-| Contacts | GET, POST, PATCH, DELETE `/api/contacts/*` | FIX REQUIRED |
-| Deadlines | GET, POST, PATCH, DELETE `/api/deadlines/*` | FIX REQUIRED |
-| Checklist | GET, POST, PATCH, DELETE `/api/checklist/*` | FIX REQUIRED |
-| Products Offered | GET, POST, PATCH, DELETE `/api/products-offered/*` | FIX REQUIRED |
-| Products Used | GET, POST, PATCH, DELETE `/api/products-used/*` | FIX REQUIRED |
-| Web Links | GET, POST, PATCH, DELETE `/api/web-links/*` | FIX REQUIRED |
-| Dashboard Stats | GET `/api/dashboard/stats` | FIX REQUIRED |
-| Daily Brief | GET `/api/daily-brief` | FIX REQUIRED |
-| Business Info | GET, PUT `/api/business-info` | FIX REQUIRED |
-| Vault Status/Credentials | GET `/api/vault/status`, `/api/credentials` | FIX REQUIRED |
-
-#### P1: HIGH - Infrastructure Issues
-
-| Issue | Impact | Fix |
-|-------|--------|-----|
-| In-memory vault sessions | Won't work with multiple workers | Move to Redis |
-| In-memory rate limiting | Resets on restart | Move to Redis |
-| Docker runs as root | Security risk | Add non-root user |
-| No database backups | Data loss risk | Implement automated backups |
-
-#### P2: MEDIUM - Code Quality
-
-| Issue | Impact |
-|-------|--------|
-| POST returns 200 | Should return 201 Created |
-| Inconsistent error handling | Some use alert(), some GlobalErrorToast |
-| Missing ARIA labels | Accessibility issues |
-| Missing input validation | Potential for bad data |
+1. **Compliance-First** - 96-item business checklist (unique in market)
+2. **Fundraising Toolkit** - Cap table + data room + investor updates in one place
+3. **AI CFO** - Financial insights without needing an accountant
+4. **Security-First** - AES-256-GCM encryption, audit logging, IDOR-protected
 
 ---
 
-## Completed Features
+## Current Status
 
-### Core Infrastructure
-- [x] Multi-tenant architecture with Organization model
-- [x] User authentication (email/password)
-- [x] Role-based access control (admin, editor, viewer)
-- [x] JWT token authentication with refresh tokens
-- [x] AES-256-GCM encryption for sensitive data
-- [x] Rate limiting and security headers
-
-### Public Marketing Site
-- [x] Home page with hero section
-- [x] Features page
-- [x] Pricing page (3 tiers: Starter, Professional, Enterprise)
-- [x] About page
-- [x] Signup page
-- [x] Public/protected route separation (`/` vs `/app`)
-
-### OAuth Authentication
-- [x] Google OAuth integration (backend + frontend)
-- [x] GitHub OAuth integration (backend + frontend)
-- [x] OAuth credentials configured
-- [x] Login page with OAuth buttons
-- [x] Password visibility toggle
-- [x] Browser password manager integration (autocomplete attributes)
-
-### Business Management
-- [x] Dashboard with daily brief
-- [x] Business Library (company info, identifiers)
-- [x] Getting Started checklist (98 items, 11 categories)
-- [x] Documents with secure upload/download
-- [x] Contacts management (extended fields: phone, location, social, birthday, tags)
-- [x] Deadlines tracking
-- [x] Credential Vault (encrypted, standalone page)
-- [x] Services/Products tracking
-- [x] Web Links bookmarks
-- [x] Web Presence management
-- [x] Banking information (Finance page)
-- [x] Tasks/Kanban board
-
-### Analytics & Metrics
-- [x] Metrics tracking page
-- [x] Analytics dashboard with charts
-- [x] Financial health KPIs (MRR, ARR, burn rate, runway)
-- [x] Customer health KPIs (customers, churn, LTV, CAC)
-- [x] Goal setting and tracking
-- [x] Period comparison (7d, 30d, 90d, 1y)
-
-### Branding & Marketing
-- [x] Branding page (colors, fonts, assets, guidelines)
-- [x] Marketing page (email templates, campaigns)
-- [x] Social media content preview
-- [x] Mailchimp API integration
-- [x] 9 document templates (NDA, contracts, policies)
-
-### Asset Optimization
-- [x] Image optimization pipeline (WebP conversion)
-- [x] Metadata stripping
-- [x] Responsive image sizing
-
-### UI/UX Improvements (2026-01-17)
-- [x] Sidebar reorganization (4 color-coded sections)
-- [x] Collapsible navigation sections with localStorage persistence
-- [x] Section hover colors matching section theme
-- [x] Privacy policy page (/privacy)
-- [x] Terms of service page (/terms)
-- [x] Security practices page (/security)
-- [x] Login page reorganization (email/password first, OAuth below)
-
-### CI/CD Improvements (2026-01-17)
-- [x] Robust .env protection in GitHub Actions
-- [x] Automatic .env backup to ~/.env.made4founders.backup
-- [x] Auto-restore from backup on deploy failure
-- [x] Critical OAuth env var validation before deploy
-- [x] Deploy abort on missing environment variables
+| Area | Status |
+|------|--------|
+| Core Features | Complete |
+| Security | Complete (143 tests passing) |
+| OAuth (5 providers) | Complete |
+| Social Posting | Complete |
+| Production Ready | Yes |
 
 ---
 
-## In Progress
+## Phase 1: Real Integrations (Current Priority)
 
-### Phase 0: Security Fixes (BLOCKING)
-- [ ] Add authentication to all unprotected endpoints (40+)
-- [ ] Add non-root user to Dockerfiles
-- [ ] Implement database backup strategy
-- [ ] Move vault sessions to Redis
-- [ ] Move rate limiting to Redis
+> **Goal:** Connect to the tools founders actually use
 
-### Phase 1: OAuth Frontend Integration - COMPLETED
-- [x] Add Google/GitHub login buttons to Login page
-- [x] Add Google/GitHub signup buttons to Signup page
-- [x] OAuth error handling and loading states
-- [x] "Continue with" social buttons styling
+| Integration | Purpose | Priority | Status |
+|-------------|---------|----------|--------|
+| **Plaid** | Real-time bank balances, transactions | P0 | Complete |
+| **Stripe** | Revenue metrics, MRR/ARR auto-populated | P0 | Complete |
+| **Google Calendar** | Deadlines/meetings sync both ways | P1 | Complete |
+| **Slack** | Notifications, daily digest | P1 | Complete |
+| **Gmail/Outlook** | Email tracking with contacts | P2 | Not Started |
+| **DocuSign** | Document signing workflow | P2 | Not Started |
+| **QuickBooks** | Accounting sync | P2 | Started (OAuth done) |
+| **Xero** | Accounting sync | P2 | Started (OAuth done) |
 
-### Phase 2: Stripe Checkout Integration
-- [ ] Wire up Stripe checkout on Pricing page
-- [ ] Create checkout session from frontend
-- [ ] Handle successful payment redirect
-- [ ] Subscription status display in app
+### Plaid Integration Details (Complete)
+- [x] Link bank accounts via Plaid Link
+- [x] Sync daily balances automatically
+- [x] Categorize transactions
+- [x] Calculate runway from burn rate
+- [x] Financial Dashboard with cash position
+- [x] Burn rate trending (improving/stable/declining)
 
-### Phase 3: Social Media OAuth
-- [x] Twitter/X OAuth integration (login + posting)
-- [x] Facebook OAuth integration (login + posting)
-- [ ] Instagram OAuth integration
-- [x] LinkedIn OAuth integration (login + posting)
-- [ ] Social account connection UI in Marketing page
-- [ ] OAuth account linking (allow linking new OAuth to existing account)
+### Stripe Integration Details (Complete)
+- [x] Connect Stripe account via OAuth (read-only)
+- [x] Pull subscription data
+- [x] Calculate MRR, ARR, churn rate
+- [x] Revenue dashboard with charts
+- [x] Subscription breakdown by plan
+- [x] Top customers by revenue
+- [x] Month-over-month growth tracking
 
----
+### Google Calendar Integration Details (Complete)
+- [x] Google Calendar OAuth with calendar scopes
+- [x] Two-way sync for deadlines and meetings
+- [x] Calendar selection (choose which calendar)
+- [x] Sync settings (toggle deadline/meeting sync)
+- [x] View upcoming events from calendar
+- [x] Push individual items to calendar
 
-## Still Needed
-
-### High Priority
-- [ ] **Tutorial/Onboarding for New Users** - Interactive walkthrough for first-time users
-  - Welcome modal explaining key features
-  - Step-by-step guided tour of the dashboard
-  - Checklist of recommended first actions
-  - Skip option for experienced users
-- [ ] **OAuth Account Linking** - When user logs in with OAuth for first time:
-  - Option to link to existing account (if email doesn't match)
-  - Prompt: "Link to existing account?" vs "Create new account"
-  - Support linking multiple OAuth providers to one account
-
----
-
-## Future Enhancements
-
-### Phase 4: Notifications & Automation
-- [ ] Email notifications for deadline reminders
-- [ ] Webhook integrations
-- [ ] Automated email campaigns via Mailchimp
-- [ ] Slack/Discord notifications
-
-### Phase 5: Mobile & UX
-- [ ] Mobile responsive improvements
-- [ ] Progressive Web App (PWA) enhancements
-- [ ] Dark/light theme toggle
-- [ ] Keyboard shortcuts
-
-### Phase 6: Security & Compliance
-- [ ] Two-factor authentication (TOTP)
-- [ ] Audit log viewer
-- [ ] Data export (GDPR compliance)
-- [ ] Session management UI
-
-### Phase 7: Advanced Features
-- [ ] Team collaboration features
-- [ ] API key management for integrations
-- [ ] Custom domain support
-- [ ] White-label options
+### Slack Integration Details (Complete)
+- [x] Slack OAuth with workspace connection
+- [x] Channel selection for notifications
+- [x] Deadline alerts with due date reminders
+- [x] Task update notifications
+- [x] Metric change alerts
+- [x] Daily digest with configurable time
+- [x] Test message functionality
+- [x] Block Kit rich message formatting
 
 ---
 
-## Bugs Fixed (2026-01-17)
+## Phase 2: Financial Dashboard (Mercury/Brex Competitor)
 
-- [x] Credential vault custom_fields update error (dict vs model_dump)
-- [x] SQLAlchemy Date import missing in models.py
-- [x] OAuth env vars lost on Docker restart (now uses --env-file)
-- [x] Users without organizations causing 403 on marketing endpoints
-- [x] Browser not prompting to save passwords (added autocomplete attributes)
-- [x] Dynamic Tailwind hover classes not working (using explicit class names)
+> **Goal:** Replace spreadsheets for financial tracking
 
----
-
-## Technical Debt
-
-- [ ] Add comprehensive test coverage
-- [ ] API documentation (OpenAPI/Swagger)
-- [ ] Performance optimization audit
-- [ ] Database migration system
-- [ ] Standardize frontend error handling
-- [ ] Add ARIA labels for accessibility
-- [ ] Fix HTTP status codes (POST -> 201, DELETE -> 204)
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Real-time cash position | Aggregate from all linked accounts | P0 | Complete |
+| Runway calculator | Months of runway with burn rate | P0 | Complete |
+| Burn rate trending | 3/6/12 month burn trends | P0 | Complete |
+| Budget vs. actuals | Monthly comparison view | P1 | Not Started |
+| Invoice generation | Simple invoicing with templates | P1 | Not Started |
+| Expense categorization | Auto-categorize transactions | P2 | Complete |
+| MRR/ARR dashboard | Revenue metrics from Stripe | P0 | Complete |
+| Financial alerts | Runway < 6 months warning | P1 | Complete (UI only) |
 
 ---
 
-## Email Configuration Required
+## Phase 3: Investor Relations (Carta-lite)
 
-- [ ] `support@made4founders.com` - Customer support
-- [ ] `notifications@made4founders.com` - System notifications
+> **Goal:** Fundraising toolkit for seed-stage startups
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Cap table management | Shareholders, options, SAFEs | P0 | Complete |
+| Investor updates | Email reports with metrics | P0 | Not Started |
+| Data room | Secure doc sharing for fundraising | P1 | Not Started |
+| 409A valuation tracking | Annual valuations log | P2 | Not Started |
+| Dilution calculator | Scenario modeling for raises | P1 | Complete |
+| SAFE/Note tracking | Convertible instruments | P1 | Complete |
+| Investor CRM | Track investor relationships | P2 | Not Started |
+
+### Cap Table Details (Complete)
+- [x] Shareholder management (founders, investors, employees, advisors)
+- [x] Share class definitions (common, preferred with full terms)
+- [x] Equity grants with vesting schedules
+- [x] Stock options (ISO/NSO) with exercise tracking
+- [x] SAFE notes (post-money, pre-money, MFN)
+- [x] Convertible notes with interest accrual
+- [x] Funding round tracking
+- [x] Cap table summary with ownership breakdown
+- [x] Dilution modeling for new funding scenarios
+- [x] Vesting calculation (standard 4y/1y cliff, custom)
 
 ---
 
-## Deployment
+## Phase 4: Team Management (Gusto-lite)
 
-| Environment | URL | Status |
-|-------------|-----|--------|
-| Production | https://made4founders.com | Active |
-| Staging | - | Not configured |
-| Local | http://localhost:5173 | Development |
+> **Goal:** Basic HR for teams under 10 people
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Employee directory | With org chart | P1 | Not Started |
+| Equity tracker | Options vesting schedules | P0 | Not Started |
+| PTO tracking | Simple leave management | P2 | Not Started |
+| Onboarding checklists | Per-role templates | P2 | Not Started |
+| Contractor management | 1099 tracking | P2 | Not Started |
+| Offer letter templates | Standard offer docs | P2 | Not Started |
+
+---
+
+## Phase 5: AI Features
+
+> **Goal:** AI CFO - financial insights without an accountant
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| AI business assistant | "How's my runway?" natural language | P0 | Not Started |
+| Document summarization | Auto-summarize uploaded docs | P1 | Not Started |
+| Smart deadline extraction | Parse dates from documents | P2 | Not Started |
+| Competitor monitoring | Track competitor news/changes | P2 | Not Started |
+| Meeting action items | Extract from transcripts | P1 | Started |
+| Financial insights | "Your burn rate increased 20%" | P0 | Not Started |
+| Anomaly detection | Flag unusual transactions | P1 | Not Started |
+
+---
+
+## Phase 6: Collaboration
+
+> **Goal:** Enable founder + 1-2 team members to work together
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Comments everywhere | On any entity | P1 | Not Started |
+| @mentions | With notifications | P1 | Not Started |
+| Activity feed | Per-entity history | P2 | Not Started |
+| Guest access | Investors, advisors, lawyers | P0 | Not Started |
+| Real-time presence | Who's viewing what | P3 | Not Started |
+| Shared workspaces | Multiple organizations | P2 | Not Started |
+
+---
+
+## Phase 7: Mobile & Reporting
+
+> **Goal:** Access on the go, professional reports
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Native mobile apps | iOS/Android or PWA | P1 | Not Started |
+| Push notifications | Deadline reminders | P1 | Not Started |
+| Investor report builder | Template-based | P0 | Not Started |
+| Board deck generator | Auto-generate from metrics | P1 | Not Started |
+| Custom dashboards | Drag-and-drop widgets | P2 | Not Started |
+| PDF export everything | Professional formatting | P1 | Not Started |
+
+---
+
+## Phase 8: Notifications & 2FA
+
+> **Goal:** Keep founders informed and secure
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Email digests | Daily/weekly summaries | Complete | Done |
+| Deadline reminders | Email + push | P1 | Partial |
+| Metric alerts | Runway < 6 months warning | P1 | Not Started |
+| TOTP 2FA | Google Authenticator | P0 | Not Started |
+| SMS backup | For 2FA recovery | P2 | Not Started |
+| Recovery codes | Backup access | P1 | Not Started |
+
+---
+
+## Technical Debt (After Phase 2)
+
+| Item | Description | Priority |
+|------|-------------|----------|
+| `datetime.utcnow()` deprecation | Migrate to `datetime.now(UTC)` | High |
+| Pydantic v2 migration | `Config` → `ConfigDict` | High |
+| SQLAlchemy 2.0 migration | `declarative_base()` warning | Medium |
+| React component testing | Jest/Vitest test coverage | Medium |
+| API documentation | OpenAPI examples, better descriptions | Medium |
+
+---
+
+## Completed (Security Milestone)
+
+### 2026-01-25: Security Hardening Complete
+- [x] Fixed 35 IDOR vulnerabilities
+- [x] 143 security tests passing
+- [x] XSS prevention (DOMPurify)
+- [x] Rate limiter bypass fixed
+- [x] OAuth state expiration
+- [x] Timing attack prevention
+- [x] API key encryption
+- [x] CSP hardening
+- [x] Security scanning infrastructure
+
+### Previously Completed
+- [x] Core features (Dashboard, Tasks, Metrics, Contacts, etc.)
+- [x] OAuth (Google, GitHub, LinkedIn, Twitter, Facebook)
+- [x] Social posting (LinkedIn, Twitter, Facebook)
+- [x] Credential Vault (AES-256-GCM)
+- [x] Business Checklist (96 items)
+- [x] Meeting Transcripts
+- [x] Gamification (XP, achievements)
+- [x] Mobile responsive layout
+- [x] Email notifications
+- [x] Audit logging
 
 ---
 
 ## Tech Stack
 
-**Frontend:** React 18, TypeScript, Vite, TailwindCSS
-**Backend:** Python FastAPI, SQLAlchemy, SQLite
-**Auth:** JWT, OAuth 2.0 (Google, GitHub)
-**Payments:** Stripe
-**Email:** Mailchimp, Resend
-**Deployment:** Docker, AWS Lightsail, GitHub Actions
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18, TypeScript, Vite, TailwindCSS |
+| Backend | Python FastAPI, SQLAlchemy, SQLite |
+| Auth | JWT HS512, OAuth 2.0 (5 providers) |
+| Encryption | AES-256-GCM, Argon2id, BCrypt |
+| Payments | Stripe (planned) |
+| Banking | Plaid (planned) |
+| Deployment | Docker, AWS Lightsail, GitHub Actions |
 
 ---
 
-*This roadmap is updated as features are completed.*
+## Competitive Landscape
+
+| Competitor | Their Focus | Our Advantage |
+|------------|-------------|---------------|
+| Notion | General docs/wiki | Purpose-built for founders |
+| Monday.com | Team project management | Solo founder optimized |
+| Carta | Cap table only | Full command center |
+| Mercury | Banking only | All-in-one platform |
+| Gusto | HR/Payroll only | Integrated with financials |
+
+---
+
+*This roadmap reflects current priorities. Updated as we complete phases.*

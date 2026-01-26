@@ -60,7 +60,7 @@ const featureCategories = [
         icon: ListChecks,
         image: checklistIcon,
         title: 'Smart Compliance Checklist',
-        description: '98 items across 11 categories including entity formation, federal requirements, government contracting, state & local, corporate governance, banking, and more. Never miss a deadline.',
+        description: '96 items across 11 categories including entity formation, federal requirements, government contracting, state & local, corporate governance, banking, and more. Never miss a deadline.',
       },
       {
         icon: Calendar,

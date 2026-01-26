@@ -214,7 +214,7 @@ class DataContextBuilder:
         ).all()
 
         completed_items = sum(1 for p in progress if p.is_completed)
-        total_items = len(progress) if progress else 98  # Default checklist has 98 items
+        total_items = 96  # Fixed total - matches frontend checklist items
 
         return {
             "upcoming_deadlines": [

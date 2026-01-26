@@ -34,7 +34,7 @@ const features = [
     icon: CheckCircle,
     image: checklistIcon,
     title: 'Smart Checklist',
-    description: '98 compliance items across 11 categories. Never miss a filing deadline.',
+    description: '96 compliance items across 11 categories. Never miss a filing deadline.',
   },
   {
     icon: Lock,
