@@ -213,7 +213,7 @@ class DataContextBuilder:
             ChecklistProgress.organization_id == self.organization_id
         ).all()
 
-        completed_items = sum(1 for p in progress if p.is_complete)
+        completed_items = sum(1 for p in progress if p.is_completed)
         total_items = len(progress) if progress else 98  # Default checklist has 98 items
 
         return {
