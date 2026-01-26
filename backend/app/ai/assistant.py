@@ -86,7 +86,7 @@ class BusinessAssistant:
                 "data_cards": [],
                 "suggested_actions": [],
                 "tokens_used": 0,
-                "model": self.client.model,
+                "model": response.model or "unknown",
                 "intent": intent
             }
 
