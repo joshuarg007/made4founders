@@ -78,6 +78,10 @@ from .budget import router as budget_router
 from .invoicing import router as invoicing_router
 from .team import router as team_router
 from .ai_router import router as ai_router
+from .comments import router as comments_router
+from .notifications_api import router as inapp_notifications_router
+from .activity import router as activity_router
+from .guest_access import router as guest_router, public_router as guest_public_router
 from .schemas import (
     ServiceCreate, ServiceUpdate, ServiceResponse,
     DocumentCreate, DocumentUpdate, DocumentResponse,
@@ -445,6 +449,11 @@ app.include_router(budget_router)
 app.include_router(invoicing_router)
 app.include_router(team_router)
 app.include_router(ai_router)
+app.include_router(comments_router)
+app.include_router(inapp_notifications_router)
+app.include_router(activity_router)
+app.include_router(guest_router)
+app.include_router(guest_public_router)
 
 # Startup validation
 @app.on_event("startup")

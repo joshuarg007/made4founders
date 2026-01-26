@@ -11,10 +11,12 @@ import {
   AlertTriangle,
   Upload,
   Lock,
-  X
+  X,
+  MessageCircle,
 } from 'lucide-react';
 import { getDocuments, createDocument, updateDocument, deleteDocument, type Document } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import CommentsSection from '../components/CommentsSection';
 import { format, isBefore, addDays } from 'date-fns';
 import ResizableModal from '../components/ResizableModal';
 
@@ -40,6 +42,7 @@ export default function Documents() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     category: 'other',
@@ -401,25 +404,33 @@ export default function Documents() {
               )}
 
               <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                {canEdit && (
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleEdit(doc)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
-                      title="Edit"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(doc.id)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-                {!canEdit && <div />}
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setSelectedDocument(doc)}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-white/10 transition"
+                    title="View details & comments"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                  </button>
+                  {canEdit && (
+                    <>
+                      <button
+                        onClick={() => handleEdit(doc)}
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                        title="Edit"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+                </div>
 
                 {/* Re-upload button for missing files */}
                 {doc.file_path && doc.file_exists === false && canEdit && (
@@ -690,6 +701,105 @@ export default function Documents() {
               </div>
             </form>
       </ResizableModal>
+
+      {/* Detail Modal with Comments */}
+      {selectedDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileText className="w-8 h-8 text-violet-400" />
+                <div>
+                  <h2 className="text-lg font-bold text-white">{selectedDocument.name}</h2>
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <span className="capitalize">{selectedDocument.category}</span>
+                    {selectedDocument.is_sensitive && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-xs">
+                        <Lock className="w-3 h-3" />
+                        Sensitive
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDocument(null)}
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {selectedDocument.description && (
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <h3 className="text-sm font-medium text-gray-400 mb-1">Description</h3>
+                  <p className="text-white">{selectedDocument.description}</p>
+                </div>
+              )}
+
+              {selectedDocument.expiration_date && (
+                <div className="text-sm text-gray-400">
+                  <span className="font-medium">Expires:</span>{' '}
+                  {format(new Date(selectedDocument.expiration_date), 'MMMM d, yyyy')}
+                </div>
+              )}
+
+              {selectedDocument.tags && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedDocument.tags.split(',').map((tag, i) => (
+                    <span key={i} className="px-2 py-1 rounded text-xs bg-white/10 text-gray-300">
+                      {tag.trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Comments Section */}
+              <CommentsSection
+                entityType="document"
+                entityId={selectedDocument.id}
+                maxHeight="300px"
+              />
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-white/10 flex justify-between">
+              <div className="flex gap-2">
+                {selectedDocument.file_path && selectedDocument.file_exists !== false && (
+                  <a
+                    href={`${API_BASE}/documents/${selectedDocument.id}/download`}
+                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </a>
+                )}
+                {canEdit && (
+                  <button
+                    onClick={() => {
+                      handleEdit(selectedDocument);
+                      setSelectedDocument(null);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition flex items-center gap-2"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedDocument(null)}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

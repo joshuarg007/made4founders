@@ -36,12 +36,16 @@ import {
   Network,
   Palmtree,
   ClipboardList,
+  Activity,
+  Bell,
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AssistantProvider } from '../context/AssistantContext';
 import Tutorial from './Tutorial';
 import SupportWidget from './SupportWidget';
 import { AssistantWidget } from './AIAssistant';
+import NotificationBell from './NotificationBell';
 import { usePageTracking } from '../hooks/useAnalytics';
 
 interface NavItem {
@@ -81,6 +85,8 @@ const navSections: NavSection[] = [
       { to: '/app/getting-started', icon: ClipboardCheck, label: 'To-Do' },
       { to: '/app/daily-brief', icon: ListTodo, label: 'Today' },
       { to: '/app/tasks', icon: Calendar, label: 'Calendar' },
+      { to: '/app/activity', icon: Activity, label: 'Activity' },
+      { to: '/app/notifications', icon: Bell, label: 'Notifications' },
       { to: '/app/integrations', icon: Plug, label: 'Integrations' },
       { to: '/app/vault', icon: Shield, label: 'Vault' },
     ],
@@ -140,6 +146,7 @@ const navSections: NavSection[] = [
       { to: '/app/cap-table', icon: PieChart, label: 'Cap Table' },
       { to: '/app/investor-updates', icon: Mail, label: 'Investor Updates' },
       { to: '/app/data-room', icon: FolderLock, label: 'Data Room' },
+      { to: '/app/guests', icon: UserPlus, label: 'Guest Access' },
       { to: '/app/budget', icon: Calculator, label: 'Budget' },
       { to: '/app/invoices', icon: Receipt, label: 'Invoices' },
       { to: '/app/finance', icon: Landmark, label: 'Accounts' },
@@ -235,12 +242,15 @@ function LayoutContent() {
           <img src="/logo.webp" alt="Made4Founders" className="h-8 w-auto" />
           <span className="text-sm font-bold text-white">M4F</span>
         </Link>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-lg bg-white/5 text-white hover:bg-white/10 transition"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-lg bg-white/5 text-white hover:bg-white/10 transition"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Backdrop */}
@@ -346,6 +356,9 @@ function LayoutContent() {
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-[#1a1d24] border-t border-white/10 space-y-2">
           {user && (
             <>
+              <div className="hidden md:flex items-center justify-center gap-2 pb-1">
+                <NotificationBell />
+              </div>
               <div className="text-xs text-gray-400 truncate text-center px-2">{user.email}</div>
               <NavLink
                 to="/app/settings"

@@ -4097,6 +4097,8 @@ export interface GuestUser {
   last_accessed_at: string | null;
   invited_at: string;
   invite_url: string | null;
+  token_expires_at: string | null;
+  created_at: string;
 }
 
 export const getGuestUsers = (params?: { guest_type?: string; is_active?: boolean }) => {
@@ -4134,6 +4136,8 @@ export const updateGuestUser = (id: number, data: {
 
 export const revokeGuestAccess = (id: number) =>
   fetchApi<{ ok: boolean }>(`/guests/${id}`, { method: 'DELETE' });
+
+export const deleteGuestUser = revokeGuestAccess;
 
 export const resendGuestInvite = (id: number) =>
   fetchApi<{ ok: boolean; expires_at: string }>(`/guests/${id}/resend-invite`, { method: 'POST' });
