@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import * as Sentry from '@sentry/react'
 import { AuthProvider } from './context/AuthContext'
 import { BusinessProvider } from './context/BusinessContext'
+import { ThemeProvider } from './context/ThemeContext'
 import './index.css'
 import App from './App'
 
@@ -32,11 +33,13 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
-        <AuthProvider>
-          <BusinessProvider>
-            <App />
-          </BusinessProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <BusinessProvider>
+              <App />
+            </BusinessProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </HelmetProvider>
   </StrictMode>,
