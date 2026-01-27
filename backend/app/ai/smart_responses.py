@@ -120,8 +120,8 @@ QUESTION_PATTERNS = {
     r"(overdue|late|missed|past.?due)": "handle_overdue",
     r"(tax|taxes|filing|irs|state)": "handle_tax_deadlines",
     r"(compliance|regulatory|legal).*(status|check|item)": "handle_compliance",
-    r"(checklist|getting.?started|setup|to.?do.?list|todo.?list)": "handle_checklist",
-    r"(what.*left|what.*remaining).*(to.?do|todo|list)": "handle_checklist",
+    r"(checklist|getting.?started|setup|compliance.?list|business.?setup)": "handle_checklist",
+    r"(what.*left|what.*remaining).*(checklist|compliance|setup)": "handle_checklist",
 
     # -------------------------------------------------------------------------
     # BUDGET
@@ -134,11 +134,17 @@ QUESTION_PATTERNS = {
     # -------------------------------------------------------------------------
     # TASKS & PRODUCTIVITY (before team to catch "how many tasks")
     # -------------------------------------------------------------------------
-    r"(task|tasks|action.?item)": "handle_tasks",
-    r"(how many|what).*(task|tasks)": "handle_tasks",
-    r"(what|anything).*(need|should|must).*(do|done|complete)": "handle_tasks",
+    r"(task|tasks|kanban|action.?item|my.?work|assigned.?to.?me|working.?on)": "handle_tasks",
+    r"(how many|what|which).*(task|tasks)": "handle_tasks",
     r"(overdue|late|pending).*(task|item)": "handle_tasks",
     r"(priority|priorities|urgent|important)": "handle_priorities",
+
+    # -------------------------------------------------------------------------
+    # AMBIGUOUS - show both tasks AND checklist
+    # -------------------------------------------------------------------------
+    r"(what|anything).*(need|should|must).*(do|done|complete|finish)": "handle_work_overview",
+    r"(what|anything).*(to.?do|todo)(?!.*list)": "handle_work_overview",
+    r"(what).*(left|remaining|pending)$": "handle_work_overview",
 
     # -------------------------------------------------------------------------
     # TEAM & HR
@@ -1326,7 +1332,7 @@ def handle_overdue(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 
 
 def handle_checklist(db: Session, org_id: int, message: str) -> Dict[str, Any]:
-    """Handle checklist/getting started questions."""
+    """Handle checklist/getting started questions (96-item compliance checklist)."""
     from ..models import ChecklistProgress
 
     progress = db.query(ChecklistProgress).filter(
@@ -1335,32 +1341,37 @@ def handle_checklist(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 
     completed = sum(1 for p in progress if p.is_completed)
     total = 96  # Fixed total - matches frontend checklist items
+    remaining = total - completed
     percentage = (completed / total * 100) if total > 0 else 0
 
-    # Progress bar
+    # Progress bar with better characters
     filled = int(percentage / 10)
-    bar = "█" * filled + "░" * (10 - filled)
+    bar = "●" * filled + "○" * (10 - filled)
 
     if percentage >= 90:
-        status = "🏆 **Almost there!** Just a few items left."
+        status = "Almost there! Just a few items left."
+        icon = "🏆"
     elif percentage >= 70:
-        status = "💪 **Great progress!** Keep going."
+        status = "Great progress! Keep going."
+        icon = "📈"
     elif percentage >= 50:
-        status = "📈 **Halfway there!** You're making good progress."
+        status = "Halfway there!"
+        icon = "↗"
     elif percentage >= 25:
-        status = "🚀 **Good start!** Keep checking off items."
+        status = "Good start! Keep checking off items."
+        icon = "→"
     else:
-        status = "👋 **Just getting started.** Take it one step at a time."
+        status = "Just getting started."
+        icon = "○"
 
-    response = f"""**Business Checklist Progress** ✅
+    response = f"""**Business Checklist** (Compliance & Setup)
 
-[{bar}] **{percentage:.0f}%**
+{bar}  **{percentage:.0f}%**
 
-• Completed: {completed} / {total} items
+   ✓  Completed: {completed}
+   ○  Remaining: {remaining}
 
-{status}
-
-The checklist covers essential startup compliance, legal setup, and operational best practices."""
+{icon} {status}"""
 
     data_cards = [
         {"type": "metric", "title": "Progress", "value": f"{percentage:.0f}%", "trend": "up" if percentage > 50 else "stable"},
@@ -1574,7 +1585,7 @@ def handle_pto(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 
 
 def handle_tasks(db: Session, org_id: int, message: str) -> Dict[str, Any]:
-    """Handle task questions."""
+    """Handle task questions (kanban board tasks)."""
     from ..models import Task, TaskBoard
 
     # Tasks don't have organization_id directly - join through TaskBoard
@@ -1586,31 +1597,31 @@ def handle_tasks(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     high_priority = [t for t in tasks if t.priority == 'high']
     overdue = [t for t in tasks if t.due_date and t.due_date < datetime.utcnow()]
     in_progress = [t for t in tasks if t.status == 'in_progress']
-    todo = [t for t in tasks if t.status == 'todo']
+    not_started = [t for t in tasks if t.status == 'todo']
 
-    parts = ["**Task Overview** ✅\n"]
+    parts = ["**Your Tasks** (Kanban Board)\n"]
     data_cards = []
 
     if overdue:
-        parts.append(f"🚨 **{len(overdue)} Overdue Tasks:**")
+        parts.append(f"⏰ **{len(overdue)} Overdue:**")
         for t in overdue[:3]:
-            parts.append(f"• {t.title}")
+            parts.append(f"   › {t.title}")
         parts.append("")
         data_cards.append({"type": "alert", "title": "Overdue", "value": str(len(overdue)), "trend": "down"})
 
     if high_priority:
-        parts.append(f"🔴 **{len(high_priority)} High Priority:**")
+        parts.append(f"🎯 **{len(high_priority)} High Priority:**")
         for t in high_priority[:3]:
-            parts.append(f"• {t.title}")
+            parts.append(f"   › {t.title}")
         parts.append("")
 
-    parts.append(f"""**Summary:**
-• 📋 To Do: {len(todo)}
-• 🔄 In Progress: {len(in_progress)}
-• ⚠️ Overdue: {len(overdue)}""")
+    parts.append(f"""**Status:**
+   ○  Not Started: {len(not_started)}
+   ◐  In Progress: {len(in_progress)}
+   ⏰ Overdue: {len(overdue)}""")
 
     if not tasks:
-        parts = ["**No Open Tasks** ✅\n\nYou're all caught up! Add tasks in the **Calendar** page."]
+        parts = ["**All Clear!** ✓\n\nNo open tasks. Create tasks in **Calendar** to track your work."]
 
     return {
         "response": "\n".join(parts),
@@ -1619,6 +1630,64 @@ def handle_tasks(db: Session, org_id: int, message: str) -> Dict[str, Any]:
             {"label": "View Calendar", "action": "navigate", "target": "/app/tasks"},
         ],
         "intent": "tasks",
+        "source": "smart_response"
+    }
+
+
+def handle_work_overview(db: Session, org_id: int, message: str) -> Dict[str, Any]:
+    """Handle ambiguous 'what do I need to do' questions - shows BOTH tasks and checklist."""
+    from ..models import Task, TaskBoard, ChecklistProgress
+
+    # Get tasks
+    tasks = db.query(Task).join(TaskBoard).filter(
+        TaskBoard.organization_id == org_id,
+        Task.status != 'done'
+    ).all()
+
+    high_priority = [t for t in tasks if t.priority == 'high']
+    overdue_tasks = [t for t in tasks if t.due_date and t.due_date < datetime.utcnow()]
+    in_progress = [t for t in tasks if t.status == 'in_progress']
+    not_started = [t for t in tasks if t.status == 'todo']
+
+    # Get checklist progress
+    progress = db.query(ChecklistProgress).filter(
+        ChecklistProgress.organization_id == org_id
+    ).all()
+    checklist_completed = sum(1 for p in progress if p.is_completed)
+    checklist_total = 96
+    checklist_remaining = checklist_total - checklist_completed
+    checklist_pct = (checklist_completed / checklist_total * 100) if checklist_total > 0 else 0
+
+    parts = ["**What You Need To Do**\n"]
+    data_cards = []
+
+    # Tasks section
+    parts.append("━━━ **Tasks** (Your Work Items) ━━━")
+    if tasks:
+        if overdue_tasks:
+            parts.append(f"⏰ {len(overdue_tasks)} overdue")
+        if high_priority:
+            parts.append(f"🎯 {len(high_priority)} high priority")
+        parts.append(f"   ○ {len(not_started)} not started  ·  ◐ {len(in_progress)} in progress")
+    else:
+        parts.append("   ✓ All clear!")
+    parts.append("")
+
+    # Checklist section
+    bar_filled = int(checklist_pct / 10)
+    bar = "●" * bar_filled + "○" * (10 - bar_filled)
+    parts.append("━━━ **Business Checklist** (Compliance) ━━━")
+    parts.append(f"   {bar}  {checklist_pct:.0f}%")
+    parts.append(f"   {checklist_remaining} items remaining")
+
+    return {
+        "response": "\n".join(parts),
+        "data_cards": data_cards,
+        "suggested_actions": [
+            {"label": "View Tasks", "action": "navigate", "target": "/app/tasks"},
+            {"label": "View Checklist", "action": "navigate", "target": "/app/getting-started"},
+        ],
+        "intent": "work_overview",
         "source": "smart_response"
     }
 
