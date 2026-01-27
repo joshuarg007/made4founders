@@ -134,24 +134,24 @@ class BusinessAssistant:
         """Generate default suggestions based on intent."""
         suggestions_map = {
             "runway": [
-                {"label": "View financial dashboard", "action": "navigate", "target": "/app/financial-dashboard"},
-                {"label": "Check budget vs actual", "action": "query", "message": "How does my spending compare to budget?"},
+                {"label": "Cash & Runway", "action": "navigate", "target": "/app/financial-dashboard"},
+                {"label": "Check budget vs actual", "action": "query", "target": "How does my spending compare to budget?"},
             ],
             "revenue": [
-                {"label": "View revenue dashboard", "action": "navigate", "target": "/app/revenue"},
-                {"label": "Check churn rate", "action": "query", "message": "What's my current churn rate?"},
+                {"label": "Revenue (MRR)", "action": "navigate", "target": "/app/revenue"},
+                {"label": "Check churn rate", "action": "query", "target": "What's my current churn rate?"},
             ],
             "cap_table": [
-                {"label": "View cap table", "action": "navigate", "target": "/app/cap-table"},
-                {"label": "Model dilution", "action": "query", "message": "What would my dilution be if I raised $1M at $10M pre?"},
+                {"label": "Cap Table", "action": "navigate", "target": "/app/cap-table"},
+                {"label": "Model dilution", "action": "query", "target": "What would my dilution be if I raised $1M at $10M pre?"},
             ],
             "compliance": [
-                {"label": "View checklist", "action": "navigate", "target": "/app/getting-started"},
-                {"label": "Check deadlines", "action": "navigate", "target": "/app/deadlines"},
+                {"label": "To-Do", "action": "navigate", "target": "/app/getting-started"},
+                {"label": "Deadlines", "action": "navigate", "target": "/app/deadlines"},
             ],
             "general": [
-                {"label": "View dashboard", "action": "navigate", "target": "/app"},
-                {"label": "Check metrics", "action": "navigate", "target": "/app/insights"},
+                {"label": "Home", "action": "navigate", "target": "/app"},
+                {"label": "Analytics", "action": "navigate", "target": "/app/insights"},
             ]
         }
         return suggestions_map.get(intent, suggestions_map["general"])

@@ -543,7 +543,7 @@ Once connected, I'll automatically track your runway and alert you to any concer
         "response": response,
         "data_cards": data_cards,
         "suggested_actions": [
-            {"label": "Financial Dashboard", "action": "navigate", "target": "/app/financial-dashboard"},
+            {"label": "Cash & Runway", "action": "navigate", "target": "/app/financial-dashboard"},
             {"label": "Connect Bank", "action": "navigate", "target": "/app/integrations"},
             {"label": "View burn breakdown", "action": "query", "target": "What are my biggest expenses?"},
         ],
@@ -674,7 +674,7 @@ I need transaction data to calculate your burn rate.
         "data_cards": data_cards,
         "suggested_actions": [
             {"label": "See expense breakdown", "action": "query", "target": "What are my biggest expenses?"},
-            {"label": "Financial Dashboard", "action": "navigate", "target": "/app/financial-dashboard"},
+            {"label": "Cash & Runway", "action": "navigate", "target": "/app/financial-dashboard"},
         ],
         "intent": "burn_rate",
         "source": "smart_response"
@@ -960,7 +960,7 @@ def handle_growth(db: Session, org_id: int, message: str) -> Dict[str, Any]:
         "response": "\n".join(parts),
         "data_cards": data_cards,
         "suggested_actions": [
-            {"label": "View Insights", "action": "navigate", "target": "/app/insights"},
+            {"label": "View Analytics", "action": "navigate", "target": "/app/insights"},
         ],
         "intent": "growth",
         "source": "smart_response"
@@ -1318,7 +1318,7 @@ def handle_overdue(db: Session, org_id: int, message: str) -> Dict[str, Any]:
         "data_cards": data_cards,
         "suggested_actions": [
             {"label": "View Deadlines", "action": "navigate", "target": "/app/deadlines"},
-            {"label": "View Tasks", "action": "navigate", "target": "/app/tasks"},
+            {"label": "View Calendar", "action": "navigate", "target": "/app/tasks"},
         ],
         "intent": "overdue",
         "source": "smart_response"
@@ -1506,7 +1506,7 @@ def handle_team(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     else:
         response = """**No Team Data** 👥
 
-Add team members in the **Team** page to track:
+Add team members in the **Directory** page to track:
 • Employee directory
 • Department organization
 • PTO and time off
@@ -1517,7 +1517,7 @@ Add team members in the **Team** page to track:
         "response": response,
         "data_cards": data_cards,
         "suggested_actions": [
-            {"label": "View Team", "action": "navigate", "target": "/app/team"},
+            {"label": "View Directory", "action": "navigate", "target": "/app/team"},
             {"label": "Check PTO requests", "action": "query", "target": "Any pending PTO requests?"},
         ],
         "intent": "team",
@@ -1566,7 +1566,7 @@ def handle_pto(db: Session, org_id: int, message: str) -> Dict[str, Any]:
         "response": "\n".join(parts),
         "data_cards": data_cards,
         "suggested_actions": [
-            {"label": "View Team", "action": "navigate", "target": "/app/team"},
+            {"label": "View Directory", "action": "navigate", "target": "/app/team"},
         ],
         "intent": "pto",
         "source": "smart_response"
@@ -1610,13 +1610,13 @@ def handle_tasks(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 • ⚠️ Overdue: {len(overdue)}""")
 
     if not tasks:
-        parts = ["**No Open Tasks** ✅\n\nYou're all caught up! Add tasks in the **Tasks** page."]
+        parts = ["**No Open Tasks** ✅\n\nYou're all caught up! Add tasks in the **Calendar** page."]
 
     return {
         "response": "\n".join(parts),
         "data_cards": data_cards,
         "suggested_actions": [
-            {"label": "View Tasks", "action": "navigate", "target": "/app/tasks"},
+            {"label": "View Calendar", "action": "navigate", "target": "/app/tasks"},
         ],
         "intent": "tasks",
         "source": "smart_response"
@@ -1820,7 +1820,7 @@ def handle_profitability(db: Session, org_id: int, message: str) -> Dict[str, An
     return {
         "response": response,
         "data_cards": [],
-        "suggested_actions": [{"label": "Financial Dashboard", "action": "navigate", "target": "/app/financial-dashboard"}],
+        "suggested_actions": [{"label": "Cash & Runway", "action": "navigate", "target": "/app/financial-dashboard"}],
         "intent": "profitability",
         "source": "smart_response"
     }
@@ -1959,9 +1959,9 @@ def handle_forecast(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 def handle_hiring(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle hiring questions."""
     return {
-        "response": "Track open positions and hiring in the **Team** page.",
+        "response": "Track open positions and hiring in the **Directory** page.",
         "data_cards": [],
-        "suggested_actions": [{"label": "View Team", "action": "navigate", "target": "/app/team"}],
+        "suggested_actions": [{"label": "View Directory", "action": "navigate", "target": "/app/team"}],
         "intent": "hiring",
         "source": "smart_response"
     }
@@ -1997,7 +1997,7 @@ def handle_onboarding(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     return {
         "response": response,
         "data_cards": [],
-        "suggested_actions": [{"label": "View Team", "action": "navigate", "target": "/app/team"}],
+        "suggested_actions": [{"label": "View Directory", "action": "navigate", "target": "/app/team"}],
         "intent": "onboarding",
         "source": "smart_response"
     }
@@ -2056,7 +2056,7 @@ Manage your social media presence from one place:
 | **Facebook** | Business page posts |
 
 **How to use:**
-1. Go to **Social Hub** in the sidebar
+1. Go to **Marketing** in the sidebar
 2. Connect your social accounts
 3. Compose posts and schedule them
 4. Track engagement metrics
@@ -2070,7 +2070,7 @@ Manage your social media presence from one place:
         "response": response,
         "data_cards": [],
         "suggested_actions": [
-            {"label": "Open Social Hub", "action": "navigate", "target": "/app/social"},
+            {"label": "Open Marketing", "action": "navigate", "target": "/app/social-hub"},
             {"label": "Connect Accounts", "action": "navigate", "target": "/app/integrations"},
         ],
         "intent": "social",
@@ -2122,7 +2122,7 @@ Deadlines sync to your calendar if connected.""",
         ("task", "tasks"): {
             "response": """**How to Add a Task** ✅
 
-1. Go to **Tasks** in the sidebar
+1. Go to **Calendar** in the sidebar
 2. Click **"+ Add Task"** or use the quick add
 3. Enter title, description, due date, priority
 4. Drag tasks between columns to update status""",
@@ -2142,7 +2142,7 @@ Deadlines sync to your calendar if connected.""",
         ("metric", "metrics", "kpi"): {
             "response": """**How to Add a Metric** 📊
 
-1. Go to **Insights** in the sidebar
+1. Go to **Analytics** in the sidebar
 2. Click **"Add Metric"**
 3. Choose metric type (MRR, users, etc.)
 4. Enter value and date
@@ -2153,7 +2153,7 @@ Deadlines sync to your calendar if connected.""",
         ("employee", "team member", "hire"): {
             "response": """**How to Add a Team Member** 👥
 
-1. Go to **Team** in the sidebar
+1. Go to **Directory** in the sidebar
 2. Click **"Add Employee"**
 3. Fill in name, email, role, department
 4. Set employment type and start date""",
