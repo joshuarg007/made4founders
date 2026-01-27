@@ -13,6 +13,8 @@ import {
   Unlink,
 } from 'lucide-react';
 import api from '../lib/api';
+import CalendarSync from '../components/CalendarSync';
+import SlackIntegration from '../components/SlackIntegration';
 
 // Integration logos
 import zoomLogo from '../assets/integrations/zoom.svg';
@@ -430,6 +432,12 @@ export default function Integrations() {
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
         </button>
+      </div>
+
+      {/* Featured Integrations */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <CalendarSync />
+        <SlackIntegration />
       </div>
 
       {/* Category Filter */}

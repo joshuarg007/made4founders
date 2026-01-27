@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { usePlaidLink, type PlaidLinkOnSuccess, type PlaidLinkOptions } from 'react-plaid-link';
-import { Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { createPlaidLinkToken, exchangePlaidPublicToken } from '../lib/api';
+import { Building2, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { getPlaidStatus, createPlaidLinkToken, exchangePlaidPublicToken } from '../lib/api';
 
 interface PlaidLinkButtonProps {
   onSuccess?: () => void;
@@ -18,22 +18,35 @@ export default function PlaidLinkButton({
 }: PlaidLinkButtonProps) {
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'success' | 'error' | 'not_configured'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
+  const [plaidConfigured, setPlaidConfigured] = useState<boolean | null>(null);
 
-  // Get link token on mount
+  // Check Plaid status and get link token on mount
   useEffect(() => {
-    const getToken = async () => {
+    const init = async () => {
       try {
+        // First check if Plaid is configured
+        const statusResponse = await getPlaidStatus();
+        setPlaidConfigured(statusResponse.configured);
+
+        if (!statusResponse.configured) {
+          setStatus('not_configured');
+          return;
+        }
+
+        // If configured, get the link token
         const response = await createPlaidLinkToken();
         setLinkToken(response.link_token);
       } catch (err) {
-        console.error('Failed to create link token:', err);
-        onError?.('Failed to initialize bank connection');
+        console.error('Failed to initialize Plaid:', err);
+        // Don't show error to user if Plaid just isn't configured
+        setPlaidConfigured(false);
+        setStatus('not_configured');
       }
     };
-    getToken();
-  }, [onError]);
+    init();
+  }, []);
 
   const handleSuccess = useCallback<PlaidLinkOnSuccess>(
     async (publicToken, metadata) => {
@@ -90,6 +103,29 @@ export default function PlaidLinkButton({
       open();
     }
   };
+
+  // Show "not configured" state
+  if (status === 'not_configured' || plaidConfigured === false) {
+    return (
+      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700/50 text-gray-400 ${className}`}>
+        <AlertCircle className="w-5 h-5" />
+        <span className="text-sm">Bank sync not configured</span>
+      </div>
+    );
+  }
+
+  // Still loading status check
+  if (plaidConfigured === null) {
+    return (
+      <button
+        disabled
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed ${className}`}
+      >
+        <Loader2 className="w-5 h-5 animate-spin" />
+        <span>Loading...</span>
+      </button>
+    );
+  }
 
   const getButtonContent = () => {
     if (loading) {

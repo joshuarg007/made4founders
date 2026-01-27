@@ -62,7 +62,7 @@ const ENTITY_ROUTES: Record<string, string> = {
   deadline: '/app/deadlines',
   document: '/app/documents',
   contact: '/app/contacts',
-  metric: '/app/insights',
+  metric: '/app/analytics',
   investor_update: '/app/investor-updates',
   data_room_document: '/app/data-room',
 };

@@ -14,8 +14,11 @@ import {
   Twitter,
   MapPin,
   Clock,
-  Smartphone
+  Smartphone,
+  Eye,
+  MessageCircle,
 } from 'lucide-react';
+import CommentsSection from '../components/CommentsSection';
 import { getContacts, createContact, updateContact, deleteContact, type Contact } from '../lib/api';
 import { format } from 'date-fns';
 
@@ -598,6 +601,7 @@ export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     title: '',
@@ -990,6 +994,13 @@ export default function Contacts() {
 
               <div className="flex items-center justify-between pt-3 border-t border-white/10">
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedContact(contact)}
+                    className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-white/10 transition"
+                    title="View details"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => handleEdit(contact)}
                     className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
@@ -1484,6 +1495,136 @@ export default function Contacts() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Detail Modal */}
+      {selectedContact && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-lg">
+                  {getTypeIcon(selectedContact.contact_type)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">{selectedContact.name}</h2>
+                  <p className="text-sm text-gray-400">
+                    {selectedContact.title && `${selectedContact.title} `}
+                    {selectedContact.company && `at ${selectedContact.company}`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedContact(null)}
+                className="p-2 text-gray-500 hover:text-white rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Contact Details */}
+              <div className="grid md:grid-cols-2 gap-4">
+                {selectedContact.email && (
+                  <a href={`mailto:${selectedContact.email}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
+                    <Mail className="w-4 h-4" />
+                    {selectedContact.email}
+                  </a>
+                )}
+                {selectedContact.phone && (
+                  <a href={`tel:${selectedContact.phone}`} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
+                    <Phone className="w-4 h-4" />
+                    {selectedContact.phone}
+                  </a>
+                )}
+                {selectedContact.website && (
+                  <a href={selectedContact.website.startsWith('http') ? selectedContact.website : `https://${selectedContact.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
+                    <Globe className="w-4 h-4" />
+                    {selectedContact.website.replace(/^https?:\/\//, '')}
+                  </a>
+                )}
+                {selectedContact.linkedin_url && (
+                  <a href={selectedContact.linkedin_url.startsWith('http') ? selectedContact.linkedin_url : `https://${selectedContact.linkedin_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
+                    <Linkedin className="w-4 h-4" />
+                    LinkedIn
+                  </a>
+                )}
+                {selectedContact.twitter_handle && (
+                  <a href={`https://twitter.com/${selectedContact.twitter_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300">
+                    <Twitter className="w-4 h-4" />
+                    @{selectedContact.twitter_handle.replace('@', '')}
+                  </a>
+                )}
+                {(selectedContact.city || selectedContact.state || selectedContact.country) && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <MapPin className="w-4 h-4" />
+                    {[selectedContact.city, selectedContact.state, selectedContact.country].filter(Boolean).join(', ')}
+                  </div>
+                )}
+              </div>
+
+              {/* Responsibilities */}
+              {selectedContact.responsibilities && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-2">Responsibilities</p>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedContact.responsibilities.split(', ').map((resp, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded text-xs bg-cyan-500/10 text-cyan-400">
+                        {resp}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {selectedContact.notes && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-2">Notes</p>
+                  <p className="text-sm text-gray-400">{selectedContact.notes}</p>
+                </div>
+              )}
+
+              {/* Comments */}
+              <div className="pt-4 border-t border-white/10">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3">
+                  <MessageCircle className="w-4 h-4" />
+                  Discussion
+                </div>
+                <CommentsSection
+                  entityType="contact"
+                  entityId={selectedContact.id}
+                  maxHeight="300px"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-white/10 flex justify-between">
+              <button
+                onClick={() => {
+                  handleEdit(selectedContact);
+                  setSelectedContact(null);
+                }}
+                className="px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition flex items-center gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit Contact
+              </button>
+              {selectedContact.email && (
+                <a
+                  href={`mailto:${selectedContact.email}`}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white text-sm hover:opacity-90 transition flex items-center gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  Send Email
+                </a>
+              )}
+            </div>
           </div>
         </div>
       )}

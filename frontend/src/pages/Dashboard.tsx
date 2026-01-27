@@ -457,7 +457,7 @@ export default function Dashboard() {
                   <span className="text-xs text-gray-400 font-medium">?</span>
                 </button>
               </div>
-              <Link to="/app/insights" className="text-xs text-gray-500 hover:text-white transition">
+              <Link to="/app/analytics" className="text-xs text-gray-500 hover:text-white transition">
                 Details →
               </Link>
             </div>
@@ -691,7 +691,7 @@ export default function Dashboard() {
                   <BarChart3 className="w-5 h-5 text-emerald-400" />
                   <h3 className="font-semibold text-white">Key Metrics</h3>
                 </div>
-                <Link to="/app/insights" className="text-xs text-gray-500 hover:text-white transition">
+                <Link to="/app/analytics" className="text-xs text-gray-500 hover:text-white transition">
                   All metrics →
                 </Link>
               </div>

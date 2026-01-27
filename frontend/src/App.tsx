@@ -44,7 +44,7 @@ const Library = lazy(() => import('./pages/Library'))
 const Users = lazy(() => import('./pages/Users'))
 const Tasks = lazy(() => import('./pages/Tasks'))
 const SocialHub = lazy(() => import('./pages/SocialHub'))
-const Insights = lazy(() => import('./pages/Insights'))
+const AnalyticsPage = lazy(() => import('./pages/Insights'))
 const Offerings = lazy(() => import('./pages/Offerings'))
 const Finance = lazy(() => import('./pages/Finance'))
 const FinancialDashboard = lazy(() => import('./pages/FinancialDashboard'))
@@ -117,7 +117,7 @@ function App() {
 
           {/* New merged pages */}
           <Route path="social-hub" element={<SocialHub />} />
-          <Route path="insights" element={<Insights />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="offerings" element={<Offerings />} />
           <Route path="finance" element={<Finance />} />
           <Route path="financial-dashboard" element={<FinancialDashboard />} />
@@ -155,8 +155,8 @@ function App() {
         <Route path="/app/marketing" element={<Navigate to="/app/social-hub" replace />} />
         <Route path="/app/branding" element={<Navigate to="/app/social-hub" replace />} />
         <Route path="/app/website" element={<Navigate to="/app/social-hub" replace />} />
-        <Route path="/app/metrics" element={<Navigate to="/app/insights" replace />} />
-        <Route path="/app/analytics" element={<Navigate to="/app/insights" replace />} />
+        <Route path="/app/metrics" element={<Navigate to="/app/analytics" replace />} />
+        <Route path="/app/insights" element={<Navigate to="/app/analytics" replace />} />
         <Route path="/app/products-offered" element={<Navigate to="/app/offerings" replace />} />
         <Route path="/app/products-used" element={<Navigate to="/app/offerings" replace />} />
         <Route path="/app/services" element={<Navigate to="/app/offerings" replace />} />

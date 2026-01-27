@@ -1999,6 +1999,15 @@ export interface TransactionSummary {
 }
 
 // Plaid API functions
+export interface PlaidStatus {
+  configured: boolean;
+  environment: string | null;
+  message: string;
+}
+
+export const getPlaidStatus = () =>
+  fetchApi<PlaidStatus>('/plaid/status');
+
 export const createPlaidLinkToken = () =>
   fetchApi<PlaidLinkToken>('/plaid/link-token', { method: 'POST' });
 

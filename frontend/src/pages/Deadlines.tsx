@@ -7,10 +7,13 @@ import {
   X,
   Search,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  MessageCircle,
+  Calendar
 } from 'lucide-react';
 import { getDeadlines, createDeadline, updateDeadline, deleteDeadline, completeDeadline, type Deadline } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import CommentsSection from '../components/CommentsSection';
 import { format, isBefore, isAfter, addDays } from 'date-fns';
 
 const deadlineTypes = [
@@ -32,6 +35,7 @@ export default function Deadlines() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null);
+  const [selectedDeadline, setSelectedDeadline] = useState<Deadline | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -210,6 +214,7 @@ export default function Deadlines() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onComplete={handleComplete}
+                    onSelect={setSelectedDeadline}
                     getTypeIcon={getTypeIcon}
                     status="overdue"
                     canEdit={canEdit}
@@ -233,6 +238,7 @@ export default function Deadlines() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onComplete={handleComplete}
+                    onSelect={setSelectedDeadline}
                     getTypeIcon={getTypeIcon}
                     status={isSoon(deadline.due_date) ? 'soon' : 'normal'}
                     canEdit={canEdit}
@@ -256,6 +262,7 @@ export default function Deadlines() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onComplete={handleComplete}
+                    onSelect={setSelectedDeadline}
                     getTypeIcon={getTypeIcon}
                     status="completed"
                     canEdit={canEdit}
@@ -377,6 +384,82 @@ export default function Deadlines() {
           </div>
         </div>
       )}
+
+      {/* Detail Modal with Comments */}
+      {selectedDeadline && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{getTypeIcon(selectedDeadline.deadline_type)}</span>
+                <div>
+                  <h2 className="text-lg font-bold text-white">{selectedDeadline.title}</h2>
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <Calendar className="w-4 h-4" />
+                    <span>{format(new Date(selectedDeadline.due_date), 'MMMM d, yyyy')}</span>
+                    <span className="capitalize px-2 py-0.5 bg-white/10 rounded text-xs">
+                      {selectedDeadline.deadline_type}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDeadline(null)}
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {selectedDeadline.description && (
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <h3 className="text-sm font-medium text-gray-400 mb-1">Description</h3>
+                  <p className="text-white">{selectedDeadline.description}</p>
+                </div>
+              )}
+
+              {selectedDeadline.is_recurring && (
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Recurring every {selectedDeadline.recurrence_months} month(s)</span>
+                </div>
+              )}
+
+              {/* Comments Section */}
+              <CommentsSection
+                entityType="deadline"
+                entityId={selectedDeadline.id}
+                maxHeight="300px"
+              />
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-white/10 flex justify-end gap-2">
+              {canEdit && (
+                <button
+                  onClick={() => {
+                    handleEdit(selectedDeadline);
+                    setSelectedDeadline(null);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition flex items-center gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedDeadline(null)}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -387,6 +470,7 @@ function DeadlineCard({
   onEdit,
   onDelete,
   onComplete,
+  onSelect,
   getTypeIcon,
   status,
   canEdit
@@ -395,6 +479,7 @@ function DeadlineCard({
   onEdit: (d: Deadline) => void;
   onDelete: (id: number) => void;
   onComplete: (id: number) => void;
+  onSelect: (d: Deadline) => void;
   getTypeIcon: (type: string) => string;
   status: 'overdue' | 'soon' | 'normal' | 'completed';
   canEdit: boolean;
@@ -462,22 +547,31 @@ function DeadlineCard({
             </div>
             <div className="text-xs text-gray-500 capitalize">{deadline.deadline_type}</div>
           </div>
-          {canEdit && (
-            <div className="flex gap-1">
-              <button
-                onClick={() => onEdit(deadline)}
-                className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onDelete(deadline.id)}
-                className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <div className="flex gap-1">
+            <button
+              onClick={() => onSelect(deadline)}
+              className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-white/10 transition"
+              title="View details & comments"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </button>
+            {canEdit && (
+              <>
+                <button
+                  onClick={() => onEdit(deadline)}
+                  className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(deadline.id)}
+                  className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

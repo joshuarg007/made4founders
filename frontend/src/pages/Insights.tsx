@@ -5,21 +5,21 @@ import { BarChart3, TrendingUp } from 'lucide-react';
 import Metrics from './Metrics';
 import Analytics from './Analytics';
 
-type Tab = 'metrics' | 'analytics';
+type Tab = 'metrics' | 'insights';
 
 const tabs = [
   { id: 'metrics' as Tab, label: 'Metrics', icon: BarChart3, description: 'Track KPIs and business metrics' },
-  { id: 'analytics' as Tab, label: 'Analytics', icon: TrendingUp, description: 'Growth trends and forecasts' },
+  { id: 'insights' as Tab, label: 'Insights', icon: TrendingUp, description: 'Growth trends and forecasts' },
 ];
 
-export default function Insights() {
+export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('metrics');
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Insights</h1>
+        <h1 className="text-2xl font-bold text-white">Analytics</h1>
         <p className="text-gray-400 mt-1">Track your business metrics and analyze growth trends</p>
       </div>
 
@@ -44,7 +44,7 @@ export default function Insights() {
       {/* Tab Content */}
       <div className="-m-8">
         {activeTab === 'metrics' && <Metrics />}
-        {activeTab === 'analytics' && <Analytics />}
+        {activeTab === 'insights' && <Analytics />}
       </div>
     </div>
   );

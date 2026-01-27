@@ -124,7 +124,7 @@ const navSections: NavSection[] = [
     },
     items: [
       { to: '/app/social-hub', icon: Megaphone, label: 'Marketing' },
-      { to: '/app/insights', icon: BarChart3, label: 'Analytics' },
+      { to: '/app/analytics', icon: BarChart3, label: 'Analytics' },
       { to: '/app/marketplaces', icon: Store, label: 'Markets' },
     ],
   },
