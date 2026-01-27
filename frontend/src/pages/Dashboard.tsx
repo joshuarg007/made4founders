@@ -8,7 +8,6 @@ import {
   FileText,
   Users,
   Clock,
-  Target,
   Zap,
   Shield,
   AlertTriangle,
@@ -32,12 +31,10 @@ import { useBusiness } from '../context/BusinessContext';
 import {
   getDashboardStats,
   getDailyBrief,
-  getBusinessQuests,
   getMetrics,
   getTasks,
   type DashboardStats,
   type DailyBrief,
-  type BusinessQuest,
   type Metric,
   type Task,
 } from '../lib/api';
@@ -237,7 +234,6 @@ export default function Dashboard() {
   const { currentBusiness, refreshBusinesses } = useBusiness();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [brief, setBrief] = useState<DailyBrief | null>(null);
-  const [quests, setQuests] = useState<BusinessQuest[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -249,17 +245,15 @@ export default function Dashboard() {
     else setLoading(true);
 
     try {
-      const [statsData, briefData, questsData, metricsData, tasksData] = await Promise.all([
+      const [statsData, briefData, metricsData, tasksData] = await Promise.all([
         getDashboardStats(),
         getDailyBrief(),
-        currentBusiness ? getBusinessQuests(currentBusiness.id).catch(() => []) : Promise.resolve([]),
         getMetrics().catch(() => []),
         getTasks().catch(() => []),
       ]);
 
       setStats(statsData);
       setBrief(briefData);
-      setQuests(questsData);
       setMetrics(metricsData);
       setTasks(tasksData);
       if (isRefresh) refreshBusinesses();
@@ -308,11 +302,6 @@ export default function Dashboard() {
   const activeTasks = useMemo(() => {
     return tasks.filter(t => t.status === 'in_progress' || t.status === 'todo').slice(0, 5);
   }, [tasks]);
-
-  // Incomplete quests
-  const activeQuests = useMemo(() => {
-    return quests.filter(q => !q.is_completed).slice(0, 3);
-  }, [quests]);
 
   // Key metrics with trends
   const keyMetrics = useMemo(() => {
