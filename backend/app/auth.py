@@ -791,3 +791,33 @@ def verify_password(
     if not security.verify_password(request.password, current_user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect password")
     return {"verified": True}
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+def change_password(
+    request: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Change password for authenticated user."""
+    # Verify current password
+    if not security.verify_password(request.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+    # Validate new password
+    if len(request.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    if request.current_password == request.new_password:
+        raise HTTPException(status_code=400, detail="New password must be different from current password")
+
+    # Update password
+    current_user.hashed_password = security.get_password_hash(request.new_password)
+    db.commit()
+
+    return {"message": "Password changed successfully"}

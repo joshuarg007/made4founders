@@ -176,6 +176,17 @@ QUESTION_PATTERNS = {
     r"(social|social media|linkedin|twitter|facebook|post|posting)": "handle_social",
 
     # -------------------------------------------------------------------------
+    # SETTINGS & ACCOUNT
+    # -------------------------------------------------------------------------
+    r"(change|reset|update).*(password|my password)": "handle_how_to",
+    r"(enable|disable|setup|set up).*(mfa|2fa|two.?factor)": "handle_how_to",
+    r"(dark|light).?mode|theme|appearance": "handle_how_to",
+    r"(notification|notifications|alerts|email digest)": "handle_how_to",
+    r"(subscription|billing|upgrade|plan|payment)": "handle_how_to",
+    r"(export|download).*(data|backup)": "handle_how_to",
+    r"(settings|preferences|account settings)": "handle_how_to",
+
+    # -------------------------------------------------------------------------
     # HELP & CAPABILITIES
     # -------------------------------------------------------------------------
     r"(what can you|how can you|help|assist|capable|do for me)": "handle_help",
@@ -2253,8 +2264,8 @@ Available integrations:
 4. Add equity grants or options""",
             "target": "/app/cap-table"
         },
-        # Credential/Password
-        ("credential", "password", "login", "vault"): {
+        # Credential/Vault
+        ("credential", "login", "vault", "store password"): {
             "response": """**How to Store Credentials** 🔐
 
 1. Go to **Vault** in the sidebar
@@ -2262,6 +2273,86 @@ Available integrations:
 3. Enter service name, username, password
 4. Credentials are encrypted with AES-256""",
             "target": "/app/vault"
+        },
+        # Password Change
+        ("password", "change password", "reset password", "update password"): {
+            "response": """**How to Change Your Password** 🔑
+
+1. Go to **Settings** in the sidebar
+2. Find the **"Change Password"** section
+3. Click the **"Change Password"** button
+4. Enter your current password
+5. Enter and confirm your new password (min 8 characters)
+6. Click **"Update Password"**
+
+Your password will be updated immediately.""",
+            "target": "/app/settings"
+        },
+        # Two-Factor Authentication / MFA
+        ("mfa", "2fa", "two factor", "two-factor", "authenticator"): {
+            "response": """**How to Enable Two-Factor Authentication** 🔐
+
+1. Go to **Settings** in the sidebar
+2. Scroll to **Two-Factor Authentication** section
+3. Click **"Enable Two-Factor Authentication"**
+4. Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.)
+5. Enter the 6-digit code from your app
+6. Save your backup codes securely
+
+2FA adds an extra layer of security to your account.""",
+            "target": "/app/settings"
+        },
+        # Theme / Dark Mode / Light Mode
+        ("theme", "dark mode", "light mode", "appearance", "color scheme"): {
+            "response": """**How to Change Theme** 🎨
+
+1. Go to **Settings** in the sidebar
+2. Find the **Display** section
+3. Choose your theme:
+   - **Dark** - Dark background (default)
+   - **Light** - Light background
+   - **System** - Follows your OS preference
+
+Your theme preference is saved automatically.""",
+            "target": "/app/settings"
+        },
+        # Notifications
+        ("notification", "notifications", "alerts", "email digest"): {
+            "response": """**How to Manage Notifications** 🔔
+
+1. Go to **Settings** in the sidebar
+2. Find the **Notifications** section
+3. Toggle options:
+   - Email notifications
+   - Weekly digest
+   - Sound notifications
+
+Connect Slack in Integrations for Slack notifications.""",
+            "target": "/app/settings"
+        },
+        # Subscription / Billing / Plan
+        ("subscription", "billing", "plan", "upgrade", "payment"): {
+            "response": """**How to Manage Subscription** 💳
+
+1. Go to **Settings** in the sidebar
+2. View your current plan at the top
+3. To upgrade: Click on a higher plan
+4. To manage billing: Click **"Manage Subscription"**
+
+Available plans: Starter ($7/mo), Growth ($29/mo), Scale ($79/mo)""",
+            "target": "/app/settings"
+        },
+        # Export Data
+        ("export", "download data", "backup", "gdpr"): {
+            "response": """**How to Export Your Data** 📦
+
+1. Go to **Settings** in the sidebar
+2. Scroll to **Data & Privacy** section
+3. Click **"Export All Data"**
+4. Download the JSON file with all your data
+
+This includes all your business data, contacts, documents, and more.""",
+            "target": "/app/settings"
         },
         # Invoice
         ("invoice", "bill"): {
@@ -2302,9 +2393,13 @@ Here are common actions:
 | Manage tasks | Tasks page |
 | Store passwords | Vault page |
 | Upload files | Documents page |
+| Change password | Settings → Change Password |
+| Enable 2FA | Settings → Two-Factor Auth |
+| Change theme | Settings → Display |
 
 Ask me something more specific like:
-• "How do I add a contact?"
+• "How do I change my password?"
+• "How do I enable two-factor authentication?"
 • "How do I connect Stripe?"
 • "How do I create an invoice?" """,
         "data_cards": [],

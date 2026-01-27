@@ -48,6 +48,7 @@ import {
   verifyMFASetup,
   disableMFA,
   regenerateBackupCodes,
+  changePassword,
   getAuditLogs,
   getAuditLogStats,
   exportAuditLogs,
@@ -145,6 +146,15 @@ export default function Settings() {
   const [mfaDisableCode, setMfaDisableCode] = useState('');
   const [showMfaPassword, setShowMfaPassword] = useState(false);
   const [showBackupCodes, setShowBackupCodes] = useState(false);
+
+  // Password change state
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [passwordChanging, setPasswordChanging] = useState(false);
 
   // Audit logs state (admin only)
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
@@ -331,6 +341,36 @@ export default function Settings() {
       setError('Invalid MFA code. Please try again.');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError('Please fill in all password fields');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+    setPasswordChanging(true);
+    setError(null);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setSuccessMessage('Password changed successfully!');
+      setShowPasswordChange(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to change password';
+      setError(errorMessage);
+    } finally {
+      setPasswordChanging(false);
     }
   };
 
@@ -869,6 +909,107 @@ export default function Settings() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Change Password */}
+      <div className="p-6 rounded-2xl bg-[#13151a] border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-500/10 flex items-center justify-center">
+            <Key className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Change Password</h2>
+            <p className="text-sm text-gray-500">Update your account password</p>
+          </div>
+        </div>
+
+        {showPasswordChange ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Current Password</label>
+              <div className="relative">
+                <input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-white/10 text-white placeholder-gray-500 focus:border-amber-500/50 focus:outline-none pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">New Password</label>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 8 characters)"
+                  className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-white/10 text-white placeholder-gray-500 focus:border-amber-500/50 focus:outline-none pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Confirm New Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                className="w-full px-4 py-2.5 rounded-lg bg-[#0f1117] border border-white/10 text-white placeholder-gray-500 focus:border-amber-500/50 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleChangePassword}
+                disabled={passwordChanging}
+                className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-medium transition disabled:opacity-50"
+              >
+                {passwordChanging ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Changing...
+                  </span>
+                ) : (
+                  'Update Password'
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setShowPasswordChange(false);
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+                className="px-4 py-2.5 rounded-lg bg-[#0f1117] border border-white/10 text-gray-400 hover:text-white transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowPasswordChange(true)}
+            className="w-full py-3 px-4 rounded-lg bg-[#0f1117] border border-white/10 hover:border-amber-500/50 text-white font-medium transition flex items-center justify-center gap-2"
+          >
+            <Key className="w-5 h-5" />
+            Change Password
+          </button>
+        )}
       </div>
 
       {/* Two-Factor Authentication */}
