@@ -540,13 +540,13 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Active Quests */}
+          {/* Objectives */}
           {activeQuests.length > 0 && (
             <div className="rounded-2xl bg-[#1a1d24] border border-white/10 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-cyan-400" />
-                  <h3 className="font-semibold text-white">Active Quests</h3>
+                  <h3 className="font-semibold text-white">Objectives</h3>
                 </div>
                 <span className="text-xs text-gray-500">{activeQuests.length} in progress</span>
               </div>

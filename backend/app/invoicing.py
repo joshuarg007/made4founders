@@ -58,6 +58,92 @@ def calculate_invoice_totals(line_items: List[dict], tax_rate: float) -> dict:
 
 
 # ============================================
+# SUMMARY (must be before /{invoice_id} route)
+# ============================================
+
+@router.get("/summary", response_model=InvoiceSummary)
+def get_invoice_summary(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get invoice summary for dashboard."""
+    today = date.today()
+    first_of_month = today.replace(day=1)
+
+    # Outstanding (sent but not paid)
+    outstanding = db.query(func.sum(Invoice.total_amount - Invoice.paid_amount)).filter(
+        Invoice.organization_id == current_user.organization_id,
+        Invoice.status.in_(["sent", "viewed"])
+    ).scalar() or 0
+
+    # Overdue
+    overdue_invoices = db.query(Invoice).filter(
+        Invoice.organization_id == current_user.organization_id,
+        Invoice.status.in_(["sent", "viewed"]),
+        Invoice.due_date < today
+    ).all()
+
+    overdue_amount = sum(inv.total_amount - inv.paid_amount for inv in overdue_invoices)
+    overdue_count = len(overdue_invoices)
+
+    # Paid this month
+    paid_this_month = db.query(func.sum(InvoicePayment.amount)).join(Invoice).filter(
+        Invoice.organization_id == current_user.organization_id,
+        InvoicePayment.payment_date >= first_of_month
+    ).scalar() or 0
+
+    # Total invoice count
+    invoice_count = db.query(Invoice).filter(
+        Invoice.organization_id == current_user.organization_id
+    ).count()
+
+    # Recent invoices
+    recent = db.query(Invoice).filter(
+        Invoice.organization_id == current_user.organization_id
+    ).order_by(Invoice.created_at.desc()).limit(5).all()
+
+    recent_invoices = []
+    for inv in recent:
+        contact = inv.contact
+        recent_invoices.append({
+            "id": inv.id,
+            "organization_id": inv.organization_id,
+            "business_id": inv.business_id,
+            "contact_id": inv.contact_id,
+            "invoice_number": inv.invoice_number,
+            "issue_date": inv.issue_date,
+            "due_date": inv.due_date,
+            "subtotal": inv.subtotal,
+            "tax_rate": inv.tax_rate,
+            "tax_amount": inv.tax_amount,
+            "total_amount": inv.total_amount,
+            "status": inv.status,
+            "payment_method": inv.payment_method,
+            "paid_at": inv.paid_at,
+            "paid_amount": inv.paid_amount,
+            "notes": inv.notes,
+            "terms": inv.terms,
+            "email_sent_at": inv.email_sent_at,
+            "viewed_at": inv.viewed_at,
+            "created_by_id": inv.created_by_id,
+            "created_at": inv.created_at,
+            "updated_at": inv.updated_at,
+            "contact_name": contact.name if contact else None,
+            "contact_email": contact.email if contact else None,
+            "contact_company": contact.company if contact else None,
+        })
+
+    return {
+        "total_outstanding": outstanding,
+        "total_overdue": overdue_amount,
+        "total_paid_this_month": paid_this_month,
+        "invoice_count": invoice_count,
+        "overdue_count": overdue_count,
+        "recent_invoices": recent_invoices,
+    }
+
+
+# ============================================
 # INVOICE CRUD
 # ============================================
 
@@ -764,89 +850,3 @@ def download_invoice_pdf(
             "Content-Disposition": f'attachment; filename="invoice-{invoice.invoice_number}.html"'
         }
     )
-
-
-# ============================================
-# SUMMARY
-# ============================================
-
-@router.get("/summary", response_model=InvoiceSummary)
-def get_invoice_summary(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get invoice summary for dashboard."""
-    today = date.today()
-    first_of_month = today.replace(day=1)
-
-    # Outstanding (sent but not paid)
-    outstanding = db.query(func.sum(Invoice.total_amount - Invoice.paid_amount)).filter(
-        Invoice.organization_id == current_user.organization_id,
-        Invoice.status.in_(["sent", "viewed"])
-    ).scalar() or 0
-
-    # Overdue
-    overdue_invoices = db.query(Invoice).filter(
-        Invoice.organization_id == current_user.organization_id,
-        Invoice.status.in_(["sent", "viewed"]),
-        Invoice.due_date < today
-    ).all()
-
-    overdue_amount = sum(inv.total_amount - inv.paid_amount for inv in overdue_invoices)
-    overdue_count = len(overdue_invoices)
-
-    # Paid this month
-    paid_this_month = db.query(func.sum(InvoicePayment.amount)).join(Invoice).filter(
-        Invoice.organization_id == current_user.organization_id,
-        InvoicePayment.payment_date >= first_of_month
-    ).scalar() or 0
-
-    # Total invoice count
-    invoice_count = db.query(Invoice).filter(
-        Invoice.organization_id == current_user.organization_id
-    ).count()
-
-    # Recent invoices
-    recent = db.query(Invoice).filter(
-        Invoice.organization_id == current_user.organization_id
-    ).order_by(Invoice.created_at.desc()).limit(5).all()
-
-    recent_invoices = []
-    for inv in recent:
-        contact = inv.contact
-        recent_invoices.append({
-            "id": inv.id,
-            "organization_id": inv.organization_id,
-            "business_id": inv.business_id,
-            "contact_id": inv.contact_id,
-            "invoice_number": inv.invoice_number,
-            "issue_date": inv.issue_date,
-            "due_date": inv.due_date,
-            "subtotal": inv.subtotal,
-            "tax_rate": inv.tax_rate,
-            "tax_amount": inv.tax_amount,
-            "total_amount": inv.total_amount,
-            "status": inv.status,
-            "payment_method": inv.payment_method,
-            "paid_at": inv.paid_at,
-            "paid_amount": inv.paid_amount,
-            "notes": inv.notes,
-            "terms": inv.terms,
-            "email_sent_at": inv.email_sent_at,
-            "viewed_at": inv.viewed_at,
-            "created_by_id": inv.created_by_id,
-            "created_at": inv.created_at,
-            "updated_at": inv.updated_at,
-            "contact_name": contact.name if contact else None,
-            "contact_email": contact.email if contact else None,
-            "contact_company": contact.company if contact else None,
-        })
-
-    return {
-        "total_outstanding": outstanding,
-        "total_overdue": overdue_amount,
-        "total_paid_this_month": paid_this_month,
-        "invoice_count": invoice_count,
-        "overdue_count": overdue_count,
-        "recent_invoices": recent_invoices,
-    }
