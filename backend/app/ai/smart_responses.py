@@ -50,6 +50,8 @@ QUESTION_PATTERNS = {
     r"(revenue|income|earnings).*(trend|growth|change)": "handle_revenue",
     r"(how|what).*(revenue|mrr|arr).*(grow|growing|trend|change)": "handle_revenue",
     r"(show|tell).*(revenue|mrr|arr|sales)": "handle_revenue",
+    r"(forecast|project|predict).*(revenue|mrr|arr|sales|income)": "handle_revenue_forecast",
+    r"(next month|future).*(revenue|mrr|arr|sales)": "handle_revenue_forecast",
 
     # -------------------------------------------------------------------------
     # GROWTH & TRENDS
@@ -161,6 +163,11 @@ QUESTION_PATTERNS = {
     # -------------------------------------------------------------------------
     r"(document|documents|file|files|paperwork)": "handle_documents",
     r"(missing|need|required).*(document|file|paperwork)": "handle_documents",
+
+    # -------------------------------------------------------------------------
+    # SOCIAL MEDIA
+    # -------------------------------------------------------------------------
+    r"(social|social media|linkedin|twitter|facebook|post|posting)": "handle_social",
 
     # -------------------------------------------------------------------------
     # HELP & CAPABILITIES
@@ -828,6 +835,94 @@ Once connected, I'll track trends and alert you to changes."""
             {"label": "Check churn", "action": "query", "target": "What's my churn rate?"},
         ],
         "intent": "revenue",
+        "source": "smart_response"
+    }
+
+
+def handle_revenue_forecast(db: Session, org_id: int, message: str) -> Dict[str, Any]:
+    """Handle revenue forecast questions."""
+    from ..models import Metric, StripeSubscriptionSync
+
+    # Get current MRR from Stripe or metrics
+    active_subs = db.query(StripeSubscriptionSync).filter(
+        StripeSubscriptionSync.organization_id == org_id,
+        StripeSubscriptionSync.status == "active"
+    ).all()
+
+    stripe_mrr = sum(
+        (s.amount_cents or 0) / 100
+        for s in active_subs
+        if s.interval == 'month'
+    )
+
+    mrr_data = get_metric_with_trend(db, org_id, "mrr")
+    churn_metric = db.query(Metric).filter(
+        Metric.organization_id == org_id,
+        Metric.metric_type == "churn"
+    ).order_by(Metric.date.desc()).first()
+
+    current_mrr = stripe_mrr if stripe_mrr > 0 else (mrr_data["current"] or 0)
+    churn_rate = churn_metric.value if churn_metric else 5  # Default 5% churn assumption
+
+    if current_mrr > 0:
+        # Simple forecast: current MRR - churn + assumed growth
+        # Conservative: assume no new customers, just apply churn
+        conservative_forecast = current_mrr * (1 - churn_rate / 100)
+
+        # Calculate growth rate if we have history
+        if mrr_data["previous"] and mrr_data["current"]:
+            growth_rate = ((mrr_data["current"] - mrr_data["previous"]) / mrr_data["previous"])
+            optimistic_forecast = current_mrr * (1 + growth_rate)
+            growth_pct = growth_rate * 100
+        else:
+            # Assume modest 5% growth for optimistic
+            optimistic_forecast = current_mrr * 1.05
+            growth_pct = 5
+
+        response = f"""**Revenue Forecast** 📊
+
+**Current MRR:** {format_currency(current_mrr)}
+
+**Next Month Projections:**
+
+| Scenario | Forecast | Assumptions |
+|----------|----------|-------------|
+| 🔴 Conservative | {format_currency(conservative_forecast)} | {churn_rate}% churn, no new sales |
+| 🟡 Likely | {format_currency((conservative_forecast + optimistic_forecast) / 2)} | Average of scenarios |
+| 🟢 Optimistic | {format_currency(optimistic_forecast)} | {growth_pct:.0f}% growth continues |
+
+**Key Factors:**
+• Churn rate: {churn_rate}%{' (assumed)' if not churn_metric else ''}
+• Active subscriptions: {len(active_subs)}
+• Growth trend: {mrr_data['emoji'] if mrr_data['change'] else '➡️ Flat'}
+
+_Forecast based on current trends. Reduce churn and increase sales to beat projections._"""
+
+        data_cards = [
+            {"type": "metric", "title": "Likely Forecast", "value": format_currency((conservative_forecast + optimistic_forecast) / 2), "trend": mrr_data["trend"] or "stable"},
+        ]
+    else:
+        response = """**Revenue Forecast** 📊
+
+I need revenue data to create a forecast.
+
+**To enable forecasting:**
+1. **Connect Stripe** for automatic MRR tracking
+2. **Or** add "mrr" metrics manually in Insights
+
+Once I have at least one month of data, I can project future revenue with conservative, likely, and optimistic scenarios."""
+
+        data_cards = []
+
+    return {
+        "response": response,
+        "data_cards": data_cards,
+        "suggested_actions": [
+            {"label": "Revenue Dashboard", "action": "navigate", "target": "/app/revenue"},
+            {"label": "Connect Stripe", "action": "navigate", "target": "/app/integrations"},
+            {"label": "Current MRR", "action": "query", "target": "What's my MRR?"},
+        ],
+        "intent": "revenue_forecast",
         "source": "smart_response"
     }
 
@@ -1948,9 +2043,209 @@ View and manage documents in the **Documents** page."""
     }
 
 
+def handle_social(db: Session, org_id: int, message: str) -> Dict[str, Any]:
+    """Handle social media questions."""
+    response = """**Social Hub** 📱
+
+Manage your social media presence from one place:
+
+| Platform | Features |
+|----------|----------|
+| **LinkedIn** | Post updates, share company news |
+| **Twitter/X** | Tweet announcements, engage followers |
+| **Facebook** | Business page posts |
+
+**How to use:**
+1. Go to **Social Hub** in the sidebar
+2. Connect your social accounts
+3. Compose posts and schedule them
+4. Track engagement metrics
+
+**Tips:**
+• Draft posts and preview before publishing
+• Schedule posts for optimal times
+• Share investor updates to LinkedIn"""
+
+    return {
+        "response": response,
+        "data_cards": [],
+        "suggested_actions": [
+            {"label": "Open Social Hub", "action": "navigate", "target": "/app/social"},
+            {"label": "Connect Accounts", "action": "navigate", "target": "/app/integrations"},
+        ],
+        "intent": "social",
+        "source": "smart_response"
+    }
+
+
 def handle_how_to(db: Session, org_id: int, message: str) -> Dict[str, Any]:
-    """Handle how-to questions."""
-    return handle_help(db, org_id, message)
+    """Handle how-to questions with specific guidance."""
+    message_lower = message.lower()
+
+    # Map keywords to specific guidance
+    how_to_guides = {
+        # Business/Company
+        ("company", "business", "organization"): {
+            "response": """**How to Add a Business** 🏢
+
+1. Go to **Settings** → **Businesses**
+2. Click **"Add Business"**
+3. Fill in your company details (name, type, EIN, etc.)
+4. Click **Save**
+
+You can manage multiple businesses and switch between them from the sidebar.""",
+            "target": "/app/settings"
+        },
+        # Contacts
+        ("contact", "contacts", "person", "people"): {
+            "response": """**How to Add a Contact** 👤
+
+1. Go to **Contacts** in the sidebar
+2. Click **"Add Contact"**
+3. Fill in name, email, phone, and other details
+4. Click **Save**""",
+            "target": "/app/contacts"
+        },
+        # Deadlines
+        ("deadline", "deadlines", "due date", "reminder"): {
+            "response": """**How to Add a Deadline** 📅
+
+1. Go to **Deadlines** in the sidebar
+2. Click **"Add Deadline"**
+3. Enter title, due date, and set reminder
+4. Click **Save**
+
+Deadlines sync to your calendar if connected.""",
+            "target": "/app/deadlines"
+        },
+        # Tasks
+        ("task", "tasks"): {
+            "response": """**How to Add a Task** ✅
+
+1. Go to **Tasks** in the sidebar
+2. Click **"+ Add Task"** or use the quick add
+3. Enter title, description, due date, priority
+4. Drag tasks between columns to update status""",
+            "target": "/app/tasks"
+        },
+        # Documents
+        ("document", "documents", "file", "upload"): {
+            "response": """**How to Upload a Document** 📄
+
+1. Go to **Documents** in the sidebar
+2. Click **"Upload"** or drag & drop files
+3. Add tags and description (optional)
+4. Documents are encrypted and stored securely""",
+            "target": "/app/documents"
+        },
+        # Metrics
+        ("metric", "metrics", "kpi"): {
+            "response": """**How to Add a Metric** 📊
+
+1. Go to **Insights** in the sidebar
+2. Click **"Add Metric"**
+3. Choose metric type (MRR, users, etc.)
+4. Enter value and date
+5. Set goals to track progress""",
+            "target": "/app/insights"
+        },
+        # Team/Employee
+        ("employee", "team member", "hire"): {
+            "response": """**How to Add a Team Member** 👥
+
+1. Go to **Team** in the sidebar
+2. Click **"Add Employee"**
+3. Fill in name, email, role, department
+4. Set employment type and start date""",
+            "target": "/app/team"
+        },
+        # Integrations
+        ("integrate", "integration", "connect", "plaid", "stripe", "calendar"): {
+            "response": """**How to Connect Integrations** 🔗
+
+1. Go to **Settings** → **Integrations**
+2. Find the service you want to connect
+3. Click **"Connect"** and authorize access
+
+Available integrations:
+• **Plaid** - Bank accounts & transactions
+• **Stripe** - Revenue & subscriptions
+• **Google Calendar** - Sync deadlines
+• **Slack** - Notifications""",
+            "target": "/app/integrations"
+        },
+        # Shareholder/Cap Table
+        ("shareholder", "investor", "equity", "cap table"): {
+            "response": """**How to Add a Shareholder** 📈
+
+1. Go to **Cap Table** in the sidebar
+2. Click **"Add Shareholder"**
+3. Enter name, type (founder/investor/employee)
+4. Add equity grants or options""",
+            "target": "/app/cap-table"
+        },
+        # Credential/Password
+        ("credential", "password", "login", "vault"): {
+            "response": """**How to Store Credentials** 🔐
+
+1. Go to **Vault** in the sidebar
+2. Click **"Add Credential"**
+3. Enter service name, username, password
+4. Credentials are encrypted with AES-256""",
+            "target": "/app/vault"
+        },
+        # Invoice
+        ("invoice", "bill"): {
+            "response": """**How to Create an Invoice** 💵
+
+1. Go to **Invoices** in the sidebar
+2. Click **"Create Invoice"**
+3. Select client, add line items
+4. Send via email or download PDF""",
+            "target": "/app/invoices"
+        },
+    }
+
+    # Find matching guide
+    for keywords, guide in how_to_guides.items():
+        if any(kw in message_lower for kw in keywords):
+            return {
+                "response": guide["response"],
+                "data_cards": [],
+                "suggested_actions": [
+                    {"label": "Go There", "action": "navigate", "target": guide["target"]},
+                ],
+                "intent": "how_to",
+                "source": "smart_response"
+            }
+
+    # Default: show general guidance
+    return {
+        "response": """**Getting Started** 🚀
+
+Here are common actions:
+
+| Action | Where |
+|--------|-------|
+| Add a business | Settings → Businesses |
+| Add contacts | Contacts page |
+| Track deadlines | Deadlines page |
+| Manage tasks | Tasks page |
+| Store passwords | Vault page |
+| Upload files | Documents page |
+
+Ask me something more specific like:
+• "How do I add a contact?"
+• "How do I connect Stripe?"
+• "How do I create an invoice?" """,
+        "data_cards": [],
+        "suggested_actions": [
+            {"label": "View Settings", "action": "navigate", "target": "/app/settings"},
+            {"label": "Getting Started", "action": "navigate", "target": "/app/getting-started"},
+        ],
+        "intent": "how_to",
+        "source": "smart_response"
+    }
 
 
 def handle_whats_new(db: Session, org_id: int, message: str) -> Dict[str, Any]:
