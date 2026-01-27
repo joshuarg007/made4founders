@@ -198,7 +198,7 @@ export default function Website() {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
             hasChanges
               ? 'bg-gradient-to-r from-cyan-500 to-violet-600 text-white hover:opacity-90'
-              : 'bg-white/5 text-gray-500 cursor-not-allowed'
+              : 'bg-[#1a1d24]/5 text-gray-500 cursor-not-allowed'
           }`}
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -305,7 +305,7 @@ export default function Website() {
               value={formData.domain_name || ''}
               onChange={(e) => handleChange('domain_name', e.target.value)}
               placeholder="yourcompany.com"
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -313,7 +313,7 @@ export default function Website() {
             <select
               value={formData.domain_registrar || ''}
               onChange={(e) => handleChange('domain_registrar', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             >
               <option value="" className="bg-[#1a1d24] text-white">Select registrar...</option>
               {registrars.map(r => (
@@ -327,7 +327,7 @@ export default function Website() {
               type="date"
               value={formData.domain_expiration?.split('T')[0] || ''}
               onChange={(e) => handleChange('domain_expiration', e.target.value ? new Date(e.target.value).toISOString() : null)}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div className="flex items-center gap-6 pt-6">
@@ -336,7 +336,7 @@ export default function Website() {
                 type="checkbox"
                 checked={formData.domain_privacy || false}
                 onChange={(e) => handleChange('domain_privacy', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <Shield className="w-4 h-4" />
               Privacy Protection
@@ -346,7 +346,7 @@ export default function Website() {
                 type="checkbox"
                 checked={formData.domain_auto_renew || false}
                 onChange={(e) => handleChange('domain_auto_renew', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <RefreshCw className="w-4 h-4" />
               Auto-Renew
@@ -369,7 +369,7 @@ export default function Website() {
           </div>
           <button
             onClick={addEmail}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition text-sm"
           >
             <Plus className="w-4 h-4" />
             Add Email
@@ -383,7 +383,7 @@ export default function Website() {
             <select
               value={formData.email_provider || ''}
               onChange={(e) => handleChange('email_provider', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             >
               <option value="" className="bg-[#1a1d24] text-white">Select provider...</option>
               {emailProviders.map(p => (
@@ -398,7 +398,7 @@ export default function Website() {
               value={formData.email_domain || ''}
               onChange={(e) => handleChange('email_domain', e.target.value)}
               placeholder="yourcompany.com"
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -408,7 +408,7 @@ export default function Website() {
               value={formData.email_admin || ''}
               onChange={(e) => handleChange('email_admin', e.target.value)}
               placeholder="admin@yourcompany.com"
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
         </div>
@@ -418,11 +418,11 @@ export default function Website() {
           <div className="space-y-3 pt-4 border-t border-white/10">
             <div className="text-sm text-gray-400">Additional Email Accounts</div>
             {formData.additional_emails.map((email, index) => (
-              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5">
+              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-[#1a1d24]/5">
                 <select
                   value={email.provider || ''}
                   onChange={(e) => updateEmail(index, 'provider', e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 >
                   <option value="" className="bg-[#1a1d24] text-white">Provider...</option>
                   {emailProviders.map(p => (
@@ -434,14 +434,14 @@ export default function Website() {
                   value={email.domain || ''}
                   onChange={(e) => updateEmail(index, 'domain', e.target.value)}
                   placeholder="Domain"
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 />
                 <input
                   type="email"
                   value={email.email || ''}
                   onChange={(e) => updateEmail(index, 'email', e.target.value)}
                   placeholder="Email address"
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 />
                 <div className="flex items-center gap-2">
                   <input
@@ -449,7 +449,7 @@ export default function Website() {
                     value={email.notes || ''}
                     onChange={(e) => updateEmail(index, 'notes', e.target.value)}
                     placeholder="Notes"
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                   />
                   <button
                     onClick={() => removeEmail(index)}
@@ -478,7 +478,7 @@ export default function Website() {
           </div>
           <button
             onClick={addWebsite}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition text-sm"
           >
             <Plus className="w-4 h-4" />
             Add Website
@@ -494,7 +494,7 @@ export default function Website() {
               value={formData.website_url || ''}
               onChange={(e) => handleChange('website_url', e.target.value)}
               placeholder="https://yourcompany.com"
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -502,7 +502,7 @@ export default function Website() {
             <select
               value={formData.website_platform || ''}
               onChange={(e) => handleChange('website_platform', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             >
               <option value="" className="bg-[#1a1d24] text-white">Select platform...</option>
               {websitePlatforms.map(p => (
@@ -515,7 +515,7 @@ export default function Website() {
             <select
               value={formData.website_hosting || ''}
               onChange={(e) => handleChange('website_hosting', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             >
               <option value="" className="bg-[#1a1d24] text-white">Select hosting...</option>
               {hostingProviders.map(h => (
@@ -529,7 +529,7 @@ export default function Website() {
                 type="checkbox"
                 checked={formData.ssl_enabled || false}
                 onChange={(e) => handleChange('ssl_enabled', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <Shield className="w-4 h-4" />
               SSL/HTTPS Enabled
@@ -542,28 +542,28 @@ export default function Website() {
           <div className="space-y-3 pt-4 border-t border-white/10">
             <div className="text-sm text-gray-400">Additional Websites</div>
             {formData.additional_websites.map((site, index) => (
-              <div key={index} className="p-3 rounded-lg bg-white/5">
+              <div key={index} className="p-3 rounded-lg bg-[#1a1d24]/5">
                 <div className="grid md:grid-cols-2 gap-3 mb-3">
                   <input
                     type="text"
                     value={site.name || ''}
                     onChange={(e) => updateWebsite(index, 'name', e.target.value)}
                     placeholder="Site name (e.g., Blog, Documentation)"
-                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                    className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                   />
                   <input
                     type="url"
                     value={site.url || ''}
                     onChange={(e) => updateWebsite(index, 'url', e.target.value)}
                     placeholder="https://..."
-                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                    className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="grid md:grid-cols-4 gap-3">
                   <select
                     value={site.platform || ''}
                     onChange={(e) => updateWebsite(index, 'platform', e.target.value)}
-                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                    className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                   >
                     <option value="" className="bg-[#1a1d24] text-white">Platform...</option>
                     {websitePlatforms.map(p => (
@@ -573,7 +573,7 @@ export default function Website() {
                   <select
                     value={site.hosting || ''}
                     onChange={(e) => updateWebsite(index, 'hosting', e.target.value)}
-                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                    className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                   >
                     <option value="" className="bg-[#1a1d24] text-white">Hosting...</option>
                     {hostingProviders.map(h => (
@@ -585,7 +585,7 @@ export default function Website() {
                       type="checkbox"
                       checked={site.ssl_enabled || false}
                       onChange={(e) => updateWebsite(index, 'ssl_enabled', e.target.checked)}
-                      className="rounded bg-white/5 border-white/10 text-cyan-500"
+                      className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
                     />
                     SSL
                   </label>
@@ -618,7 +618,7 @@ export default function Website() {
           </div>
           <button
             onClick={addSocial}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition text-sm"
           >
             <Plus className="w-4 h-4" />
             Add Social
@@ -636,7 +636,7 @@ export default function Website() {
               value={formData.linkedin_url || ''}
               onChange={(e) => handleChange('linkedin_url', e.target.value)}
               placeholder="https://linkedin.com/company/..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -649,7 +649,7 @@ export default function Website() {
               value={formData.twitter_url || ''}
               onChange={(e) => handleChange('twitter_url', e.target.value)}
               placeholder="https://twitter.com/..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -661,7 +661,7 @@ export default function Website() {
               value={formData.instagram_url || ''}
               onChange={(e) => handleChange('instagram_url', e.target.value)}
               placeholder="https://instagram.com/..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -673,7 +673,7 @@ export default function Website() {
               value={formData.facebook_url || ''}
               onChange={(e) => handleChange('facebook_url', e.target.value)}
               placeholder="https://facebook.com/..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -685,7 +685,7 @@ export default function Website() {
               value={formData.youtube_url || ''}
               onChange={(e) => handleChange('youtube_url', e.target.value)}
               placeholder="https://youtube.com/@..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div>
@@ -697,7 +697,7 @@ export default function Website() {
               value={formData.github_url || ''}
               onChange={(e) => handleChange('github_url', e.target.value)}
               placeholder="https://github.com/..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
           <div className="md:col-span-2">
@@ -710,7 +710,7 @@ export default function Website() {
               value={formData.tiktok_url || ''}
               onChange={(e) => handleChange('tiktok_url', e.target.value)}
               placeholder="https://tiktok.com/@..."
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             />
           </div>
         </div>
@@ -720,11 +720,11 @@ export default function Website() {
           <div className="space-y-3 pt-4 border-t border-white/10">
             <div className="text-sm text-gray-400">Additional Social Media</div>
             {formData.additional_socials.map((social, index) => (
-              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5">
+              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-[#1a1d24]/5">
                 <select
                   value={social.platform}
                   onChange={(e) => updateSocial(index, 'platform', e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 >
                   {socialPlatforms.map(p => (
                     <option key={p.value} value={p.value} className="bg-[#1a1d24] text-white">{p.label}</option>
@@ -735,14 +735,14 @@ export default function Website() {
                   value={social.handle || ''}
                   onChange={(e) => updateSocial(index, 'handle', e.target.value)}
                   placeholder="@handle"
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 />
                 <input
                   type="url"
                   value={social.url || ''}
                   onChange={(e) => updateSocial(index, 'url', e.target.value)}
                   placeholder="https://..."
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 />
                 <div className="flex justify-end">
                   <button
@@ -772,7 +772,7 @@ export default function Website() {
           </div>
           <button
             onClick={addListing}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition text-sm"
           >
             <Plus className="w-4 h-4" />
             Add Listing
@@ -784,11 +784,11 @@ export default function Website() {
           <div className="space-y-3 mb-6 pb-4 border-b border-white/10">
             <div className="text-sm text-gray-400">Your Custom Listings</div>
             {formData.additional_listings.map((listing, index) => (
-              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-white/5">
+              <div key={index} className="grid md:grid-cols-4 gap-3 p-3 rounded-lg bg-[#1a1d24]/5">
                 <select
                   value={listing.platform}
                   onChange={(e) => updateListing(index, 'platform', e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 >
                   {listingPlatforms.map(p => (
                     <option key={p.value} value={p.value} className="bg-[#1a1d24] text-white">{p.label}</option>
@@ -799,14 +799,14 @@ export default function Website() {
                   value={listing.url || ''}
                   onChange={(e) => updateListing(index, 'url', e.target.value)}
                   placeholder="https://..."
-                  className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                 />
                 <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={listing.verified || false}
                     onChange={(e) => updateListing(index, 'verified', e.target.checked)}
-                    className="rounded bg-white/5 border-white/10 text-cyan-500"
+                    className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
                   />
                   Verified/Claimed
                 </label>
@@ -826,7 +826,7 @@ export default function Website() {
         {/* Main Listings */}
         <div className="space-y-4">
           {/* Google Business */}
-          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-[#1a1d24]/5">
             <div className="flex items-center gap-2">
               <span className="text-lg">🔍</span>
               <span className="text-sm font-medium text-white">Google Business</span>
@@ -836,14 +836,14 @@ export default function Website() {
               value={formData.google_business_url || ''}
               onChange={(e) => handleChange('google_business_url', e.target.value)}
               placeholder="https://business.google.com/..."
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+              className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.google_business_verified || false}
                 onChange={(e) => handleChange('google_business_verified', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <CheckCircle2 className="w-4 h-4" />
               Verified
@@ -851,7 +851,7 @@ export default function Website() {
           </div>
 
           {/* Apple Business Connect */}
-          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-[#1a1d24]/5">
             <div className="flex items-center gap-2">
               <span className="text-lg"></span>
               <span className="text-sm font-medium text-white">Apple Business Connect</span>
@@ -861,14 +861,14 @@ export default function Website() {
               value={formData.apple_business_url || ''}
               onChange={(e) => handleChange('apple_business_url', e.target.value)}
               placeholder="https://businessconnect.apple.com/..."
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+              className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.apple_business_verified || false}
                 onChange={(e) => handleChange('apple_business_verified', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <CheckCircle2 className="w-4 h-4" />
               Verified
@@ -876,7 +876,7 @@ export default function Website() {
           </div>
 
           {/* Bing Places */}
-          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-[#1a1d24]/5">
             <div className="flex items-center gap-2">
               <span className="text-lg">🅱️</span>
               <span className="text-sm font-medium text-white">Bing Places</span>
@@ -886,14 +886,14 @@ export default function Website() {
               value={formData.bing_places_url || ''}
               onChange={(e) => handleChange('bing_places_url', e.target.value)}
               placeholder="https://bingplaces.com/..."
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+              className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.bing_places_verified || false}
                 onChange={(e) => handleChange('bing_places_verified', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <CheckCircle2 className="w-4 h-4" />
               Verified
@@ -901,7 +901,7 @@ export default function Website() {
           </div>
 
           {/* Yelp */}
-          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-[#1a1d24]/5">
             <div className="flex items-center gap-2">
               <span className="text-lg">⭐</span>
               <span className="text-sm font-medium text-white">Yelp</span>
@@ -911,14 +911,14 @@ export default function Website() {
               value={formData.yelp_url || ''}
               onChange={(e) => handleChange('yelp_url', e.target.value)}
               placeholder="https://yelp.com/biz/..."
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+              className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.yelp_claimed || false}
                 onChange={(e) => handleChange('yelp_claimed', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <CheckCircle2 className="w-4 h-4" />
               Claimed
@@ -926,7 +926,7 @@ export default function Website() {
           </div>
 
           {/* BBB */}
-          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-white/5">
+          <div className="grid md:grid-cols-3 gap-4 p-4 rounded-lg bg-[#1a1d24]/5">
             <div className="flex items-center gap-2">
               <span className="text-lg">🏛️</span>
               <span className="text-sm font-medium text-white">Better Business Bureau</span>
@@ -936,14 +936,14 @@ export default function Website() {
               value={formData.bbb_url || ''}
               onChange={(e) => handleChange('bbb_url', e.target.value)}
               placeholder="https://bbb.org/..."
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+              className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
             <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.bbb_accredited || false}
                 onChange={(e) => handleChange('bbb_accredited', e.target.checked)}
-                className="rounded bg-white/5 border-white/10 text-cyan-500"
+                className="rounded bg-[#1a1d24]/5 border-white/10 text-cyan-500"
               />
               <CheckCircle2 className="w-4 h-4" />
               Accredited
@@ -960,7 +960,7 @@ export default function Website() {
           onChange={(e) => handleChange('notes', e.target.value)}
           rows={4}
           placeholder="Additional notes about your web presence..."
-          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 resize-none"
+          className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 resize-none"
         />
       </div>
 
@@ -981,7 +981,7 @@ export default function Website() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition group"
+              className="p-3 rounded-lg bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition group"
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white font-medium">{link.label}</span>

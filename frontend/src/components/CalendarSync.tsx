@@ -127,7 +127,7 @@ export default function CalendarSync() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-6">
         <div className="flex items-center justify-center h-32">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
@@ -136,15 +136,15 @@ export default function CalendarSync() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div className="bg-[#1a1d24] rounded-xl  border border-white/10">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
             <Calendar className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">Google Calendar</h2>
+            <h2 className="font-semibold text-white">Google Calendar</h2>
             <p className="text-sm text-gray-500">
               Sync deadlines and meetings with your calendar
             </p>
@@ -154,14 +154,14 @@ export default function CalendarSync() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="p-2 text-gray-400 hover:text-gray-400 hover:bg-white/5 rounded-lg"
             >
               <Settings className="w-5 h-5" />
             </button>
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"
             >
               <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Syncing...' : 'Sync'}
@@ -199,7 +199,7 @@ export default function CalendarSync() {
       {connection?.is_active && (
         <>
           {/* Connection Status */}
-          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-5 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
               {connection.sync_status === 'synced' ? (
                 <CheckCircle className="w-4 h-4 text-green-500" />
@@ -210,7 +210,7 @@ export default function CalendarSync() {
               ) : (
                 <Clock className="w-4 h-4 text-yellow-500" />
               )}
-              <span className="text-gray-600">
+              <span className="text-gray-400">
                 {connection.calendar_name || 'Primary Calendar'}
               </span>
               <span className="text-gray-400">•</span>
@@ -232,8 +232,8 @@ export default function CalendarSync() {
 
           {/* Settings Panel */}
           {showSettings && (
-            <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-              <h3 className="font-medium text-gray-900 mb-3">Sync Settings</h3>
+            <div className="px-5 py-4 bg-white/5 border-b border-white/10">
+              <h3 className="font-medium text-white mb-3">Sync Settings</h3>
               <div className="space-y-3">
                 <label className="flex items-center gap-3">
                   <input
@@ -242,7 +242,7 @@ export default function CalendarSync() {
                     onChange={(e) => setSyncDeadlines(e.target.checked)}
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
-                  <span className="text-sm text-gray-700">Sync deadlines to calendar</span>
+                  <span className="text-sm text-gray-300">Sync deadlines to calendar</span>
                 </label>
                 <label className="flex items-center gap-3">
                   <input
@@ -251,10 +251,10 @@ export default function CalendarSync() {
                     onChange={(e) => setSyncMeetings(e.target.checked)}
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
-                  <span className="text-sm text-gray-700">Sync meetings to calendar</span>
+                  <span className="text-sm text-gray-300">Sync meetings to calendar</span>
                 </label>
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">Calendar</label>
+                  <label className="block text-sm text-gray-300 mb-1">Calendar</label>
                   <select
                     value={selectedCalendar}
                     onChange={(e) => setSelectedCalendar(e.target.value)}
@@ -279,7 +279,7 @@ export default function CalendarSync() {
 
           {/* Upcoming Events */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-3">Upcoming Events (14 days)</h3>
+            <h3 className="font-medium text-white mb-3">Upcoming Events (14 days)</h3>
             {events.length === 0 ? (
               <p className="text-sm text-gray-500">No upcoming events</p>
             ) : (
@@ -287,7 +287,7 @@ export default function CalendarSync() {
                 {events.slice(0, 5).map((event) => (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-2 rounded-full ${
@@ -298,7 +298,7 @@ export default function CalendarSync() {
                           : 'bg-blue-500'
                       }`} />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{event.title}</div>
+                        <div className="text-sm font-medium text-white">{event.title}</div>
                         <div className="text-xs text-gray-500">
                           {new Date(event.start).toLocaleDateString()} at{' '}
                           {new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -320,7 +320,7 @@ export default function CalendarSync() {
                           href={event.location.startsWith('http') ? event.location : undefined}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-400 hover:text-gray-400"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
@@ -342,7 +342,7 @@ export default function CalendarSync() {
       {!connection?.is_active && (
         <div className="p-8 text-center">
           <Calendar className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-600 mb-2">
+          <p className="text-gray-400 mb-2">
             Connect Google Calendar to sync your deadlines and meetings
           </p>
           <p className="text-sm text-gray-500">

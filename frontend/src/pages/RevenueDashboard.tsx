@@ -126,8 +126,8 @@ export default function RevenueDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Revenue Dashboard</h1>
-          <p className="text-gray-600">MRR, ARR, and subscription metrics from Stripe</p>
+          <h1 className="text-2xl font-bold text-white">Revenue Dashboard</h1>
+          <p className="text-gray-400">MRR, ARR, and subscription metrics from Stripe</p>
         </div>
         <div className="flex items-center gap-3">
           {connection?.is_active && (
@@ -135,7 +135,7 @@ export default function RevenueDashboard() {
               <button
                 onClick={handleSync}
                 disabled={syncing}
-                className="inline-flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                className="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                 {syncing ? 'Syncing...' : 'Sync'}
@@ -160,12 +160,12 @@ export default function RevenueDashboard() {
 
       {!connection?.is_active ? (
         /* Empty State */
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-12 text-center">
           <CreditCard className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-white mb-2">
             Connect Your Stripe Account
           </h2>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          <p className="text-gray-400 mb-6 max-w-md mx-auto">
             Connect your Stripe account to automatically track MRR, ARR, churn rate,
             and other subscription metrics.
           </p>
@@ -190,7 +190,7 @@ export default function RevenueDashboard() {
           {/* Connection Status */}
           <div className="bg-gradient-to-r from-[#635bff] to-[#7c3aed] rounded-xl p-4 text-white flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#1a1d24]/20 rounded-lg flex items-center justify-center">
                 <CreditCard className="w-5 h-5" />
               </div>
               <div>
@@ -223,12 +223,12 @@ export default function RevenueDashboard() {
           {metrics && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* MRR */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-500">MRR</span>
                   <DollarSign className="w-5 h-5 text-green-500" />
                 </div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-white">
                   {formatCurrency(metrics.mrr)}
                 </div>
                 <div className={`text-sm mt-1 flex items-center gap-1 ${
@@ -244,12 +244,12 @@ export default function RevenueDashboard() {
               </div>
 
               {/* ARR */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-500">ARR</span>
                   <TrendingUp className="w-5 h-5 text-blue-500" />
                 </div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-white">
                   {formatCurrency(metrics.arr)}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
@@ -258,12 +258,12 @@ export default function RevenueDashboard() {
               </div>
 
               {/* Active Subscriptions */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-500">Subscriptions</span>
                   <Users className="w-5 h-5 text-purple-500" />
                 </div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-white">
                   {metrics.active_subscriptions}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
@@ -272,12 +272,12 @@ export default function RevenueDashboard() {
               </div>
 
               {/* Churn Rate */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-500">Churn Rate</span>
                   <TrendingDown className={`w-5 h-5 ${metrics.churn_rate > 5 ? 'text-red-500' : 'text-gray-400'}`} />
                 </div>
-                <div className={`text-2xl font-bold ${metrics.churn_rate > 5 ? 'text-red-600' : 'text-gray-900'}`}>
+                <div className={`text-2xl font-bold ${metrics.churn_rate > 5 ? 'text-red-600' : 'text-white'}`}>
                   {metrics.churn_rate.toFixed(1)}%
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
@@ -292,8 +292,8 @@ export default function RevenueDashboard() {
             {/* Left Column - Chart */}
             <div className="lg:col-span-2">
               {/* MRR Chart */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <h2 className="font-semibold text-gray-900 mb-4">MRR Trend</h2>
+              <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+                <h2 className="font-semibold text-white mb-4">MRR Trend</h2>
                 {dashboard?.chart_data && (
                   <div className="h-64 flex items-end gap-2">
                     {dashboard.chart_data.mrr.map((value, i) => {
@@ -316,26 +316,26 @@ export default function RevenueDashboard() {
               </div>
 
               {/* Plan Breakdown */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mt-6">
-                <h2 className="font-semibold text-gray-900 mb-4">Plan Breakdown</h2>
+              <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5 mt-6">
+                <h2 className="font-semibold text-white mb-4">Plan Breakdown</h2>
                 <div className="space-y-3">
                   {dashboard?.subscription_breakdown.map((plan) => (
                     <div key={plan.plan_name} className="flex items-center gap-4">
                       <div className="flex-1">
                         <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-700">{plan.plan_name}</span>
+                          <span className="text-sm font-medium text-gray-300">{plan.plan_name}</span>
                           <span className="text-sm text-gray-500">
                             {plan.count} subs ({plan.percentage.toFixed(0)}%)
                           </span>
                         </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-blue-500 rounded-full"
                             style={{ width: `${plan.percentage}%` }}
                           />
                         </div>
                       </div>
-                      <span className="font-medium text-gray-900 w-24 text-right">
+                      <span className="font-medium text-white w-24 text-right">
                         {formatCurrency(plan.mrr)}/mo
                       </span>
                     </div>
@@ -351,23 +351,23 @@ export default function RevenueDashboard() {
             <div className="space-y-6">
               {/* Additional Metrics */}
               {metrics && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                  <h2 className="font-semibold text-gray-900 mb-4">Key Metrics</h2>
+                <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+                  <h2 className="font-semibold text-white mb-4">Key Metrics</h2>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">ARPC</span>
+                      <span className="text-sm text-gray-400">ARPC</span>
                       <span className="font-medium">{formatCurrency(metrics.average_revenue_per_customer)}/mo</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">New Customers (30d)</span>
+                      <span className="text-sm text-gray-400">New Customers (30d)</span>
                       <span className="font-medium text-green-600">+{metrics.new_customers_30d}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Churned (30d)</span>
+                      <span className="text-sm text-gray-400">Churned (30d)</span>
                       <span className="font-medium text-red-600">-{metrics.churned_subscriptions_30d}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Net Growth (30d)</span>
+                      <span className="text-sm text-gray-400">Net Growth (30d)</span>
                       <span className={`font-medium ${metrics.new_customers_30d - metrics.churned_subscriptions_30d >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {metrics.new_customers_30d - metrics.churned_subscriptions_30d >= 0 ? '+' : ''}
                         {metrics.new_customers_30d - metrics.churned_subscriptions_30d}
@@ -378,23 +378,23 @@ export default function RevenueDashboard() {
               )}
 
               {/* Top Customers */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <h2 className="font-semibold text-gray-900 mb-4">Top Customers</h2>
+              <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+                <h2 className="font-semibold text-white mb-4">Top Customers</h2>
                 <div className="space-y-3">
                   {dashboard?.top_customers.map((customer, i) => (
                     <div key={customer.customer_id} className="flex items-center gap-3">
-                      <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
+                      <span className="w-6 h-6 bg-white/5 rounded-full flex items-center justify-center text-sm font-medium text-gray-400">
                         {i + 1}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="text-sm font-medium text-white truncate">
                           {customer.name || customer.email || 'Unknown'}
                         </div>
                         <div className="text-xs text-gray-500">
                           {customer.subscription_count} subscription{customer.subscription_count !== 1 ? 's' : ''}
                         </div>
                       </div>
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-white">
                         {formatCurrency(customer.total_revenue)}
                       </span>
                     </div>
@@ -406,7 +406,7 @@ export default function RevenueDashboard() {
               </div>
 
               {/* Quick Stats Card */}
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-sm p-5 text-white">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl  p-5 text-white">
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="w-5 h-5" />
                   <h2 className="font-semibold">Revenue Summary</h2>

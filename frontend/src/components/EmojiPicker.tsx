@@ -60,7 +60,7 @@ export default function EmojiPicker({ value, onChange, placeholder = '📦' }: E
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 flex items-center justify-between gap-2 hover:bg-white/10 transition"
+        className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 flex items-center justify-between gap-2 hover:bg-[#1a1d24]/10 transition"
       >
         <span className="text-xl">{value || placeholder}</span>
         <ChevronDown className={`w-4 h-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
@@ -78,7 +78,7 @@ export default function EmojiPicker({ value, onChange, placeholder = '📦' }: E
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search emoji..."
-                className="w-full pl-8 pr-3 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                className="w-full pl-8 pr-3 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
                 autoFocus
               />
             </div>
@@ -95,7 +95,7 @@ export default function EmojiPicker({ value, onChange, placeholder = '📦' }: E
                   className={`px-2 py-1 text-xs rounded whitespace-nowrap transition ${
                     activeCategory === cat
                       ? 'bg-cyan-500/20 text-cyan-300'
-                      : 'text-gray-400 hover:bg-white/5'
+                      : 'text-gray-400 hover:bg-[#1a1d24]/5'
                   }`}
                 >
                   {cat}
@@ -115,7 +115,7 @@ export default function EmojiPicker({ value, onChange, placeholder = '📦' }: E
                     key={`${emoji}-${i}`}
                     type="button"
                     onClick={() => handleSelect(emoji)}
-                    className="w-8 h-8 flex items-center justify-center text-lg rounded hover:bg-white/10 transition"
+                    className="w-8 h-8 flex items-center justify-center text-lg rounded hover:bg-[#1a1d24]/10 transition"
                   >
                     {emoji}
                   </button>
@@ -131,7 +131,7 @@ export default function EmojiPicker({ value, onChange, placeholder = '📦' }: E
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder="Or type/paste emoji"
-              className="w-full px-2 py-1 text-sm rounded bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-2 py-1 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
             />
           </div>
         </div>

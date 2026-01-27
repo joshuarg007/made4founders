@@ -21,7 +21,7 @@ import type { TaskBoard, TaskColumn, Task, UserBrief, TaskComment, TimeEntry, Ta
 import { format, formatDistanceToNow, isPast, isToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 
 const PRIORITY_COLORS: Record<string, string> = {
-  low: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+  low: 'bg-white/50/20 text-gray-300 border-gray-500/30',
   medium: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   high: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
   urgent: 'bg-red-500/20 text-red-300 border-red-500/30',
@@ -264,12 +264,12 @@ export default function Tasks() {
 
       // Show toast notification
       const statusLabels: Record<string, { label: string; color: string }> = {
-        backlog: { label: 'Backlog', color: 'bg-gray-500' },
+        backlog: { label: 'Backlog', color: 'bg-white/50' },
         todo: { label: 'To Do', color: 'bg-blue-500' },
         in_progress: { label: 'In Progress', color: 'bg-yellow-500' },
         done: { label: 'Done', color: 'bg-green-500' },
       };
-      const statusInfo = statusLabels[newStatus] || { label: newStatus, color: 'bg-gray-500' };
+      const statusInfo = statusLabels[newStatus] || { label: newStatus, color: 'bg-white/50' };
       setToast({ message: `Moved to ${statusInfo.label}`, color: statusInfo.color });
       setTimeout(() => setToast(null), 2000);
 
@@ -375,7 +375,7 @@ export default function Tasks() {
           </div>
           <div className="flex items-center gap-3">
             {/* View toggle */}
-            <div className="flex items-center bg-white/5 border border-white/10 rounded-lg p-1">
+            <div className="flex items-center bg-[#1a1d24]/5 border border-white/10 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('calendar')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
@@ -403,7 +403,7 @@ export default function Tasks() {
             {/* Calendar Sync button */}
             <button
               onClick={openCalendarModal}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition"
               title="Sync with Google Calendar"
             >
               <Link2 className="w-4 h-4" />
@@ -436,7 +436,7 @@ export default function Tasks() {
                 const board = boards.find(b => b.id === parseInt(e.target.value));
                 setCurrentBoard(board || null);
               }}
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+              className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm"
             >
               {boards.map(board => (
                 <option key={board.id} value={board.id} className="bg-[#1a1d24] text-white">{board.name}</option>
@@ -452,7 +452,7 @@ export default function Tasks() {
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
           </div>
 
@@ -460,7 +460,7 @@ export default function Tasks() {
           <select
             value={filterPriority || ''}
             onChange={(e) => setFilterPriority(e.target.value || null)}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+            className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm"
           >
             <option value="" className="bg-[#1a1d24] text-white">All Priorities</option>
             <option value="urgent" className="bg-[#1a1d24] text-white">Urgent</option>
@@ -473,7 +473,7 @@ export default function Tasks() {
           <select
             value={filterAssignee || ''}
             onChange={(e) => setFilterAssignee(e.target.value ? parseInt(e.target.value) : null)}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+            className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm"
           >
             <option value="" className="bg-[#1a1d24] text-white">All Assignees</option>
             {users.map(u => (
@@ -487,7 +487,7 @@ export default function Tasks() {
               type="checkbox"
               checked={showCompleted}
               onChange={(e) => setShowCompleted(e.target.checked)}
-              className="rounded border-white/20 bg-white/5"
+              className="rounded border-white/20 bg-[#1a1d24]/5"
             />
             Show completed
           </label>
@@ -568,7 +568,7 @@ export default function Tasks() {
                   value={taskForm.title}
                   onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                   required
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   placeholder="Task title"
                 />
               </div>
@@ -578,7 +578,7 @@ export default function Tasks() {
                   value={taskForm.description}
                   onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 resize-none"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 resize-none"
                   placeholder="Task description..."
                 />
               </div>
@@ -588,7 +588,7 @@ export default function Tasks() {
                   <select
                     value={taskForm.priority}
                     onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     <option value="low" className="bg-[#1a1d24] text-white">Low</option>
                     <option value="medium" className="bg-[#1a1d24] text-white">Medium</option>
@@ -602,7 +602,7 @@ export default function Tasks() {
                     type="date"
                     value={taskForm.due_date}
                     onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
               </div>
@@ -612,7 +612,7 @@ export default function Tasks() {
                   <select
                     value={taskForm.assigned_to_id || ''}
                     onChange={(e) => setTaskForm({ ...taskForm, assigned_to_id: e.target.value ? parseInt(e.target.value) : null })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     <option value="" className="bg-[#1a1d24] text-white">Unassigned</option>
                     {users.map(u => (
@@ -627,7 +627,7 @@ export default function Tasks() {
                   <select
                     value={taskForm.column_id || ''}
                     onChange={(e) => setTaskForm({ ...taskForm, column_id: e.target.value ? parseInt(e.target.value) : null })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     {currentBoard.columns.map(col => (
                       <option key={col.id} value={col.id} className="bg-[#1a1d24] text-white">{col.name}</option>
@@ -695,7 +695,7 @@ function KanbanColumn({
   canEdit: boolean;
 }) {
   return (
-    <div className="w-80 flex-shrink-0 flex flex-col bg-white/5 rounded-xl border border-white/10">
+    <div className="w-80 flex-shrink-0 flex flex-col bg-[#1a1d24]/5 rounded-xl border border-white/10">
       {/* Column Header */}
       <div
         className="p-3 border-b border-white/10 flex items-center justify-between"
@@ -703,7 +703,7 @@ function KanbanColumn({
       >
         <div className="flex items-center gap-2">
           <span className="font-medium text-white">{column.name}</span>
-          <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
+          <span className="px-2 py-0.5 text-xs rounded-full bg-[#1a1d24]/10 text-gray-400">
             {tasks.length}
           </span>
         </div>
@@ -802,7 +802,7 @@ function TaskCard({
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
           task.priority === 'urgent' ? 'bg-red-500' :
           task.priority === 'high' ? 'bg-orange-500' :
-          task.priority === 'medium' ? 'bg-blue-500' : 'bg-gray-500'
+          task.priority === 'medium' ? 'bg-blue-500' : 'bg-white/50'
         }`} />
 
         {/* Due date indicator if overdue */}
@@ -814,7 +814,7 @@ function TaskCard({
             e.stopPropagation();
             setIsCollapsed(false);
           }}
-          className="flex-shrink-0 p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition"
+          className="flex-shrink-0 p-1 text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 rounded transition"
         >
           <ChevronDown className="w-4 h-4" />
         </button>
@@ -905,7 +905,7 @@ function TaskCard({
             e.stopPropagation();
             setIsCollapsed(true);
           }}
-          className="flex-shrink-0 p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded transition opacity-0 group-hover:opacity-100"
+          className="flex-shrink-0 p-1 text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 rounded transition opacity-0 group-hover:opacity-100"
         >
           <ChevronUp className="w-4 h-4" />
         </button>
@@ -1023,7 +1023,7 @@ function TaskDetailPanel({
   const totalTime = timeEntries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
 
   const STATUS_OPTIONS = [
-    { value: 'backlog', label: 'Backlog', color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
+    { value: 'backlog', label: 'Backlog', color: 'bg-white/50/20 text-gray-300 border-gray-500/30' },
     { value: 'todo', label: 'To Do', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
     { value: 'in_progress', label: 'In Progress', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
     { value: 'done', label: 'Done', color: 'bg-green-500/20 text-green-300 border-green-500/30' },
@@ -1049,7 +1049,7 @@ function TaskDetailPanel({
             {canEdit && (
               <button
                 onClick={() => onEdit(task)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+                className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
               >
                 <Edit3 className="w-4 h-4" />
               </button>
@@ -1062,14 +1062,14 @@ function TaskDetailPanel({
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition">
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Status Selector */}
-        <div className="px-5 py-3 border-b border-white/10 bg-white/5">
+        <div className="px-5 py-3 border-b border-white/10 bg-[#1a1d24]/5">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-400 mr-2">Status:</span>
             {STATUS_OPTIONS.map((status) => (
@@ -1080,7 +1080,7 @@ function TaskDetailPanel({
                 className={`px-3 py-1.5 text-sm rounded-lg border transition ${
                   task.status === status.value
                     ? status.color + ' ring-2 ring-offset-2 ring-offset-[#1a1d24]'
-                    : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white'
+                    : 'bg-[#1a1d24]/5 text-gray-400 border-white/10 hover:bg-[#1a1d24]/10 hover:text-white'
                 } ${!canEdit && status.value !== 'done' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {status.label}
@@ -1119,7 +1119,7 @@ function TaskDetailPanel({
               <select
                 value={task.assigned_to_id || ''}
                 onChange={(e) => onAssign(task.id, e.target.value ? parseInt(e.target.value) : null)}
-                className="w-full px-2 py-1 text-sm rounded bg-white/5 border border-white/10 text-white"
+                className="w-full px-2 py-1 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white"
               >
                 <option value="" className="bg-[#1a1d24] text-white">Unassigned</option>
                 {users.map(u => (
@@ -1202,7 +1202,7 @@ function TaskDetailPanel({
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
                 placeholder="Add a comment..."
-                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
               />
               <button
                 onClick={handleAddComment}
@@ -1218,7 +1218,7 @@ function TaskDetailPanel({
             ) : (
               <div className="space-y-3">
                 {comments.map(comment => (
-                  <div key={comment.id} className="p-3 rounded-lg bg-white/5">
+                  <div key={comment.id} className="p-3 rounded-lg bg-[#1a1d24]/5">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center text-[10px] text-white font-medium">
                         {(comment.user?.name || comment.user?.email || '?')[0].toUpperCase()}
@@ -1230,7 +1230,7 @@ function TaskDetailPanel({
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
                       {comment.is_edited && (
-                        <span className="text-xs text-gray-600">(edited)</span>
+                        <span className="text-xs text-gray-400">(edited)</span>
                       )}
                     </div>
                     <p className="text-sm text-gray-300 pl-8">{comment.content}</p>
@@ -1244,7 +1244,7 @@ function TaskDetailPanel({
         {activeTab === 'time' && (
           <div className="space-y-4">
             {/* Timer */}
-            <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+            <div className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
               {runningTimer ? (
                 <div className="flex items-center justify-between">
                   <div>
@@ -1273,7 +1273,7 @@ function TaskDetailPanel({
             </div>
 
             {/* Manual time entry */}
-            <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+            <div className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
               <p className="text-sm text-gray-400 mb-2">Add time manually</p>
               <div className="flex items-center gap-2">
                 <input
@@ -1281,7 +1281,7 @@ function TaskDetailPanel({
                   min="0"
                   value={manualTime.hours}
                   onChange={(e) => setManualTime({ ...manualTime, hours: parseInt(e.target.value) || 0 })}
-                  className="w-16 px-2 py-1 rounded bg-white/5 border border-white/10 text-white text-sm text-center"
+                  className="w-16 px-2 py-1 rounded bg-[#1a1d24]/5 border border-white/10 text-white text-sm text-center"
                 />
                 <span className="text-gray-500 text-sm">h</span>
                 <input
@@ -1290,7 +1290,7 @@ function TaskDetailPanel({
                   max="59"
                   value={manualTime.minutes}
                   onChange={(e) => setManualTime({ ...manualTime, minutes: parseInt(e.target.value) || 0 })}
-                  className="w-16 px-2 py-1 rounded bg-white/5 border border-white/10 text-white text-sm text-center"
+                  className="w-16 px-2 py-1 rounded bg-[#1a1d24]/5 border border-white/10 text-white text-sm text-center"
                 />
                 <span className="text-gray-500 text-sm">m</span>
                 <button
@@ -1307,7 +1307,7 @@ function TaskDetailPanel({
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-gray-400">Time Entries</h4>
                 {timeEntries.map(entry => (
-                  <div key={entry.id} className="flex items-center justify-between p-2 rounded bg-white/5">
+                  <div key={entry.id} className="flex items-center justify-between p-2 rounded bg-[#1a1d24]/5">
                     <div>
                       <p className="text-sm text-white">
                         {entry.duration_minutes ? `${Math.floor(entry.duration_minutes / 60)}h ${entry.duration_minutes % 60}m` : 'Running...'}
@@ -1330,7 +1330,7 @@ function TaskDetailPanel({
             ) : (
               activities.map(activity => (
                 <div key={activity.id} className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-gray-400 font-medium flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-[#1a1d24]/10 flex items-center justify-center text-[10px] text-gray-400 font-medium flex-shrink-0">
                     {(activity.user?.name || activity.user?.email || '?')[0].toUpperCase()}
                   </div>
                   <div>
@@ -1437,16 +1437,16 @@ function CalendarView({
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Sidebar with Backlog and Undated */}
-      <div className="w-72 flex-shrink-0 border-r border-white/10 flex flex-col bg-white/5">
+      <div className="w-72 flex-shrink-0 border-r border-white/10 flex flex-col bg-[#1a1d24]/5">
         {/* Backlog Section */}
         <div className="flex flex-col flex-1 min-h-0">
           <div className="p-3 border-b border-white/10">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-white flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-gray-500" />
+                <span className="w-3 h-3 rounded-full bg-white/50" />
                 Backlog
               </h3>
-              <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-[#1a1d24]/10 text-gray-400">
                 {backlogTasks.length}
               </span>
             </div>
@@ -1500,7 +1500,7 @@ function CalendarView({
                 <span className="w-3 h-3 rounded-full bg-orange-500" />
                 Undated
               </h3>
-              <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-[#1a1d24]/10 text-gray-400">
                 {undatedTasks.length}
               </span>
             </div>
@@ -1560,19 +1560,19 @@ function CalendarView({
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
-              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
             >
               Today
             </button>
             <button
               onClick={prevMonth}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+              className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={nextMonth}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+              className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -1601,8 +1601,8 @@ function CalendarView({
                 key={day.toISOString()}
                 className={`rounded-lg border overflow-hidden flex flex-col ${
                   isCurrentMonth
-                    ? 'bg-white/5 border-white/10'
-                    : 'bg-white/[0.02] border-white/5'
+                    ? 'bg-[#1a1d24]/5 border-white/10'
+                    : 'bg-[#1a1d24]/[0.02] border-white/5'
                 } ${isCurrentDay ? 'ring-2 ring-cyan-500/50' : ''}`}
               >
                 {/* Day number */}
@@ -1618,7 +1618,7 @@ function CalendarView({
                       ? isCurrentDay
                         ? 'text-cyan-300'
                         : 'text-gray-300'
-                      : 'text-gray-600'
+                      : 'text-gray-400'
                   }`}>
                     {format(day, 'd')}
                   </span>
@@ -1743,7 +1743,7 @@ function CalendarSyncModal({
               </p>
 
               {/* Export URL Section */}
-              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="space-y-3 p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                 <h3 className="text-sm font-medium text-white">Subscribe to Your Tasks</h3>
                 {calendarToken ? (
                   <div className="space-y-3">
@@ -1753,7 +1753,7 @@ function CalendarSyncModal({
                         type="text"
                         readOnly
                         value={getCalendarFeedUrl(calendarToken)}
-                        className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs font-mono truncate"
+                        className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-xs font-mono truncate"
                       />
                       <button
                         onClick={onCopyUrl}
@@ -1788,7 +1788,7 @@ function CalendarSyncModal({
               </div>
 
               {/* Import External Calendar */}
-              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="space-y-3 p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                 <h3 className="text-sm font-medium text-white">Import External Calendar</h3>
                 <p className="text-xs text-gray-500">
                   Import events from an external iCal URL (Google Calendar, Outlook, etc.)
@@ -1799,11 +1799,11 @@ function CalendarSyncModal({
                     value={importUrl}
                     onChange={(e) => setImportUrl(e.target.value)}
                     placeholder="https://calendar.google.com/calendar/ical/..."
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
                   />
                   <button
                     onClick={handleImportCalendar}
-                    className="px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+                    className="px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white text-sm hover:bg-[#1a1d24]/20 transition"
                   >
                     Import
                   </button>
@@ -1840,7 +1840,7 @@ function CalendarSyncModal({
               {/* Connected Services */}
               <div className="space-y-3">
                 {/* Google Calendar */}
-                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="Google Calendar" className="w-8 h-8" />
                     <div>
@@ -1857,7 +1857,7 @@ function CalendarSyncModal({
                 </div>
 
                 {/* Microsoft Outlook */}
-                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <svg className="w-8 h-8" viewBox="0 0 48 48" fill="none">
                       <path d="M28.5 8H42.5C43.6046 8 44.5 8.89543 44.5 10V38C44.5 39.1046 43.6046 40 42.5 40H28.5V8Z" fill="#1976D2"/>
@@ -1878,7 +1878,7 @@ function CalendarSyncModal({
                 </div>
 
                 {/* Apple Calendar */}
-                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-lg font-bold">
                       📅
@@ -1897,7 +1897,7 @@ function CalendarSyncModal({
                 </div>
 
                 {/* Calendly */}
-                <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
                       C

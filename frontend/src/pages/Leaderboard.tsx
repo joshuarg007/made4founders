@@ -46,7 +46,7 @@ import type {
 
 // Rarity colors and styles
 const rarityStyles: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-  common: { bg: 'bg-gray-500/20', border: 'border-gray-500/30', text: 'text-gray-400', glow: '' },
+  common: { bg: 'bg-white/50/20', border: 'border-gray-500/30', text: 'text-gray-400', glow: '' },
   uncommon: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-400', glow: '' },
   rare: { bg: 'bg-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-400', glow: 'shadow-blue-500/20' },
   epic: { bg: 'bg-purple-500/20', border: 'border-purple-500/30', text: 'text-purple-400', glow: 'shadow-purple-500/30' },
@@ -418,7 +418,7 @@ export default function Leaderboard() {
           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
             activeTab === 'challenges'
               ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
+              : 'bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 border border-transparent'
           }`}
         >
           <Swords className="w-4 h-4" />
@@ -434,7 +434,7 @@ export default function Leaderboard() {
           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
             activeTab === 'leaderboard'
               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
+              : 'bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 border border-transparent'
           }`}
         >
           <Trophy className="w-4 h-4" />
@@ -445,7 +445,7 @@ export default function Leaderboard() {
           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
             activeTab === 'achievements'
               ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
+              : 'bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 border border-transparent'
           }`}
         >
           <Award className="w-4 h-4" />
@@ -472,7 +472,7 @@ export default function Leaderboard() {
             </button>
             <button
               onClick={() => setShowJoinModal(true)}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium flex items-center gap-2 transition-all"
+              className="px-4 py-2 bg-[#1a1d24]/10 hover:bg-[#1a1d24]/20 text-white rounded-lg font-medium flex items-center gap-2 transition-all"
             >
               <Share2 className="w-4 h-4" />
               Join with Code
@@ -575,7 +575,7 @@ export default function Leaderboard() {
               {/* Empty State */}
               {!challenges?.active.length && !challenges?.pending.length && !challenges?.invitations.length && (
                 <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-12 text-center">
-                  <Swords className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                  <Swords className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-400 mb-2">No active challenges</p>
                   <p className="text-gray-500 text-sm">Create a challenge and invite a friend to compete!</p>
                 </div>
@@ -595,7 +595,7 @@ export default function Leaderboard() {
             </div>
           ) : !leaderboard || leaderboard.entries.length === 0 ? (
             <div className="p-12 text-center">
-              <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+              <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-400">No businesses on the leaderboard yet</p>
               <p className="text-gray-500 text-sm mt-2">Complete tasks and quests to earn XP!</p>
             </div>
@@ -630,7 +630,7 @@ export default function Leaderboard() {
                     className={`p-4 flex items-center gap-4 transition-colors ${
                       currentBusiness?.id === entry.business_id
                         ? 'bg-cyan-500/10'
-                        : 'hover:bg-white/5'
+                        : 'hover:bg-[#1a1d24]/5'
                     }`}
                   >
                     <div className="w-12 flex justify-center">{getRankDisplay(entry.rank)}</div>
@@ -681,7 +681,7 @@ export default function Leaderboard() {
         <div className="space-y-6">
           {!currentBusiness ? (
             <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-12 text-center">
-              <Award className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+              <Award className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-400">Select a business to view achievements</p>
             </div>
           ) : achievementsLoading ? (
@@ -691,7 +691,7 @@ export default function Leaderboard() {
             </div>
           ) : achievements.length === 0 ? (
             <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-12 text-center">
-              <Award className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+              <Award className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-400">No achievements available</p>
               <p className="text-gray-500 text-sm mt-2">
                 {currentBusiness.gamification_enabled
@@ -729,7 +729,7 @@ export default function Leaderboard() {
                 </div>
                 <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-white/50/20 flex items-center justify-center">
                       <Lock className="w-5 h-5 text-gray-400" />
                     </div>
                     <div>
@@ -829,7 +829,7 @@ export default function Leaderboard() {
                           className="bg-[#1a1d24] rounded-xl border border-white/10 p-4 opacity-75 hover:opacity-100 transition-opacity"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-xl opacity-50">
+                            <div className="w-10 h-10 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center text-xl opacity-50">
                               {ba.achievement.icon || <CategoryIcon className="w-5 h-5 text-gray-500" />}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -845,7 +845,7 @@ export default function Leaderboard() {
                                   <span className="text-gray-500">{ba.current_count} / {ba.target_count}</span>
                                   <span className="text-purple-400">+{ba.xp_reward} XP</span>
                                 </div>
-                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-1.5 bg-[#1a1d24]/5 rounded-full overflow-hidden">
                                   <div
                                     className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
                                     style={{ width: `${progress}%` }}
@@ -886,7 +886,7 @@ export default function Leaderboard() {
                   value={newChallenge.name}
                   onChange={(e) => setNewChallenge({ ...newChallenge, name: e.target.value })}
                   placeholder="e.g., Weekend Warrior Showdown"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50"
                 />
               </div>
               <div>
@@ -894,7 +894,7 @@ export default function Leaderboard() {
                 <select
                   value={newChallenge.challenge_type}
                   onChange={(e) => setNewChallenge({ ...newChallenge, challenge_type: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
                 >
                   {Object.entries(challengeTypeInfo).map(([key, info]) => (
                     <option key={key} value={key}>{info.name}</option>
@@ -906,7 +906,7 @@ export default function Leaderboard() {
                 <select
                   value={newChallenge.duration}
                   onChange={(e) => setNewChallenge({ ...newChallenge, duration: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
                 >
                   {Object.entries(durationLabels).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
@@ -923,7 +923,7 @@ export default function Leaderboard() {
                   max={currentBusiness?.xp || 0}
                   value={newChallenge.xp_wager}
                   onChange={(e) => setNewChallenge({ ...newChallenge, xp_wager: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
                 />
                 <p className="text-xs text-gray-500 mt-1">Winner takes all wagered XP + bonus</p>
               </div>
@@ -933,7 +933,7 @@ export default function Leaderboard() {
                     type="checkbox"
                     checked={newChallenge.handicap_enabled}
                     onChange={(e) => setNewChallenge({ ...newChallenge, handicap_enabled: e.target.checked })}
-                    className="w-4 h-4 rounded border-white/10 bg-white/5 text-red-500 focus:ring-red-500"
+                    className="w-4 h-4 rounded border-white/10 bg-[#1a1d24]/5 text-red-500 focus:ring-red-500"
                   />
                   <span className="text-sm text-gray-300 flex items-center gap-1">
                     <Shield className="w-4 h-4 text-green-400" />
@@ -946,7 +946,7 @@ export default function Leaderboard() {
             <div className="p-4 border-t border-white/10 flex gap-3">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 text-gray-300 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -984,7 +984,7 @@ export default function Leaderboard() {
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   placeholder="Enter 8-character code"
                   maxLength={8}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 font-mono text-lg tracking-widest text-center"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 font-mono text-lg tracking-widest text-center"
                 />
               </div>
               <div>
@@ -997,14 +997,14 @@ export default function Leaderboard() {
                   max={currentBusiness?.xp || 0}
                   value={joinWager}
                   onChange={(e) => setJoinWager(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
             </div>
             <div className="p-4 border-t border-white/10 flex gap-3">
               <button
                 onClick={() => setShowJoinModal(false)}
-                className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 text-gray-300 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -1050,7 +1050,7 @@ export default function Leaderboard() {
                 <p className="text-gray-400 mb-4">You conquered the challenge!</p>
 
                 {/* Challenge name */}
-                <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/10">
+                <div className="bg-[#1a1d24]/5 rounded-xl p-4 mb-6 border border-white/10">
                   <p className="text-white font-semibold text-lg">{victoryChallenge.name}</p>
                   <p className="text-gray-500 text-sm">{challengeTypeInfo[victoryChallenge.challenge_type]?.name}</p>
                 </div>
@@ -1179,7 +1179,7 @@ function ChallengeCard({
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
               isWinner ? 'bg-gradient-to-br from-yellow-400 to-amber-500 shadow-lg shadow-yellow-500/30' :
-              'bg-white/5'
+              'bg-[#1a1d24]/5'
             } ${typeInfo.color}`}>
               {isWinner ? (
                 <Trophy className="w-5 h-5 text-white" />
@@ -1227,7 +1227,7 @@ function ChallengeCard({
                 </span>
                 <span className="text-white">{you.adjusted_progress}</span>
               </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
                   style={{ width: `${Math.min(100, (you.adjusted_progress / Math.max(opponent.adjusted_progress, you.adjusted_progress, 1)) * 100)}%` }}
@@ -1241,7 +1241,7 @@ function ChallengeCard({
                 </span>
                 <span className="text-white">{opponent.adjusted_progress}</span>
               </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
                   style={{ width: `${Math.min(100, (opponent.adjusted_progress / Math.max(opponent.adjusted_progress, you.adjusted_progress, 1)) * 100)}%` }}
@@ -1275,7 +1275,7 @@ function ChallengeCard({
             <span className="text-xs text-gray-400">Share code:</span>
             <button
               onClick={() => onCopyCode(challenge.invite_code)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 rounded-lg transition-colors"
             >
               <span className="font-mono text-cyan-400 tracking-widest">{challenge.invite_code}</span>
               {copiedCode === challenge.invite_code ? (
@@ -1299,7 +1299,7 @@ function ChallengeCard({
               </button>
               <button
                 onClick={onDecline}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors"
+                className="px-4 py-2 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 text-gray-300 rounded-lg transition-colors"
               >
                 Decline
               </button>

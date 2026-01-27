@@ -54,7 +54,7 @@ const getProviderColor = (provider: string) => {
     case 'linkedin': return 'bg-[#0A66C2]';
     case 'twitter': return 'bg-black';
     case 'facebook': return 'bg-[#1877F2]';
-    case 'google': return 'bg-white text-gray-800';
+    case 'google': return 'bg-[#1a1d24] text-white';
     case 'github': return 'bg-[#24292e]';
     default: return 'bg-gray-600';
   }
@@ -188,7 +188,7 @@ export default function LinkAccount() {
       {/* Card */}
       <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8">
         {/* OAuth Provider Info */}
-        <div className="flex items-center gap-4 mb-6 p-4 rounded-lg bg-white/5 border border-white/10">
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
           <div className={`p-3 rounded-lg ${getProviderColor(pendingOAuth.provider)}`}>
             {getProviderIcon(pendingOAuth.provider)}
           </div>
@@ -241,7 +241,7 @@ export default function LinkAccount() {
               <button
                 onClick={() => setMode('link')}
                 disabled={isSubmitting}
-                className="w-full py-3 px-4 rounded-lg bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition disabled:opacity-50 flex items-center justify-center gap-3"
+                className="w-full py-3 px-4 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white font-medium hover:bg-[#1a1d24]/10 transition disabled:opacity-50 flex items-center justify-center gap-3"
               >
                 <Link2 className="w-5 h-5" />
                 Link to Existing Account
@@ -282,7 +282,7 @@ export default function LinkAccount() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
                   placeholder="your@email.com"
                 />
               </div>
@@ -298,7 +298,7 @@ export default function LinkAccount() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full px-4 py-3 pr-12 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
+                    className="w-full px-4 py-3 pr-12 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
                     placeholder="Your password"
                   />
                   <button

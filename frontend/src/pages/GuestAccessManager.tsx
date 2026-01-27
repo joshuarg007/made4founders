@@ -297,19 +297,19 @@ export default function GuestAccessManager() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse bg-white/5 rounded-xl p-4 h-24" />
+            <div key={i} className="animate-pulse bg-[#1a1d24]/5 rounded-xl p-4 h-24" />
           ))}
         </div>
       ) : guests.length === 0 ? (
         <div className="text-center py-12 bg-[#1a1d24] rounded-xl border border-white/10">
-          <UserPlus className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <UserPlus className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No guests yet</h3>
           <p className="text-gray-400 mb-4">
             Invite investors, advisors, or other stakeholders to securely access your data room.
           </p>
           <button
             onClick={() => setShowInviteModal(true)}
-            className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+            className="px-4 py-2 bg-[#1a1d24]/10 text-white rounded-lg hover:bg-[#1a1d24]/20 transition"
           >
             Invite your first guest
           </button>
@@ -317,7 +317,7 @@ export default function GuestAccessManager() {
       ) : (
         <div className="bg-[#1a1d24] rounded-xl border border-white/10 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-white/5">
+            <thead className="bg-[#1a1d24]/5">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Guest
@@ -343,7 +343,7 @@ export default function GuestAccessManager() {
               {guests.map((guest) => {
                 const typeInfo = getGuestTypeInfo(guest.guest_type);
                 return (
-                  <tr key={guest.id} className="hover:bg-white/5">
+                  <tr key={guest.id} className="hover:bg-[#1a1d24]/5">
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center text-white font-medium">
@@ -366,12 +366,12 @@ export default function GuestAccessManager() {
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-1">
                         {guest.permissions?.data_room && (
-                          <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-gray-400">
+                          <span className="px-2 py-0.5 rounded text-xs bg-[#1a1d24]/10 text-gray-400">
                             Data Room
                           </span>
                         )}
                         {guest.permissions?.investor_updates && (
-                          <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-gray-400">
+                          <span className="px-2 py-0.5 rounded text-xs bg-[#1a1d24]/10 text-gray-400">
                             Updates
                           </span>
                         )}
@@ -387,7 +387,7 @@ export default function GuestAccessManager() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openEditModal(guest)}
-                          className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+                          className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
                           title="Edit permissions"
                         >
                           <Eye className="w-4 h-4" />
@@ -395,7 +395,7 @@ export default function GuestAccessManager() {
                         <button
                           onClick={() => handleResendInvite(guest.id)}
                           disabled={sendingInvite === guest.id}
-                          className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-white/10 rounded-lg transition disabled:opacity-50"
+                          className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-[#1a1d24]/10 rounded-lg transition disabled:opacity-50"
                           title="Resend invite"
                         >
                           {sendingInvite === guest.id ? (
@@ -406,7 +406,7 @@ export default function GuestAccessManager() {
                         </button>
                         <button
                           onClick={() => handleToggleActive(guest)}
-                          className={`p-2 hover:bg-white/10 rounded-lg transition ${
+                          className={`p-2 hover:bg-[#1a1d24]/10 rounded-lg transition ${
                             guest.is_active
                               ? 'text-gray-400 hover:text-yellow-400'
                               : 'text-yellow-400 hover:text-green-400'
@@ -421,7 +421,7 @@ export default function GuestAccessManager() {
                         </button>
                         <button
                           onClick={() => handleDelete(guest.id)}
-                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-white/10 rounded-lg transition"
+                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-[#1a1d24]/10 rounded-lg transition"
                           title="Delete guest"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -460,7 +460,7 @@ export default function GuestAccessManager() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="investor@example.com"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                   required
                 />
               </div>
@@ -474,7 +474,7 @@ export default function GuestAccessManager() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="John Smith"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -512,7 +512,7 @@ export default function GuestAccessManager() {
                   {PERMISSION_OPTIONS.map((perm) => (
                     <label
                       key={perm.key}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-[#1a1d24]/5 cursor-pointer hover:bg-[#1a1d24]/10 transition"
                     >
                       <input
                         type="checkbox"
@@ -526,7 +526,7 @@ export default function GuestAccessManager() {
                             },
                           })
                         }
-                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/20"
+                        className="w-4 h-4 rounded border-white/20 bg-[#1a1d24]/5 text-cyan-500 focus:ring-cyan-500/20"
                       />
                       <div>
                         <p className="text-sm text-white">{perm.label}</p>
@@ -541,7 +541,7 @@ export default function GuestAccessManager() {
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="flex-1 px-4 py-2 bg-white/5 text-gray-300 rounded-lg hover:bg-white/10 transition"
+                  className="flex-1 px-4 py-2 bg-[#1a1d24]/5 text-gray-300 rounded-lg hover:bg-[#1a1d24]/10 transition"
                 >
                   Cancel
                 </button>
@@ -581,7 +581,7 @@ export default function GuestAccessManager() {
                   type="email"
                   value={formData.email}
                   disabled
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-gray-400 cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-gray-400 cursor-not-allowed"
                 />
               </div>
 
@@ -594,7 +594,7 @@ export default function GuestAccessManager() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="John Smith"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -632,7 +632,7 @@ export default function GuestAccessManager() {
                   {PERMISSION_OPTIONS.map((perm) => (
                     <label
                       key={perm.key}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-[#1a1d24]/5 cursor-pointer hover:bg-[#1a1d24]/10 transition"
                     >
                       <input
                         type="checkbox"
@@ -646,7 +646,7 @@ export default function GuestAccessManager() {
                             },
                           })
                         }
-                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/20"
+                        className="w-4 h-4 rounded border-white/20 bg-[#1a1d24]/5 text-cyan-500 focus:ring-cyan-500/20"
                       />
                       <div>
                         <p className="text-sm text-white">{perm.label}</p>
@@ -658,7 +658,7 @@ export default function GuestAccessManager() {
               </div>
 
               {/* Access Info */}
-              <div className="p-3 bg-white/5 rounded-lg space-y-2">
+              <div className="p-3 bg-[#1a1d24]/5 rounded-lg space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">Invited</span>
                   <span className="text-white">
@@ -687,7 +687,7 @@ export default function GuestAccessManager() {
                 <button
                   type="button"
                   onClick={() => setEditingGuest(null)}
-                  className="flex-1 px-4 py-2 bg-white/5 text-gray-300 rounded-lg hover:bg-white/10 transition"
+                  className="flex-1 px-4 py-2 bg-[#1a1d24]/5 text-gray-300 rounded-lg hover:bg-[#1a1d24]/10 transition"
                 >
                   Cancel
                 </button>

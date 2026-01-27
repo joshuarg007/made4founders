@@ -347,16 +347,16 @@ export default function Team() {
 
   const renderOrgChartNode = (node: OrgChartNode, level: number = 0) => (
     <div key={node.id} style={{ marginLeft: level * 32 }} className="mb-2">
-      <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-sm">
+      <div className="flex items-center gap-3 p-3 bg-[#1a1d24] rounded-lg border border-white/10 hover:">
         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
           {node.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
         </div>
         <div className="flex-1">
-          <p className="font-medium text-gray-900">{node.name}</p>
+          <p className="font-medium text-white">{node.name}</p>
           <p className="text-sm text-gray-500">{node.title || 'No title'}</p>
         </div>
         {node.department && (
-          <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+          <span className="text-xs px-2 py-1 bg-white/5 text-gray-400 rounded">
             {node.department}
           </span>
         )}
@@ -386,8 +386,8 @@ export default function Team() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team</h1>
-          <p className="text-gray-600">Manage employees, PTO, and onboarding</p>
+          <h1 className="text-2xl font-bold text-white">Team</h1>
+          <p className="text-gray-400">Manage employees, PTO, and onboarding</p>
         </div>
         <button
           onClick={() => {
@@ -412,57 +412,57 @@ export default function Team() {
       {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-5 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{summary.active_employees}</p>
+                <p className="text-2xl font-bold text-white">{summary.active_employees}</p>
                 <p className="text-xs text-gray-500">Active Employees</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{summary.contractors}</p>
+                <p className="text-2xl font-bold text-white">{summary.contractors}</p>
                 <p className="text-xs text-gray-500">Contractors</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{summary.on_leave}</p>
+                <p className="text-2xl font-bold text-white">{summary.on_leave}</p>
                 <p className="text-xs text-gray-500">On Leave</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{summary.pending_pto_requests}</p>
+                <p className="text-2xl font-bold text-white">{summary.pending_pto_requests}</p>
                 <p className="text-xs text-gray-500">Pending PTO</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                 <ClipboardList className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{summary.active_onboarding}</p>
+                <p className="text-2xl font-bold text-white">{summary.active_onboarding}</p>
                 <p className="text-xs text-gray-500">Onboarding</p>
               </div>
             </div>
@@ -471,7 +471,7 @@ export default function Team() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-white/10">
         <nav className="flex space-x-8">
           {tabs.map((tab) => (
             <button
@@ -480,7 +480,7 @@ export default function Team() {
               className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-300'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -540,14 +540,14 @@ export default function Team() {
           {/* Employee Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredEmployees.map(emp => (
-              <div key={emp.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition">
+              <div key={emp.id} className="bg-[#1a1d24] rounded-xl border border-white/10 p-5 hover:shadow-md transition">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
                       {emp.first_name[0]}{emp.last_name[0]}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{emp.full_name}</h3>
+                      <h3 className="font-semibold text-white">{emp.full_name}</h3>
                       <p className="text-sm text-gray-500">{emp.title || 'No title'}</p>
                     </div>
                   </div>
@@ -578,18 +578,18 @@ export default function Team() {
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-400">
                     <Mail className="w-4 h-4" />
                     {emp.email}
                   </div>
                   {emp.department && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-400">
                       <Building2 className="w-4 h-4" />
                       {emp.department}
                     </div>
                   )}
                   {emp.work_location && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-400">
                       <MapPin className="w-4 h-4" />
                       {emp.work_location}
                     </div>
@@ -599,11 +599,11 @@ export default function Team() {
                   <span className={`text-xs px-2 py-1 rounded ${
                     emp.employment_status === 'active' ? 'bg-green-100 text-green-700' :
                     emp.employment_status === 'on_leave' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-gray-100 text-gray-600'
+                    'bg-white/5 text-gray-400'
                   }`}>
                     {emp.employment_status}
                   </span>
-                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                  <span className="text-xs px-2 py-1 bg-white/5 text-gray-400 rounded">
                     {employmentTypes.find(t => t.value === emp.employment_type)?.label || emp.employment_type}
                   </span>
                   {emp.is_contractor && (
@@ -626,8 +626,8 @@ export default function Team() {
 
       {/* Org Chart Tab */}
       {activeTab === 'org-chart' && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Organization Chart</h3>
+        <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">
+          <h3 className="font-semibold text-white mb-4">Organization Chart</h3>
           {orgChart.length > 0 ? (
             <div className="space-y-2">
               {orgChart.map(node => renderOrgChartNode(node))}
@@ -646,13 +646,13 @@ export default function Team() {
         <div className="space-y-6">
           {/* My Balances */}
           {myBalances.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="font-semibold text-gray-900 mb-4">My PTO Balances</h3>
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
+              <h3 className="font-semibold text-white mb-4">My PTO Balances</h3>
               <div className="grid grid-cols-4 gap-4">
                 {myBalances.map(bal => (
-                  <div key={bal.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div key={bal.id} className="p-4 bg-white/5 rounded-lg">
                     <p className="text-sm text-gray-500 mb-1">{bal.policy_name}</p>
-                    <p className="text-2xl font-bold text-gray-900">{bal.available_days - bal.pending_days}</p>
+                    <p className="text-2xl font-bold text-white">{bal.available_days - bal.pending_days}</p>
                     <p className="text-xs text-gray-500">days available</p>
                     {bal.pending_days > 0 && (
                       <p className="text-xs text-yellow-600 mt-1">{bal.pending_days} pending</p>
@@ -665,12 +665,12 @@ export default function Team() {
 
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <h3 className="font-semibold text-gray-900">PTO Requests</h3>
-              <div className="flex bg-gray-100 rounded-lg p-1">
+              <h3 className="font-semibold text-white">PTO Requests</h3>
+              <div className="flex bg-white/5 rounded-lg p-1">
                 <button
                   onClick={() => setShowCalendarView(false)}
                   className={`px-3 py-1 text-sm rounded-md transition ${
-                    !showCalendarView ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
+                    !showCalendarView ? 'bg-[#1a1d24] shadow text-white' : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   List
@@ -678,7 +678,7 @@ export default function Team() {
                 <button
                   onClick={() => setShowCalendarView(true)}
                   className={`px-3 py-1 text-sm rounded-md transition ${
-                    showCalendarView ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
+                    showCalendarView ? 'bg-[#1a1d24] shadow text-white' : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   Calendar
@@ -688,7 +688,7 @@ export default function Team() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowPolicyModal(true)}
-                className="px-3 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                className="px-3 py-2 text-gray-300 border border-gray-300 rounded-lg hover:bg-white/5 text-sm"
               >
                 Manage Policies
               </button>
@@ -704,23 +704,23 @@ export default function Team() {
 
           {/* PTO Calendar View */}
           {showCalendarView ? (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={() => handleCalendarMonthChange('prev')}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                  className="p-2 hover:bg-white/5 rounded-lg"
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  <ChevronLeft className="w-5 h-5 text-gray-400" />
                 </button>
-                <h3 className="font-semibold text-gray-900">
+                <h3 className="font-semibold text-white">
                   {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </h3>
                 <button
                   onClick={() => handleCalendarMonthChange('next')}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                  className="p-2 hover:bg-white/5 rounded-lg"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
                 </button>
               </div>
 
@@ -755,12 +755,12 @@ export default function Team() {
                     cells.push(
                       <div
                         key={day}
-                        className={`h-20 border border-gray-100 rounded-lg p-1 ${
+                        className={`h-20 border border-white/5 rounded-lg p-1 ${
                           date.toDateString() === new Date().toDateString() ? 'bg-blue-50 border-blue-200' : ''
                         }`}
                       >
                         <p className={`text-xs font-medium ${
-                          date.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-700'
+                          date.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-300'
                         }`}>
                           {day}
                         </p>
@@ -794,25 +794,25 @@ export default function Team() {
               <div className="mt-4 flex gap-4 text-xs">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded bg-green-100" />
-                  <span className="text-gray-600">Vacation</span>
+                  <span className="text-gray-400">Vacation</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded bg-red-100" />
-                  <span className="text-gray-600">Sick</span>
+                  <span className="text-gray-400">Sick</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded bg-purple-100" />
-                  <span className="text-gray-600">Other</span>
+                  <span className="text-gray-400">Other</span>
                 </div>
               </div>
             </div>
           ) : (
             /* PTO Requests List */
-            <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 divide-y divide-white/5">
               {ptoRequests.map(req => (
                 <div key={req.id} className="p-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{req.employee_name}</p>
+                    <p className="font-medium text-white">{req.employee_name}</p>
                     <p className="text-sm text-gray-500">
                       {req.policy_name} - {req.days_requested} day(s)
                     </p>
@@ -825,7 +825,7 @@ export default function Team() {
                       req.status === 'approved' ? 'bg-green-100 text-green-700' :
                       req.status === 'denied' ? 'bg-red-100 text-red-700' :
                       req.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-gray-100 text-gray-600'
+                      'bg-white/5 text-gray-400'
                     }`}>
                       {req.status}
                     </span>
@@ -864,11 +864,11 @@ export default function Team() {
       {activeTab === 'onboarding' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-gray-900">Active Onboarding</h3>
+            <h3 className="font-semibold text-white">Active Onboarding</h3>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowTemplateModal(true)}
-                className="px-3 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                className="px-3 py-2 text-gray-300 border border-gray-300 rounded-lg hover:bg-white/5 text-sm"
               >
                 Manage Templates
               </button>
@@ -885,10 +885,10 @@ export default function Team() {
           {/* Checklists */}
           <div className="space-y-4">
             {checklists.map(cl => (
-              <div key={cl.id} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div key={cl.id} className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h4 className="font-semibold text-gray-900">{cl.employee_name}</h4>
+                    <h4 className="font-semibold text-white">{cl.employee_name}</h4>
                     <p className="text-sm text-gray-500">{cl.name}</p>
                   </div>
                   <div className="text-right">
@@ -919,8 +919,8 @@ export default function Team() {
 
                     return (
                       <div key={task.id} className={`p-3 rounded-lg border ${
-                        task.is_completed ? 'bg-gray-50 border-gray-100' :
-                        isOverdue ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
+                        task.is_completed ? 'bg-white/5 border-white/5' :
+                        isOverdue ? 'bg-red-50 border-red-200' : 'bg-[#1a1d24] border-white/10'
                       }`}>
                         <div className="flex items-start gap-3">
                           <button
@@ -936,16 +936,16 @@ export default function Team() {
                           </button>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-sm ${task.is_completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                              <span className={`text-sm ${task.is_completed ? 'text-gray-400 line-through' : 'text-white'}`}>
                                 {task.name}
                               </span>
                               {task.category && (
-                                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded">
+                                <span className="text-xs px-2 py-0.5 bg-white/5 text-gray-500 rounded">
                                   {task.category}
                                 </span>
                               )}
                               {task.assignee_type && (
-                                <span className={`text-xs px-2 py-0.5 rounded capitalize ${assigneeColors[task.assignee_type] || 'bg-gray-100 text-gray-600'}`}>
+                                <span className={`text-xs px-2 py-0.5 rounded capitalize ${assigneeColors[task.assignee_type] || 'bg-white/5 text-gray-400'}`}>
                                   {task.assignee_type}
                                 </span>
                               )}
@@ -999,11 +999,11 @@ export default function Team() {
 
           {/* Templates Section */}
           <div className="mt-8">
-            <h3 className="font-semibold text-gray-900 mb-4">Onboarding Templates</h3>
+            <h3 className="font-semibold text-white mb-4">Onboarding Templates</h3>
             <div className="grid grid-cols-3 gap-4">
               {templates.map(tmpl => (
-                <div key={tmpl.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                  <h4 className="font-medium text-gray-900">{tmpl.name}</h4>
+                <div key={tmpl.id} className="bg-[#1a1d24] rounded-xl border border-white/10 p-4">
+                  <h4 className="font-medium text-white">{tmpl.name}</h4>
                   {tmpl.description && <p className="text-sm text-gray-500 mt-1">{tmpl.description}</p>}
                   <div className="mt-2 flex gap-2">
                     {tmpl.role && <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded">{tmpl.role}</span>}
@@ -1027,46 +1027,46 @@ export default function Team() {
         <div className="space-y-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                   <Users className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{summary.total_employees}</p>
+                  <p className="text-2xl font-bold text-white">{summary.total_employees}</p>
                   <p className="text-xs text-gray-500">Total Headcount</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{summary.recent_hires?.length || 0}</p>
+                  <p className="text-2xl font-bold text-white">{summary.recent_hires?.length || 0}</p>
                   <p className="text-xs text-gray-500">New Hires (30d)</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                   <Briefcase className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{summary.contractors}</p>
+                  <p className="text-2xl font-bold text-white">{summary.contractors}</p>
                   <p className="text-xs text-gray-500">Contractors</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
                   <Clock className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{summary.on_leave}</p>
+                  <p className="text-2xl font-bold text-white">{summary.on_leave}</p>
                   <p className="text-xs text-gray-500">On Leave</p>
                 </div>
               </div>
@@ -1075,8 +1075,8 @@ export default function Team() {
 
           <div className="grid grid-cols-2 gap-6">
             {/* Department Distribution */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
+              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-blue-600" />
                 Department Distribution
               </h3>
@@ -1087,10 +1087,10 @@ export default function Team() {
                     return (
                       <div key={dept}>
                         <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-gray-700">{dept || 'No Department'}</span>
+                          <span className="text-gray-300">{dept || 'No Department'}</span>
                           <span className="text-gray-500">{count as number} ({percent}%)</span>
                         </div>
-                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-blue-500 rounded-full"
                             style={{ width: `${percent}%` }}
@@ -1109,8 +1109,8 @@ export default function Team() {
             </div>
 
             {/* Recent Hires */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
+              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-green-600" />
                 Recent Hires (Last 30 Days)
               </h3>
@@ -1122,7 +1122,7 @@ export default function Team() {
                         {hire.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{hire.full_name}</p>
+                        <p className="text-sm font-medium text-white">{hire.full_name}</p>
                         <p className="text-xs text-gray-500">{hire.title || 'No title'}</p>
                       </div>
                       {hire.hire_date && (
@@ -1143,8 +1143,8 @@ export default function Team() {
           </div>
 
           {/* Employment Type Breakdown */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-purple-600" />
               Employment Type Breakdown
             </h3>
@@ -1152,8 +1152,8 @@ export default function Team() {
               {employmentTypes.map(type => {
                 const count = employees.filter(e => e.employment_type === type.value).length;
                 return (
-                  <div key={type.value} className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-2xl font-bold text-gray-900">{count}</p>
+                  <div key={type.value} className="text-center p-4 bg-white/5 rounded-lg">
+                    <p className="text-2xl font-bold text-white">{count}</p>
                     <p className="text-xs text-gray-500">{type.label}</p>
                   </div>
                 );
@@ -1162,8 +1162,8 @@ export default function Team() {
           </div>
 
           {/* Status Distribution */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">Employment Status</h3>
+          <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
+            <h3 className="font-semibold text-white mb-4">Employment Status</h3>
             <div className="flex gap-4">
               {employmentStatuses.map(status => {
                 const count = employees.filter(e => e.employment_status === status.value).length;
@@ -1174,7 +1174,7 @@ export default function Team() {
                   pending: 'bg-blue-100 text-blue-700',
                 };
                 return (
-                  <div key={status.value} className={`flex-1 p-4 rounded-lg ${colors[status.value] || 'bg-gray-100 text-gray-700'}`}>
+                  <div key={status.value} className={`flex-1 p-4 rounded-lg ${colors[status.value] || 'bg-white/5 text-gray-300'}`}>
                     <p className="text-2xl font-bold">{count}</p>
                     <p className="text-xs">{status.label}</p>
                   </div>
@@ -1190,12 +1190,12 @@ export default function Team() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowEmployeeModal(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-white">
                   {editingEmployee ? 'Edit Employee' : 'Add Employee'}
                 </h2>
-                <button onClick={() => setShowEmployeeModal(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowEmployeeModal(false)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -1203,7 +1203,7 @@ export default function Team() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">First Name *</label>
                     <input
                       type="text"
                       value={employeeForm.first_name || ''}
@@ -1213,7 +1213,7 @@ export default function Team() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Last Name *</label>
                     <input
                       type="text"
                       value={employeeForm.last_name || ''}
@@ -1225,7 +1225,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Email *</label>
                   <input
                     type="email"
                     value={employeeForm.email || ''}
@@ -1237,7 +1237,7 @@ export default function Team() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
                     <input
                       type="text"
                       value={employeeForm.title || ''}
@@ -1246,7 +1246,7 @@ export default function Team() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Department</label>
                     <input
                       type="text"
                       value={employeeForm.department || ''}
@@ -1258,7 +1258,7 @@ export default function Team() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Employment Type</label>
                     <select
                       value={employeeForm.employment_type || 'full_time'}
                       onChange={(e) => setEmployeeForm({ ...employeeForm, employment_type: e.target.value })}
@@ -1270,7 +1270,7 @@ export default function Team() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Work Location</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Work Location</label>
                     <select
                       value={employeeForm.work_location || ''}
                       onChange={(e) => setEmployeeForm({ ...employeeForm, work_location: e.target.value })}
@@ -1286,7 +1286,7 @@ export default function Team() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Hire Date</label>
                     <input
                       type="date"
                       value={employeeForm.hire_date || ''}
@@ -1295,7 +1295,7 @@ export default function Team() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
                     <input
                       type="date"
                       value={employeeForm.start_date || ''}
@@ -1306,7 +1306,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Manager</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Manager</label>
                   <select
                     value={employeeForm.manager_id || ''}
                     onChange={(e) => setEmployeeForm({ ...employeeForm, manager_id: e.target.value ? parseInt(e.target.value) : null })}
@@ -1327,14 +1327,14 @@ export default function Team() {
                     onChange={(e) => setEmployeeForm({ ...employeeForm, is_contractor: e.target.checked })}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <label htmlFor="is_contractor" className="text-sm text-gray-700">1099 Contractor</label>
+                  <label htmlFor="is_contractor" className="text-sm text-gray-300">1099 Contractor</label>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowEmployeeModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-gray-300 hover:bg-white/5 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -1356,17 +1356,17 @@ export default function Team() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowPTOModal(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-md w-full p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Request PTO</h2>
-                <button onClick={() => setShowPTOModal(false)} className="text-gray-400 hover:text-gray-600">
+                <h2 className="text-lg font-semibold text-white">Request PTO</h2>
+                <button onClick={() => setShowPTOModal(false)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">PTO Type</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">PTO Type</label>
                   <select
                     value={ptoForm.policy_id}
                     onChange={(e) => setPtoForm({ ...ptoForm, policy_id: parseInt(e.target.value) })}
@@ -1381,7 +1381,7 @@ export default function Team() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
                     <input
                       type="date"
                       value={ptoForm.start_date}
@@ -1390,7 +1390,7 @@ export default function Team() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">End Date</label>
                     <input
                       type="date"
                       value={ptoForm.end_date}
@@ -1401,7 +1401,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Days Requested</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Days Requested</label>
                   <input
                     type="number"
                     min="0.5"
@@ -1413,7 +1413,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
                   <textarea
                     value={ptoForm.notes}
                     onChange={(e) => setPtoForm({ ...ptoForm, notes: e.target.value })}
@@ -1426,7 +1426,7 @@ export default function Team() {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowPTOModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-gray-300 hover:bg-white/5 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -1448,17 +1448,17 @@ export default function Team() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowPolicyModal(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-md w-full p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Add PTO Policy</h2>
-                <button onClick={() => setShowPolicyModal(false)} className="text-gray-400 hover:text-gray-600">
+                <h2 className="text-lg font-semibold text-white">Add PTO Policy</h2>
+                <button onClick={() => setShowPolicyModal(false)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Policy Name</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Policy Name</label>
                   <input
                     type="text"
                     value={policyForm.name}
@@ -1469,7 +1469,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
                   <select
                     value={policyForm.pto_type}
                     onChange={(e) => setPolicyForm({ ...policyForm, pto_type: e.target.value })}
@@ -1483,7 +1483,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Annual Days</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Annual Days</label>
                   <input
                     type="number"
                     value={policyForm.annual_days}
@@ -1500,14 +1500,14 @@ export default function Team() {
                     onChange={(e) => setPolicyForm({ ...policyForm, requires_approval: e.target.checked })}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <label htmlFor="requires_approval" className="text-sm text-gray-700">Requires approval</label>
+                  <label htmlFor="requires_approval" className="text-sm text-gray-300">Requires approval</label>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowPolicyModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-gray-300 hover:bg-white/5 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -1529,17 +1529,17 @@ export default function Team() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowChecklistModal(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-md w-full p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Start Onboarding</h2>
-                <button onClick={() => setShowChecklistModal(false)} className="text-gray-400 hover:text-gray-600">
+                <h2 className="text-lg font-semibold text-white">Start Onboarding</h2>
+                <button onClick={() => setShowChecklistModal(false)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Employee</label>
                   <select
                     value={checklistForm.employee_id}
                     onChange={(e) => setChecklistForm({ ...checklistForm, employee_id: parseInt(e.target.value) })}
@@ -1553,7 +1553,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Template</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Template</label>
                   <select
                     value={checklistForm.template_id}
                     onChange={(e) => setChecklistForm({ ...checklistForm, template_id: parseInt(e.target.value) })}
@@ -1567,7 +1567,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Checklist Name</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Checklist Name</label>
                   <input
                     type="text"
                     value={checklistForm.name}
@@ -1578,7 +1578,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
                   <input
                     type="date"
                     value={checklistForm.start_date}
@@ -1591,7 +1591,7 @@ export default function Team() {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowChecklistModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-gray-300 hover:bg-white/5 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -1613,17 +1613,17 @@ export default function Team() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowTemplateModal(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-md w-full p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Create Template</h2>
-                <button onClick={() => setShowTemplateModal(false)} className="text-gray-400 hover:text-gray-600">
+                <h2 className="text-lg font-semibold text-white">Create Template</h2>
+                <button onClick={() => setShowTemplateModal(false)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Template Name</label>
                   <input
                     type="text"
                     value={templateForm.name}
@@ -1633,7 +1633,7 @@ export default function Team() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                   <textarea
                     value={templateForm.description}
                     onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
@@ -1644,7 +1644,7 @@ export default function Team() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
                     <input
                       type="text"
                       value={templateForm.role}
@@ -1654,7 +1654,7 @@ export default function Team() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Department</label>
                     <input
                       type="text"
                       value={templateForm.department}
@@ -1669,7 +1669,7 @@ export default function Team() {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowTemplateModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-gray-300 hover:bg-white/5 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -1691,18 +1691,18 @@ export default function Team() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black/50" onClick={() => setSelectedEmployee(null)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-[#1a1d24] flex items-center justify-between p-4 border-b border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-lg">
                     {selectedEmployee.first_name[0]}{selectedEmployee.last_name[0]}
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">{selectedEmployee.full_name}</h2>
+                    <h2 className="text-lg font-semibold text-white">{selectedEmployee.full_name}</h2>
                     <p className="text-sm text-gray-500">{selectedEmployee.title || 'No title'} {selectedEmployee.department && `• ${selectedEmployee.department}`}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedEmployee(null)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setSelectedEmployee(null)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -1710,23 +1710,23 @@ export default function Team() {
               <div className="p-6 space-y-6">
                 {/* Contact Info */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-400">
                     <Mail className="w-4 h-4" />
                     <span>{selectedEmployee.email}</span>
                   </div>
                   {selectedEmployee.work_location && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-400">
                       <MapPin className="w-4 h-4" />
                       <span className="capitalize">{selectedEmployee.work_location}</span>
                     </div>
                   )}
                   {selectedEmployee.hire_date && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-400">
                       <Calendar className="w-4 h-4" />
                       <span>Hired {new Date(selectedEmployee.hire_date).toLocaleDateString()}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-400">
                     <Briefcase className="w-4 h-4" />
                     <span className="capitalize">{selectedEmployee.employment_type?.replace('_', ' ')}</span>
                     {selectedEmployee.is_contractor && <span className="ml-2 text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded">1099</span>}
@@ -1738,17 +1738,17 @@ export default function Team() {
                   <span className={`text-xs px-3 py-1 rounded-full ${
                     selectedEmployee.employment_status === 'active' ? 'bg-green-100 text-green-700' :
                     selectedEmployee.employment_status === 'on_leave' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-gray-100 text-gray-600'
+                    'bg-white/5 text-gray-400'
                   }`}>
                     {selectedEmployee.employment_status}
                   </span>
                 </div>
 
                 {/* Equity Section */}
-                <div className="border-t border-gray-200 pt-6">
+                <div className="border-t border-white/10 pt-6">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-green-600" />
-                    <h3 className="font-semibold text-gray-900">Equity & Stock Options</h3>
+                    <h3 className="font-semibold text-white">Equity & Stock Options</h3>
                   </div>
 
                   {loadingEquity ? (
@@ -1765,16 +1765,16 @@ export default function Team() {
                       {/* Equity Grants */}
                       {employeeEquity.grants.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Equity Grants</h4>
+                          <h4 className="text-sm font-medium text-gray-300 mb-2">Equity Grants</h4>
                           <div className="space-y-2">
                             {employeeEquity.grants.map(grant => (
-                              <div key={grant.id} className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                              <div key={grant.id} className="p-3 bg-white/5 rounded-lg flex items-center justify-between">
                                 <div>
-                                  <p className="font-medium text-gray-900">{grant.shares.toLocaleString()} shares</p>
+                                  <p className="font-medium text-white">{grant.shares.toLocaleString()} shares</p>
                                   <p className="text-xs text-gray-500">Granted {new Date(grant.grant_date).toLocaleDateString()}</p>
                                 </div>
                                 <span className={`text-xs px-2 py-1 rounded ${
-                                  grant.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                  grant.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-white/5 text-gray-400'
                                 }`}>
                                   {grant.status}
                                 </span>
@@ -1787,17 +1787,17 @@ export default function Team() {
                       {/* Stock Options */}
                       {employeeEquity.options.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Stock Options</h4>
+                          <h4 className="text-sm font-medium text-gray-300 mb-2">Stock Options</h4>
                           <div className="space-y-3">
                             {employeeEquity.options.map(option => {
                               const vestedPercent = option.shares_granted > 0
                                 ? Math.round((option.shares_vested / option.shares_granted) * 100)
                                 : 0;
                               return (
-                                <div key={option.id} className="p-4 bg-gray-50 rounded-lg">
+                                <div key={option.id} className="p-4 bg-white/5 rounded-lg">
                                   <div className="flex items-center justify-between mb-2">
                                     <div>
-                                      <p className="font-medium text-gray-900">
+                                      <p className="font-medium text-white">
                                         {option.shares_granted.toLocaleString()} options
                                       </p>
                                       <p className="text-xs text-gray-500">
@@ -1807,7 +1807,7 @@ export default function Team() {
                                     <span className={`text-xs px-2 py-1 rounded ${
                                       option.status === 'active' ? 'bg-green-100 text-green-700' :
                                       option.status === 'exercised' ? 'bg-blue-100 text-blue-700' :
-                                      'bg-gray-100 text-gray-600'
+                                      'bg-white/5 text-gray-400'
                                     }`}>
                                       {option.status}
                                     </span>
@@ -1815,7 +1815,7 @@ export default function Team() {
 
                                   {/* Vesting Progress */}
                                   <div className="mt-3">
-                                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                                    <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                                       <span>Vested: {option.shares_vested.toLocaleString()} / {option.shares_granted.toLocaleString()}</span>
                                       <span>{vestedPercent}%</span>
                                     </div>
@@ -1842,7 +1842,7 @@ export default function Team() {
                 </div>
               </div>
 
-              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between">
+              <div className="sticky bottom-0 bg-white/5 px-6 py-4 border-t border-white/10 flex justify-between">
                 <button
                   onClick={() => {
                     setEditingEmployee(selectedEmployee);
@@ -1857,7 +1857,7 @@ export default function Team() {
                 </button>
                 <button
                   onClick={() => setSelectedEmployee(null)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  className="px-4 py-2 bg-gray-200 text-gray-300 rounded-lg hover:bg-gray-300"
                 >
                   Close
                 </button>

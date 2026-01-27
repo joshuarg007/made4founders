@@ -858,8 +858,8 @@ export default function Contacts() {
               onClick={() => setSelectedType(type.value)}
               className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition ${
                 selectedType === type.value
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-400 hover:bg-white/5'
+                  ? 'bg-[#1a1d24]/10 text-white'
+                  : 'text-gray-400 hover:bg-[#1a1d24]/5'
               }`}
             >
               <span className="mr-1">{type.icon}</span>
@@ -912,7 +912,7 @@ export default function Contacts() {
                       </span>
                     ))}
                     {contact.responsibilities.split(', ').length > 3 && (
-                      <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-gray-500">
+                      <span className="px-2 py-0.5 rounded text-xs bg-[#1a1d24]/5 text-gray-500">
                         +{contact.responsibilities.split(', ').length - 3}
                       </span>
                     )}
@@ -987,7 +987,7 @@ export default function Contacts() {
               )}
 
               {contact.last_contacted && (
-                <p className="text-xs text-gray-600 mb-3">
+                <p className="text-xs text-gray-400 mb-3">
                   Last contacted: {format(new Date(contact.last_contacted), 'MMM d, yyyy')}
                 </p>
               )}
@@ -996,20 +996,20 @@ export default function Contacts() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedContact(contact)}
-                    className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-white/10 transition"
+                    className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-[#1a1d24]/10 transition"
                     title="View details"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleEdit(contact)}
-                    className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                    className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 transition"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(contact.id)}
-                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#1a1d24]/10 transition"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -1017,7 +1017,7 @@ export default function Contacts() {
                 {contact.email && (
                   <a
                     href={`mailto:${contact.email}`}
-                    className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+                    className="px-3 py-1.5 rounded-lg bg-[#1a1d24]/10 text-white text-sm hover:bg-[#1a1d24]/20 transition"
                   >
                     Email
                   </a>
@@ -1049,7 +1049,7 @@ export default function Contacts() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -1062,7 +1062,7 @@ export default function Contacts() {
                           value={formData.title}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                           placeholder="Enter custom title..."
-                          className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                          className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                           autoFocus
                         />
                         <button
@@ -1079,7 +1079,7 @@ export default function Contacts() {
                     ) : (
                       <div
                         onClick={() => setShowTitleDropdown(true)}
-                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer flex items-center justify-between"
+                        className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white cursor-pointer flex items-center justify-between"
                       >
                         <span className={formData.title ? 'text-white' : 'text-gray-500'}>
                           {formData.title || 'Select title...'}
@@ -1098,7 +1098,7 @@ export default function Contacts() {
                               value={titleSearch}
                               onChange={(e) => setTitleSearch(e.target.value)}
                               placeholder="Search titles..."
-                              className="w-full pl-8 pr-3 py-1.5 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                              className="w-full pl-8 pr-3 py-1.5 rounded bg-[#1a1d24]/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
                               autoFocus
                             />
                           </div>
@@ -1110,8 +1110,8 @@ export default function Contacts() {
                               key={t}
                               type="button"
                               onClick={() => selectTitle(t)}
-                              className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition ${
-                                formData.title === t ? 'text-cyan-400 bg-white/5' : 'text-gray-300'
+                              className={`w-full px-3 py-2 text-left text-sm hover:bg-[#1a1d24]/5 transition ${
+                                formData.title === t ? 'text-cyan-400 bg-[#1a1d24]/5' : 'text-gray-300'
                               }`}
                             >
                               {t}
@@ -1124,7 +1124,7 @@ export default function Contacts() {
                               setShowCustomTitle(true);
                               setFormData({ ...formData, title: '' });
                             }}
-                            className="w-full px-3 py-2 text-left text-sm text-violet-400 hover:bg-white/5 transition border-t border-white/10"
+                            className="w-full px-3 py-2 text-left text-sm text-violet-400 hover:bg-[#1a1d24]/5 transition border-t border-white/10"
                           >
                             + Other (type your own)
                           </button>
@@ -1139,7 +1139,7 @@ export default function Contacts() {
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -1147,7 +1147,7 @@ export default function Contacts() {
                   <select
                     value={formData.contact_type}
                     onChange={(e) => setFormData({ ...formData, contact_type: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     {contactTypes.slice(1).map((type) => (
                       <option key={type.value} value={type.value} className="bg-[#1a1d24] text-white">{type.label}</option>
@@ -1165,7 +1165,7 @@ export default function Contacts() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="Primary email"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                   {additionalEmails.map((email, idx) => (
                     <div key={idx} className="flex gap-2">
@@ -1178,7 +1178,7 @@ export default function Contacts() {
                           setAdditionalEmails(updated);
                         }}
                         placeholder="Additional email"
-                        className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                        className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                       />
                       <button
                         type="button"
@@ -1204,7 +1204,7 @@ export default function Contacts() {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="Primary phone"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                   {additionalPhones.map((phone, idx) => (
                     <div key={idx} className="flex gap-2">
@@ -1217,7 +1217,7 @@ export default function Contacts() {
                           setAdditionalPhones(updated);
                         }}
                         placeholder="Additional phone"
-                        className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                        className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                       />
                       <button
                         type="button"
@@ -1248,7 +1248,7 @@ export default function Contacts() {
                     value={formData.website}
                     onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -1258,7 +1258,7 @@ export default function Contacts() {
                     value={formData.linkedin_url}
                     onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
                     placeholder="https://linkedin.com/in/..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -1268,7 +1268,7 @@ export default function Contacts() {
                     value={formData.twitter_handle}
                     onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
                     placeholder="@username"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
 
@@ -1283,7 +1283,7 @@ export default function Contacts() {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="Street address"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -1292,7 +1292,7 @@ export default function Contacts() {
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -1301,7 +1301,7 @@ export default function Contacts() {
                     type="text"
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -1310,7 +1310,7 @@ export default function Contacts() {
                     type="text"
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -1318,7 +1318,7 @@ export default function Contacts() {
                   <select
                     value={formData.timezone}
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     <option value="" className="bg-[#1a1d24]">Select timezone...</option>
                     <option value="America/New_York" className="bg-[#1a1d24]">Eastern (ET)</option>
@@ -1348,7 +1348,7 @@ export default function Contacts() {
                     <select
                       value={formData.birthday_month}
                       onChange={(e) => setFormData({ ...formData, birthday_month: e.target.value })}
-                      className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                      className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                     >
                       <option value="" className="bg-[#1a1d24]">Month</option>
                       {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
@@ -1358,7 +1358,7 @@ export default function Contacts() {
                     <select
                       value={formData.birthday_day}
                       onChange={(e) => setFormData({ ...formData, birthday_day: e.target.value })}
-                      className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                      className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                     >
                       <option value="" className="bg-[#1a1d24]">Day</option>
                       {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
@@ -1368,7 +1368,7 @@ export default function Contacts() {
                     <select
                       value={formData.birthday_year}
                       onChange={(e) => setFormData({ ...formData, birthday_year: e.target.value })}
-                      className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                      className="px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                     >
                       <option value="" className="bg-[#1a1d24]">Year</option>
                       {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(y => (
@@ -1384,7 +1384,7 @@ export default function Contacts() {
                     value={formData.tags}
                     onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                     placeholder="vip, partner, lead (comma-separated)"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -1393,7 +1393,7 @@ export default function Contacts() {
                     {/* Selected tags */}
                     <div
                       onClick={() => setShowResponsibilitiesDropdown(!showResponsibilitiesDropdown)}
-                      className="min-h-[42px] w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer focus-within:border-cyan-500/50 flex flex-wrap gap-1.5 items-center"
+                      className="min-h-[42px] w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white cursor-pointer focus-within:border-cyan-500/50 flex flex-wrap gap-1.5 items-center"
                     >
                       {selectedResponsibilities.length > 0 ? (
                         selectedResponsibilities.map(r => (
@@ -1432,7 +1432,7 @@ export default function Contacts() {
                               value={responsibilitySearch}
                               onChange={(e) => setResponsibilitySearch(e.target.value)}
                               placeholder="Search..."
-                              className="w-full pl-8 pr-3 py-1.5 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                              className="w-full pl-8 pr-3 py-1.5 rounded bg-[#1a1d24]/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
                               autoFocus
                             />
                           </div>
@@ -1450,7 +1450,7 @@ export default function Contacts() {
                                   key={r}
                                   type="button"
                                   onClick={() => toggleResponsibility(r)}
-                                  className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-white/5 transition ${
+                                  className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-[#1a1d24]/5 transition ${
                                     isSelected ? 'text-cyan-400' : 'text-gray-300'
                                   }`}
                                 >
@@ -1475,7 +1475,7 @@ export default function Contacts() {
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={3}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
               </div>
@@ -1519,7 +1519,7 @@ export default function Contacts() {
               </div>
               <button
                 onClick={() => setSelectedContact(null)}
-                className="p-2 text-gray-500 hover:text-white rounded-lg hover:bg-white/10"
+                className="p-2 text-gray-500 hover:text-white rounded-lg hover:bg-[#1a1d24]/10"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1610,7 +1610,7 @@ export default function Contacts() {
                   handleEdit(selectedContact);
                   setSelectedContact(null);
                 }}
-                className="px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition flex items-center gap-2"
+                className="px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white text-sm hover:bg-[#1a1d24]/20 transition flex items-center gap-2"
               >
                 <Pencil className="w-4 h-4" />
                 Edit Contact

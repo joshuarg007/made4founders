@@ -136,7 +136,7 @@ export default function SlackIntegration() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-6">
         <div className="flex items-center justify-center h-32">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
@@ -145,15 +145,15 @@ export default function SlackIntegration() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div className="bg-[#1a1d24] rounded-xl  border border-white/10">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[#4A154B] rounded-lg flex items-center justify-center">
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">Slack</h2>
+            <h2 className="font-semibold text-white">Slack</h2>
             <p className="text-sm text-gray-500">
               Get notifications and daily digests
             </p>
@@ -164,14 +164,14 @@ export default function SlackIntegration() {
             <button
               onClick={handleSendTest}
               disabled={sendingTest}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"
             >
               <Send className={`w-4 h-4 ${sendingTest ? 'animate-pulse' : ''}`} />
               Test
             </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="p-2 text-gray-400 hover:text-gray-400 hover:bg-white/5 rounded-lg"
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -215,14 +215,14 @@ export default function SlackIntegration() {
       {connection?.is_active && (
         <>
           {/* Connection Status */}
-          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-5 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="font-medium text-gray-900">{connection.team_name}</span>
+              <span className="font-medium text-white">{connection.team_name}</span>
               {connection.channel_name && (
                 <>
                   <span className="text-gray-400">•</span>
-                  <span className="text-gray-600 flex items-center gap-1">
+                  <span className="text-gray-400 flex items-center gap-1">
                     <Hash className="w-3 h-3" />
                     {connection.channel_name}
                   </span>
@@ -233,12 +233,12 @@ export default function SlackIntegration() {
 
           {/* Settings Panel */}
           {showSettings && (
-            <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-              <h3 className="font-medium text-gray-900 mb-4">Notification Settings</h3>
+            <div className="px-5 py-4 bg-white/5 border-b border-white/10">
+              <h3 className="font-medium text-white mb-4">Notification Settings</h3>
 
               {/* Channel Selection */}
               <div className="mb-4">
-                <label className="block text-sm text-gray-700 mb-1">Channel</label>
+                <label className="block text-sm text-gray-300 mb-1">Channel</label>
                 <select
                   value={selectedChannel}
                   onChange={(e) => setSelectedChannel(e.target.value)}
@@ -263,7 +263,7 @@ export default function SlackIntegration() {
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-700">Deadline reminders</span>
+                  <span className="text-sm text-gray-300">Deadline reminders</span>
                 </label>
                 <label className="flex items-center gap-3">
                   <input
@@ -273,7 +273,7 @@ export default function SlackIntegration() {
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
                   <ListTodo className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-700">Task updates</span>
+                  <span className="text-sm text-gray-300">Task updates</span>
                 </label>
                 <label className="flex items-center gap-3">
                   <input
@@ -283,12 +283,12 @@ export default function SlackIntegration() {
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
                   <TrendingUp className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-700">Metric alerts</span>
+                  <span className="text-sm text-gray-300">Metric alerts</span>
                 </label>
               </div>
 
               {/* Daily Digest */}
-              <div className="border-t border-gray-200 pt-4 mb-4">
+              <div className="border-t border-white/10 pt-4 mb-4">
                 <label className="flex items-center gap-3 mb-3">
                   <input
                     type="checkbox"
@@ -297,12 +297,12 @@ export default function SlackIntegration() {
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
                   <Bell className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-700">Daily digest</span>
+                  <span className="text-sm text-gray-300">Daily digest</span>
                 </label>
                 {dailyDigest && (
                   <div className="ml-7 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Send at</span>
+                    <span className="text-sm text-gray-400">Send at</span>
                     <input
                       type="time"
                       value={digestTime}
@@ -325,7 +325,7 @@ export default function SlackIntegration() {
 
           {/* Notification Summary */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-3">Active Notifications</h3>
+            <h3 className="font-medium text-white mb-3">Active Notifications</h3>
             <div className="flex flex-wrap gap-2">
               {connection.notify_deadlines && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-full">
@@ -362,7 +362,7 @@ export default function SlackIntegration() {
       {!connection?.is_active && (
         <div className="p-8 text-center">
           <MessageSquare className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-600 mb-2">
+          <p className="text-gray-400 mb-2">
             Connect Slack to receive notifications
           </p>
           <p className="text-sm text-gray-500">

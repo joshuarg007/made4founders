@@ -225,7 +225,7 @@ function KPICard({
   return (
     <div className="bg-[#1a1d24] rounded-xl p-5 border border-white/10">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-gray-400">
+        <div className="w-10 h-10 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center text-gray-400">
           <Icon className="w-5 h-5" />
         </div>
         <span className="text-sm text-gray-400">{label}</span>
@@ -262,7 +262,7 @@ function ProgressBar({
   const clampedProgress = Math.min(Math.max(progress, 0), 100);
 
   return (
-    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+    <div className="h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
       <div
         className={`h-full ${colorClasses[color]} transition-all duration-500`}
         style={{ width: `${clampedProgress}%` }}
@@ -397,13 +397,13 @@ export default function Analytics() {
     return (
       <div className="p-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-white/10 rounded w-48 mb-8"></div>
+          <div className="h-8 bg-[#1a1d24]/10 rounded w-48 mb-8"></div>
           <div className="grid grid-cols-4 gap-4 mb-8">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-32 bg-white/5 rounded-xl"></div>
+              <div key={i} className="h-32 bg-[#1a1d24]/5 rounded-xl"></div>
             ))}
           </div>
-          <div className="h-64 bg-white/5 rounded-xl"></div>
+          <div className="h-64 bg-[#1a1d24]/5 rounded-xl"></div>
         </div>
       </div>
     );
@@ -433,15 +433,15 @@ export default function Analytics() {
         </div>
 
         {/* Period Selector */}
-        <div className="flex items-center gap-2 bg-white/5 rounded-lg p-1">
+        <div className="flex items-center gap-2 bg-[#1a1d24]/5 rounded-lg p-1">
           {(Object.entries(PERIOD_LABELS) as [Period, string][]).map(([p, label]) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 period === p
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-[#1a1d24]/10 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5'
               }`}
             >
               {label}
@@ -492,7 +492,7 @@ export default function Analytics() {
               <select
                 value={selectedChart}
                 onChange={(e) => setSelectedChart(e.target.value)}
-                className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500"
+                className="px-3 py-1.5 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500"
               >
                 {chartOptions.map(opt => (
                   <option key={opt.value} value={opt.value} className="bg-[#1a1d24]">
@@ -531,7 +531,7 @@ export default function Analytics() {
             {canEdit && (
               <button
                 onClick={() => setShowGoalModal(true)}
-                className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition"
+                className="p-2 bg-[#1a1d24]/5 rounded-lg hover:bg-[#1a1d24]/10 transition"
               >
                 <Plus className="w-4 h-4 text-gray-400" />
               </button>
@@ -543,7 +543,7 @@ export default function Analytics() {
                 const info = METRIC_TYPES[goal.metric_type as keyof typeof METRIC_TYPES];
                 const progressColor = (goal.progress_percent || 0) >= 100 ? 'green' : (goal.progress_percent || 0) >= 50 ? 'cyan' : 'yellow';
                 return (
-                  <div key={goal.id} className="p-4 bg-white/5 rounded-lg">
+                  <div key={goal.id} className="p-4 bg-[#1a1d24]/5 rounded-lg">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="text-white font-medium">{goal.name || info?.label || goal.metric_type}</p>
@@ -665,7 +665,7 @@ export default function Analytics() {
                 <select
                   value={goalForm.metric_type}
                   onChange={(e) => setGoalForm({ ...goalForm, metric_type: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                 >
                   {Object.entries(METRIC_TYPES).map(([type, info]) => (
                     <option key={type} value={type} className="bg-[#1a1d24]">
@@ -680,7 +680,7 @@ export default function Analytics() {
                   type="text"
                   value={goalForm.name}
                   onChange={(e) => setGoalForm({ ...goalForm, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                   placeholder="e.g., Q1 Revenue Target"
                 />
               </div>
@@ -691,7 +691,7 @@ export default function Analytics() {
                     type="number"
                     value={goalForm.target_value}
                     onChange={(e) => setGoalForm({ ...goalForm, target_value: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                     placeholder="0"
                     required
                   />
@@ -702,7 +702,7 @@ export default function Analytics() {
                     type="date"
                     value={goalForm.target_date}
                     onChange={(e) => setGoalForm({ ...goalForm, target_date: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -711,7 +711,7 @@ export default function Analytics() {
                 <textarea
                   value={goalForm.notes}
                   onChange={(e) => setGoalForm({ ...goalForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 resize-none"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 resize-none"
                   rows={2}
                 />
               </div>
@@ -719,7 +719,7 @@ export default function Analytics() {
                 <button
                   type="button"
                   onClick={() => setShowGoalModal(false)}
-                  className="flex-1 px-4 py-2 bg-white/5 text-gray-300 rounded-lg hover:bg-white/10 transition"
+                  className="flex-1 px-4 py-2 bg-[#1a1d24]/5 text-gray-300 rounded-lg hover:bg-[#1a1d24]/10 transition"
                 >
                   Cancel
                 </button>

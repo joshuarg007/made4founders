@@ -153,7 +153,7 @@ export default function Login() {
                 autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
                 placeholder="Your name"
               />
             </div>
@@ -169,7 +169,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="you@company.com"
             />
           </div>
@@ -193,7 +193,7 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-4 py-3 pr-12 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
+                className="w-full px-4 py-3 pr-12 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
                 placeholder="At least 6 characters"
               />
               <button
@@ -238,7 +238,7 @@ export default function Login() {
             type="button"
             onClick={() => handleOAuthLogin('google')}
             disabled={oauthLoading !== null}
-            className="w-full py-3 px-4 rounded-lg bg-white text-gray-800 font-medium hover:bg-gray-100 transition disabled:opacity-50 flex items-center justify-center gap-3"
+            className="w-full py-3 px-4 rounded-lg bg-[#1a1d24] text-white font-medium hover:bg-white/5 transition disabled:opacity-50 flex items-center justify-center gap-3"
           >
             {oauthLoading === 'google' ? (
               <Loader2 className="w-5 h-5 animate-spin" />

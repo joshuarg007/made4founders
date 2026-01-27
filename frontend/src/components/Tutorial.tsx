@@ -107,7 +107,7 @@ export default function Tutorial({ onComplete }: TutorialProps) {
 
         {/* Header with gradient */}
         <div className={`bg-gradient-to-r ${step.color} p-8 text-center`}>
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#1a1d24]/20 rounded-2xl mb-4">
             <Icon className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-1">{step.title}</h2>
@@ -125,7 +125,7 @@ export default function Tutorial({ onComplete }: TutorialProps) {
               {step.checklist.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-[#1a1d24]/5 border border-white/10"
                 >
                   <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-medium">
                     {index + 1}
@@ -147,7 +147,7 @@ export default function Tutorial({ onComplete }: TutorialProps) {
                     ? 'w-6 bg-cyan-500'
                     : index < currentStep
                     ? 'bg-cyan-500/50'
-                    : 'bg-white/20'
+                    : 'bg-[#1a1d24]/20'
                 }`}
               />
             ))}

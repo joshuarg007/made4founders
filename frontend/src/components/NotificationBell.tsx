@@ -152,7 +152,7 @@ export default function NotificationBell() {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+        className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-[#1a1d24]/5"
         aria-label="Notifications"
       >
         <Bell className="w-5 h-5" />
@@ -194,7 +194,7 @@ export default function NotificationBell() {
               <div className="p-4 text-center text-gray-500">Loading...</div>
             ) : notifications.length === 0 ? (
               <div className="p-6 text-center">
-                <Bell className="w-10 h-10 text-gray-600 mx-auto mb-2" />
+                <Bell className="w-10 h-10 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-500 text-sm">No notifications yet</p>
               </div>
             ) : (
@@ -205,7 +205,7 @@ export default function NotificationBell() {
                     <button
                       key={notification.id}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`w-full p-3 text-left hover:bg-white/5 transition-colors flex gap-3 ${
+                      className={`w-full p-3 text-left hover:bg-[#1a1d24]/5 transition-colors flex gap-3 ${
                         !notification.is_read ? 'bg-cyan-900/10' : ''
                       }`}
                     >
@@ -214,7 +214,7 @@ export default function NotificationBell() {
                         className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                           !notification.is_read
                             ? 'bg-cyan-600/20 text-cyan-400'
-                            : 'bg-white/5 text-gray-500'
+                            : 'bg-[#1a1d24]/5 text-gray-500'
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -234,7 +234,7 @@ export default function NotificationBell() {
                             {notification.message}
                           </p>
                         )}
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-gray-400 mt-1">
                           {formatDistanceToNow(new Date(notification.created_at), {
                             addSuffix: true,
                           })}
@@ -260,7 +260,7 @@ export default function NotificationBell() {
                   navigate('/app/notifications');
                   setIsOpen(false);
                 }}
-                className="w-full py-2 text-center text-sm text-cyan-400 hover:text-cyan-300 hover:bg-white/5 rounded-lg transition-colors"
+                className="w-full py-2 text-center text-sm text-cyan-400 hover:text-cyan-300 hover:bg-[#1a1d24]/5 rounded-lg transition-colors"
               >
                 View all notifications
               </button>

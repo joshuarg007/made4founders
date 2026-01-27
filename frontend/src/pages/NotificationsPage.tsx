@@ -193,7 +193,7 @@ export default function NotificationsPage() {
   };
 
   const getColor = (type: string) => {
-    return NOTIFICATION_COLORS[type] || 'bg-gray-500/20 text-gray-400';
+    return NOTIFICATION_COLORS[type] || 'bg-white/50/20 text-gray-400';
   };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -222,7 +222,7 @@ export default function NotificationsPage() {
         <button
           onClick={handleMarkAllRead}
           disabled={unreadCount === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-[#1a1d24]/10 text-white rounded-lg hover:bg-[#1a1d24]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <CheckCheck className="w-4 h-4" />
           Mark all read
@@ -239,7 +239,7 @@ export default function NotificationsPage() {
             className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition ${
               filter === f.value
                 ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                : 'text-gray-400 hover:bg-white/5 border border-transparent'
+                : 'text-gray-400 hover:bg-[#1a1d24]/5 border border-transparent'
             }`}
           >
             {f.label}
@@ -249,7 +249,7 @@ export default function NotificationsPage() {
 
       {/* Bulk Actions */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+        <div className="flex items-center gap-3 mb-4 p-3 bg-[#1a1d24]/5 rounded-lg border border-white/10">
           <span className="text-sm text-gray-400">
             {selectedIds.size} selected
           </span>
@@ -280,18 +280,18 @@ export default function NotificationsPage() {
       {loading && notifications.length === 0 ? (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="animate-pulse flex gap-4 p-4 bg-white/5 rounded-lg">
-              <div className="w-10 h-10 bg-white/10 rounded-full" />
+            <div key={i} className="animate-pulse flex gap-4 p-4 bg-[#1a1d24]/5 rounded-lg">
+              <div className="w-10 h-10 bg-[#1a1d24]/10 rounded-full" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-white/10 rounded w-3/4" />
-                <div className="h-3 bg-white/10 rounded w-1/4" />
+                <div className="h-4 bg-[#1a1d24]/10 rounded w-3/4" />
+                <div className="h-3 bg-[#1a1d24]/10 rounded w-1/4" />
               </div>
             </div>
           ))}
         </div>
       ) : notifications.length === 0 ? (
         <div className="text-center py-12">
-          <Inbox className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <Inbox className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No notifications</h3>
           <p className="text-gray-400">
             {filter !== 'all'
@@ -308,7 +308,7 @@ export default function NotificationsPage() {
                 type="checkbox"
                 checked={selectedIds.size === notifications.length && notifications.length > 0}
                 onChange={handleSelectAll}
-                className="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/20"
+                className="w-4 h-4 rounded border-white/20 bg-[#1a1d24]/5 text-cyan-500 focus:ring-cyan-500/20"
               />
               <span className="text-sm text-gray-400">Select all</span>
             </label>
@@ -334,7 +334,7 @@ export default function NotificationsPage() {
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleSelect(notification.id)}
-                  className="mt-3 w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/20"
+                  className="mt-3 w-4 h-4 rounded border-white/20 bg-[#1a1d24]/5 text-cyan-500 focus:ring-cyan-500/20"
                   onClick={(e) => e.stopPropagation()}
                 />
 
@@ -360,7 +360,7 @@ export default function NotificationsPage() {
                         {notification.message}
                       </p>
                     )}
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-gray-400 mt-1">
                       {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                     </p>
                   </div>
@@ -380,7 +380,7 @@ export default function NotificationsPage() {
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition disabled:opacity-50"
+                className="px-4 py-2 bg-[#1a1d24]/10 text-white rounded-lg hover:bg-[#1a1d24]/20 transition disabled:opacity-50"
               >
                 {loading ? 'Loading...' : 'Load More'}
               </button>

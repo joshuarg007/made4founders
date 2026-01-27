@@ -309,7 +309,7 @@ export default function DailyBrief() {
               item.days_until < 0 ? 'text-red-400 bg-red-500/15' :
               item.days_until === 0 ? 'text-amber-400 bg-amber-500/15' :
               item.days_until <= 3 ? 'text-yellow-400 bg-yellow-500/15' :
-              'text-gray-400 bg-white/5'
+              'text-gray-400 bg-[#1a1d24]/5'
             }`}>
               {getUrgencyLabel(item.days_until)}
             </span>
@@ -334,7 +334,7 @@ export default function DailyBrief() {
             </span>
           )}
           {!isDeadline && !isTask && !isCompleted && (
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
           )}
         </div>
       </div>
@@ -374,7 +374,7 @@ export default function DailyBrief() {
           <a
             href={`mailto:${item.email}`}
             onClick={() => handleContactTouch(item.id)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm font-medium"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition text-sm font-medium"
           >
             <Mail className="w-4 h-4" /> Email
           </a>
@@ -383,7 +383,7 @@ export default function DailyBrief() {
           <a
             href={`tel:${item.phone}`}
             onClick={() => handleContactTouch(item.id)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition text-sm font-medium"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition text-sm font-medium"
           >
             <Phone className="w-4 h-4" /> Call
           </a>
@@ -418,7 +418,7 @@ export default function DailyBrief() {
     <button
       onClick={() => toggleSection(section)}
       className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
-        expanded ? `bg-${color}-500/10 border border-${color}-500/20` : 'hover:bg-white/5'
+        expanded ? `bg-${color}-500/10 border border-${color}-500/20` : 'hover:bg-[#1a1d24]/5'
       }`}
     >
       <div className="flex items-center gap-3">
@@ -509,7 +509,7 @@ export default function DailyBrief() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#1a1d24]/5 border border-white/10">
             {(['all', 'deadline', 'task'] as const).map(type => (
               <button
                 key={type}
@@ -526,7 +526,7 @@ export default function DailyBrief() {
           </div>
           <button
             onClick={loadBrief}
-            className="p-2.5 rounded-xl text-gray-500 hover:text-white hover:bg-white/10 border border-white/10 transition"
+            className="p-2.5 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 border border-white/10 transition"
           >
             <RefreshCw className="w-5 h-5" />
           </button>
@@ -551,7 +551,7 @@ export default function DailyBrief() {
               <div className="text-sm text-gray-500">completed</div>
             </div>
           </div>
-          <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-3 bg-[#1a1d24]/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-cyan-500 via-violet-500 to-pink-500 rounded-full transition-all duration-700 ease-out relative"
               style={{ width: `${totalItems > 0 ? (completedCount / totalItems) * 100 : 0}%` }}
@@ -642,7 +642,7 @@ export default function DailyBrief() {
                 <Link
                   key={item.id}
                   to="/app/getting-started"
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-violet-500/30 hover:bg-white/10 transition group"
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1a1d24]/5 border border-white/10 hover:border-violet-500/30 hover:bg-[#1a1d24]/10 transition group"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full shrink-0 ${
@@ -655,7 +655,7 @@ export default function DailyBrief() {
                     <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getUrgencyStyle(item.urgency)}`}>
                       {getChecklistUrgencyLabel(item.urgency)}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
               ))}

@@ -191,8 +191,8 @@ export default function ProductsOffered() {
               onClick={() => setSelectedCategory(cat.value)}
               className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition ${
                 selectedCategory === cat.value
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-400 hover:bg-white/5'
+                  ? 'bg-[#1a1d24]/10 text-white'
+                  : 'text-gray-400 hover:bg-[#1a1d24]/5'
               }`}
             >
               <span className="mr-1">{cat.icon}</span>
@@ -207,7 +207,7 @@ export default function ProductsOffered() {
         <div className="text-gray-400">Loading...</div>
       ) : filteredProducts.length === 0 ? (
         <div className="text-center py-12">
-          <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No products found</p>
           <button
             onClick={() => setShowModal(true)}
@@ -233,7 +233,7 @@ export default function ProductsOffered() {
 
               <div className="flex items-center gap-3">
                 {/* Icon */}
-                <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-lg shrink-0 group-hover:bg-white/10 transition">
+                <div className="w-9 h-9 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center text-lg shrink-0 group-hover:bg-[#1a1d24]/10 transition">
                   {product.icon || '📦'}
                 </div>
 
@@ -254,14 +254,14 @@ export default function ProductsOffered() {
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleToggleActive(product); }}
-                    className={`p-1.5 rounded-md transition ${product.is_active ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-gray-500 hover:text-emerald-400 hover:bg-white/5'}`}
+                    className={`p-1.5 rounded-md transition ${product.is_active ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-gray-500 hover:text-emerald-400 hover:bg-[#1a1d24]/5'}`}
                     title={product.is_active ? 'Active' : 'Inactive'}
                   >
                     {product.is_active ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleEdit(product); }}
-                    className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/5 transition"
+                    className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#1a1d24]/5 transition"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
@@ -277,7 +277,7 @@ export default function ProductsOffered() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/5 transition"
+                      className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#1a1d24]/5 transition"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
@@ -337,7 +337,7 @@ export default function ProductsOffered() {
                             key={index}
                             type="button"
                             onClick={() => applyTemplate(template)}
-                            className="w-full px-3 py-2 flex items-center gap-3 hover:bg-white/10 transition text-left"
+                            className="w-full px-3 py-2 flex items-center gap-3 hover:bg-[#1a1d24]/10 transition text-left"
                           >
                             <span className="text-xl">{template.icon}</span>
                             <div className="flex-1 min-w-0">
@@ -366,7 +366,7 @@ export default function ProductsOffered() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -374,7 +374,7 @@ export default function ProductsOffered() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     {categories.slice(1).map((cat) => (
                       <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">{cat.label}</option>
@@ -394,7 +394,7 @@ export default function ProductsOffered() {
                   <select
                     value={formData.pricing_model}
                     onChange={(e) => setFormData({ ...formData, pricing_model: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     <option value="" className="bg-[#1a1d24] text-white">Select...</option>
                     {pricingModels.map((pm) => (
@@ -409,7 +409,7 @@ export default function ProductsOffered() {
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     placeholder="e.g., $99/mo"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -419,7 +419,7 @@ export default function ProductsOffered() {
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -428,7 +428,7 @@ export default function ProductsOffered() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -437,7 +437,7 @@ export default function ProductsOffered() {
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -446,7 +446,7 @@ export default function ProductsOffered() {
                       type="checkbox"
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                      className="rounded bg-white/5 border-white/10"
+                      className="rounded bg-[#1a1d24]/5 border-white/10"
                     />
                     Active (currently offered)
                   </label>

@@ -36,7 +36,7 @@ export default function Offerings() {
             className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all whitespace-nowrap ${
               activeTab === tab.id
                 ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 border border-transparent'
             }`}
           >
             <tab.icon className="w-4 h-4" />

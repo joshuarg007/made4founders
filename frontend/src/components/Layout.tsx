@@ -246,7 +246,7 @@ function LayoutContent() {
           <NotificationBell />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg bg-white/5 text-white hover:bg-white/10 transition"
+            className="p-2 rounded-lg bg-[#1a1d24]/5 text-white hover:bg-[#1a1d24]/10 transition"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -292,7 +292,7 @@ function LayoutContent() {
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-left border ${
                     isActive
                       ? `${section.color.bg} ${section.color.border}`
-                      : 'hover:bg-white/5 border-transparent'
+                      : 'hover:bg-[#1a1d24]/5 border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
@@ -318,7 +318,7 @@ function LayoutContent() {
                           `flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
                             itemActive
                               ? `${section.color.activeBg} ${section.color.text} font-medium`
-                              : `text-gray-400 hover:bg-white/5 ${section.color.hoverText}`
+                              : `text-gray-400 hover:bg-[#1a1d24]/5 ${section.color.hoverText}`
                           }`
                         }
                       >
@@ -340,8 +340,8 @@ function LayoutContent() {
                 className={({ isActive }) =>
                   `flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors text-sm ${
                     isActive
-                      ? 'bg-white/10 text-white'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      ? 'bg-[#1a1d24]/10 text-white'
+                      : 'text-gray-400 hover:bg-[#1a1d24]/5 hover:text-white'
                   }`
                 }
               >
@@ -366,7 +366,7 @@ function LayoutContent() {
                   `w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition text-sm font-medium ${
                     isActive
                       ? 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10'
-                      : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white'
+                      : 'border-white/10 text-gray-400 hover:bg-[#1a1d24]/5 hover:text-white'
                   }`
                 }
               >
@@ -383,14 +383,14 @@ function LayoutContent() {
               </button>
             </>
           )}
-          <div className="text-[10px] text-gray-600 text-center">
+          <div className="text-[10px] text-gray-400 text-center">
             Made4Founders v1.0
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto relative pt-14 md:pt-0">
+      <main className="flex-1 overflow-auto relative pt-14 md:pt-0 bg-[#0f1117]">
         <Outlet />
       </main>
 

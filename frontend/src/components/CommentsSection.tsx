@@ -214,7 +214,7 @@ export default function CommentsSection({
   }
 
   return (
-    <div className={`bg-white/5 rounded-lg border border-white/10 ${className}`}>
+    <div className={`bg-[#1a1d24]/5 rounded-lg border border-white/10 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-white/10">
         <div className="flex items-center gap-2 text-sm font-medium text-white">
@@ -246,7 +246,7 @@ export default function CommentsSection({
           comments.map((comment) => (
             <div
               key={comment.id}
-              className="group p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              className="group p-3 rounded-lg bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition-colors"
             >
               {editingId === comment.id ? (
                 // Edit mode
@@ -270,7 +270,7 @@ export default function CommentsSection({
                         setEditingId(null);
                         setEditContent('');
                       }}
-                      className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded"
+                      className="px-3 py-1 text-xs bg-gray-600 hover:bg-white/50 text-white rounded"
                     >
                       Cancel
                     </button>
@@ -293,7 +293,7 @@ export default function CommentsSection({
                           {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                         </span>
                         {comment.is_edited && (
-                          <span className="text-xs text-gray-600 ml-1">(edited)</span>
+                          <span className="text-xs text-gray-400 ml-1">(edited)</span>
                         )}
                       </div>
                     </div>
@@ -310,14 +310,14 @@ export default function CommentsSection({
                         <div className="absolute right-0 top-6 z-10 bg-gray-800 border border-white/10 rounded-lg shadow-xl py-1 min-w-[100px]">
                           <button
                             onClick={() => startEdit(comment)}
-                            className="w-full px-3 py-1.5 text-left text-sm text-gray-300 hover:bg-white/10 flex items-center gap-2"
+                            className="w-full px-3 py-1.5 text-left text-sm text-gray-300 hover:bg-[#1a1d24]/10 flex items-center gap-2"
                           >
                             <Edit2 className="w-3 h-3" />
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(comment.id)}
-                            className="w-full px-3 py-1.5 text-left text-sm text-red-400 hover:bg-white/10 flex items-center gap-2"
+                            className="w-full px-3 py-1.5 text-left text-sm text-red-400 hover:bg-[#1a1d24]/10 flex items-center gap-2"
                           >
                             <Trash2 className="w-3 h-3" />
                             Delete
@@ -381,7 +381,7 @@ export default function CommentsSection({
                   key={user.id}
                   onClick={() => insertMention(user)}
                   className={`w-full px-3 py-2 text-left flex items-center gap-2 ${
-                    index === mentionIndex ? 'bg-cyan-600/20' : 'hover:bg-white/5'
+                    index === mentionIndex ? 'bg-cyan-600/20' : 'hover:bg-[#1a1d24]/5'
                   }`}
                 >
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white">
@@ -401,7 +401,7 @@ export default function CommentsSection({
           )}
         </div>
         <p className="mt-1 text-xs text-gray-500">
-          Press <kbd className="px-1 py-0.5 bg-white/10 rounded text-gray-400">Cmd+Enter</kbd> to send
+          Press <kbd className="px-1 py-0.5 bg-[#1a1d24]/10 rounded text-gray-400">Cmd+Enter</kbd> to send
         </p>
       </div>
     </div>

@@ -109,7 +109,7 @@ function MetricCard({
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-gray-400">
+          <div className="w-10 h-10 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center text-gray-400">
             {getIcon()}
           </div>
           <div>
@@ -289,10 +289,10 @@ export default function Metrics() {
     return (
       <div className="p-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-white/10 rounded w-48 mb-8"></div>
+          <div className="h-8 bg-[#1a1d24]/10 rounded w-48 mb-8"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-40 bg-white/5 rounded-xl"></div>
+              <div key={i} className="h-40 bg-[#1a1d24]/5 rounded-xl"></div>
             ))}
           </div>
         </div>
@@ -339,7 +339,7 @@ export default function Metrics() {
           {canEdit && (
             <button
               onClick={() => handleOpenModal()}
-              className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+              className="px-4 py-2 bg-[#1a1d24]/10 text-white rounded-lg hover:bg-[#1a1d24]/20 transition"
             >
               Add your first metric
             </button>
@@ -356,7 +356,7 @@ export default function Metrics() {
               <button
                 key={type}
                 onClick={() => handleOpenModal(type)}
-                className="px-3 py-1.5 bg-white/5 text-gray-300 rounded-lg hover:bg-white/10 transition text-sm"
+                className="px-3 py-1.5 bg-[#1a1d24]/5 text-gray-300 rounded-lg hover:bg-[#1a1d24]/10 transition text-sm"
               >
                 + {info.label}
               </button>
@@ -373,7 +373,7 @@ export default function Metrics() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-white/5">
+              <thead className="bg-[#1a1d24]/5">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Metric</th>
@@ -388,7 +388,7 @@ export default function Metrics() {
                 {metrics.slice(0, 20).map(metric => {
                   const typeInfo = METRIC_TYPES[metric.metric_type as MetricType] || METRIC_TYPES.custom;
                   return (
-                    <tr key={metric.id} className="hover:bg-white/5">
+                    <tr key={metric.id} className="hover:bg-[#1a1d24]/5">
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
                         {new Date(metric.date).toLocaleDateString()}
                       </td>
@@ -409,13 +409,13 @@ export default function Metrics() {
                         <td className="px-4 py-3 whitespace-nowrap text-right">
                           <button
                             onClick={() => handleEditMetric(metric)}
-                            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition mr-1"
+                            className="p-1.5 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded transition mr-1"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(metric.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-white/10 rounded transition"
+                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-[#1a1d24]/10 rounded transition"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -455,7 +455,7 @@ export default function Metrics() {
                   <select
                     value={formData.metric_type}
                     onChange={(e) => handleTypeChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                   >
                     {Object.entries(METRIC_TYPES).map(([type, info]) => (
                       <option key={type} value={type} className="bg-[#1a1d24] text-white">
@@ -474,7 +474,7 @@ export default function Metrics() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                   required
                 />
               </div>
@@ -499,7 +499,7 @@ export default function Metrics() {
                           e.preventDefault();
                         }
                       }}
-                      className={`w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 ${formData.unit === '$' ? 'pl-7' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                      className={`w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 ${formData.unit === '$' ? 'pl-7' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                       placeholder="0"
                       min="0"
                       required
@@ -521,7 +521,7 @@ export default function Metrics() {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                     required
                   />
                 </div>
@@ -534,7 +534,7 @@ export default function Metrics() {
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 resize-none"
+                  className="w-full px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 resize-none"
                   rows={2}
                   placeholder="Add any context or notes..."
                 />
@@ -544,7 +544,7 @@ export default function Metrics() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 bg-white/5 text-gray-300 rounded-lg hover:bg-white/10 transition"
+                  className="flex-1 px-4 py-2 bg-[#1a1d24]/5 text-gray-300 rounded-lg hover:bg-[#1a1d24]/10 transition"
                 >
                   Cancel
                 </button>

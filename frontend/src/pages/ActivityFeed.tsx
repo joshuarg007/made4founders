@@ -52,7 +52,7 @@ const ACTIVITY_COLORS: Record<string, string> = {
   contact_created: 'bg-emerald-500/20 text-emerald-400',
   investor_update_sent: 'bg-pink-500/20 text-pink-400',
   metric_recorded: 'bg-orange-500/20 text-orange-400',
-  entity_updated: 'bg-gray-500/20 text-gray-400',
+  entity_updated: 'bg-white/50/20 text-gray-400',
   entity_deleted: 'bg-red-500/20 text-red-400',
 };
 
@@ -150,7 +150,7 @@ export default function ActivityFeed() {
   };
 
   const getColor = (type: string) => {
-    return ACTIVITY_COLORS[type] || 'bg-gray-500/20 text-gray-400';
+    return ACTIVITY_COLORS[type] || 'bg-white/50/20 text-gray-400';
   };
 
   // Group activities by date
@@ -198,7 +198,7 @@ export default function ActivityFeed() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition disabled:opacity-50"
+          className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-[#1a1d24]/10 transition disabled:opacity-50"
         >
           <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
@@ -214,7 +214,7 @@ export default function ActivityFeed() {
             className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition ${
               filter === type.value
                 ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                : 'text-gray-400 hover:bg-white/5 border border-transparent'
+                : 'text-gray-400 hover:bg-[#1a1d24]/5 border border-transparent'
             }`}
           >
             {type.label}
@@ -226,18 +226,18 @@ export default function ActivityFeed() {
       {loading && activities.length === 0 ? (
         <div className="space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="animate-pulse flex gap-4 p-4 bg-white/5 rounded-lg">
-              <div className="w-10 h-10 bg-white/10 rounded-full" />
+            <div key={i} className="animate-pulse flex gap-4 p-4 bg-[#1a1d24]/5 rounded-lg">
+              <div className="w-10 h-10 bg-[#1a1d24]/10 rounded-full" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-white/10 rounded w-3/4" />
-                <div className="h-3 bg-white/10 rounded w-1/4" />
+                <div className="h-4 bg-[#1a1d24]/10 rounded w-3/4" />
+                <div className="h-3 bg-[#1a1d24]/10 rounded w-1/4" />
               </div>
             </div>
           ))}
         </div>
       ) : activities.length === 0 ? (
         <div className="text-center py-12">
-          <Activity className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No activity yet</h3>
           <p className="text-gray-400">
             Activity will appear here as you and your team work on tasks, documents, and more.
@@ -250,7 +250,7 @@ export default function ActivityFeed() {
               {/* Date Header */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="text-sm font-medium text-gray-400">{getDateLabel(date)}</div>
-                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-[#1a1d24]/10" />
               </div>
 
               {/* Activities for this date */}
@@ -291,7 +291,7 @@ export default function ActivityFeed() {
                               {activity.user.name || activity.user.email}
                             </span>
                           )}
-                          <span className="flex items-center gap-1 text-xs text-gray-600">
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
                             <Clock className="w-3 h-3" />
                             {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                           </span>
@@ -310,7 +310,7 @@ export default function ActivityFeed() {
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition disabled:opacity-50"
+                className="px-4 py-2 bg-[#1a1d24]/10 text-white rounded-lg hover:bg-[#1a1d24]/20 transition disabled:opacity-50"
               >
                 {loading ? 'Loading...' : 'Load More'}
               </button>

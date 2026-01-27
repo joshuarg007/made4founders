@@ -531,7 +531,7 @@ export default function Settings() {
             <button
               onClick={handleManageBilling}
               disabled={actionLoading === 'portal'}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition disabled:opacity-50"
             >
               {actionLoading === 'portal' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -560,11 +560,11 @@ export default function Settings() {
           </h2>
 
           {/* Billing toggle */}
-          <div className="inline-flex items-center gap-2 p-1 rounded-lg bg-white/5 border border-white/10">
+          <div className="inline-flex items-center gap-2 p-1 rounded-lg bg-[#1a1d24]/5 border border-white/10">
             <button
               onClick={() => setBillingCycle('monthly')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                billingCycle === 'monthly' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'
+                billingCycle === 'monthly' ? 'bg-[#1a1d24]/10 text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
               Monthly
@@ -572,7 +572,7 @@ export default function Settings() {
             <button
               onClick={() => setBillingCycle('yearly')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition flex items-center gap-1.5 ${
-                billingCycle === 'yearly' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'
+                billingCycle === 'yearly' ? 'bg-[#1a1d24]/10 text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
               Yearly
@@ -632,7 +632,7 @@ export default function Settings() {
                 {isCurrentPlan ? (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-lg bg-white/5 text-gray-500 font-medium cursor-not-allowed"
+                    className="w-full py-2.5 rounded-lg bg-[#1a1d24]/5 text-gray-500 font-medium cursor-not-allowed"
                   >
                     Current Plan
                   </button>
@@ -692,7 +692,7 @@ export default function Settings() {
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                   currentBusiness.gamification_enabled
                     ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20'
-                    : 'bg-white/5'
+                    : 'bg-[#1a1d24]/5'
                 }`}>
                   {currentBusiness.gamification_enabled ? (
                     <Trophy className="w-5 h-5 text-amber-400" />
@@ -715,11 +715,11 @@ export default function Settings() {
                 className={`relative w-14 h-8 rounded-full transition-colors ${
                   currentBusiness.gamification_enabled
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500'
-                    : 'bg-white/10'
+                    : 'bg-[#1a1d24]/10'
                 } ${savingGamification ? 'opacity-50' : ''}`}
               >
                 <div
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                  className={`absolute top-1 w-6 h-6 bg-[#1a1d24] rounded-full shadow-lg transition-transform ${
                     currentBusiness.gamification_enabled ? 'translate-x-7' : 'translate-x-1'
                   }`}
                 />
@@ -735,7 +735,7 @@ export default function Settings() {
                     className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                       !soundMuted && soundVolume > 0
                         ? 'bg-gradient-to-br from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30'
-                        : 'bg-white/5 hover:bg-white/10'
+                        : 'bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10'
                     }`}
                   >
                     {!soundMuted && soundVolume > 0 ? (
@@ -769,7 +769,7 @@ export default function Settings() {
                   onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
                   onMouseUp={handleVolumeChangeEnd}
                   onTouchEnd={handleVolumeChangeEnd}
-                  className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer
+                  className="flex-1 h-2 bg-[#1a1d24]/10 rounded-full appearance-none cursor-pointer
                     [&::-webkit-slider-thumb]:appearance-none
                     [&::-webkit-slider-thumb]:w-4
                     [&::-webkit-slider-thumb]:h-4
@@ -840,7 +840,7 @@ export default function Settings() {
           {/* Email display */}
           <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center">
                 <Mail className="w-5 h-5 text-gray-400" />
               </div>
               <div>
@@ -854,7 +854,7 @@ export default function Settings() {
           {/* Role */}
           <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-gray-400" />
               </div>
               <div>
@@ -891,7 +891,7 @@ export default function Settings() {
                 Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
               </p>
               <div className="flex justify-center mb-4">
-                <div className="p-4 bg-white rounded-lg">
+                <div className="p-4 bg-[#1a1d24] rounded-lg">
                   <img
                     src={`data:image/png;base64,${mfaQrCode}`}
                     alt="MFA QR Code"
@@ -902,12 +902,12 @@ export default function Settings() {
               <div className="text-center">
                 <p className="text-xs text-gray-500 mb-2">Can't scan? Enter this code manually:</p>
                 <div className="flex items-center justify-center gap-2">
-                  <code className="px-3 py-1.5 bg-white/5 rounded text-sm text-cyan-400 font-mono">
+                  <code className="px-3 py-1.5 bg-[#1a1d24]/5 rounded text-sm text-cyan-400 font-mono">
                     {mfaSecret}
                   </code>
                   <button
                     onClick={() => copyToClipboard(mfaSecret)}
-                    className="p-1.5 hover:bg-white/10 rounded transition"
+                    className="p-1.5 hover:bg-[#1a1d24]/10 rounded transition"
                   >
                     <Copy className="w-4 h-4 text-gray-400" />
                   </button>
@@ -926,7 +926,7 @@ export default function Settings() {
                   value={mfaVerifyCode}
                   onChange={(e) => setMfaVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="000000"
-                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-center text-lg font-mono tracking-widest focus:outline-none focus:border-green-500/50"
+                  className="flex-1 px-4 py-3 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white text-center text-lg font-mono tracking-widest focus:outline-none focus:border-green-500/50"
                   maxLength={6}
                 />
                 <button
@@ -971,7 +971,7 @@ export default function Settings() {
                     value={mfaDisablePassword}
                     onChange={(e) => setMfaDisablePassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full px-4 py-3 pr-12 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
+                    className="w-full px-4 py-3 pr-12 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500/50"
                   />
                   <button
                     type="button"
@@ -989,7 +989,7 @@ export default function Settings() {
                   value={mfaDisableCode}
                   onChange={(e) => setMfaDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="Enter 6-digit code"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white font-mono focus:outline-none focus:border-red-500/50"
+                  className="w-full px-4 py-3 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white font-mono focus:outline-none focus:border-red-500/50"
                   maxLength={6}
                 />
               </div>
@@ -1001,7 +1001,7 @@ export default function Settings() {
                   setMfaDisablePassword('');
                   setMfaDisableCode('');
                 }}
-                className="flex-1 px-4 py-3 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition"
+                className="flex-1 px-4 py-3 bg-[#1a1d24]/10 text-white rounded-lg font-medium hover:bg-[#1a1d24]/20 transition"
               >
                 Cancel
               </button>
@@ -1034,7 +1034,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-2 gap-2 p-4 bg-[#0f1117] rounded-lg border border-white/5">
               {mfaBackupCodes.map((code, i) => (
-                <div key={i} className="px-3 py-2 bg-white/5 rounded font-mono text-sm text-center text-white">
+                <div key={i} className="px-3 py-2 bg-[#1a1d24]/5 rounded font-mono text-sm text-center text-white">
                   {code}
                 </div>
               ))}
@@ -1042,7 +1042,7 @@ export default function Settings() {
             <div className="flex gap-3">
               <button
                 onClick={() => copyToClipboard(mfaBackupCodes.join('\n'))}
-                className="flex-1 px-4 py-3 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-[#1a1d24]/10 text-white rounded-lg font-medium hover:bg-[#1a1d24]/20 transition flex items-center justify-center gap-2"
               >
                 <Copy className="w-4 h-4" />
                 Copy All
@@ -1061,7 +1061,7 @@ export default function Settings() {
             <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  mfaEnabled ? 'bg-green-500/20' : 'bg-white/5'
+                  mfaEnabled ? 'bg-green-500/20' : 'bg-[#1a1d24]/5'
                 }`}>
                   <Shield className={`w-5 h-5 ${mfaEnabled ? 'text-green-400' : 'text-gray-500'}`} />
                 </div>
@@ -1089,7 +1089,7 @@ export default function Settings() {
                 <button
                   onClick={handleRegenerateBackupCodes}
                   disabled={actionLoading === 'mfa-backup'}
-                  className="flex-1 px-4 py-3 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-[#1a1d24]/10 text-white rounded-lg font-medium hover:bg-[#1a1d24]/20 transition flex items-center justify-center gap-2"
                 >
                   {actionLoading === 'mfa-backup' ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1140,7 +1140,7 @@ export default function Settings() {
           <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
             <div className="flex items-center gap-4">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                emailNotifications ? 'bg-violet-500/20' : 'bg-white/5'
+                emailNotifications ? 'bg-violet-500/20' : 'bg-[#1a1d24]/5'
               }`}>
                 {emailNotifications ? (
                   <Bell className="w-5 h-5 text-violet-400" />
@@ -1156,11 +1156,11 @@ export default function Settings() {
             <button
               onClick={() => setEmailNotifications(!emailNotifications)}
               className={`relative w-14 h-8 rounded-full transition-colors ${
-                emailNotifications ? 'bg-violet-500' : 'bg-white/10'
+                emailNotifications ? 'bg-violet-500' : 'bg-[#1a1d24]/10'
               }`}
             >
               <div
-                className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                className={`absolute top-1 w-6 h-6 bg-[#1a1d24] rounded-full shadow-lg transition-transform ${
                   emailNotifications ? 'translate-x-7' : 'translate-x-1'
                 }`}
               />
@@ -1171,7 +1171,7 @@ export default function Settings() {
           <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
             <div className="flex items-center gap-4">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                deadlineReminders ? 'bg-orange-500/20' : 'bg-white/5'
+                deadlineReminders ? 'bg-orange-500/20' : 'bg-[#1a1d24]/5'
               }`}>
                 <Clock className={`w-5 h-5 ${deadlineReminders ? 'text-orange-400' : 'text-gray-500'}`} />
               </div>
@@ -1183,11 +1183,11 @@ export default function Settings() {
             <button
               onClick={() => setDeadlineReminders(!deadlineReminders)}
               className={`relative w-14 h-8 rounded-full transition-colors ${
-                deadlineReminders ? 'bg-orange-500' : 'bg-white/10'
+                deadlineReminders ? 'bg-orange-500' : 'bg-[#1a1d24]/10'
               }`}
             >
               <div
-                className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                className={`absolute top-1 w-6 h-6 bg-[#1a1d24] rounded-full shadow-lg transition-transform ${
                   deadlineReminders ? 'translate-x-7' : 'translate-x-1'
                 }`}
               />
@@ -1198,7 +1198,7 @@ export default function Settings() {
           <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
             <div className="flex items-center gap-4">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                weeklyDigest ? 'bg-cyan-500/20' : 'bg-white/5'
+                weeklyDigest ? 'bg-cyan-500/20' : 'bg-[#1a1d24]/5'
               }`}>
                 <Mail className={`w-5 h-5 ${weeklyDigest ? 'text-cyan-400' : 'text-gray-500'}`} />
               </div>
@@ -1210,11 +1210,11 @@ export default function Settings() {
             <button
               onClick={() => setWeeklyDigest(!weeklyDigest)}
               className={`relative w-14 h-8 rounded-full transition-colors ${
-                weeklyDigest ? 'bg-cyan-500' : 'bg-white/10'
+                weeklyDigest ? 'bg-cyan-500' : 'bg-[#1a1d24]/10'
               }`}
             >
               <div
-                className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                className={`absolute top-1 w-6 h-6 bg-[#1a1d24] rounded-full shadow-lg transition-transform ${
                   weeklyDigest ? 'translate-x-7' : 'translate-x-1'
                 }`}
               />
@@ -1239,7 +1239,7 @@ export default function Settings() {
           {/* Timezone */}
           <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center">
                 <Globe className="w-5 h-5 text-gray-400" />
               </div>
               <div>
@@ -1250,7 +1250,7 @@ export default function Settings() {
             <select
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
-              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500/50"
+              className="px-3 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500/50"
             >
               {commonTimezones.map(tz => (
                 <option key={tz} value={tz} className="bg-[#1a1d24] text-white">
@@ -1288,7 +1288,7 @@ export default function Settings() {
                 <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      aiStatus.providers?.ollama?.available ? 'bg-green-500/20' : 'bg-white/5'
+                      aiStatus.providers?.ollama?.available ? 'bg-green-500/20' : 'bg-[#1a1d24]/5'
                     }`}>
                       <Server className={`w-5 h-5 ${
                         aiStatus.providers?.ollama?.available ? 'text-green-400' : 'text-gray-500'
@@ -1321,7 +1321,7 @@ export default function Settings() {
                       <button
                         onClick={() => handleSetAIProvider('ollama')}
                         disabled={aiSaving}
-                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                        className="px-3 py-1.5 text-xs bg-[#1a1d24]/5 text-gray-300 rounded hover:bg-[#1a1d24]/10 transition"
                       >
                         Set Preferred
                       </button>
@@ -1333,7 +1333,7 @@ export default function Settings() {
                 <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      aiStatus.providers?.cloudflare?.configured ? 'bg-orange-500/20' : 'bg-white/5'
+                      aiStatus.providers?.cloudflare?.configured ? 'bg-orange-500/20' : 'bg-[#1a1d24]/5'
                     }`}>
                       <Cloud className={`w-5 h-5 ${
                         aiStatus.providers?.cloudflare?.configured ? 'text-orange-400' : 'text-gray-500'
@@ -1358,7 +1358,7 @@ export default function Settings() {
                         Configured
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 text-xs bg-gray-500/20 text-gray-400 rounded-full">
+                      <span className="px-2.5 py-1 text-xs bg-white/50/20 text-gray-400 rounded-full">
                         Not configured
                       </span>
                     )}
@@ -1366,7 +1366,7 @@ export default function Settings() {
                       <button
                         onClick={() => handleSetAIProvider('cloudflare')}
                         disabled={aiSaving}
-                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                        className="px-3 py-1.5 text-xs bg-[#1a1d24]/5 text-gray-300 rounded hover:bg-[#1a1d24]/10 transition"
                       >
                         Set Preferred
                       </button>
@@ -1378,7 +1378,7 @@ export default function Settings() {
                 <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      aiStatus.providers?.openai?.configured ? 'bg-cyan-500/20' : 'bg-white/5'
+                      aiStatus.providers?.openai?.configured ? 'bg-cyan-500/20' : 'bg-[#1a1d24]/5'
                     }`}>
                       <Cloud className={`w-5 h-5 ${
                         aiStatus.providers?.openai?.configured ? 'text-cyan-400' : 'text-gray-500'
@@ -1403,7 +1403,7 @@ export default function Settings() {
                         Configured
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 text-xs bg-gray-500/20 text-gray-400 rounded-full">
+                      <span className="px-2.5 py-1 text-xs bg-white/50/20 text-gray-400 rounded-full">
                         Not configured
                       </span>
                     )}
@@ -1411,7 +1411,7 @@ export default function Settings() {
                       <button
                         onClick={() => handleSetAIProvider('openai')}
                         disabled={aiSaving}
-                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                        className="px-3 py-1.5 text-xs bg-[#1a1d24]/5 text-gray-300 rounded hover:bg-[#1a1d24]/10 transition"
                       >
                         Set Preferred
                       </button>
@@ -1423,7 +1423,7 @@ export default function Settings() {
                 <div className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      aiStatus.providers?.anthropic?.configured ? 'bg-orange-500/20' : 'bg-white/5'
+                      aiStatus.providers?.anthropic?.configured ? 'bg-orange-500/20' : 'bg-[#1a1d24]/5'
                     }`}>
                       <Cloud className={`w-5 h-5 ${
                         aiStatus.providers?.anthropic?.configured ? 'text-orange-400' : 'text-gray-500'
@@ -1448,7 +1448,7 @@ export default function Settings() {
                         Configured
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 text-xs bg-gray-500/20 text-gray-400 rounded-full">
+                      <span className="px-2.5 py-1 text-xs bg-white/50/20 text-gray-400 rounded-full">
                         Not configured
                       </span>
                     )}
@@ -1456,7 +1456,7 @@ export default function Settings() {
                       <button
                         onClick={() => handleSetAIProvider('anthropic')}
                         disabled={aiSaving}
-                        className="px-3 py-1.5 text-xs bg-white/5 text-gray-300 rounded hover:bg-white/10 transition"
+                        className="px-3 py-1.5 text-xs bg-[#1a1d24]/5 text-gray-300 rounded hover:bg-[#1a1d24]/10 transition"
                       >
                         Set Preferred
                       </button>
@@ -1471,7 +1471,7 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    aiStatus.fallback_enabled ? 'bg-blue-500/20' : 'bg-white/5'
+                    aiStatus.fallback_enabled ? 'bg-blue-500/20' : 'bg-[#1a1d24]/5'
                   }`}>
                     <RefreshCw className={`w-5 h-5 ${
                       aiStatus.fallback_enabled ? 'text-blue-400' : 'text-gray-500'
@@ -1489,7 +1489,7 @@ export default function Settings() {
                 <span className={`px-2.5 py-1 text-xs rounded-full ${
                   aiStatus.fallback_enabled
                     ? 'bg-blue-500/20 text-blue-400'
-                    : 'bg-gray-500/20 text-gray-400'
+                    : 'bg-white/50/20 text-gray-400'
                 }`}>
                   {aiStatus.fallback_enabled ? 'Enabled' : 'Disabled'}
                 </span>
@@ -1637,7 +1637,7 @@ export default function Settings() {
               <button
                 onClick={loadAuditData}
                 disabled={auditLoading}
-                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                className="p-2 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 hover:text-white transition"
                 title="Refresh"
               >
                 <RefreshCw className={`w-4 h-4 ${auditLoading ? 'animate-spin' : ''}`} />

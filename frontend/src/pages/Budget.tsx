@@ -186,7 +186,7 @@ export default function Budget() {
       case 'over':
         return 'text-red-400 bg-red-500/20'
       default:
-        return 'text-gray-400 bg-gray-500/20'
+        return 'text-gray-400 bg-white/50/20'
     }
   }
 
@@ -224,7 +224,7 @@ export default function Budget() {
             <button
               onClick={handleCalculateActuals}
               disabled={calculating}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white hover:bg-[#1a1d24]/10 transition disabled:opacity-50"
             >
               {calculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               Sync Actuals
@@ -384,7 +384,7 @@ export default function Budget() {
                       <span className="text-gray-400">Budget Progress</span>
                       <span className="text-white">{summary.percent_spent.toFixed(0)}% spent</span>
                     </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-3 bg-[#1a1d24]/5 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
                           summary.percent_spent > 100 ? 'bg-red-500' :
@@ -411,7 +411,7 @@ export default function Budget() {
                               {formatCurrency(cat.spent)} / {formatCurrency(cat.budget)}
                             </span>
                           </div>
-                          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-2 bg-[#1a1d24]/5 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
                                 cat.percent > 100 ? 'bg-red-500' :
@@ -450,7 +450,7 @@ export default function Budget() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {varianceReport.line_items.map(item => (
-                <tr key={item.id} className="hover:bg-white/5">
+                <tr key={item.id} className="hover:bg-[#1a1d24]/5">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
@@ -488,7 +488,7 @@ export default function Budget() {
                 </tr>
               ))}
               {/* Totals row */}
-              <tr className="bg-white/5 font-medium">
+              <tr className="bg-[#1a1d24]/5 font-medium">
                 <td className="px-6 py-4 text-white">Total</td>
                 <td className="px-6 py-4 text-right text-white">{formatCurrency(varianceReport.total_budgeted)}</td>
                 <td className="px-6 py-4 text-right text-white">{formatCurrency(varianceReport.total_actual)}</td>
@@ -590,7 +590,7 @@ export default function Budget() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {categories.map(cat => (
-                  <tr key={cat.id} className="hover:bg-white/5">
+                  <tr key={cat.id} className="hover:bg-[#1a1d24]/5">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div
@@ -625,7 +625,7 @@ export default function Budget() {
                 <select
                   value={newPeriodType}
                   onChange={(e) => setNewPeriodType(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
@@ -639,7 +639,7 @@ export default function Budget() {
                     type="date"
                     value={newPeriodStart}
                     onChange={(e) => setNewPeriodStart(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div>
@@ -648,7 +648,7 @@ export default function Budget() {
                     type="date"
                     value={newPeriodEnd}
                     onChange={(e) => setNewPeriodEnd(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -659,7 +659,7 @@ export default function Budget() {
                   value={newPeriodName}
                   onChange={(e) => setNewPeriodName(e.target.value)}
                   placeholder="e.g., Q1 2025 Budget"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
@@ -693,7 +693,7 @@ export default function Budget() {
                 <select
                   value={lineItemCategoryId || ''}
                   onChange={(e) => setLineItemCategoryId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                 >
                   <option value="">Select category...</option>
                   {categories.map(cat => (
@@ -710,7 +710,7 @@ export default function Budget() {
                   placeholder="0.00"
                   min="0"
                   step="0.01"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
@@ -750,7 +750,7 @@ export default function Budget() {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="e.g., Cloud Infrastructure"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
               <div>
@@ -759,7 +759,7 @@ export default function Budget() {
                   type="color"
                   value={newCategoryColor}
                   onChange={(e) => setNewCategoryColor(e.target.value)}
-                  className="w-full h-10 bg-white/5 border border-white/10 rounded-lg cursor-pointer"
+                  className="w-full h-10 bg-[#1a1d24]/5 border border-white/10 rounded-lg cursor-pointer"
                 />
               </div>
             </div>

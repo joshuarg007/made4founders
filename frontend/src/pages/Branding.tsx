@@ -197,7 +197,7 @@ export default function Branding() {
         </div>
         <button
           onClick={exportBrandKit}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-gray-300 hover:bg-[#1a1d24]/10 hover:text-white transition"
         >
           <Download className="w-4 h-4" />
           Export Brand Kit
@@ -219,13 +219,13 @@ export default function Branding() {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
               activeTab === tab.id
                 ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5'
             }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
             {tab.count > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs">
+              <span className="px-2 py-0.5 rounded-full bg-[#1a1d24]/10 text-xs">
                 {tab.count}
               </span>
             )}
@@ -364,7 +364,7 @@ function ColorsTab({ colors, onAdd, onEdit, onRefresh }: {
             if (typeColors.length === 0) return null;
 
             return (
-              <div key={type.value} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+              <div key={type.value} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 overflow-hidden">
                 <div className="p-4 border-b border-white/10">
                   <h3 className="font-medium text-white">{type.label}</h3>
                   <p className="text-xs text-gray-500">{type.description}</p>
@@ -385,7 +385,7 @@ function ColorsTab({ colors, onAdd, onEdit, onRefresh }: {
                       <div className="flex gap-1">
                         <button
                           onClick={() => copyToClipboard(color.hex_value, color.id)}
-                          className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                          className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                           title="Copy hex"
                         >
                           {copiedId === color.id ? (
@@ -396,7 +396,7 @@ function ColorsTab({ colors, onAdd, onEdit, onRefresh }: {
                         </button>
                         <button
                           onClick={() => onEdit(color)}
-                          className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                          className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
@@ -460,7 +460,7 @@ function FontsTab({ fonts, onAdd, onEdit, onRefresh }: {
           {fonts.map((font) => {
             const usage = FONT_USAGES.find(u => u.value === font.usage);
             return (
-              <div key={font.id} className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <div key={font.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <span className="text-xs font-medium text-cyan-400 uppercase tracking-wider">
@@ -473,7 +473,7 @@ function FontsTab({ fonts, onAdd, onEdit, onRefresh }: {
                   <div className="flex gap-1">
                     <button
                       onClick={() => onEdit(font)}
-                      className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                      className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -514,7 +514,7 @@ function FontsTab({ fonts, onAdd, onEdit, onRefresh }: {
                   )}
                 </div>
 
-                <div className="mt-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="mt-4 p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                   <p style={{ fontFamily: font.font_family, fontWeight: font.font_weight || 400 }} className="text-gray-300">
                     The quick brown fox jumps over the lazy dog. 0123456789
                   </p>
@@ -608,7 +608,7 @@ function AssetsTab({ assets, onAdd, onEdit, onRefresh }: {
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {typeAssets.map((asset) => (
-                    <div key={asset.id} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden group">
+                    <div key={asset.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 overflow-hidden group">
                       <div className="aspect-square bg-[#0a0d14] flex items-center justify-center p-4 relative">
                         {asset.mime_type?.startsWith('image/') ? (
                           <img
@@ -617,7 +617,7 @@ function AssetsTab({ assets, onAdd, onEdit, onRefresh }: {
                             className="max-w-full max-h-full object-contain"
                           />
                         ) : (
-                          <FileText className="w-16 h-16 text-gray-600" />
+                          <FileText className="w-16 h-16 text-gray-400" />
                         )}
                         {asset.is_primary && (
                           <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-xs flex items-center gap-1">
@@ -628,13 +628,13 @@ function AssetsTab({ assets, onAdd, onEdit, onRefresh }: {
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleDownload(asset)}
-                            className="p-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition"
+                            className="p-2 rounded-lg bg-[#1a1d24]/20 text-white hover:bg-[#1a1d24]/30 transition"
                           >
                             <Download className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => onEdit(asset)}
-                            className="p-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition"
+                            className="p-2 rounded-lg bg-[#1a1d24]/20 text-white hover:bg-[#1a1d24]/30 transition"
                           >
                             <Edit3 className="w-5 h-5" />
                           </button>
@@ -718,13 +718,13 @@ function GuidelinesTab({ guidelines, onAdd, onEdit, onRefresh }: {
                 </h3>
                 <div className="space-y-4">
                   {categoryGuidelines.map((guideline) => (
-                    <div key={guideline.id} className="bg-white/5 rounded-xl border border-white/10 p-6">
+                    <div key={guideline.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 p-6">
                       <div className="flex justify-between items-start mb-3">
                         <h4 className="text-lg font-medium text-white">{guideline.title}</h4>
                         <div className="flex gap-1">
                           <button
                             onClick={() => onEdit(guideline)}
-                            className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                            className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -797,7 +797,7 @@ function ColorModal({ color, onClose, onSave }: {
             <select
               value={formData.color_type}
               onChange={(e) => setFormData({ ...formData, color_type: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               {COLOR_TYPES.map((type) => (
                 <option key={type.value} value={type.value} className="bg-[#1a1d24] text-white">{type.label}</option>
@@ -818,7 +818,7 @@ function ColorModal({ color, onClose, onSave }: {
                 type="text"
                 value={formData.hex_value}
                 onChange={(e) => setFormData({ ...formData, hex_value: e.target.value })}
-                className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                className="flex-1 px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                 placeholder="#000000"
               />
             </div>
@@ -830,7 +830,7 @@ function ColorModal({ color, onClose, onSave }: {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="e.g., Ocean Blue"
             />
           </div>
@@ -841,7 +841,7 @@ function ColorModal({ color, onClose, onSave }: {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={2}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
               placeholder="When to use this color..."
             />
           </div>
@@ -850,7 +850,7 @@ function ColorModal({ color, onClose, onSave }: {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition"
             >
               Cancel
             </button>
@@ -916,7 +916,7 @@ function FontModal({ font, onClose, onSave }: {
               value={formData.font_family}
               onChange={(e) => setFormData({ ...formData, font_family: e.target.value })}
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="e.g., Inter, Roboto"
             />
           </div>
@@ -926,7 +926,7 @@ function FontModal({ font, onClose, onSave }: {
             <select
               value={formData.usage}
               onChange={(e) => setFormData({ ...formData, usage: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               {FONT_USAGES.map((u) => (
                 <option key={u.value} value={u.value} className="bg-[#1a1d24] text-white">{u.label}</option>
@@ -939,7 +939,7 @@ function FontModal({ font, onClose, onSave }: {
             <select
               value={formData.font_weight}
               onChange={(e) => setFormData({ ...formData, font_weight: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               <option value="100" className="bg-[#1a1d24] text-white">100 - Thin</option>
               <option value="200" className="bg-[#1a1d24] text-white">200 - Extra Light</option>
@@ -959,7 +959,7 @@ function FontModal({ font, onClose, onSave }: {
               type="url"
               value={formData.google_font_url}
               onChange={(e) => setFormData({ ...formData, google_font_url: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="https://fonts.google.com/specimen/..."
             />
           </div>
@@ -970,7 +970,7 @@ function FontModal({ font, onClose, onSave }: {
               type="text"
               value={formData.fallback_fonts}
               onChange={(e) => setFormData({ ...formData, fallback_fonts: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="e.g., system-ui, sans-serif"
             />
           </div>
@@ -979,7 +979,7 @@ function FontModal({ font, onClose, onSave }: {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition"
             >
               Cancel
             </button>
@@ -1095,7 +1095,7 @@ function AssetModal({ asset, onClose, onSave }: {
                   <div>
                     <Upload className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                     <p className="text-gray-400">Click to select file</p>
-                    <p className="text-xs text-gray-600 mt-1">PNG, JPG, SVG, WebP, GIF, ICO, PDF</p>
+                    <p className="text-xs text-gray-400 mt-1">PNG, JPG, SVG, WebP, GIF, ICO, PDF</p>
                   </div>
                 )}
               </button>
@@ -1108,7 +1108,7 @@ function AssetModal({ asset, onClose, onSave }: {
               value={formData.asset_type}
               onChange={(e) => setFormData({ ...formData, asset_type: e.target.value })}
               disabled={!!asset}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition disabled:opacity-50"
             >
               {ASSET_TYPES.map((type) => (
                 <option key={type.value} value={type.value} className="bg-[#1a1d24] text-white">{type.label}</option>
@@ -1123,7 +1123,7 @@ function AssetModal({ asset, onClose, onSave }: {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="Asset name"
             />
           </div>
@@ -1134,7 +1134,7 @@ function AssetModal({ asset, onClose, onSave }: {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={2}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
               placeholder="Usage notes..."
             />
           </div>
@@ -1145,7 +1145,7 @@ function AssetModal({ asset, onClose, onSave }: {
               type="text"
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="dark, square, marketing"
             />
           </div>
@@ -1155,7 +1155,7 @@ function AssetModal({ asset, onClose, onSave }: {
               type="checkbox"
               checked={formData.is_primary}
               onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-              className="w-5 h-5 rounded bg-white/5 border border-white/20 text-cyan-500 focus:ring-cyan-500/50"
+              className="w-5 h-5 rounded bg-[#1a1d24]/5 border border-white/20 text-cyan-500 focus:ring-cyan-500/50"
             />
             <span className="text-gray-300">Set as primary asset for this type</span>
           </label>
@@ -1164,7 +1164,7 @@ function AssetModal({ asset, onClose, onSave }: {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition"
             >
               Cancel
             </button>
@@ -1229,7 +1229,7 @@ function GuidelineModal({ guideline, onClose, onSave }: {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="e.g., Minimum Logo Size"
             />
           </div>
@@ -1239,7 +1239,7 @@ function GuidelineModal({ guideline, onClose, onSave }: {
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               {GUIDELINE_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat} className="bg-[#1a1d24] text-white">{cat}</option>
@@ -1254,7 +1254,7 @@ function GuidelineModal({ guideline, onClose, onSave }: {
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               required
               rows={6}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
               placeholder="Describe the guideline in detail..."
             />
           </div>
@@ -1263,7 +1263,7 @@ function GuidelineModal({ guideline, onClose, onSave }: {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition"
             >
               Cancel
             </button>

@@ -222,8 +222,8 @@ export default function CapTable() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cap Table</h1>
-          <p className="text-gray-600">Manage equity, shareholders, and ownership</p>
+          <h1 className="text-2xl font-bold text-white">Cap Table</h1>
+          <p className="text-gray-400">Manage equity, shareholders, and ownership</p>
         </div>
       </div>
 
@@ -234,7 +234,7 @@ export default function CapTable() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-white/10">
         <nav className="flex space-x-8">
           {tabs.map((tab) => (
             <button
@@ -243,7 +243,7 @@ export default function CapTable() {
               className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-300'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -258,14 +258,14 @@ export default function CapTable() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-blue-600" />
                 </div>
                 <span className="text-sm text-gray-500">Issued Shares</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-white">
                 {formatNumber(summary.total_issued_shares)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
@@ -273,14 +273,14 @@ export default function CapTable() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-purple-600" />
                 </div>
                 <span className="text-sm text-gray-500">Outstanding Options</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-white">
                 {formatNumber(summary.total_outstanding_options)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
@@ -288,14 +288,14 @@ export default function CapTable() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-green-600" />
                 </div>
                 <span className="text-sm text-gray-500">Implied Valuation</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-white">
                 {formatCurrency(summary.implied_valuation)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
@@ -303,14 +303,14 @@ export default function CapTable() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-orange-600" />
                 </div>
                 <span className="text-sm text-gray-500">Outstanding SAFEs</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-white">
                 {formatCurrency(summary.total_safe_amount + summary.total_convertible_amount)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
@@ -321,11 +321,11 @@ export default function CapTable() {
 
           {/* Ownership Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <h3 className="font-semibold text-gray-900 mb-4">Ownership Breakdown</h3>
+            <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+              <h3 className="font-semibold text-white mb-4">Ownership Breakdown</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Founders</span>
+                  <span className="text-sm text-gray-400">Founders</span>
                   <div className="flex items-center gap-2">
                     <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
@@ -339,7 +339,7 @@ export default function CapTable() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Investors</span>
+                  <span className="text-sm text-gray-400">Investors</span>
                   <div className="flex items-center gap-2">
                     <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
@@ -353,7 +353,7 @@ export default function CapTable() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Employees</span>
+                  <span className="text-sm text-gray-400">Employees</span>
                   <div className="flex items-center gap-2">
                     <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
@@ -367,7 +367,7 @@ export default function CapTable() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Option Pool</span>
+                  <span className="text-sm text-gray-400">Option Pool</span>
                   <div className="flex items-center gap-2">
                     <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
@@ -383,21 +383,21 @@ export default function CapTable() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <h3 className="font-semibold text-gray-900 mb-4">Top Shareholders</h3>
+            <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+              <h3 className="font-semibold text-white mb-4">Top Shareholders</h3>
               <div className="space-y-3">
                 {summary.top_shareholders.slice(0, 5).map((sh: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
+                      <span className="w-6 h-6 bg-white/5 rounded-full flex items-center justify-center text-xs font-medium text-gray-400">
                         {idx + 1}
                       </span>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{sh.name}</p>
+                        <p className="text-sm font-medium text-white">{sh.name}</p>
                         <p className="text-xs text-gray-500 capitalize">{sh.type}</p>
                       </div>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-white">
                       {formatPercent(sh.percentage)}
                     </span>
                   </div>
@@ -412,12 +412,12 @@ export default function CapTable() {
           </div>
 
           {/* Share Classes */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">Share Classes</h3>
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+            <h3 className="font-semibold text-white mb-4">Share Classes</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-white/10">
                     <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-4">
                       Class
                     </th>
@@ -434,20 +434,20 @@ export default function CapTable() {
                 </thead>
                 <tbody>
                   {summary.share_class_breakdown.map((sc: any) => (
-                    <tr key={sc.id} className="border-b border-gray-100">
+                    <tr key={sc.id} className="border-b border-white/5">
                       <td className="py-3 px-4">
-                        <span className="font-medium text-gray-900">{sc.name}</span>
+                        <span className="font-medium text-white">{sc.name}</span>
                         <span className="ml-2 text-xs text-gray-500 capitalize">
                           ({sc.class_type})
                         </span>
                       </td>
-                      <td className="text-right py-3 px-4 text-gray-600">
+                      <td className="text-right py-3 px-4 text-gray-400">
                         {formatNumber(sc.authorized)}
                       </td>
-                      <td className="text-right py-3 px-4 text-gray-900 font-medium">
+                      <td className="text-right py-3 px-4 text-white font-medium">
                         {formatNumber(sc.issued)}
                       </td>
-                      <td className="text-right py-3 px-4 text-gray-600">
+                      <td className="text-right py-3 px-4 text-gray-400">
                         {formatCurrency(sc.price_per_share)}
                       </td>
                     </tr>
@@ -479,9 +479,9 @@ export default function CapTable() {
             </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-white/5">
                 <tr>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-4">
                     Name
@@ -508,14 +508,14 @@ export default function CapTable() {
                 {shareholders.map((sh) => {
                   const TypeIcon = shareholderTypes.find(t => t.value === sh.shareholder_type)?.icon || Users;
                   return (
-                    <tr key={sh.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={sh.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                            <TypeIcon className="w-4 h-4 text-gray-600" />
+                          <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center">
+                            <TypeIcon className="w-4 h-4 text-gray-400" />
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{sh.name}</p>
+                            <p className="font-medium text-white">{sh.name}</p>
                             {sh.email && (
                               <p className="text-xs text-gray-500">{sh.email}</p>
                             )}
@@ -523,17 +523,17 @@ export default function CapTable() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/5 text-white capitalize">
                           {sh.shareholder_type.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="text-right py-3 px-4 font-medium text-gray-900">
+                      <td className="text-right py-3 px-4 font-medium text-white">
                         {formatNumber(sh.total_shares)}
                       </td>
-                      <td className="text-right py-3 px-4 text-gray-600">
+                      <td className="text-right py-3 px-4 text-gray-400">
                         {formatNumber(sh.total_options)}
                       </td>
-                      <td className="text-right py-3 px-4 text-gray-600">
+                      <td className="text-right py-3 px-4 text-gray-400">
                         {formatPercent(sh.ownership_percentage)}
                       </td>
                       <td className="text-right py-3 px-4 font-medium text-blue-600">
@@ -543,7 +543,7 @@ export default function CapTable() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => openModal('shareholder', sh)}
-                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                            className="p-1.5 text-gray-400 hover:text-gray-400 hover:bg-white/5 rounded"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -583,7 +583,7 @@ export default function CapTable() {
             <div className="flex gap-2">
               <button
                 onClick={() => openModal('shareClass')}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-300 rounded-lg hover:bg-white/5"
               >
                 <Plus className="w-4 h-4" />
                 Add Share Class
@@ -599,23 +599,23 @@ export default function CapTable() {
           </div>
 
           {/* Share Classes */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">Share Classes</h3>
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+            <h3 className="font-semibold text-white mb-4">Share Classes</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {shareClasses.map((sc) => (
                 <div
                   key={sc.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                  className="border border-white/10 rounded-lg p-4 hover:border-blue-300 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h4 className="font-medium text-gray-900">{sc.name}</h4>
+                      <h4 className="font-medium text-white">{sc.name}</h4>
                       <p className="text-xs text-gray-500 capitalize">{sc.class_type}</p>
                     </div>
                     <div className="flex gap-1">
                       <button
                         onClick={() => openModal('shareClass', sc)}
-                        className="p-1 text-gray-400 hover:text-gray-600"
+                        className="p-1 text-gray-400 hover:text-gray-400"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -652,12 +652,12 @@ export default function CapTable() {
           </div>
 
           {/* Equity Grants */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">Equity Grants</h3>
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/10">
+              <h3 className="font-semibold text-white">Equity Grants</h3>
             </div>
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-white/5">
                 <tr>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-4">
                     Shareholder
@@ -682,18 +682,18 @@ export default function CapTable() {
               </thead>
               <tbody>
                 {equityGrants.map((grant) => (
-                  <tr key={grant.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-900">
+                  <tr key={grant.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-3 px-4 font-medium text-white">
                       {grant.shareholder_name}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{grant.share_class_name}</td>
-                    <td className="text-right py-3 px-4 font-medium text-gray-900">
+                    <td className="py-3 px-4 text-gray-400">{grant.share_class_name}</td>
+                    <td className="text-right py-3 px-4 font-medium text-white">
                       {formatNumber(grant.shares)}
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-gray-400">
                       {formatNumber(grant.vested_shares)} / {formatNumber(grant.shares)}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-gray-400">
                       {new Date(grant.grant_date).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4">
@@ -701,7 +701,7 @@ export default function CapTable() {
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           grant.status === 'active'
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-white/5 text-white'
                         }`}
                       >
                         {grant.status}
@@ -710,7 +710,7 @@ export default function CapTable() {
                     <td className="py-3 px-4">
                       <button
                         onClick={() => openModal('equity', grant)}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                        className="p-1.5 text-gray-400 hover:text-gray-400 hover:bg-white/5 rounded"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -743,9 +743,9 @@ export default function CapTable() {
             </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-white/5">
                 <tr>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-4">
                     Holder
@@ -772,8 +772,8 @@ export default function CapTable() {
               </thead>
               <tbody>
                 {stockOptions.map((option) => (
-                  <tr key={option.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-900">
+                  <tr key={option.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-3 px-4 font-medium text-white">
                       {option.shareholder_name}
                     </td>
                     <td className="py-3 px-4">
@@ -781,16 +781,16 @@ export default function CapTable() {
                         {option.option_type}
                       </span>
                     </td>
-                    <td className="text-right py-3 px-4 font-medium text-gray-900">
+                    <td className="text-right py-3 px-4 font-medium text-white">
                       {formatNumber(option.shares_granted)}
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-gray-400">
                       {formatNumber(option.vested_options)} ({formatPercent((option.vested_options || 0) / option.shares_granted * 100)})
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-gray-400">
                       {formatCurrency(option.exercise_price)}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-gray-400">
                       {new Date(option.grant_date).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4">
@@ -800,7 +800,7 @@ export default function CapTable() {
                             ? 'bg-green-100 text-green-800'
                             : option.status === 'exercised'
                             ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-white/5 text-white'
                         }`}
                       >
                         {option.status}
@@ -825,9 +825,9 @@ export default function CapTable() {
       {activeTab === 'convertibles' && (
         <div className="space-y-6">
           {/* SAFEs */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">SAFEs</h3>
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10">
+            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+              <h3 className="font-semibold text-white">SAFEs</h3>
               <button
                 onClick={() => openModal('safe')}
                 className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -837,7 +837,7 @@ export default function CapTable() {
               </button>
             </div>
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-white/5">
                 <tr>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-4">
                     Investor
@@ -864,23 +864,23 @@ export default function CapTable() {
               </thead>
               <tbody>
                 {safes.map((safe) => (
-                  <tr key={safe.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-900">
+                  <tr key={safe.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-3 px-4 font-medium text-white">
                       {safe.shareholder_name}
                     </td>
-                    <td className="py-3 px-4 text-gray-600 capitalize">
+                    <td className="py-3 px-4 text-gray-400 capitalize">
                       {safe.safe_type.replace('_', '-')}
                     </td>
-                    <td className="text-right py-3 px-4 font-medium text-gray-900">
+                    <td className="text-right py-3 px-4 font-medium text-white">
                       {formatCurrency(safe.investment_amount)}
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-gray-400">
                       {formatCurrency(safe.valuation_cap)}
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-gray-400">
                       {safe.discount_rate ? `${(safe.discount_rate * 100).toFixed(0)}%` : '-'}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-gray-400">
                       {new Date(safe.signed_date).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4">
@@ -908,9 +908,9 @@ export default function CapTable() {
           </div>
 
           {/* Convertible Notes */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Convertible Notes</h3>
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10">
+            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+              <h3 className="font-semibold text-white">Convertible Notes</h3>
               <button
                 onClick={() => openModal('convertible')}
                 className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -920,7 +920,7 @@ export default function CapTable() {
               </button>
             </div>
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-white/5">
                 <tr>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-4">
                     Investor
@@ -947,23 +947,23 @@ export default function CapTable() {
               </thead>
               <tbody>
                 {convertibles.map((note) => (
-                  <tr key={note.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-900">
+                  <tr key={note.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-3 px-4 font-medium text-white">
                       {note.shareholder_name}
                     </td>
-                    <td className="text-right py-3 px-4 font-medium text-gray-900">
+                    <td className="text-right py-3 px-4 font-medium text-white">
                       {formatCurrency(note.principal_amount)}
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-gray-400">
                       {(note.interest_rate * 100).toFixed(1)}%
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-gray-400">
                       {formatCurrency(note.accrued_interest)}
                     </td>
                     <td className="text-right py-3 px-4 font-medium text-blue-600">
                       {formatCurrency(note.total_owed)}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-gray-400">
                       {new Date(note.maturity_date).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4">
@@ -1009,11 +1009,11 @@ export default function CapTable() {
             {fundingRounds.map((round) => (
               <div
                 key={round.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5"
+                className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{round.name}</h3>
+                    <h3 className="font-semibold text-white">{round.name}</h3>
                     <p className="text-xs text-gray-500 capitalize">
                       {round.round_type?.replace('_', ' ')}
                     </p>
@@ -1024,7 +1024,7 @@ export default function CapTable() {
                         ? 'bg-green-100 text-green-800'
                         : round.status === 'in_progress'
                         ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
+                        : 'bg-white/5 text-white'
                     }`}
                   >
                     {round.status.replace('_', ' ')}
@@ -1107,10 +1107,10 @@ export default function CapTable() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-2xl font-bold text-white">
                       {formatCurrency(currentValuation.fmv_per_share)}/share
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-400">
                       Fair Market Value
                     </p>
                   </div>
@@ -1131,9 +1131,9 @@ export default function CapTable() {
             );
           })()}
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-5 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">409A Valuation History</h3>
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10">
+            <div className="p-5 border-b border-white/10 flex items-center justify-between">
+              <h3 className="font-semibold text-white">409A Valuation History</h3>
               <button
                 onClick={() => openModal('valuation')}
                 className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
@@ -1142,22 +1142,22 @@ export default function CapTable() {
                 Add Valuation
               </button>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-white/5">
               {valuations.map((val) => (
-                <div key={val.id} className="p-5 hover:bg-gray-50">
+                <div key={val.id} className="p-5 hover:bg-white/5">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <span className="text-lg font-semibold text-gray-900">
+                        <span className="text-lg font-semibold text-white">
                           {formatCurrency(val.fmv_per_share)}/share
                         </span>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           val.status === 'final' && !val.is_expired
                             ? 'bg-green-100 text-green-800'
                             : val.status === 'final' && val.is_expired
-                            ? 'bg-gray-100 text-gray-600'
+                            ? 'bg-white/5 text-gray-400'
                             : val.status === 'superseded'
-                            ? 'bg-gray-100 text-gray-600'
+                            ? 'bg-white/5 text-gray-400'
                             : val.status === 'pending_review'
                             ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-blue-100 text-blue-800'
@@ -1173,31 +1173,31 @@ export default function CapTable() {
                       <div className="mt-2 grid grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-500">Effective:</span>
-                          <span className="ml-2 text-gray-900">
+                          <span className="ml-2 text-white">
                             {new Date(val.effective_date).toLocaleDateString()}
                           </span>
                         </div>
                         <div>
                           <span className="text-gray-500">Expires:</span>
-                          <span className={`ml-2 ${val.is_expired ? 'text-red-600' : 'text-gray-900'}`}>
+                          <span className={`ml-2 ${val.is_expired ? 'text-red-600' : 'text-white'}`}>
                             {new Date(val.expiration_date).toLocaleDateString()}
                           </span>
                         </div>
                         {val.provider_name && (
                           <div>
                             <span className="text-gray-500">Provider:</span>
-                            <span className="ml-2 text-gray-900">{val.provider_name}</span>
+                            <span className="ml-2 text-white">{val.provider_name}</span>
                           </div>
                         )}
                         {val.valuation_method && (
                           <div>
                             <span className="text-gray-500">Method:</span>
-                            <span className="ml-2 text-gray-900">{val.valuation_method}</span>
+                            <span className="ml-2 text-white">{val.valuation_method}</span>
                           </div>
                         )}
                       </div>
                       {val.implied_company_value && (
-                        <p className="mt-2 text-sm text-gray-600">
+                        <p className="mt-2 text-sm text-gray-400">
                           Implied company value: {formatCurrency(val.implied_company_value)}
                         </p>
                       )}
@@ -1248,7 +1248,7 @@ export default function CapTable() {
               {valuations.length === 0 && (
                 <div className="p-12 text-center text-gray-500">
                   <Scale className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                  <p className="font-medium text-gray-900 mb-1">No 409A Valuations</p>
+                  <p className="font-medium text-white mb-1">No 409A Valuations</p>
                   <p className="text-sm">Add your first 409A valuation to track FMV for stock options.</p>
                 </div>
               )}
@@ -1271,11 +1271,11 @@ export default function CapTable() {
       {/* Dilution Model Tab */}
       {activeTab === 'model' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">Dilution Scenario</h3>
+          <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+            <h3 className="font-semibold text-white mb-4">Dilution Scenario</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">
+                <label className="block text-sm text-gray-300 mb-1">
                   New Money Raised
                 </label>
                 <div className="relative">
@@ -1289,7 +1289,7 @@ export default function CapTable() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">
+                <label className="block text-sm text-gray-300 mb-1">
                   Pre-Money Valuation
                 </label>
                 <div className="relative">
@@ -1303,7 +1303,7 @@ export default function CapTable() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">
+                <label className="block text-sm text-gray-300 mb-1">
                   Option Pool Increase (%)
                 </label>
                 <div className="relative">
@@ -1327,41 +1327,41 @@ export default function CapTable() {
           </div>
 
           {dilutionResult && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <h3 className="font-semibold text-gray-900 mb-4">Results</h3>
+            <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+              <h3 className="font-semibold text-white mb-4">Results</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="p-3 bg-white/5 rounded-lg">
                     <p className="text-xs text-gray-500 mb-1">Post-Money Valuation</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-white">
                       {formatCurrency(dilutionResult.post_money_valuation)}
                     </p>
                   </div>
-                  <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="p-3 bg-white/5 rounded-lg">
                     <p className="text-xs text-gray-500 mb-1">New Shares Issued</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-white">
                       {formatNumber(dilutionResult.new_shares_issued)}
                     </p>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Ownership Impact</h4>
+                <div className="border-t border-white/10 pt-4">
+                  <h4 className="text-sm font-medium text-white mb-3">Ownership Impact</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">New Investor Ownership</span>
+                      <span className="text-sm text-gray-400">New Investor Ownership</span>
                       <span className="text-sm font-medium text-green-600">
                         +{formatPercent(dilutionResult.new_investor_percentage)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Founder Dilution</span>
+                      <span className="text-sm text-gray-400">Founder Dilution</span>
                       <span className="text-sm font-medium text-red-600">
                         -{formatPercent(dilutionResult.founder_dilution)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Existing Investor Dilution</span>
+                      <span className="text-sm text-gray-400">Existing Investor Dilution</span>
                       <span className="text-sm font-medium text-red-600">
                         -{formatPercent(dilutionResult.existing_investor_dilution)}
                       </span>
@@ -1500,10 +1500,10 @@ function ShareholderModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+        <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-lg w-full p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">{titles[type]}</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h2 className="text-lg font-semibold text-white">{titles[type]}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-400">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -1512,7 +1512,7 @@ function ShareholderModal({
             {type === 'shareholder' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Name *</label>
                   <input
                     type="text"
                     required
@@ -1522,7 +1522,7 @@ function ShareholderModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
                   <input
                     type="email"
                     value={formData.email || ''}
@@ -1531,7 +1531,7 @@ function ShareholderModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Type *</label>
                   <select
                     required
                     value={formData.shareholder_type || 'other'}
@@ -1544,7 +1544,7 @@ function ShareholderModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
                   <input
                     type="text"
                     value={formData.title || ''}
@@ -1554,7 +1554,7 @@ function ShareholderModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Company</label>
                   <input
                     type="text"
                     value={formData.company || ''}
@@ -1569,7 +1569,7 @@ function ShareholderModal({
             {type === 'shareClass' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Name *</label>
                   <input
                     type="text"
                     required
@@ -1580,7 +1580,7 @@ function ShareholderModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Type *</label>
                   <select
                     required
                     value={formData.class_type || 'common'}
@@ -1594,7 +1594,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Authorized Shares</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Authorized Shares</label>
                     <input
                       type="number"
                       value={formData.authorized_shares || ''}
@@ -1603,7 +1603,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price per Share</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Price per Share</label>
                     <input
                       type="number"
                       step="0.0001"
@@ -1616,7 +1616,7 @@ function ShareholderModal({
                 {formData.class_type === 'preferred' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Liquidation Preference</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Liquidation Preference</label>
                       <input
                         type="number"
                         step="0.1"
@@ -1633,7 +1633,7 @@ function ShareholderModal({
                           onChange={(e) => setFormData({ ...formData, is_participating: e.target.checked })}
                           className="rounded border-gray-300 text-blue-600"
                         />
-                        <span className="text-sm text-gray-700">Participating</span>
+                        <span className="text-sm text-gray-300">Participating</span>
                       </label>
                     </div>
                   </div>
@@ -1644,7 +1644,7 @@ function ShareholderModal({
             {type === 'equity' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Shareholder *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Shareholder *</label>
                   <select
                     required
                     value={formData.shareholder_id || ''}
@@ -1658,7 +1658,7 @@ function ShareholderModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Share Class *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Share Class *</label>
                   <select
                     required
                     value={formData.share_class_id || ''}
@@ -1673,7 +1673,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shares *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Shares *</label>
                     <input
                       type="number"
                       required
@@ -1683,7 +1683,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price/Share</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Price/Share</label>
                     <input
                       type="number"
                       step="0.0001"
@@ -1694,7 +1694,7 @@ function ShareholderModal({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Grant Date *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Grant Date *</label>
                   <input
                     type="date"
                     required
@@ -1704,7 +1704,7 @@ function ShareholderModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vesting Schedule</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Vesting Schedule</label>
                   <select
                     value={formData.vesting_schedule || 'immediate'}
                     onChange={(e) => setFormData({ ...formData, vesting_schedule: e.target.value })}
@@ -1721,7 +1721,7 @@ function ShareholderModal({
             {type === 'option' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Option Holder *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Option Holder *</label>
                   <select
                     required
                     value={formData.shareholder_id || ''}
@@ -1735,7 +1735,7 @@ function ShareholderModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Share Class *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Share Class *</label>
                   <select
                     required
                     value={formData.share_class_id || ''}
@@ -1750,7 +1750,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Option Type</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Option Type</label>
                     <select
                       value={formData.option_type || 'ISO'}
                       onChange={(e) => setFormData({ ...formData, option_type: e.target.value })}
@@ -1761,7 +1761,7 @@ function ShareholderModal({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shares Granted *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Shares Granted *</label>
                     <input
                       type="number"
                       required
@@ -1773,7 +1773,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Exercise Price *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Exercise Price *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1784,7 +1784,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Grant Date *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Grant Date *</label>
                     <input
                       type="date"
                       required
@@ -1800,7 +1800,7 @@ function ShareholderModal({
             {type === 'safe' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Investor *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Investor *</label>
                   <select
                     required
                     value={formData.shareholder_id || ''}
@@ -1814,7 +1814,7 @@ function ShareholderModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SAFE Type</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">SAFE Type</label>
                   <select
                     value={formData.safe_type || 'post_money'}
                     onChange={(e) => setFormData({ ...formData, safe_type: e.target.value })}
@@ -1827,7 +1827,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Investment Amount *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Investment Amount *</label>
                     <input
                       type="number"
                       required
@@ -1837,7 +1837,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Valuation Cap</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Valuation Cap</label>
                     <input
                       type="number"
                       value={formData.valuation_cap || ''}
@@ -1848,7 +1848,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Discount (%)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1859,7 +1859,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Signed Date *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Signed Date *</label>
                     <input
                       type="date"
                       required
@@ -1875,7 +1875,7 @@ function ShareholderModal({
             {type === 'convertible' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Investor *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Investor *</label>
                   <select
                     required
                     value={formData.shareholder_id || ''}
@@ -1890,7 +1890,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Principal *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Principal *</label>
                     <input
                       type="number"
                       required
@@ -1900,7 +1900,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Interest Rate (%) *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Interest Rate (%) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1914,7 +1914,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Issue Date *</label>
                     <input
                       type="date"
                       required
@@ -1924,7 +1924,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Maturity Date *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Maturity Date *</label>
                     <input
                       type="date"
                       required
@@ -1936,7 +1936,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Valuation Cap</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Valuation Cap</label>
                     <input
                       type="number"
                       value={formData.valuation_cap || ''}
@@ -1945,7 +1945,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Discount (%)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1962,7 +1962,7 @@ function ShareholderModal({
             {type === 'round' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Round Name *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Round Name *</label>
                   <input
                     type="text"
                     required
@@ -1974,7 +1974,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Round Type</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Round Type</label>
                     <select
                       value={formData.round_type || ''}
                       onChange={(e) => setFormData({ ...formData, round_type: e.target.value })}
@@ -1990,7 +1990,7 @@ function ShareholderModal({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
                     <select
                       value={formData.status || 'planned'}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -2005,7 +2005,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount Raised</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Amount Raised</label>
                     <input
                       type="number"
                       value={formData.amount_raised || ''}
@@ -2014,7 +2014,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pre-Money Valuation</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Pre-Money Valuation</label>
                     <input
                       type="number"
                       value={formData.pre_money_valuation || ''}
@@ -2030,7 +2030,7 @@ function ShareholderModal({
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">FMV per Share *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">FMV per Share *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -2042,7 +2042,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Common Shares</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Total Common Shares</label>
                     <input
                       type="number"
                       value={formData.total_common_shares || ''}
@@ -2053,7 +2053,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Valuation Date *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Valuation Date *</label>
                     <input
                       type="date"
                       required
@@ -2063,7 +2063,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Effective Date *</label>
                     <input
                       type="date"
                       required
@@ -2073,7 +2073,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date *</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Expiration Date *</label>
                     <input
                       type="date"
                       required
@@ -2085,7 +2085,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Provider Name</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Provider Name</label>
                     <input
                       type="text"
                       value={formData.provider_name || ''}
@@ -2095,7 +2095,7 @@ function ShareholderModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Provider Type</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Provider Type</label>
                     <select
                       value={formData.provider_type || 'external'}
                       onChange={(e) => setFormData({ ...formData, provider_type: e.target.value })}
@@ -2108,7 +2108,7 @@ function ShareholderModal({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Valuation Method</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Valuation Method</label>
                     <select
                       value={formData.valuation_method || ''}
                       onChange={(e) => setFormData({ ...formData, valuation_method: e.target.value })}
@@ -2123,7 +2123,7 @@ function ShareholderModal({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Event</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Trigger Event</label>
                     <select
                       value={formData.trigger_event || ''}
                       onChange={(e) => setFormData({ ...formData, trigger_event: e.target.value })}
@@ -2138,7 +2138,7 @@ function ShareholderModal({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">DLOM (%)</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">DLOM (%)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -2150,7 +2150,7 @@ function ShareholderModal({
                   <p className="text-xs text-gray-500 mt-1">Discount for Lack of Marketability</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
                   <textarea
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -2165,7 +2165,7 @@ function ShareholderModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 text-gray-300 hover:bg-white/5 rounded-lg"
               >
                 Cancel
               </button>

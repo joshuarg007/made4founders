@@ -577,13 +577,13 @@ export default function Library() {
                 className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center">
                     <Hash className="w-5 h-5 text-gray-400" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-white">{ident.label}</span>
-                      <span className="px-2 py-0.5 text-xs bg-white/10 text-gray-400 rounded">
+                      <span className="px-2 py-0.5 text-xs bg-[#1a1d24]/10 text-gray-400 rounded">
                         {IDENTIFIER_TYPES.find(t => t.value === ident.identifier_type)?.label || ident.identifier_type}
                       </span>
                     </div>

@@ -225,7 +225,7 @@ const COLOR_CLASSES: Record<string, { bg: string; border: string; glow: string }
   cyan: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/30', glow: 'shadow-cyan-500/50' },
   yellow: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', glow: 'shadow-yellow-500/50' },
   red: { bg: 'bg-red-500/20', border: 'border-red-500/30', glow: 'shadow-red-500/50' },
-  gray: { bg: 'bg-gray-500/20', border: 'border-gray-500/30', glow: 'shadow-gray-500/50' },
+  gray: { bg: 'bg-white/50/20', border: 'border-gray-500/30', glow: 'shadow-gray-500/50' },
 };
 
 export default function Integrations() {
@@ -427,7 +427,7 @@ export default function Integrations() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -449,7 +449,7 @@ export default function Integrations() {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
               activeCategory === category.id
                 ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white'
+                : 'bg-[#1a1d24]/5 text-gray-400 border border-white/10 hover:bg-[#1a1d24]/10 hover:text-white'
             }`}
           >
             <category.icon className="w-4 h-4" />
@@ -471,7 +471,7 @@ export default function Integrations() {
               className={`relative p-5 rounded-xl border transition ${
                 isConnected
                   ? `${colors.bg} ${colors.border}`
-                  : 'bg-white/5 border-white/10 hover:border-white/20'
+                  : 'bg-[#1a1d24]/5 border-white/10 hover:border-white/20'
               } ${isComingSoon ? 'opacity-60' : ''}`}
             >
               {/* Status Indicator */}
@@ -510,7 +510,7 @@ export default function Integrations() {
                 {integration.categories.map(cat => (
                   <span
                     key={cat}
-                    className="px-2 py-0.5 rounded text-xs bg-white/10 text-gray-400 capitalize"
+                    className="px-2 py-0.5 rounded text-xs bg-[#1a1d24]/10 text-gray-400 capitalize"
                   >
                     {cat}
                   </span>
@@ -545,7 +545,7 @@ export default function Integrations() {
                 <button
                   onClick={() => handleConnect(integration)}
                   disabled={integration.loading}
-                  className="w-full py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                  className="w-full py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"
                 >
                   {integration.loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -561,7 +561,7 @@ export default function Integrations() {
       </div>
 
       {/* Help Section */}
-      <div className="mt-12 p-6 rounded-xl bg-white/5 border border-white/10">
+      <div className="mt-12 p-6 rounded-xl bg-[#1a1d24]/5 border border-white/10">
         <h3 className="text-lg font-semibold text-white mb-2">Need help with integrations?</h3>
         <p className="text-gray-400 text-sm mb-4">
           Each integration requires you to authorize Made4Founders to access your account.

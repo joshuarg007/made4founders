@@ -1337,7 +1337,7 @@ export default function GettingStarted() {
       case 'required': return 'bg-red-500/20 text-red-300 border-red-500/30';
       case 'recommended': return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
       case 'trigger': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      default: return 'bg-white/50/20 text-gray-400 border-gray-500/30';
     }
   };
 
@@ -1376,7 +1376,7 @@ export default function GettingStarted() {
           <span className="text-sm text-gray-400">Required items progress</span>
           <span className="text-lg font-bold text-cyan-400">{getProgress()}%</span>
         </div>
-        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-cyan-500 to-violet-600 rounded-full transition-all duration-500"
             style={{ width: `${getProgress()}%` }}
@@ -1396,7 +1396,7 @@ export default function GettingStarted() {
             <span className="text-gray-500">Trigger-based</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-gray-500" />
+            <span className="w-2 h-2 rounded-full bg-white/50" />
             <span className="text-gray-500">Optional</span>
           </div>
         </div>
@@ -1418,7 +1418,7 @@ export default function GettingStarted() {
           <button
             onClick={() => setFilterPriority(filterPriority === 'required' ? null : 'required')}
             className={`px-3 py-2 rounded-lg text-xs font-medium transition ${
-              filterPriority === 'required' ? 'bg-red-500/30 text-red-300' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              filterPriority === 'required' ? 'bg-red-500/30 text-red-300' : 'bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10'
             }`}
           >
             Required
@@ -1426,7 +1426,7 @@ export default function GettingStarted() {
           <button
             onClick={() => setFilterPriority(filterPriority === 'trigger' ? null : 'trigger')}
             className={`px-3 py-2 rounded-lg text-xs font-medium transition ${
-              filterPriority === 'trigger' ? 'bg-blue-500/30 text-blue-300' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              filterPriority === 'trigger' ? 'bg-blue-500/30 text-blue-300' : 'bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10'
             }`}
           >
             Trigger-based
@@ -1441,7 +1441,7 @@ export default function GettingStarted() {
               }
             }}
             className={`px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
-              showOnlyIncomplete ? 'bg-violet-500/30 text-violet-300' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              showOnlyIncomplete ? 'bg-violet-500/30 text-violet-300' : 'bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10'
             }`}
           >
             <Filter className="w-3 h-3" />
@@ -1467,7 +1467,7 @@ export default function GettingStarted() {
               {/* Category Header */}
               <button
                 onClick={() => toggleCategory(category.name)}
-                className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition"
+                className="w-full p-3 flex items-center justify-between hover:bg-[#1a1d24]/5 transition"
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg bg-${category.color}-500/20 flex items-center justify-center`}>
@@ -1481,7 +1481,7 @@ export default function GettingStarted() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-16 h-1.5 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                     <div
                       className={`h-full bg-${category.color}-500 rounded-full transition-all`}
                       style={{ width: `${categoryProgress.total > 0 ? (categoryProgress.completed / categoryProgress.total) * 100 : 0}%` }}
@@ -1510,7 +1510,7 @@ export default function GettingStarted() {
                           className={`relative p-3 rounded-lg border transition group ${
                             isComplete
                               ? 'bg-green-500/10 border-green-500/20 opacity-70'
-                              : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
+                              : 'bg-[#1a1d24]/5 border-white/10 hover:border-white/20 hover:bg-[#1a1d24]/10'
                           } ${canEdit ? 'cursor-pointer' : ''}`}
                         >
                           <div className="flex items-start gap-2">
@@ -1549,7 +1549,7 @@ export default function GettingStarted() {
                           {isComplete && canEdit && (
                             <button
                               onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                              className="absolute top-1 right-1 p-1 rounded bg-white/10 opacity-0 group-hover:opacity-100 transition"
+                              className="absolute top-1 right-1 p-1 rounded bg-[#1a1d24]/10 opacity-0 group-hover:opacity-100 transition"
                             >
                               <Pencil className="w-3 h-3 text-gray-400" />
                             </button>
@@ -1614,7 +1614,7 @@ export default function GettingStarted() {
               href={resource.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition text-center"
+              className="p-2 rounded-lg bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition text-center"
             >
               <span className="text-xs text-white">{resource.label}</span>
               <ExternalLink className="w-2.5 h-2.5 text-gray-500 inline ml-1" />
@@ -1624,7 +1624,7 @@ export default function GettingStarted() {
       </div>
 
       {/* Disclaimer */}
-      <p className="text-center text-[10px] text-gray-600">
+      <p className="text-center text-[10px] text-gray-400">
         This checklist is for informational purposes only. Consult legal and tax professionals for advice specific to your situation.
       </p>
 
@@ -1695,7 +1695,7 @@ export default function GettingStarted() {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/5 text-xs text-cyan-400 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#1a1d24]/5 text-xs text-cyan-400 hover:bg-[#1a1d24]/10"
                       >
                         {link.label}
                         <ExternalLink className="w-2.5 h-2.5" />
@@ -1745,7 +1745,7 @@ export default function GettingStarted() {
               {/* Notes */}
               <div>
                 <label className="block text-xs text-gray-400 mb-1">
-                  Notes <span className="text-gray-600">(optional)</span>
+                  Notes <span className="text-gray-400">(optional)</span>
                 </label>
                 <textarea
                   value={modalNotes}
@@ -1758,7 +1758,7 @@ export default function GettingStarted() {
 
               {/* Upload */}
               {canEdit && !progress[confirmModal.id]?.is_completed && (
-                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                <div className="bg-[#1a1d24]/5 border border-white/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Upload className="w-3 h-3 text-cyan-400" />
                     <span className="text-xs font-medium text-white">Upload Document</span>
@@ -1824,7 +1824,7 @@ export default function GettingStarted() {
                 <button
                   onClick={() => { setConfirmModal(null); setModalDataFields({}); setModalNotes(''); setModalFile(null); setIsEditMode(false); }}
                   disabled={uploading}
-                  className="flex-1 px-3 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-white/5 transition text-sm disabled:opacity-50"
+                  className="flex-1 px-3 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-[#1a1d24]/5 transition text-sm disabled:opacity-50"
                 >
                   Cancel
                 </button>

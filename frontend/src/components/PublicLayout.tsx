@@ -80,8 +80,8 @@ export default function PublicLayout() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     location.pathname === link.to
-                      ? 'bg-white/10 text-white'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      ? 'bg-[#1a1d24]/10 text-white'
+                      : 'text-gray-400 hover:bg-[#1a1d24]/5 hover:text-white'
                   }`}
                 >
                   {link.label}
@@ -171,7 +171,7 @@ export default function PublicLayout() {
               >
                 Site2CRM
               </a>
-              <span className="text-gray-600">•</span>
+              <span className="text-gray-400">•</span>
               <a
                 href="https://axiondeep.com"
                 target="_blank"

@@ -255,7 +255,7 @@ export default function Documents() {
           className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
             isDragging
               ? 'border-cyan-500 bg-cyan-500/10'
-              : 'border-white/20 hover:border-white/40 hover:bg-white/5'
+              : 'border-white/20 hover:border-white/40 hover:bg-[#1a1d24]/5'
           }`}
         >
           <input
@@ -306,8 +306,8 @@ export default function Documents() {
               onClick={() => setSelectedCategory(cat.value)}
               className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition ${
                 selectedCategory === cat.value
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-400 hover:bg-white/5'
+                  ? 'bg-[#1a1d24]/10 text-white'
+                  : 'text-gray-400 hover:bg-[#1a1d24]/5'
               }`}
             >
               <span className="mr-1">{cat.icon}</span>
@@ -385,7 +385,7 @@ export default function Documents() {
               {doc.tags && (
                 <div className="flex flex-wrap gap-1 mb-3 overflow-hidden">
                   {doc.tags.split(',').slice(0, 3).map((tag, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded text-xs bg-white/5 text-gray-400 truncate max-w-[100px]">
+                    <span key={i} className="px-2 py-0.5 rounded text-xs bg-[#1a1d24]/5 text-gray-400 truncate max-w-[100px]">
                       {tag.trim()}
                     </span>
                   ))}
@@ -407,7 +407,7 @@ export default function Documents() {
                 <div className="flex gap-1">
                   <button
                     onClick={() => setSelectedDocument(doc)}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-white/10 transition"
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-[#1a1d24]/10 transition"
                     title="View details & comments"
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
@@ -416,14 +416,14 @@ export default function Documents() {
                     <>
                       <button
                         onClick={() => handleEdit(doc)}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 transition"
                         title="Edit"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(doc.id)}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#1a1d24]/10 transition"
                         title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -519,7 +519,7 @@ export default function Documents() {
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition ${
                       doc.is_sensitive
                         ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                        : 'bg-white/10 text-white hover:bg-white/20'
+                        : 'bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20'
                     }`}
                   >
                     {doc.is_sensitive && <Lock className="w-3 h-3" />}
@@ -551,7 +551,7 @@ export default function Documents() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div>
@@ -559,7 +559,7 @@ export default function Documents() {
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 >
                   {categories.slice(1).map((cat) => (
                     <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">{cat.label}</option>
@@ -576,7 +576,7 @@ export default function Documents() {
                     className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${
                       modalFile
                         ? 'border-cyan-500/50 bg-cyan-500/10'
-                        : 'border-white/20 hover:border-white/40 hover:bg-white/5'
+                        : 'border-white/20 hover:border-white/40 hover:bg-[#1a1d24]/5'
                     }`}
                   >
                     <input
@@ -630,7 +630,7 @@ export default function Documents() {
                     value={formData.external_url}
                     onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
                     placeholder="https://drive.google.com/..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
               )}
@@ -640,7 +640,7 @@ export default function Documents() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div>
@@ -649,7 +649,7 @@ export default function Documents() {
                   type="date"
                   value={formData.expiration_date}
                   onChange={(e) => setFormData({ ...formData, expiration_date: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div>
@@ -659,7 +659,7 @@ export default function Documents() {
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   placeholder="e.g., important, 2024, renewal"
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
@@ -668,7 +668,7 @@ export default function Documents() {
                   id="is_sensitive"
                   checked={formData.is_sensitive}
                   onChange={(e) => setFormData({ ...formData, is_sensitive: e.target.checked })}
-                  className="w-4 h-4 rounded bg-white/5 border-white/20"
+                  className="w-4 h-4 rounded bg-[#1a1d24]/5 border-white/20"
                 />
                 <label htmlFor="is_sensitive" className="flex items-center gap-2 text-sm text-amber-300 cursor-pointer">
                   <Lock className="w-4 h-4" />
@@ -725,7 +725,7 @@ export default function Documents() {
               </div>
               <button
                 onClick={() => setSelectedDocument(null)}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -734,7 +734,7 @@ export default function Documents() {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {selectedDocument.description && (
-                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <div className="bg-[#1a1d24]/5 rounded-lg p-3 border border-white/10">
                   <h3 className="text-sm font-medium text-gray-400 mb-1">Description</h3>
                   <p className="text-white">{selectedDocument.description}</p>
                 </div>
@@ -750,7 +750,7 @@ export default function Documents() {
               {selectedDocument.tags && (
                 <div className="flex flex-wrap gap-2">
                   {selectedDocument.tags.split(',').map((tag, i) => (
-                    <span key={i} className="px-2 py-1 rounded text-xs bg-white/10 text-gray-300">
+                    <span key={i} className="px-2 py-1 rounded text-xs bg-[#1a1d24]/10 text-gray-300">
                       {tag.trim()}
                     </span>
                   ))}
@@ -771,7 +771,7 @@ export default function Documents() {
                 {selectedDocument.file_path && selectedDocument.file_exists !== false && (
                   <a
                     href={`${API_BASE}/documents/${selectedDocument.id}/download`}
-                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
                     Download
@@ -783,7 +783,7 @@ export default function Documents() {
                       handleEdit(selectedDocument);
                       setSelectedDocument(null);
                     }}
-                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition flex items-center gap-2"
                   >
                     <Pencil className="w-4 h-4" />
                     Edit

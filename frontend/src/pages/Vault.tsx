@@ -53,7 +53,7 @@ const categories = [
   { value: 'insurance', label: 'Insurance', icon: '🛡️', color: 'purple', border: 'border-l-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' },
   { value: 'vendors', label: 'Vendors', icon: '🤝', color: 'pink', border: 'border-l-pink-500', bg: 'bg-pink-500/10', text: 'text-pink-400' },
   { value: 'tools', label: 'Tools', icon: '🔧', color: 'violet', border: 'border-l-violet-500', bg: 'bg-violet-500/10', text: 'text-violet-400' },
-  { value: 'other', label: 'Other', icon: '📁', color: 'gray', border: 'border-l-gray-500', bg: 'bg-gray-500/10', text: 'text-gray-400' },
+  { value: 'other', label: 'Other', icon: '📁', color: 'gray', border: 'border-l-gray-500', bg: 'bg-white/50/10', text: 'text-gray-400' },
 ];
 
 // Service database with 150+ services, aliases, and categories for smart matching
@@ -2096,7 +2096,7 @@ export default function Vault() {
                         }
                         setShowSortMenu(false);
                       }}
-                      className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-white/5 transition ${
+                      className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[#1a1d24]/5 transition ${
                         sortBy === option.value ? 'text-violet-400' : 'text-gray-300'
                       }`}
                     >
@@ -2241,7 +2241,7 @@ export default function Vault() {
                         {cred.has_username && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
-                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
+                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
                             title="Copy username"
                           >
                             <User className="w-3.5 h-3.5" />
@@ -2250,7 +2250,7 @@ export default function Vault() {
                         {cred.has_password && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
-                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
                             title="Copy password"
                           >
                             <Key className="w-3.5 h-3.5" />
@@ -2258,14 +2258,14 @@ export default function Vault() {
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
-                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
+                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-[#1a1d24]/10"
                           title="Edit"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1.5 rounded text-amber-400 hover:bg-white/10"
+                          className="p-1.5 rounded text-amber-400 hover:bg-[#1a1d24]/10"
                           title="Remove from favorites"
                         >
                           <Star className="w-3.5 h-3.5 fill-amber-400" />
@@ -2307,7 +2307,7 @@ export default function Vault() {
                           )}
                           <button
                             onClick={(e) => toggleFavorite(cred.id, e)}
-                            className="p-1 rounded text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
+                            className="p-1 rounded text-amber-400 hover:bg-[#1a1d24]/10 opacity-0 group-hover:opacity-100 transition"
                           >
                             <Star className="w-4 h-4 fill-amber-400" />
                           </button>
@@ -2393,7 +2393,7 @@ export default function Vault() {
                         {cred.has_username && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'username'); }}
-                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
+                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 ${copiedField === `${cred.id}-username` ? 'text-emerald-400' : ''}`}
                             title="Copy username"
                           >
                             <User className="w-3.5 h-3.5" />
@@ -2402,7 +2402,7 @@ export default function Vault() {
                         {cred.has_password && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopy(cred.id, 'password'); }}
-                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
+                            className={`p-1.5 rounded text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 ${copiedField === `${cred.id}-password` ? 'text-emerald-400' : ''}`}
                             title="Copy password"
                           >
                             <Key className="w-3.5 h-3.5" />
@@ -2410,14 +2410,14 @@ export default function Vault() {
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEdit(cred.id); }}
-                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-white/10"
+                          className="p-1.5 rounded text-gray-400 hover:text-white hover:bg-[#1a1d24]/10"
                           title="Edit"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => toggleFavorite(cred.id, e)}
-                          className="p-1.5 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10"
+                          className="p-1.5 rounded text-gray-400 hover:text-amber-400 hover:bg-[#1a1d24]/10"
                           title="Add to favorites"
                         >
                           <Star className="w-3.5 h-3.5" />
@@ -2459,7 +2459,7 @@ export default function Vault() {
                           )}
                           <button
                             onClick={(e) => toggleFavorite(cred.id, e)}
-                            className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
+                            className="p-1 rounded text-gray-400 hover:text-amber-400 hover:bg-[#1a1d24]/10 opacity-0 group-hover:opacity-100 transition"
                           >
                             <Star className="w-4 h-4" />
                           </button>
@@ -2494,7 +2494,7 @@ export default function Vault() {
 
         {filteredCredentials.length === 0 && (
           <div className="py-20 text-center">
-            <Shield className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-400 mb-2">
               {searchQuery || selectedCategory ? 'No matching credentials' : 'No credentials yet'}
             </h3>
@@ -2521,7 +2521,7 @@ export default function Vault() {
                   className={`p-2 rounded-lg transition ${
                     isFavorite(viewingCredential.id)
                       ? 'text-amber-400 hover:bg-amber-500/10'
-                      : 'text-gray-400 hover:text-amber-400 hover:bg-white/10'
+                      : 'text-gray-400 hover:text-amber-400 hover:bg-[#1a1d24]/10'
                   }`}
                   title={isFavorite(viewingCredential.id) ? 'Remove from favorites' : 'Add to favorites'}
                 >
@@ -2529,7 +2529,7 @@ export default function Vault() {
                 </button>
                 <button
                   onClick={() => setViewingCredential(null)}
-                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
+                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a1d24]/10"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -2577,7 +2577,7 @@ export default function Vault() {
                 <div className="border border-white/10 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection('credentials')}
-                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                    className="w-full flex items-center justify-between p-3 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition"
                   >
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-blue-400" />
@@ -2590,12 +2590,12 @@ export default function Vault() {
                     )}
                   </button>
                   {expandedSections.credentials && (
-                    <div className="p-3 space-y-3 bg-white/[0.02]">
+                    <div className="p-3 space-y-3 bg-[#1a1d24]/[0.02]">
                       {viewingCredential.username && (
                         <div>
                           <label className="block text-xs text-gray-500 mb-1">Username</label>
                           <div className="flex items-center gap-2">
-                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm">
+                            <code className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 text-white font-mono text-sm">
                               {showPassword ? viewingCredential.username : '••••••••••••'}
                             </code>
                             <button
@@ -2623,7 +2623,7 @@ export default function Vault() {
                         <div>
                           <label className="block text-xs text-gray-500 mb-1">Password</label>
                           <div className="flex items-center gap-2">
-                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm">
+                            <code className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 text-white font-mono text-sm">
                               {showPassword ? viewingCredential.password : '••••••••••••'}
                             </code>
                             <button
@@ -2657,7 +2657,7 @@ export default function Vault() {
                 <div className="border border-white/10 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection('notes')}
-                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                    className="w-full flex items-center justify-between p-3 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition"
                   >
                     <div className="flex items-center gap-2">
                       <StickyNote className="w-4 h-4 text-amber-400" />
@@ -2670,9 +2670,9 @@ export default function Vault() {
                     )}
                   </button>
                   {expandedSections.notes && (
-                    <div className="p-3 bg-white/[0.02]">
+                    <div className="p-3 bg-[#1a1d24]/[0.02]">
                       <div className="flex items-start gap-2">
-                        <div className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-gray-300 whitespace-pre-wrap text-sm">
+                        <div className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 text-gray-300 whitespace-pre-wrap text-sm">
                           {showPassword ? viewingCredential.notes : '••••••••••••'}
                         </div>
                         <button
@@ -2692,7 +2692,7 @@ export default function Vault() {
                 <div className="border border-white/10 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection('security')}
-                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                    className="w-full flex items-center justify-between p-3 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition"
                   >
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-violet-400" />
@@ -2705,10 +2705,10 @@ export default function Vault() {
                     )}
                   </button>
                   {expandedSections.security && (
-                    <div className="p-3 bg-white/[0.02]">
+                    <div className="p-3 bg-[#1a1d24]/[0.02]">
                       <label className="block text-xs text-gray-500 mb-1">TOTP Secret</label>
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-violet-400 font-mono text-sm break-all">
+                        <code className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 text-violet-400 font-mono text-sm break-all">
                           {showPassword ? viewingCredential.totp_secret : '••••••••••••'}
                         </code>
                         <button
@@ -2728,7 +2728,7 @@ export default function Vault() {
                 <div className="border border-white/10 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection('additional')}
-                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition"
+                    className="w-full flex items-center justify-between p-3 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition"
                   >
                     <div className="flex items-center gap-2">
                       <KeyRound className="w-4 h-4 text-cyan-400" />
@@ -2742,12 +2742,12 @@ export default function Vault() {
                     )}
                   </button>
                   {expandedSections.additional && (
-                    <div className="p-3 space-y-3 bg-white/[0.02]">
+                    <div className="p-3 space-y-3 bg-[#1a1d24]/[0.02]">
                       {viewingCredential.custom_fields.map((field, index) => (
                         <div key={index}>
                           <label className="block text-xs text-gray-500 mb-1">{field.name}</label>
                           <div className="flex items-center gap-2">
-                            <code className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white font-mono text-sm break-all">
+                            <code className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 text-white font-mono text-sm break-all">
                               {showPassword ? field.value : '••••••••••••'}
                             </code>
                             <button
@@ -2812,7 +2812,7 @@ export default function Vault() {
               </h2>
               <button
                 onClick={closeModal}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a1d24]/10"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2825,7 +2825,7 @@ export default function Vault() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                   placeholder="e.g., Bank of America"
                   required
                 />
@@ -2837,7 +2837,7 @@ export default function Vault() {
                   type="url"
                   value={formData.service_url || ''}
                   onChange={(e) => setFormData({ ...formData, service_url: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                   placeholder="https://..."
                 />
               </div>
@@ -2847,7 +2847,7 @@ export default function Vault() {
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                 >
                   {categories.map(cat => (
                     <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">
@@ -2863,7 +2863,7 @@ export default function Vault() {
                   type="text"
                   value={formData.username || ''}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                   placeholder="Username or email"
                 />
               </div>
@@ -2875,7 +2875,7 @@ export default function Vault() {
                     type={showFormPassword ? 'text' : 'password'}
                     value={formData.password || ''}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-2 pr-10 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                    className="w-full px-4 py-2 pr-10 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                     placeholder="Password"
                   />
                   <button
@@ -2893,7 +2893,7 @@ export default function Vault() {
                 <textarea
                   value={formData.notes || ''}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500 resize-none"
+                  className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500 resize-none"
                   rows={3}
                   placeholder="Additional notes..."
                 />
@@ -2905,7 +2905,7 @@ export default function Vault() {
                   type="text"
                   value={formData.purpose || ''}
                   onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                   placeholder="What is this credential for?"
                 />
               </div>
@@ -2984,7 +2984,7 @@ export default function Vault() {
                 {formData.custom_fields && formData.custom_fields.length > 0 && (
                   <div className="space-y-3">
                     {formData.custom_fields.map((field, index) => (
-                      <div key={index} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                      <div key={index} className="p-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 space-y-2">
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
@@ -2994,7 +2994,7 @@ export default function Vault() {
                               updated[index] = { ...updated[index], name: e.target.value };
                               setFormData({ ...formData, custom_fields: updated });
                             }}
-                            className="flex-1 px-3 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                            className="flex-1 px-3 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                             placeholder="Field name"
                           />
                           <select
@@ -3004,7 +3004,7 @@ export default function Vault() {
                               updated[index] = { ...updated[index], type: e.target.value as CustomField['type'] };
                               setFormData({ ...formData, custom_fields: updated });
                             }}
-                            className="px-2 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                            className="px-2 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                           >
                             <option value="text" className="bg-[#1a1d24] text-white">Text</option>
                             <option value="secret" className="bg-[#1a1d24] text-white">Secret</option>
@@ -3032,7 +3032,7 @@ export default function Vault() {
                               updated[index] = { ...updated[index], value: e.target.value };
                               setFormData({ ...formData, custom_fields: updated });
                             }}
-                            className="w-full px-3 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                            className="w-full px-3 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                             placeholder="Secret value"
                           />
                         ) : field.type === 'date' ? (
@@ -3044,7 +3044,7 @@ export default function Vault() {
                               updated[index] = { ...updated[index], value: e.target.value };
                               setFormData({ ...formData, custom_fields: updated });
                             }}
-                            className="w-full px-3 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                            className="w-full px-3 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                           />
                         ) : field.type === 'dropdown' ? (
                           <div className="space-y-2">
@@ -3059,7 +3059,7 @@ export default function Vault() {
                                 };
                                 setFormData({ ...formData, custom_fields: updated });
                               }}
-                              className="w-full px-3 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                              className="w-full px-3 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                               placeholder="Options (comma-separated)"
                             />
                             {field.options && field.options.length > 0 && (
@@ -3070,7 +3070,7 @@ export default function Vault() {
                                   updated[index] = { ...updated[index], value: e.target.value };
                                   setFormData({ ...formData, custom_fields: updated });
                                 }}
-                                className="w-full px-3 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                                className="w-full px-3 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                               >
                                 <option value="" className="bg-[#1a1d24] text-white">Select...</option>
                                 {field.options.map((opt, i) => (
@@ -3088,7 +3088,7 @@ export default function Vault() {
                               updated[index] = { ...updated[index], value: e.target.value };
                               setFormData({ ...formData, custom_fields: updated });
                             }}
-                            className="w-full px-3 py-1.5 text-sm rounded bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
+                            className="w-full px-3 py-1.5 text-sm rounded bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-violet-500"
                             placeholder={field.type === 'url' ? 'https://...' : 'Value'}
                           />
                         )}
@@ -3102,7 +3102,7 @@ export default function Vault() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 py-2 rounded-lg bg-white/5 text-gray-300 font-medium hover:bg-white/10 transition"
+                  className="flex-1 py-2 rounded-lg bg-[#1a1d24]/5 text-gray-300 font-medium hover:bg-[#1a1d24]/10 transition"
                 >
                   Cancel
                 </button>

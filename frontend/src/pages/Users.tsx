@@ -137,7 +137,7 @@ export default function Users() {
     return (
       <div className="p-8">
         <div className="text-center py-12">
-          <Shield className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-white mb-2">Admin Access Required</h2>
           <p className="text-gray-400">You need admin privileges to access user management.</p>
         </div>
@@ -175,7 +175,7 @@ export default function Users() {
               <div className={`p-1.5 rounded ${
                 role.value === 'admin' ? 'bg-amber-500/20 text-amber-400' :
                 role.value === 'editor' ? 'bg-cyan-500/20 text-cyan-400' :
-                'bg-gray-500/20 text-gray-400'
+                'bg-white/50/20 text-gray-400'
               }`}>
                 <Icon className="w-4 h-4" />
               </div>
@@ -210,7 +210,7 @@ export default function Users() {
         </div>
       ) : filteredUsers.length === 0 ? (
         <div className="text-center py-12">
-          <UsersIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No users found</p>
         </div>
       ) : (
@@ -255,7 +255,7 @@ export default function Users() {
                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
                       user.role === 'admin' ? 'bg-amber-500/20 text-amber-400' :
                       user.role === 'editor' ? 'bg-cyan-500/20 text-cyan-400' :
-                      'bg-gray-500/20 text-gray-400'
+                      'bg-white/50/20 text-gray-400'
                     }`}>
                       <RoleIcon className="w-3.5 h-3.5" />
                       <span className="text-sm font-medium capitalize">{user.role}</span>
@@ -266,7 +266,7 @@ export default function Users() {
                       onClick={() => handleToggleActive(user)}
                       disabled={isCurrentUser}
                       className={`p-1.5 rounded ${
-                        user.is_active ? 'text-green-400' : 'text-gray-600 hover:text-gray-400'
+                        user.is_active ? 'text-green-400' : 'text-gray-400 hover:text-gray-400'
                       } ${isCurrentUser ? 'opacity-50 cursor-not-allowed' : ''}`}
                       title={user.is_active ? 'Active' : 'Inactive'}
                     >
@@ -277,14 +277,14 @@ export default function Users() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(user)}
-                        className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                        className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 transition"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(user.id)}
                         disabled={isCurrentUser}
-                        className={`p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition ${
+                        className={`p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#1a1d24]/10 transition ${
                           isCurrentUser ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
@@ -326,7 +326,7 @@ export default function Users() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div>
@@ -338,7 +338,7 @@ export default function Users() {
                   required={!editingUser}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div>
@@ -347,7 +347,7 @@ export default function Users() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div>
@@ -375,7 +375,7 @@ export default function Users() {
                         <div className={`p-1.5 rounded ${
                           role.value === 'admin' ? 'bg-amber-500/20 text-amber-400' :
                           role.value === 'editor' ? 'bg-cyan-500/20 text-cyan-400' :
-                          'bg-gray-500/20 text-gray-400'
+                          'bg-white/50/20 text-gray-400'
                         }`}>
                           <Icon className="w-4 h-4" />
                         </div>
@@ -394,7 +394,7 @@ export default function Users() {
                     type="checkbox"
                     checked={formData.is_active}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="rounded bg-white/5 border-white/10"
+                    className="rounded bg-[#1a1d24]/5 border-white/10"
                   />
                   Active (can log in)
                 </label>

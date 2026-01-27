@@ -159,8 +159,8 @@ export default function Deadlines() {
               onClick={() => setSelectedType(type.value)}
               className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition ${
                 selectedType === type.value
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-400 hover:bg-white/5'
+                  ? 'bg-[#1a1d24]/10 text-white'
+                  : 'text-gray-400 hover:bg-[#1a1d24]/5'
               }`}
             >
               <span className="mr-1">{type.icon}</span>
@@ -177,7 +177,7 @@ export default function Deadlines() {
           id="showCompleted"
           checked={showCompleted}
           onChange={(e) => setShowCompleted(e.target.checked)}
-          className="rounded bg-white/5 border-white/20"
+          className="rounded bg-[#1a1d24]/5 border-white/20"
         />
         <label htmlFor="showCompleted" className="text-sm text-gray-400">Show completed</label>
       </div>
@@ -295,7 +295,7 @@ export default function Deadlines() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g., Annual Report Filing"
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -304,7 +304,7 @@ export default function Deadlines() {
                   <select
                     value={formData.deadline_type}
                     onChange={(e) => setFormData({ ...formData, deadline_type: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     {deadlineTypes.slice(1).map((type) => (
                       <option key={type.value} value={type.value} className="bg-[#1a1d24] text-white">{type.label}</option>
@@ -318,7 +318,7 @@ export default function Deadlines() {
                     required
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
               </div>
@@ -328,7 +328,7 @@ export default function Deadlines() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div>
@@ -338,7 +338,7 @@ export default function Deadlines() {
                   min="1"
                   value={formData.reminder_days}
                   onChange={(e) => setFormData({ ...formData, reminder_days: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
               <div className="flex items-center gap-4">
@@ -347,7 +347,7 @@ export default function Deadlines() {
                     type="checkbox"
                     checked={formData.is_recurring}
                     onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                    className="rounded bg-white/5 border-white/20"
+                    className="rounded bg-[#1a1d24]/5 border-white/20"
                   />
                   <span className="text-sm text-gray-400">Recurring</span>
                 </label>
@@ -359,7 +359,7 @@ export default function Deadlines() {
                       min="1"
                       value={formData.recurrence_months}
                       onChange={(e) => setFormData({ ...formData, recurrence_months: parseInt(e.target.value) })}
-                      className="w-16 px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 text-sm"
+                      className="w-16 px-2 py-1 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 text-sm"
                     />
                     <span className="text-sm text-gray-400">months</span>
                   </div>
@@ -398,7 +398,7 @@ export default function Deadlines() {
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <Calendar className="w-4 h-4" />
                     <span>{format(new Date(selectedDeadline.due_date), 'MMMM d, yyyy')}</span>
-                    <span className="capitalize px-2 py-0.5 bg-white/10 rounded text-xs">
+                    <span className="capitalize px-2 py-0.5 bg-[#1a1d24]/10 rounded text-xs">
                       {selectedDeadline.deadline_type}
                     </span>
                   </div>
@@ -406,7 +406,7 @@ export default function Deadlines() {
               </div>
               <button
                 onClick={() => setSelectedDeadline(null)}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -415,7 +415,7 @@ export default function Deadlines() {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {selectedDeadline.description && (
-                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <div className="bg-[#1a1d24]/5 rounded-lg p-3 border border-white/10">
                   <h3 className="text-sm font-medium text-gray-400 mb-1">Description</h3>
                   <p className="text-white">{selectedDeadline.description}</p>
                 </div>
@@ -444,7 +444,7 @@ export default function Deadlines() {
                     handleEdit(selectedDeadline);
                     setSelectedDeadline(null);
                   }}
-                  className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition flex items-center gap-2"
                 >
                   <Pencil className="w-4 h-4" />
                   Edit
@@ -495,7 +495,7 @@ function DeadlineCard({
     overdue: 'bg-red-500/5',
     soon: 'bg-amber-500/5',
     normal: 'bg-[#1a1d24]',
-    completed: 'bg-white/[0.02]'
+    completed: 'bg-[#1a1d24]/[0.02]'
   }[status];
 
   return (
@@ -550,7 +550,7 @@ function DeadlineCard({
           <div className="flex gap-1">
             <button
               onClick={() => onSelect(deadline)}
-              className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-white/10 transition"
+              className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-[#1a1d24]/10 transition"
               title="View details & comments"
             >
               <MessageCircle className="w-4 h-4" />
@@ -559,13 +559,13 @@ function DeadlineCard({
               <>
                 <button
                   onClick={() => onEdit(deadline)}
-                  className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                  className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 transition"
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onDelete(deadline.id)}
-                  className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                  className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#1a1d24]/10 transition"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

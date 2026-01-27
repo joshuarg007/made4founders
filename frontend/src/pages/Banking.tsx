@@ -330,7 +330,7 @@ export default function Banking() {
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl font-bold ${
-                    isConnected ? 'bg-white/20 text-white' : `${provider.color} text-white`
+                    isConnected ? 'bg-[#1a1d24]/20 text-white' : `${provider.color} text-white`
                   }`}>
                     {provider.name.charAt(0)}
                   </div>
@@ -357,7 +357,7 @@ export default function Banking() {
                       <button
                         onClick={() => handleSync(provider.id)}
                         disabled={isSyncing}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition text-sm disabled:opacity-50"
                       >
                         {isSyncing ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -369,7 +369,7 @@ export default function Banking() {
                       <button
                         onClick={() => handleAccountingDisconnect(provider.id)}
                         disabled={isLoading}
-                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition text-sm disabled:opacity-50"
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#1a1d24]/10 text-white/80 hover:bg-[#1a1d24]/20 hover:text-white transition text-sm disabled:opacity-50"
                       >
                         {isLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -408,7 +408,7 @@ export default function Banking() {
           </h2>
           <button
             onClick={() => { setEditingAccount(null); resetForm(); setShowModal(true); }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1d24]/10 text-white text-sm hover:bg-[#1a1d24]/20 transition"
           >
             <Plus className="w-4 h-4" />
             Add Account
@@ -419,7 +419,7 @@ export default function Banking() {
       {/* Empty State */}
       {accounts.length === 0 ? (
         <div className="text-center py-12">
-          <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No accounts added yet</p>
           <button
             onClick={() => setShowModal(true)}
@@ -520,7 +520,7 @@ export default function Banking() {
                 <select
                   value={formData.account_type}
                   onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 >
                   {accountTypes.map(type => (
                     <option key={type.value} value={type.value} className="bg-[#1a1d24] text-white">
@@ -538,7 +538,7 @@ export default function Banking() {
                   value={formData.institution_name}
                   onChange={(e) => setFormData({ ...formData, institution_name: e.target.value })}
                   placeholder="e.g., Chase, Bank of America, Coinbase"
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
 
@@ -549,7 +549,7 @@ export default function Banking() {
                   value={formData.account_name}
                   onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
                   placeholder="e.g., Main Operating Account"
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
 
@@ -562,7 +562,7 @@ export default function Banking() {
                     value={formData.account_number_last4}
                     onChange={(e) => setFormData({ ...formData, account_number_last4: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                     placeholder="1234"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -573,7 +573,7 @@ export default function Banking() {
                     value={formData.routing_number}
                     onChange={(e) => setFormData({ ...formData, routing_number: e.target.value.replace(/\D/g, '').slice(0, 9) })}
                     placeholder="123456789"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
               </div>
@@ -585,7 +585,7 @@ export default function Banking() {
                   value={formData.account_holder}
                   onChange={(e) => setFormData({ ...formData, account_holder: e.target.value })}
                   placeholder="Company Name or Individual"
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
 
@@ -596,7 +596,7 @@ export default function Banking() {
                   value={formData.url}
                   onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                   placeholder="https://..."
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
 
@@ -607,7 +607,7 @@ export default function Banking() {
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={2}
                   placeholder="Additional notes..."
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 resize-none"
+                  className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 resize-none"
                 />
               </div>
 
@@ -617,7 +617,7 @@ export default function Banking() {
                     type="checkbox"
                     checked={formData.is_primary}
                     onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-                    className="rounded bg-white/5 border-white/10"
+                    className="rounded bg-[#1a1d24]/5 border-white/10"
                   />
                   <Star className="w-4 h-4" />
                   Primary Account
@@ -705,20 +705,20 @@ function AccountCard({
         <div className="flex gap-2">
           <button
             onClick={() => onEdit(account)}
-            className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+            className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 transition"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(account.id)}
-            className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+            className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#1a1d24]/10 transition"
           >
             <Trash2 className="w-4 h-4" />
           </button>
           {!account.is_primary && (
             <button
               onClick={() => onSetPrimary(account)}
-              className="p-2 rounded-lg text-gray-500 hover:text-amber-400 hover:bg-white/10 transition"
+              className="p-2 rounded-lg text-gray-500 hover:text-amber-400 hover:bg-[#1a1d24]/10 transition"
               title="Set as primary"
             >
               <Star className="w-4 h-4" />
@@ -730,7 +730,7 @@ function AccountCard({
             href={account.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1d24]/10 text-white text-sm hover:bg-[#1a1d24]/20 transition"
           >
             Login
             <ExternalLink className="w-3 h-3" />

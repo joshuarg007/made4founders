@@ -491,7 +491,7 @@ export default function Meetings() {
               </button>
               <button
                 onClick={disconnectZoom}
-                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                className="p-2 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 hover:text-white transition"
                 title={`Connected as ${zoomStatus.user_email}`}
               >
                 <Unlink className="w-3.5 h-3.5" />
@@ -500,7 +500,7 @@ export default function Meetings() {
           ) : (
             <button
               onClick={connectZoom}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition text-sm"
             >
               <Link className="w-4 h-4" />
               Zoom
@@ -519,7 +519,7 @@ export default function Meetings() {
               </button>
               <button
                 onClick={disconnectGoogleMeet}
-                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                className="p-2 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 hover:text-white transition"
                 title={`Connected as ${googleMeetStatus.user_email}`}
               >
                 <Unlink className="w-3.5 h-3.5" />
@@ -528,7 +528,7 @@ export default function Meetings() {
           ) : (
             <button
               onClick={connectGoogleMeet}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition text-sm"
             >
               <Link className="w-4 h-4" />
               Meet
@@ -547,7 +547,7 @@ export default function Meetings() {
               </button>
               <button
                 onClick={disconnectTeams}
-                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition"
+                className="p-2 rounded-lg bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 hover:text-white transition"
                 title={`Connected as ${teamsStatus.user_email}`}
               >
                 <Unlink className="w-3.5 h-3.5" />
@@ -556,7 +556,7 @@ export default function Meetings() {
           ) : (
             <button
               onClick={connectTeams}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition text-sm"
             >
               <Link className="w-4 h-4" />
               Teams
@@ -592,13 +592,13 @@ export default function Meetings() {
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search transcripts..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
           />
         </div>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+          className="px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
         >
           <option value="">All Types</option>
           {MEETING_TYPES.map((type) => (
@@ -607,7 +607,7 @@ export default function Meetings() {
         </select>
         <button
           onClick={handleSearch}
-          className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+          className="px-4 py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition"
         >
           Search
         </button>
@@ -616,7 +616,7 @@ export default function Meetings() {
       {/* Transcripts Grid */}
       {transcripts.length === 0 ? (
         <div className="text-center py-16">
-          <Video className="w-16 h-16 mx-auto mb-4 text-gray-600" />
+          <Video className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-xl font-medium text-white mb-2">No transcripts yet</h3>
           <p className="text-gray-400 mb-6">Upload a meeting transcript to get started</p>
           <button
@@ -632,7 +632,7 @@ export default function Meetings() {
           {transcripts.map((transcript) => (
             <div
               key={transcript.id}
-              className="bg-white/5 rounded-xl border border-white/10 overflow-hidden hover:border-cyan-500/30 transition cursor-pointer group"
+              className="bg-[#1a1d24]/5 rounded-xl border border-white/10 overflow-hidden hover:border-cyan-500/30 transition cursor-pointer group"
               onClick={() => handleViewDetail(transcript)}
             >
               <div className="p-5">
@@ -642,7 +642,7 @@ export default function Meetings() {
                       {transcript.title}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="px-2 py-0.5 rounded bg-white/10 text-xs text-gray-400 capitalize">
+                      <span className="px-2 py-0.5 rounded bg-[#1a1d24]/10 text-xs text-gray-400 capitalize">
                         {transcript.meeting_type}
                       </span>
                       {transcript.platform && (
@@ -653,7 +653,7 @@ export default function Meetings() {
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleDownload(transcript)}
-                      className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white"
+                      className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white"
                       title="Download"
                     >
                       <Download className="w-4 h-4" />
@@ -876,7 +876,7 @@ function UploadModal({
               <div>
                 <Upload className="w-10 h-10 mx-auto mb-2 text-gray-500" />
                 <p className="text-gray-400">Drop transcript file here or click to browse</p>
-                <p className="text-sm text-gray-600 mt-1">Supports VTT, SRT, TXT</p>
+                <p className="text-sm text-gray-400 mt-1">Supports VTT, SRT, TXT</p>
               </div>
             )}
           </div>
@@ -888,7 +888,7 @@ function UploadModal({
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
               placeholder="Meeting title"
             />
           </div>
@@ -901,7 +901,7 @@ function UploadModal({
                 type="datetime-local"
                 value={formData.meeting_date}
                 onChange={(e) => setFormData({ ...formData, meeting_date: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
               />
             </div>
             <div>
@@ -909,7 +909,7 @@ function UploadModal({
               <select
                 value={formData.meeting_type}
                 onChange={(e) => setFormData({ ...formData, meeting_type: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
               >
                 {MEETING_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>{type.label}</option>
@@ -924,7 +924,7 @@ function UploadModal({
             <select
               value={formData.platform}
               onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+              className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
             >
               <option value="">Select platform</option>
               {PLATFORMS.map((p) => (
@@ -939,7 +939,7 @@ function UploadModal({
               type="checkbox"
               checked={formData.generate_summary}
               onChange={(e) => setFormData({ ...formData, generate_summary: e.target.checked })}
-              className="w-5 h-5 rounded bg-white/5 border border-white/20 text-cyan-500 focus:ring-cyan-500/50"
+              className="w-5 h-5 rounded bg-[#1a1d24]/5 border border-white/20 text-cyan-500 focus:ring-cyan-500/50"
             />
             <div>
               <span className="text-white flex items-center gap-2">
@@ -957,7 +957,7 @@ function UploadModal({
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={2}
-              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 resize-none"
+              className="w-full px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 resize-none"
               placeholder="Add any notes about this meeting..."
             />
           </div>
@@ -967,7 +967,7 @@ function UploadModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition"
             >
               Cancel
             </button>
@@ -1130,7 +1130,7 @@ function DetailModal({
       case 'high': return 'text-red-400 bg-red-500/20';
       case 'medium': return 'text-amber-400 bg-amber-500/20';
       case 'low': return 'text-green-400 bg-green-500/20';
-      default: return 'text-gray-400 bg-gray-500/20';
+      default: return 'text-gray-400 bg-white/50/20';
     }
   };
 
@@ -1143,7 +1143,7 @@ function DetailModal({
             <div>
               <h2 className="text-xl font-semibold text-white">{transcript.title}</h2>
               <div className="flex items-center gap-3 mt-2 text-sm text-gray-400">
-                <span className="px-2 py-0.5 rounded bg-white/10 capitalize">{transcript.meeting_type}</span>
+                <span className="px-2 py-0.5 rounded bg-[#1a1d24]/10 capitalize">{transcript.meeting_type}</span>
                 {transcript.platform && <span>{transcript.platform}</span>}
                 {transcript.meeting_date && (
                   <span className="flex items-center gap-1">
@@ -1162,7 +1162,7 @@ function DetailModal({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onDownload(transcript)}
-                className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+                className="p-2 rounded-lg hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                 title="Download"
               >
                 <Download className="w-5 h-5" />
@@ -1174,7 +1174,7 @@ function DetailModal({
               >
                 <Trash2 className="w-5 h-5" />
               </button>
-              <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition">
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1187,7 +1187,7 @@ function DetailModal({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 activeTab === 'summary'
                   ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5'
               }`}
             >
               <Sparkles className="w-4 h-4 inline mr-2" />
@@ -1198,7 +1198,7 @@ function DetailModal({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 activeTab === 'analysis'
                   ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5'
               }`}
             >
               <BarChart3 className="w-4 h-4 inline mr-2" />
@@ -1209,7 +1209,7 @@ function DetailModal({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 activeTab === 'transcript'
                   ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5'
               }`}
             >
               <MessageSquare className="w-4 h-4 inline mr-2" />
@@ -1244,7 +1244,7 @@ function DetailModal({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Sparkles className="w-10 h-10 mx-auto mb-3 text-gray-600" />
+                  <Sparkles className="w-10 h-10 mx-auto mb-3 text-gray-400" />
                   <p className="text-gray-400 mb-4">No summary generated</p>
                   <button
                     onClick={handleRegenerate}
@@ -1270,7 +1270,7 @@ function DetailModal({
                   </h3>
                   <ul className="space-y-2">
                     {transcript.action_items.map((item, i) => (
-                      <li key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                      <li key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[#1a1d24]/5">
                         <div className="w-5 h-5 rounded border border-amber-500/50 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-300">{item}</span>
                       </li>
@@ -1288,7 +1288,7 @@ function DetailModal({
                   </h3>
                   <ul className="space-y-2">
                     {transcript.key_points.map((point, i) => (
-                      <li key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                      <li key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[#1a1d24]/5">
                         <span className="text-cyan-400">•</span>
                         <span className="text-gray-300">{point}</span>
                       </li>
@@ -1320,7 +1320,7 @@ function DetailModal({
                 <button
                   onClick={handleExtractActions}
                   disabled={extractingActions}
-                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-amber-500/30 transition text-left group"
+                  className="p-4 rounded-xl bg-[#1a1d24]/5 border border-white/10 hover:border-amber-500/30 transition text-left group"
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
@@ -1340,7 +1340,7 @@ function DetailModal({
                 <button
                   onClick={handleAnalyzeSpeakers}
                   disabled={analyzingSpeakers}
-                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition text-left group"
+                  className="p-4 rounded-xl bg-[#1a1d24]/5 border border-white/10 hover:border-cyan-500/30 transition text-left group"
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400">
@@ -1360,7 +1360,7 @@ function DetailModal({
                 <button
                   onClick={handleExtractDecisions}
                   disabled={extractingDecisions}
-                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition text-left group"
+                  className="p-4 rounded-xl bg-[#1a1d24]/5 border border-white/10 hover:border-purple-500/30 transition text-left group"
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
@@ -1389,7 +1389,7 @@ function DetailModal({
                     {showBoardSelector ? (
                       <div className="flex items-center gap-2">
                         <select
-                          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                          className="px-3 py-1.5 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm"
                           onChange={(e) => selectBoardAndCreateTasks(Number(e.target.value))}
                           disabled={creatingTasks}
                         >
@@ -1432,7 +1432,7 @@ function DetailModal({
 
                   <div className="space-y-3">
                     {extractedActions.map((action, i) => (
-                      <div key={i} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                      <div key={i} className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                         <div className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm font-medium flex-shrink-0">
                             {i + 1}
@@ -1447,7 +1447,7 @@ function DetailModal({
                                 </span>
                               )}
                               {(action.due_date || action.due_description) && (
-                                <span className="px-2 py-0.5 rounded bg-white/10 text-gray-400 text-xs flex items-center gap-1">
+                                <span className="px-2 py-0.5 rounded bg-[#1a1d24]/10 text-gray-400 text-xs flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {action.due_date || action.due_description}
                                 </span>
@@ -1478,12 +1478,12 @@ function DetailModal({
                   {/* Speaker Stats */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     {speakerAnalysis.speakers.map((speaker, i) => (
-                      <div key={i} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                      <div key={i} className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-white">{speaker.name}</span>
                           <span className="text-cyan-400 text-sm">{speaker.percentage.toFixed(1)}%</span>
                         </div>
-                        <div className="w-full bg-white/10 rounded-full h-2 mb-3">
+                        <div className="w-full bg-[#1a1d24]/10 rounded-full h-2 mb-3">
                           <div
                             className="bg-cyan-500 h-2 rounded-full"
                             style={{ width: `${Math.min(100, speaker.percentage)}%` }}
@@ -1495,7 +1495,7 @@ function DetailModal({
                         {speaker.main_topics.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {speaker.main_topics.map((topic, j) => (
-                              <span key={j} className="px-2 py-0.5 rounded bg-white/10 text-gray-400 text-xs">
+                              <span key={j} className="px-2 py-0.5 rounded bg-[#1a1d24]/10 text-gray-400 text-xs">
                                 {topic}
                               </span>
                             ))}
@@ -1515,7 +1515,7 @@ function DetailModal({
 
                   {/* Suggestions */}
                   {speakerAnalysis.suggestions.length > 0 && (
-                    <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                    <div className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                       <h4 className="text-sm font-medium text-gray-400 mb-2">Suggestions</h4>
                       <ul className="space-y-1">
                         {speakerAnalysis.suggestions.map((suggestion, i) => (
@@ -1540,7 +1540,7 @@ function DetailModal({
 
                   <div className="space-y-3">
                     {extractedDecisions.map((decision, i) => (
-                      <div key={i} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                      <div key={i} className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                         <p className="text-white font-medium">{decision.decision}</p>
                         {decision.made_by && (
                           <p className="text-sm text-gray-400 mt-1">Decided by: {decision.made_by}</p>
@@ -1660,12 +1660,12 @@ function RecordingsModal({
           <div className="flex items-center gap-2">
             <button
               onClick={onRefresh}
-              className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+              className="p-2 rounded-lg hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
               title="Refresh"
             >
               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
             </button>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition">
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -1678,7 +1678,7 @@ function RecordingsModal({
             </div>
           ) : recordings.length === 0 ? (
             <div className="text-center py-12">
-              <Video className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+              <Video className="w-12 h-12 mx-auto mb-3 text-gray-400" />
               <p className="text-gray-400">No recordings found in the last 30 days</p>
               <p className="text-sm text-gray-500 mt-1">Make sure cloud recording is enabled in your {platformName} settings</p>
             </div>
@@ -1695,7 +1695,7 @@ function RecordingsModal({
                     {recordingsWithTranscript.map((recording) => (
                       <div
                         key={recording.id}
-                        className={`p-4 rounded-lg bg-white/5 border border-white/10 ${colors.border} transition`}
+                        className={`p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10 ${colors.border} transition`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
@@ -1748,7 +1748,7 @@ function RecordingsModal({
                     {recordingsWithoutTranscript.map((recording) => (
                       <div
                         key={recording.id}
-                        className="p-4 rounded-lg bg-white/5 border border-white/5 opacity-60"
+                        className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/5 opacity-60"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
@@ -1766,7 +1766,7 @@ function RecordingsModal({
                               )}
                             </div>
                           </div>
-                          <span className="text-xs text-gray-500 px-2 py-1 rounded bg-white/5">
+                          <span className="text-xs text-gray-500 px-2 py-1 rounded bg-[#1a1d24]/5">
                             No transcript
                           </span>
                         </div>

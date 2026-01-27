@@ -187,7 +187,7 @@ export default function Invoices() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'text-gray-400 bg-gray-500/20'
+        return 'text-gray-400 bg-white/50/20'
       case 'sent':
       case 'viewed':
         return 'text-blue-400 bg-blue-500/20'
@@ -196,9 +196,9 @@ export default function Invoices() {
       case 'overdue':
         return 'text-red-400 bg-red-500/20'
       case 'cancelled':
-        return 'text-gray-400 bg-gray-500/20'
+        return 'text-gray-400 bg-white/50/20'
       default:
-        return 'text-gray-400 bg-gray-500/20'
+        return 'text-gray-400 bg-white/50/20'
     }
   }
 
@@ -346,7 +346,7 @@ export default function Invoices() {
                   new Date(invoice.due_date) < new Date()
 
                 return (
-                  <tr key={invoice.id} className="hover:bg-white/5">
+                  <tr key={invoice.id} className="hover:bg-[#1a1d24]/5">
                     <td className="px-6 py-4">
                       <span className="text-white font-medium">{invoice.invoice_number}</span>
                     </td>
@@ -381,14 +381,14 @@ export default function Invoices() {
                           <>
                             <button
                               onClick={() => handleSendInvoice(invoice.id)}
-                              className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition"
+                              className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-[#1a1d24]/5 rounded-lg transition"
                               title="Send Invoice"
                             >
                               <Send className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteInvoice(invoice.id)}
-                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-white/5 rounded-lg transition"
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-[#1a1d24]/5 rounded-lg transition"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -398,7 +398,7 @@ export default function Invoices() {
                         {(invoice.status === 'sent' || invoice.status === 'viewed') && (
                           <button
                             onClick={() => handleMarkPaid(invoice.id)}
-                            className="p-2 text-gray-400 hover:text-emerald-400 hover:bg-white/5 rounded-lg transition"
+                            className="p-2 text-gray-400 hover:text-emerald-400 hover:bg-[#1a1d24]/5 rounded-lg transition"
                             title="Mark as Paid"
                           >
                             <CreditCard className="w-4 h-4" />
@@ -406,7 +406,7 @@ export default function Invoices() {
                         )}
                         <button
                           onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
-                          className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"
+                          className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 rounded-lg transition"
                           title="Download"
                         >
                           <Download className="w-4 h-4" />
@@ -435,7 +435,7 @@ export default function Invoices() {
                   <select
                     value={selectedContactId || ''}
                     onChange={(e) => setSelectedContactId(e.target.value ? parseInt(e.target.value) : null)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                   >
                     <option value="">Select client...</option>
                     {contacts.map(contact => (
@@ -451,7 +451,7 @@ export default function Invoices() {
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -467,7 +467,7 @@ export default function Invoices() {
                         value={item.description}
                         onChange={(e) => handleLineItemChange(index, 'description', e.target.value)}
                         placeholder="Description"
-                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                        className="flex-1 bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                       />
                       <input
                         type="number"
@@ -475,7 +475,7 @@ export default function Invoices() {
                         onChange={(e) => handleLineItemChange(index, 'quantity', e.target.value)}
                         placeholder="Qty"
                         min="1"
-                        className="w-20 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                        className="w-20 bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                       />
                       <input
                         type="number"
@@ -484,7 +484,7 @@ export default function Invoices() {
                         placeholder="Price"
                         min="0"
                         step="0.01"
-                        className="w-28 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                        className="w-28 bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                       />
                       <button
                         onClick={() => handleRemoveLineItem(index)}
@@ -515,7 +515,7 @@ export default function Invoices() {
                     placeholder="0"
                     min="0"
                     step="0.01"
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div>
@@ -525,13 +525,13 @@ export default function Invoices() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Payment terms, etc."
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
 
               {/* Totals */}
-              <div className="bg-white/5 rounded-lg p-4 space-y-2">
+              <div className="bg-[#1a1d24]/5 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
                   <span>{formatCurrency(calculateTotal().subtotal)}</span>

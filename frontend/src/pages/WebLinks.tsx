@@ -140,8 +140,8 @@ export default function WebLinks() {
               onClick={() => setSelectedCategory(cat.value)}
               className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition ${
                 selectedCategory === cat.value
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-400 hover:bg-white/5'
+                  ? 'bg-[#1a1d24]/10 text-white'
+                  : 'text-gray-400 hover:bg-[#1a1d24]/5'
               }`}
             >
               <span className="mr-1">{cat.icon}</span>
@@ -156,7 +156,7 @@ export default function WebLinks() {
         <div className="text-gray-400">Loading...</div>
       ) : filteredLinks.length === 0 ? (
         <div className="text-center py-12">
-          <Link2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <Link2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No links found</p>
           <button
             onClick={() => setShowModal(true)}
@@ -234,7 +234,7 @@ export default function WebLinks() {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g., D&B Business Directory"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -245,7 +245,7 @@ export default function WebLinks() {
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -253,7 +253,7 @@ export default function WebLinks() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     {categories.slice(1).map((cat) => (
                       <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">{cat.label}</option>
@@ -275,7 +275,7 @@ export default function WebLinks() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
                     placeholder="What is this link for?"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -284,7 +284,7 @@ export default function WebLinks() {
                       type="checkbox"
                       checked={formData.is_favorite}
                       onChange={(e) => setFormData({ ...formData, is_favorite: e.target.checked })}
-                      className="rounded bg-white/5 border-white/10"
+                      className="rounded bg-[#1a1d24]/5 border-white/10"
                     />
                     Add to favorites
                   </label>
@@ -346,7 +346,7 @@ function LinkCard({
 
       <div className="flex items-center gap-3">
         {/* Icon */}
-        <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-lg shrink-0 group-hover:bg-white/10 transition">
+        <div className="w-9 h-9 rounded-lg bg-[#1a1d24]/5 flex items-center justify-center text-lg shrink-0 group-hover:bg-[#1a1d24]/10 transition">
           {link.icon || '🔗'}
         </div>
 
@@ -354,7 +354,7 @@ function LinkCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-medium text-white text-sm truncate">{link.title}</h3>
-            <ExternalLink className="w-3 h-3 text-gray-600 opacity-0 group-hover:opacity-100 transition shrink-0" />
+            <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition shrink-0" />
           </div>
           <p className="text-xs text-gray-500 truncate">{getDomain(link.url)}</p>
         </div>
@@ -363,13 +363,13 @@ function LinkCard({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
           <button
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(link); }}
-            className={`p-1.5 rounded-md transition ${link.is_favorite ? 'text-amber-400 hover:bg-amber-400/10' : 'text-gray-500 hover:text-amber-400 hover:bg-white/5'}`}
+            className={`p-1.5 rounded-md transition ${link.is_favorite ? 'text-amber-400 hover:bg-amber-400/10' : 'text-gray-500 hover:text-amber-400 hover:bg-[#1a1d24]/5'}`}
           >
             <Star className="w-3.5 h-3.5" fill={link.is_favorite ? 'currentColor' : 'none'} />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(link); }}
-            className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/5 transition"
+            className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#1a1d24]/5 transition"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>

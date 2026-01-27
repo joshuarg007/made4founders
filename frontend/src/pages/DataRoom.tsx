@@ -240,7 +240,7 @@ export default function DataRoom() {
         <div key={node.id}>
           <div
             className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition ${
-              isSelected ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-white/5 text-gray-300'
+              isSelected ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-[#1a1d24]/5 text-gray-300'
             }`}
             style={{ paddingLeft: `${12 + level * 20}px` }}
             onClick={() => {
@@ -274,14 +274,14 @@ export default function DataRoom() {
               {node.documents.map(doc => (
                 <div
                   key={doc.id}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:bg-white/5 rounded-lg"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:bg-[#1a1d24]/5 rounded-lg"
                   style={{ paddingLeft: `${32 + level * 20}px` }}
                 >
                   <FileText className="w-4 h-4 text-gray-500" />
                   <span className="flex-1 truncate text-sm">
                     {doc.display_name || doc.document_name}
                   </span>
-                  <span className="text-xs text-gray-600 flex items-center gap-1">
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
                     <Eye className="w-3 h-3" /> {doc.view_count}
                     <Download className="w-3 h-3 ml-2" /> {doc.download_count}
                   </span>
@@ -323,7 +323,7 @@ export default function DataRoom() {
         <div className="flex gap-3">
           <button
             onClick={() => setShowNewFolder(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-[#1a1d24]/5 border border-white/10 rounded-lg text-white hover:bg-[#1a1d24]/10 transition"
           >
             <FolderPlus className="w-4 h-4" />
             New Folder
@@ -440,7 +440,7 @@ export default function DataRoom() {
             <h3 className="text-sm font-medium text-gray-400 mb-4">Folder Structure</h3>
             {folderTree.length === 0 ? (
               <div className="text-center py-8">
-                <Folder className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <Folder className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-400">No folders yet</p>
                 <button
                   onClick={() => setShowNewFolder(true)}
@@ -480,7 +480,7 @@ export default function DataRoom() {
                         setLinkForFolder(selectedFolder.id)
                         setShowCreateLink(true)
                       }}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white text-sm rounded-lg hover:bg-white/10 transition"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1d24]/5 border border-white/10 text-white text-sm rounded-lg hover:bg-[#1a1d24]/10 transition"
                     >
                       <Share2 className="w-4 h-4" />
                       Share
@@ -505,7 +505,7 @@ export default function DataRoom() {
                     selectedFolder.documents.map(doc => (
                       <div
                         key={doc.id}
-                        className="flex items-center gap-4 p-4 bg-white/5 rounded-lg"
+                        className="flex items-center gap-4 p-4 bg-[#1a1d24]/5 rounded-lg"
                       >
                         <FileText className="w-8 h-8 text-gray-400" />
                         <div className="flex-1">
@@ -528,14 +528,14 @@ export default function DataRoom() {
                               setLinkForDocument(doc.id)
                               setShowCreateLink(true)
                             }}
-                            className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition"
+                            className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-[#1a1d24]/5 rounded-lg transition"
                             title="Create share link"
                           >
                             <Link2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleRemoveDocument(doc.id)}
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-white/5 rounded-lg transition"
+                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-[#1a1d24]/5 rounded-lg transition"
                             title="Remove from data room"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -582,7 +582,7 @@ export default function DataRoom() {
                 </tr>
               ) : (
                 links.map(link => (
-                  <tr key={link.id} className="hover:bg-white/5">
+                  <tr key={link.id} className="hover:bg-[#1a1d24]/5">
                     <td className="px-6 py-4">
                       <div>
                         <p className="text-white font-medium">{link.name || 'Unnamed Link'}</p>
@@ -627,21 +627,21 @@ export default function DataRoom() {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => copyLinkToClipboard(link.token)}
-                          className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition"
+                          className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-[#1a1d24]/5 rounded-lg transition"
                           title="Copy link"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => window.open(`/share/${link.token}`, '_blank')}
-                          className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"
+                          className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 rounded-lg transition"
                           title="Open link"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleRevokeLink(link.id)}
-                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-white/5 rounded-lg transition"
+                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-[#1a1d24]/5 rounded-lg transition"
                           title="Revoke link"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -668,7 +668,7 @@ export default function DataRoom() {
                 accessLogs.map(log => (
                   <div
                     key={log.id}
-                    className="flex items-center gap-4 p-3 bg-white/5 rounded-lg"
+                    className="flex items-center gap-4 p-3 bg-[#1a1d24]/5 rounded-lg"
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                       log.access_type === 'download' ? 'bg-emerald-500/20' : 'bg-purple-500/20'
@@ -714,7 +714,7 @@ export default function DataRoom() {
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="e.g., Series A Documents"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
               <div>
@@ -724,7 +724,7 @@ export default function DataRoom() {
                   onChange={(e) => setNewFolderDescription(e.target.value)}
                   placeholder="Brief description of folder contents"
                   rows={2}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
               <div>
@@ -732,7 +732,7 @@ export default function DataRoom() {
                 <select
                   value={newFolderParent || ''}
                   onChange={(e) => setNewFolderParent(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                 >
                   <option value="">Root Level</option>
                   {folderTree.map(folder => (
@@ -781,7 +781,7 @@ export default function DataRoom() {
                     <label
                       key={doc.id}
                       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
-                        selectedDocIds.has(doc.id) ? 'bg-cyan-500/20 border border-cyan-500/30' : 'bg-white/5 hover:bg-white/10'
+                        selectedDocIds.has(doc.id) ? 'bg-cyan-500/20 border border-cyan-500/30' : 'bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10'
                       }`}
                     >
                       <input
@@ -796,7 +796,7 @@ export default function DataRoom() {
                           }
                           setSelectedDocIds(newSet)
                         }}
-                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500"
+                        className="w-4 h-4 rounded border-white/20 bg-[#1a1d24]/5 text-cyan-500 focus:ring-cyan-500"
                       />
                       <FileText className="w-5 h-5 text-gray-400" />
                       <div className="flex-1">
@@ -843,7 +843,7 @@ export default function DataRoom() {
                   value={linkName}
                   onChange={(e) => setLinkName(e.target.value)}
                   placeholder="e.g., For Sequoia"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -862,7 +862,7 @@ export default function DataRoom() {
                         setLinkForFolder(null)
                       }
                     }}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                   >
                     <option value="">Select folder or document...</option>
                     <optgroup label="Folders">
@@ -894,7 +894,7 @@ export default function DataRoom() {
                   value={linkPassword}
                   onChange={(e) => setLinkPassword(e.target.value)}
                   placeholder="Leave empty for no password"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -905,7 +905,7 @@ export default function DataRoom() {
                     type="datetime-local"
                     value={linkExpiry}
                     onChange={(e) => setLinkExpiry(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div>
@@ -916,7 +916,7 @@ export default function DataRoom() {
                     onChange={(e) => setLinkAccessLimit(e.target.value)}
                     placeholder="Unlimited"
                     min="1"
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#1a1d24]/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { usePlaidLink, type PlaidLinkOnSuccess, type PlaidLinkOptions } from 'react-plaid-link';
-import { Building2, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Building2, Loader2, CheckCircle, XCircle, Settings } from 'lucide-react';
 import { getPlaidStatus, createPlaidLinkToken, exchangePlaidPublicToken } from '../lib/api';
 
 interface PlaidLinkButtonProps {
@@ -104,13 +105,16 @@ export default function PlaidLinkButton({
     }
   };
 
-  // Show "not configured" state
+  // Show "not configured" state - link to integrations page
   if (status === 'not_configured' || plaidConfigured === false) {
     return (
-      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700/50 text-gray-400 ${className}`}>
-        <AlertCircle className="w-5 h-5" />
-        <span className="text-sm">Bank sync not configured</span>
-      </div>
+      <Link
+        to="/app/integrations"
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition ${className}`}
+      >
+        <Settings className="w-5 h-5" />
+        <span className="text-sm">Configure Bank Sync</span>
+      </Link>
     );
   }
 

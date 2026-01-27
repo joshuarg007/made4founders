@@ -125,7 +125,7 @@ export default function SupportWidget({ userEmail, userName }: SupportWidgetProp
               </div>
               <button
                 onClick={handleClose}
-                className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+                className="p-2 rounded-lg hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -163,7 +163,7 @@ export default function SupportWidget({ userEmail, userName }: SupportWidgetProp
                     <div className="space-y-2">
                       {faqs.map((faq, i) => (
                         <details key={i} className="group">
-                          <summary className="flex items-center justify-between p-3 rounded-lg bg-[#0f1117] border border-white/5 cursor-pointer hover:bg-white/5 transition list-none">
+                          <summary className="flex items-center justify-between p-3 rounded-lg bg-[#0f1117] border border-white/5 cursor-pointer hover:bg-[#1a1d24]/5 transition list-none">
                             <span className="text-sm text-white pr-4">{faq.q}</span>
                             <span className="text-gray-500 group-open:rotate-180 transition-transform">
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,7 +264,7 @@ export default function SupportWidget({ userEmail, userName }: SupportWidgetProp
                   </p>
                   <button
                     onClick={handleClose}
-                    className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition"
+                    className="px-6 py-2 bg-[#1a1d24]/10 hover:bg-[#1a1d24]/20 text-white rounded-lg transition"
                   >
                     Close
                   </button>

@@ -151,8 +151,8 @@ export default function Services() {
               onClick={() => setSelectedCategory(cat.value)}
               className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition ${
                 selectedCategory === cat.value
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-400 hover:bg-white/5'
+                  ? 'bg-[#1a1d24]/10 text-white'
+                  : 'text-gray-400 hover:bg-[#1a1d24]/5'
               }`}
             >
               <span className="mr-1">{cat.icon}</span>
@@ -192,7 +192,7 @@ export default function Services() {
                 </div>
                 <button
                   onClick={() => handleToggleFavorite(service)}
-                  className={`p-1 rounded ${service.is_favorite ? 'text-amber-400' : 'text-gray-600 hover:text-gray-400'}`}
+                  className={`p-1 rounded ${service.is_favorite ? 'text-amber-400' : 'text-gray-400 hover:text-gray-400'}`}
                 >
                   <Star className="w-4 h-4" fill={service.is_favorite ? 'currentColor' : 'none'} />
                 </button>
@@ -210,20 +210,20 @@ export default function Services() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEdit(service)}
-                    className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition"
+                    className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1d24]/10 transition"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(service.id)}
-                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/10 transition"
+                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-[#1a1d24]/10 transition"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
                 <button
                   onClick={() => handleOpenService(service)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1d24]/10 text-white text-sm hover:bg-[#1a1d24]/20 transition"
                 >
                   Open
                   <ExternalLink className="w-3 h-3" />
@@ -255,7 +255,7 @@ export default function Services() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -266,7 +266,7 @@ export default function Services() {
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div>
@@ -274,7 +274,7 @@ export default function Services() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   >
                     {categories.slice(1).map((cat) => (
                       <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">{cat.label}</option>
@@ -288,7 +288,7 @@ export default function Services() {
                     value={formData.icon}
                     onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                     placeholder="🔗"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -297,7 +297,7 @@ export default function Services() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -307,7 +307,7 @@ export default function Services() {
                     value={formData.username_hint}
                     onChange={(e) => setFormData({ ...formData, username_hint: e.target.value })}
                     placeholder="e.g., company@email.com"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -316,7 +316,7 @@ export default function Services() {
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                   />
                 </div>
               </div>

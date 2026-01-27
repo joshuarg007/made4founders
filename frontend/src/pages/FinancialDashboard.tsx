@@ -154,7 +154,7 @@ export default function FinancialDashboard() {
         <div className="flex items-center gap-3">
           <button
             onClick={loadData}
-            className="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"
+            className="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 rounded-lg transition"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -335,7 +335,7 @@ export default function FinancialDashboard() {
                         {item.accounts.map((account) => (
                           <div
                             key={account.id}
-                            className="flex items-center justify-between py-2 px-3 bg-white/5 rounded-lg"
+                            className="flex items-center justify-between py-2 px-3 bg-[#1a1d24]/5 rounded-lg"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-sm font-medium text-gray-300">
@@ -344,7 +344,7 @@ export default function FinancialDashboard() {
                               <span className="text-xs text-gray-500">
                                 ••••{account.mask}
                               </span>
-                              <span className="text-xs px-2 py-0.5 bg-white/10 rounded text-gray-400 capitalize">
+                              <span className="text-xs px-2 py-0.5 bg-[#1a1d24]/10 rounded text-gray-400 capitalize">
                                 {account.account_subtype || account.account_type}
                               </span>
                             </div>
@@ -379,7 +379,7 @@ export default function FinancialDashboard() {
                     </div>
                   ) : (
                     transactions.slice(0, 10).map((txn) => (
-                      <div key={txn.id} className="px-5 py-3 flex items-center justify-between hover:bg-white/5">
+                      <div key={txn.id} className="px-5 py-3 flex items-center justify-between hover:bg-[#1a1d24]/5">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                             txn.amount < 0 ? 'bg-green-500/10' : 'bg-red-500/10'
@@ -440,7 +440,7 @@ export default function FinancialDashboard() {
                         +{formatCurrency(summary?.total_income || 0)}
                       </span>
                     </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-500 rounded-full"
                         style={{
@@ -456,7 +456,7 @@ export default function FinancialDashboard() {
                         -{formatCurrency(summary?.total_expenses || 0)}
                       </span>
                     </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-red-500 rounded-full"
                         style={{

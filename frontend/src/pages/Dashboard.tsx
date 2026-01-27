@@ -362,7 +362,7 @@ export default function Dashboard() {
         <button
           onClick={() => loadData(true)}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1a1d24]/5 border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 transition disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -421,7 +421,7 @@ export default function Dashboard() {
                   <span>{xpProgress.current.toLocaleString()} XP</span>
                   <span>{xpProgress.needed.toLocaleString()} XP to Level {(currentBusiness?.level || 1) + 1}</span>
                 </div>
-                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-3 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-violet-500 to-pink-500 rounded-full transition-all duration-1000 ease-out relative"
                     style={{ width: `${xpProgress.percentage}%` }}
@@ -451,7 +451,7 @@ export default function Dashboard() {
                 <span className="text-sm font-medium text-gray-400">Business Health</span>
                 <button
                   onClick={() => setShowHealthHelp(true)}
-                  className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                  className="w-5 h-5 rounded-full bg-[#1a1d24]/10 hover:bg-[#1a1d24]/20 flex items-center justify-center transition"
                   title="How is this calculated?"
                 >
                   <span className="text-xs text-gray-400 font-medium">?</span>
@@ -477,12 +477,12 @@ export default function Dashboard() {
                 { label: 'Operations', value: currentBusiness?.health_operations || 0, color: 'violet' },
                 { label: 'Growth', value: currentBusiness?.health_growth || 0, color: 'amber' },
               ].map(item => (
-                <div key={item.label} className="bg-white/5 rounded-lg p-3">
+                <div key={item.label} className="bg-[#1a1d24]/5 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-gray-400">{item.label}</span>
                     <span className={`text-sm font-medium text-${item.color}-400`}>{item.value}</span>
                   </div>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                     <div
                       className={`h-full bg-${item.color}-500 rounded-full transition-all duration-500`}
                       style={{ width: `${item.value}%` }}
@@ -502,7 +502,7 @@ export default function Dashboard() {
                   </h4>
                   <button
                     onClick={() => setShowHealthHelp(false)}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                    className="w-6 h-6 rounded-full bg-[#1a1d24]/10 hover:bg-[#1a1d24]/20 flex items-center justify-center transition"
                   >
                     <X className="w-4 h-4 text-gray-400" />
                   </button>
@@ -553,13 +553,13 @@ export default function Dashboard() {
 
               <div className="space-y-3">
                 {activeQuests.map(quest => (
-                  <div key={quest.id} className="p-3 rounded-xl bg-white/5 border border-white/5">
+                  <div key={quest.id} className="p-3 rounded-xl bg-[#1a1d24]/5 border border-white/5">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-white">{quest.quest?.name || 'Quest'}</span>
                       <span className="text-xs text-cyan-400">+{quest.quest?.xp_reward || 0} XP</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full"
                           style={{ width: `${(quest.current_count / quest.target_count) * 100}%` }}
@@ -651,7 +651,7 @@ export default function Dashboard() {
                 {upcomingThisWeek.map((item, idx) => (
                   <div
                     key={`${item.type}-${item.id}-${idx}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition"
+                    className="flex items-center justify-between p-3 rounded-xl bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
@@ -698,7 +698,7 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-2 gap-4">
                 {keyMetrics.map((metric) => (
-                  <div key={metric.id} className="p-3 rounded-xl bg-white/5">
+                  <div key={metric.id} className="p-3 rounded-xl bg-[#1a1d24]/5">
                     <div className="text-xs text-gray-400 uppercase mb-1">{metric.name || metric.metric_type}</div>
                     <div className="text-xl font-bold text-white">
                       {metric.unit === '$' || metric.unit === 'USD' ? '$' : ''}
@@ -724,28 +724,28 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 to="/app/tasks"
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-cyan-500/30 transition text-center group"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 border border-white/5 hover:border-cyan-500/30 transition text-center group"
               >
                 <CheckSquare className="w-6 h-6 text-cyan-400 group-hover:scale-110 transition-transform" />
                 <span className="text-sm text-gray-300">New Task</span>
               </Link>
               <Link
                 to="/app/deadlines"
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-violet-500/30 transition text-center group"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 border border-white/5 hover:border-violet-500/30 transition text-center group"
               >
                 <Calendar className="w-6 h-6 text-violet-400 group-hover:scale-110 transition-transform" />
                 <span className="text-sm text-gray-300">Add Deadline</span>
               </Link>
               <Link
                 to="/app/documents"
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-emerald-500/30 transition text-center group"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 border border-white/5 hover:border-emerald-500/30 transition text-center group"
               >
                 <FileText className="w-6 h-6 text-emerald-400 group-hover:scale-110 transition-transform" />
                 <span className="text-sm text-gray-300">Upload Doc</span>
               </Link>
               <Link
                 to="/app/contacts"
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-amber-500/30 transition text-center group"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 border border-white/5 hover:border-amber-500/30 transition text-center group"
               >
                 <Users className="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" />
                 <span className="text-sm text-gray-300">Add Contact</span>
@@ -771,7 +771,7 @@ export default function Dashboard() {
                   <Link
                     key={task.id}
                     to="/app/tasks"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition group"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 transition group"
                   >
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                       task.status === 'in_progress'
@@ -790,7 +790,7 @@ export default function Dashboard() {
                         </p>
                       )}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-white transition flex-shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-white transition flex-shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -822,7 +822,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex-1 mr-4">
-                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
                       style={{ width: `${currentBusiness.health_score}%` }}
@@ -848,7 +848,7 @@ export default function Dashboard() {
                 <p className="text-xs text-gray-400">AES-256 encrypted</p>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-white transition" />
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition" />
           </Link>
         </div>
       </div>

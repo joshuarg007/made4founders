@@ -162,7 +162,7 @@ export default function SocialHub() {
             className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all whitespace-nowrap ${
               activeTab === tab.id
                 ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 border border-transparent'
             }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -190,8 +190,8 @@ export default function SocialHub() {
                 onClick={() => setEmailSubTab(subTab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
                   emailSubTab === subTab.id
-                    ? 'bg-white/10 text-white'
-                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                    ? 'bg-[#1a1d24]/10 text-white'
+                    : 'text-gray-500 hover:text-white hover:bg-[#1a1d24]/5'
                 }`}
               >
                 <subTab.icon className="w-4 h-4" />
@@ -320,7 +320,7 @@ function TemplatesTab({ templates, onAdd, onEdit, onPreview, onRefresh }: {
         <div className="flex gap-3">
           <button
             onClick={() => setShowPrebuilt(!showPrebuilt)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-gray-300 hover:bg-[#1a1d24]/10 hover:text-white transition"
           >
             <Sparkles className="w-4 h-4" />
             Pre-built Templates
@@ -336,11 +336,11 @@ function TemplatesTab({ templates, onAdd, onEdit, onPreview, onRefresh }: {
       </div>
 
       {showPrebuilt && (
-        <div className="mb-8 p-6 rounded-xl bg-white/5 border border-white/10">
+        <div className="mb-8 p-6 rounded-xl bg-[#1a1d24]/5 border border-white/10">
           <h3 className="font-medium text-white mb-4">Pre-built Templates</h3>
           <div className="grid md:grid-cols-3 gap-4">
             {prebuiltTemplates.map((t) => (
-              <div key={t.name} className="p-4 rounded-lg bg-white/5 border border-white/10">
+              <div key={t.name} className="p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                 <h4 className="font-medium text-white">{t.name}</h4>
                 <p className="text-sm text-gray-500 mt-1 capitalize">{t.template_type}</p>
                 <button
@@ -364,7 +364,7 @@ function TemplatesTab({ templates, onAdd, onEdit, onPreview, onRefresh }: {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
-            <div key={template.id} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden group">
+            <div key={template.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 overflow-hidden group">
               <div className="p-4 border-b border-white/10">
                 <div className="flex justify-between items-start">
                   <div>
@@ -372,7 +372,7 @@ function TemplatesTab({ templates, onAdd, onEdit, onPreview, onRefresh }: {
                     <p className="text-xs text-gray-500 mt-1 capitalize">{template.template_type}</p>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-xs ${
-                    template.is_active ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                    template.is_active ? 'bg-green-500/20 text-green-400' : 'bg-white/50/20 text-gray-400'
                   }`}>
                     {template.is_active ? 'Active' : 'Inactive'}
                   </span>
@@ -386,21 +386,21 @@ function TemplatesTab({ templates, onAdd, onEdit, onPreview, onRefresh }: {
                 <div className="flex gap-1">
                   <button
                     onClick={() => onPreview(template)}
-                    className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                     title="Preview"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDuplicate(template.id)}
-                    className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                     title="Duplicate"
                   >
                     <Copy className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => onEdit(template)}
-                    className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                     title="Edit"
                   >
                     <Edit3 className="w-4 h-4" />
@@ -441,11 +441,11 @@ function CampaignsTab({ campaigns, onAdd, onEdit, onRefresh }: {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft': return 'bg-gray-500/20 text-gray-400';
+      case 'draft': return 'bg-white/50/20 text-gray-400';
       case 'scheduled': return 'bg-yellow-500/20 text-yellow-400';
       case 'sent': return 'bg-green-500/20 text-green-400';
       case 'cancelled': return 'bg-red-500/20 text-red-400';
-      default: return 'bg-gray-500/20 text-gray-400';
+      default: return 'bg-white/50/20 text-gray-400';
     }
   };
 
@@ -471,7 +471,7 @@ function CampaignsTab({ campaigns, onAdd, onEdit, onRefresh }: {
       ) : (
         <div className="space-y-4">
           {campaigns.map((campaign) => (
-            <div key={campaign.id} className="bg-white/5 rounded-xl border border-white/10 p-6">
+            <div key={campaign.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 p-6">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
@@ -479,7 +479,7 @@ function CampaignsTab({ campaigns, onAdd, onEdit, onRefresh }: {
                     <span className={`px-2 py-0.5 rounded text-xs capitalize ${getStatusColor(campaign.status)}`}>
                       {campaign.status}
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-white/10 text-gray-400 text-xs capitalize">
+                    <span className="px-2 py-0.5 rounded bg-[#1a1d24]/10 text-gray-400 text-xs capitalize">
                       {campaign.campaign_type}
                     </span>
                   </div>
@@ -499,7 +499,7 @@ function CampaignsTab({ campaigns, onAdd, onEdit, onRefresh }: {
                 <div className="flex gap-2">
                   <button
                     onClick={() => onEdit(campaign)}
-                    className="p-2 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    className="p-2 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
@@ -707,11 +707,11 @@ function SocialPublisherTab() {
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200 relative ${
                     isEnabled
                       ? `${platform.color} border-transparent text-white shadow-lg scale-[1.02]`
-                      : 'border-white/10 text-gray-400 hover:text-white hover:border-white/20 bg-white/5 hover:bg-white/10'
+                      : 'border-white/10 text-gray-400 hover:text-white hover:border-white/20 bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10'
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${
-                    isEnabled ? 'bg-white/20' : 'bg-white/5 group-hover:bg-white/10'
+                    isEnabled ? 'bg-[#1a1d24]/20' : 'bg-[#1a1d24]/5 group-hover:bg-[#1a1d24]/10'
                   }`}>
                     <platform.icon className="w-4 h-4" />
                   </div>
@@ -740,7 +740,7 @@ function SocialPublisherTab() {
         {/* Base Content Input */}
         <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 backdrop-blur-sm">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#1a1d24]/10 flex items-center justify-center">
               <Edit3 className="w-4 h-4 text-cyan-400" />
             </div>
             <div>
@@ -761,7 +761,7 @@ function SocialPublisherTab() {
             <div className="flex items-center gap-2 mb-3">
               <ImageIcon className="w-4 h-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-400">Attach Image</span>
-              <span className="text-xs text-gray-600">(optional)</span>
+              <span className="text-xs text-gray-400">(optional)</span>
             </div>
             {imagePreview ? (
               <div className="relative inline-block group">
@@ -778,12 +778,12 @@ function SocialPublisherTab() {
               </div>
             ) : (
               <label className="flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/5 cursor-pointer transition group">
-                <div className="w-12 h-12 rounded-full bg-white/5 group-hover:bg-cyan-500/10 flex items-center justify-center transition">
+                <div className="w-12 h-12 rounded-full bg-[#1a1d24]/5 group-hover:bg-cyan-500/10 flex items-center justify-center transition">
                   <ImageIcon className="w-6 h-6 text-gray-500 group-hover:text-cyan-400 transition" />
                 </div>
                 <div className="text-center">
                   <span className="text-gray-400 text-sm font-medium group-hover:text-white transition">Click to upload</span>
-                  <span className="block text-gray-600 text-xs mt-1">JPG, PNG, GIF up to 10MB</span>
+                  <span className="block text-gray-400 text-xs mt-1">JPG, PNG, GIF up to 10MB</span>
                 </div>
                 <input
                   type="file"
@@ -826,7 +826,7 @@ function SocialPublisherTab() {
                     className={`flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
                       isActive
                         ? `${platform.color} text-white shadow-lg`
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+                        : 'bg-[#1a1d24]/5 text-gray-400 hover:bg-[#1a1d24]/10 hover:text-white border border-white/10'
                     }`}
                   >
                     <platform.icon className="w-5 h-5" />
@@ -855,7 +855,7 @@ function SocialPublisherTab() {
                   {/* Platform Header */}
                   <div className={`${platform.color} px-6 py-4 flex items-center justify-between`}>
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                      <div className="w-12 h-12 rounded-xl bg-[#1a1d24]/20 flex items-center justify-center backdrop-blur-sm">
                         <platform.icon className="w-6 h-6 text-white" />
                       </div>
                       <div>
@@ -867,7 +867,7 @@ function SocialPublisherTab() {
                     </div>
                     <div className="flex items-center gap-4">
                       <span className={`text-sm font-mono px-3 py-1 rounded-lg ${
-                        overLimit ? 'bg-red-500/30 text-red-200' : 'bg-white/20 text-white'
+                        overLimit ? 'bg-red-500/30 text-red-200' : 'bg-[#1a1d24]/20 text-white'
                       }`}>
                         {charCount.toLocaleString()} / {platform.charLimit.toLocaleString()}
                       </span>
@@ -875,7 +875,7 @@ function SocialPublisherTab() {
                         <button
                           onClick={() => handlePost(platform.id)}
                           disabled={!post.content.trim() || overLimit || posting === platform.id}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-gray-900 font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1a1d24] text-white font-semibold hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {posting === platform.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -885,7 +885,7 @@ function SocialPublisherTab() {
                           Post Now
                         </button>
                       ) : (
-                        <span className="text-sm text-white/60 bg-white/10 px-4 py-2 rounded-lg">
+                        <span className="text-sm text-white/60 bg-[#1a1d24]/10 px-4 py-2 rounded-lg">
                           Connect to post
                         </span>
                       )}
@@ -947,7 +947,7 @@ function SocialPublisherTab() {
                       )}
 
                       {/* Platform Tips */}
-                      <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 bg-white/5 rounded-lg px-3 py-2">
+                      <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 bg-[#1a1d24]/5 rounded-lg px-3 py-2">
                         <ImageIcon className="w-3.5 h-3.5 text-gray-400" />
                         <span>{platform.imageNote}</span>
                       </div>
@@ -963,7 +963,7 @@ function SocialPublisherTab() {
                       <div className="mt-4 pt-4 border-t border-white/5">
                         <button
                           onClick={() => navigator.clipboard.writeText(post.content)}
-                          className="text-sm text-gray-400 hover:text-white transition flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/5"
+                          className="text-sm text-gray-400 hover:text-white transition flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#1a1d24]/5"
                         >
                           <Copy className="w-4 h-4" />
                           Copy to clipboard
@@ -1151,7 +1151,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
       </div>
 
       {showForm && (
-        <div className="mb-8 p-6 rounded-xl bg-white/5 border border-white/10">
+        <div className="mb-8 p-6 rounded-xl bg-[#1a1d24]/5 border border-white/10">
           <h3 className="font-medium text-white mb-4">Add Email Integration</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -1159,7 +1159,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
               <select
                 value={formData.provider}
                 onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               >
                 {providers.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -1173,7 +1173,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
                 value={formData.api_key}
                 onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
                 required
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                 placeholder="Your API key"
               />
             </div>
@@ -1184,7 +1184,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
                   type="email"
                   value={formData.from_email}
                   onChange={(e) => setFormData({ ...formData, from_email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                   placeholder="noreply@company.com"
                 />
               </div>
@@ -1194,7 +1194,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
                   type="text"
                   value={formData.from_name}
                   onChange={(e) => setFormData({ ...formData, from_name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                   placeholder="Your Company"
                 />
               </div>
@@ -1231,7 +1231,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
           {integrations.map((integration) => {
             const provider = providers.find(p => p.id === integration.provider);
             return (
-              <div key={integration.id} className="bg-white/5 rounded-xl border border-white/10 p-6">
+              <div key={integration.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-medium text-white">{provider?.name || integration.provider}</h3>
@@ -1292,11 +1292,11 @@ function IntegrationsTab({ integrations, onRefresh }: {
               <div key={platform.id} className={`rounded-xl border p-4 transition ${
                 isConnected
                   ? `${platform.color} ${platform.borderColor} shadow-lg`
-                  : 'bg-white/5 border-white/10'
+                  : 'bg-[#1a1d24]/5 border-white/10'
               }`}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    isConnected ? 'bg-white/20' : platform.color
+                    isConnected ? 'bg-[#1a1d24]/20' : platform.color
                   }`}>
                     <platform.icon className="w-5 h-5 text-white" />
                   </div>
@@ -1307,7 +1307,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
                     )}
                   </div>
                   {isConnected && (
-                    <span className="px-2 py-0.5 rounded text-xs bg-white/20 text-white font-medium">
+                    <span className="px-2 py-0.5 rounded text-xs bg-[#1a1d24]/20 text-white font-medium">
                       Connected
                     </span>
                   )}
@@ -1317,7 +1317,7 @@ function IntegrationsTab({ integrations, onRefresh }: {
                   <button
                     onClick={() => handleSocialDisconnect(platform.id)}
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 transition text-sm disabled:opacity-50 border border-white/20"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/10 text-white/90 hover:bg-[#1a1d24]/20 transition text-sm disabled:opacity-50 border border-white/20"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1403,7 +1403,7 @@ function TemplateModal({ template, onClose, onSave }: {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                 placeholder="Template name"
               />
             </div>
@@ -1412,7 +1412,7 @@ function TemplateModal({ template, onClose, onSave }: {
               <select
                 value={formData.template_type}
                 onChange={(e) => setFormData({ ...formData, template_type: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               >
                 {TEMPLATE_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>{type.label}</option>
@@ -1428,7 +1428,7 @@ function TemplateModal({ template, onClose, onSave }: {
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="Email subject line (use {{variable}} for dynamic content)"
             />
           </div>
@@ -1440,7 +1440,7 @@ function TemplateModal({ template, onClose, onSave }: {
               onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
               required
               rows={12}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-cyan-500/50 transition resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-cyan-500/50 transition resize-none"
               placeholder="<html>...</html>"
             />
           </div>
@@ -1451,7 +1451,7 @@ function TemplateModal({ template, onClose, onSave }: {
               value={formData.text_content}
               onChange={(e) => setFormData({ ...formData, text_content: e.target.value })}
               rows={4}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
               placeholder="Plain text version of the email..."
             />
           </div>
@@ -1460,7 +1460,7 @@ function TemplateModal({ template, onClose, onSave }: {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition"
             >
               Cancel
             </button>
@@ -1524,7 +1524,7 @@ function CampaignModal({ campaign, onClose, onSave }: {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
               placeholder="e.g., Q1 Product Launch"
             />
           </div>
@@ -1534,7 +1534,7 @@ function CampaignModal({ campaign, onClose, onSave }: {
             <select
               value={formData.campaign_type}
               onChange={(e) => setFormData({ ...formData, campaign_type: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
               <option value="email">Email Only</option>
               <option value="social">Social Only</option>
@@ -1548,7 +1548,7 @@ function CampaignModal({ campaign, onClose, onSave }: {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
               placeholder="Campaign goals and notes..."
             />
           </div>
@@ -1557,7 +1557,7 @@ function CampaignModal({ campaign, onClose, onSave }: {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              className="flex-1 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition"
             >
               Cancel
             </button>
@@ -1590,14 +1590,14 @@ function PreviewModal({ template, onClose }: {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded hover:bg-white/10 text-gray-400 hover:text-white transition"
+            className="p-2 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-4 bg-gray-100 overflow-auto max-h-[calc(90vh-100px)]">
+        <div className="p-4 bg-white/5 overflow-auto max-h-[calc(90vh-100px)]">
           <div
-            className="bg-white mx-auto max-w-[600px] shadow-lg"
+            className="bg-[#1a1d24] mx-auto max-w-[600px] shadow-lg"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(template.html_content, {
                 ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'span', 'img', 'table', 'tr', 'td', 'th', 'thead', 'tbody'],

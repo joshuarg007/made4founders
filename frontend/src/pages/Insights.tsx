@@ -32,7 +32,7 @@ export default function AnalyticsPage() {
             className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all ${
               activeTab === tab.id
                 ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                : 'text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 border border-transparent'
             }`}
           >
             <tab.icon className="w-4 h-4" />

@@ -171,7 +171,7 @@ export default function Businesses() {
     return (
       <div key={business.id}>
         <div
-          className={`flex items-center gap-3 p-4 border-b border-white/5 hover:bg-white/5 transition ${
+          className={`flex items-center gap-3 p-4 border-b border-white/5 hover:bg-[#1a1d24]/5 transition ${
             business.is_archived ? 'opacity-50' : ''
           }`}
           style={{ paddingLeft: `${16 + depth * 24}px` }}
@@ -196,7 +196,7 @@ export default function Businesses() {
               <div className="flex items-center gap-2">
                 <span className="font-medium text-white truncate">{business.name}</span>
                 {business.is_archived && (
-                  <span className="px-1.5 py-0.5 text-xs bg-gray-500/20 text-gray-400 rounded">Archived</span>
+                  <span className="px-1.5 py-0.5 text-xs bg-white/50/20 text-gray-400 rounded">Archived</span>
                 )}
               </div>
               <div className="text-xs text-gray-500 capitalize">{business.business_type}</div>
@@ -227,7 +227,7 @@ export default function Businesses() {
                 setEditingBusiness(business);
                 setShowModal(true);
               }}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+              className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
               title="Edit"
             >
               <Edit2 className="w-4 h-4" />
@@ -307,7 +307,7 @@ export default function Businesses() {
       <div className="rounded-xl bg-[#1a1d24] border border-white/10 overflow-hidden">
         {tree.length === 0 ? (
           <div className="p-12 text-center">
-            <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-400">No businesses yet. Create your first one!</p>
           </div>
         ) : (
@@ -328,7 +328,7 @@ export default function Businesses() {
                   setShowModal(false);
                   setEditingBusiness(null);
                 }}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+                className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -343,7 +343,7 @@ export default function Businesses() {
                   required
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                   placeholder="My Awesome Business"
                 />
               </div>
@@ -354,7 +354,7 @@ export default function Businesses() {
                 <select
                   value={formData.business_type}
                   onChange={e => setFormData({ ...formData, business_type: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                 >
                   {BUSINESS_TYPES.map(type => (
                     <option key={type.value} value={type.value} className="bg-gray-800 text-white">{type.label}</option>
@@ -369,7 +369,7 @@ export default function Businesses() {
                   value={formData.description}
                   onChange={e => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
                   placeholder="What does this business do?"
                 />
               </div>
@@ -380,7 +380,7 @@ export default function Businesses() {
                 <select
                   value={formData.parent_id || ''}
                   onChange={e => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : null })}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
                 >
                   <option value="" className="bg-gray-800 text-white">None (Top-level)</option>
                   {businesses
@@ -433,7 +433,7 @@ export default function Businesses() {
               </div>
 
               {/* Gamification Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-[#1a1d24]/5 border border-white/10">
                 <div>
                   <div className="text-white font-medium">Gamification</div>
                   <div className="text-sm text-gray-400">Track XP, levels, and streaks</div>
@@ -446,7 +446,7 @@ export default function Businesses() {
                   }`}
                 >
                   <div
-                    className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                    className={`absolute top-1 w-5 h-5 bg-[#1a1d24] rounded-full transition-transform ${
                       formData.gamification_enabled ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
@@ -461,7 +461,7 @@ export default function Businesses() {
                     setShowModal(false);
                     setEditingBusiness(null);
                   }}
-                  className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition font-medium"
+                  className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition font-medium"
                 >
                   Cancel
                 </button>

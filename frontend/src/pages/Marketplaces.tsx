@@ -217,7 +217,7 @@ export default function Marketplaces() {
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition ${
                   selectedCategory === cat.value
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'text-gray-400 hover:bg-white/5'
+                    : 'text-gray-400 hover:bg-[#1a1d24]/5'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -233,7 +233,7 @@ export default function Marketplaces() {
         <div className="text-gray-400">Loading...</div>
       ) : filteredMarketplaces.length === 0 ? (
         <div className="text-center py-12">
-          <Store className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <Store className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No marketplaces found</p>
           <button
             onClick={() => setShowModal(true)}
@@ -293,7 +293,7 @@ export default function Marketplaces() {
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleToggleActive(marketplace); }}
-                      className={`p-1.5 rounded-md transition ${marketplace.is_active ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-gray-500 hover:text-emerald-400 hover:bg-white/5'}`}
+                      className={`p-1.5 rounded-md transition ${marketplace.is_active ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-gray-500 hover:text-emerald-400 hover:bg-[#1a1d24]/5'}`}
                       title={marketplace.is_active ? 'Active' : 'Inactive'}
                     >
                       {marketplace.is_active ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
@@ -310,7 +310,7 @@ export default function Marketplaces() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/5 transition"
+                        className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#1a1d24]/5 transition"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -363,7 +363,7 @@ export default function Marketplaces() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Amazon, Capterra, G2"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div>
@@ -371,7 +371,7 @@ export default function Marketplaces() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   >
                     {categories.slice(1).map((cat) => (
                       <option key={cat.value} value={cat.value} className="bg-[#1a1d24] text-white">{cat.label}</option>
@@ -391,7 +391,7 @@ export default function Marketplaces() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   >
                     {statuses.map((s) => (
                       <option key={s.value} value={s.value} className="bg-[#1a1d24] text-white">{s.label}</option>
@@ -405,7 +405,7 @@ export default function Marketplaces() {
                     value={formData.account_id}
                     onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
                     placeholder="Your seller ID or username"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -415,7 +415,7 @@ export default function Marketplaces() {
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                     placeholder="https://amazon.com"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -425,7 +425,7 @@ export default function Marketplaces() {
                     value={formData.store_url}
                     onChange={(e) => setFormData({ ...formData, store_url: e.target.value })}
                     placeholder="https://amazon.com/your-store"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div>
@@ -435,7 +435,7 @@ export default function Marketplaces() {
                     value={formData.commission_rate}
                     onChange={(e) => setFormData({ ...formData, commission_rate: e.target.value })}
                     placeholder="e.g., 15% or $0.99/sale"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div>
@@ -445,7 +445,7 @@ export default function Marketplaces() {
                     value={formData.monthly_fee}
                     onChange={(e) => setFormData({ ...formData, monthly_fee: e.target.value })}
                     placeholder="e.g., $39.99"
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -454,7 +454,7 @@ export default function Marketplaces() {
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div className="col-span-2">
@@ -463,7 +463,7 @@ export default function Marketplaces() {
                       type="checkbox"
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                      className="rounded bg-white/5 border-white/10"
+                      className="rounded bg-[#1a1d24]/5 border-white/10"
                     />
                     Active (currently selling on this marketplace)
                   </label>

@@ -73,7 +73,7 @@ function getStatusColor(status: string): string {
     case 'failed':
       return 'bg-red-100 text-red-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-white/5 text-white';
   }
 }
 
@@ -313,8 +313,8 @@ export default function InvestorUpdates() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Investor Updates</h1>
-          <p className="text-gray-600">Send professional updates to your investors</p>
+          <h1 className="text-2xl font-bold text-white">Investor Updates</h1>
+          <p className="text-gray-400">Send professional updates to your investors</p>
         </div>
         <button
           onClick={openNewUpdate}
@@ -331,31 +331,31 @@ export default function InvestorUpdates() {
 
       {/* Metrics Summary */}
       {metrics && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 mb-4">Current Metrics</h3>
+        <div className="bg-[#1a1d24] rounded-xl  border border-white/10 p-5">
+          <h3 className="font-semibold text-white mb-4">Current Metrics</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {metrics.mrr && (
-              <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="p-3 bg-white/5 rounded-lg">
                 <p className="text-xs text-gray-500">MRR</p>
-                <p className="text-lg font-bold text-gray-900">{formatCurrency(metrics.mrr)}</p>
+                <p className="text-lg font-bold text-white">{formatCurrency(metrics.mrr)}</p>
               </div>
             )}
             {metrics.runway_months && (
-              <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="p-3 bg-white/5 rounded-lg">
                 <p className="text-xs text-gray-500">Runway</p>
-                <p className="text-lg font-bold text-gray-900">{metrics.runway_months.toFixed(1)} months</p>
+                <p className="text-lg font-bold text-white">{metrics.runway_months.toFixed(1)} months</p>
               </div>
             )}
             {metrics.cash_on_hand && (
-              <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="p-3 bg-white/5 rounded-lg">
                 <p className="text-xs text-gray-500">Cash</p>
-                <p className="text-lg font-bold text-gray-900">{formatCurrency(metrics.cash_on_hand)}</p>
+                <p className="text-lg font-bold text-white">{formatCurrency(metrics.cash_on_hand)}</p>
               </div>
             )}
             {metrics.customers && (
-              <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="p-3 bg-white/5 rounded-lg">
                 <p className="text-xs text-gray-500">Customers</p>
-                <p className="text-lg font-bold text-gray-900">{metrics.customers.toLocaleString()}</p>
+                <p className="text-lg font-bold text-white">{metrics.customers.toLocaleString()}</p>
               </div>
             )}
           </div>
@@ -364,19 +364,19 @@ export default function InvestorUpdates() {
 
       {/* Drafts */}
       {drafts.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="px-5 py-4 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Drafts</h3>
+        <div className="bg-[#1a1d24] rounded-xl  border border-white/10">
+          <div className="px-5 py-4 border-b border-white/10">
+            <h3 className="font-semibold text-white">Drafts</h3>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-white/5">
             {drafts.map((update) => (
-              <div key={update.id} className="px-5 py-4 flex items-center justify-between hover:bg-gray-50">
+              <div key={update.id} className="px-5 py-4 flex items-center justify-between hover:bg-white/5">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-gray-600" />
+                  <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-gray-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{update.title}</p>
+                    <p className="font-medium text-white">{update.title}</p>
                     <p className="text-sm text-gray-500">
                       Created {formatDate(update.created_at)}
                     </p>
@@ -385,14 +385,14 @@ export default function InvestorUpdates() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handlePreview(update.id)}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                    className="p-2 text-gray-400 hover:text-gray-400 hover:bg-white/5 rounded-lg"
                     title="Preview"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => openEditUpdate(update)}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                    className="p-2 text-gray-400 hover:text-gray-400 hover:bg-white/5 rounded-lg"
                     title="Edit"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -420,13 +420,13 @@ export default function InvestorUpdates() {
       )}
 
       {/* Sent Updates */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-5 py-4 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">Sent Updates</h3>
+      <div className="bg-[#1a1d24] rounded-xl  border border-white/10">
+        <div className="px-5 py-4 border-b border-white/10">
+          <h3 className="font-semibold text-white">Sent Updates</h3>
         </div>
         {sent.length > 0 ? (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-white/5">
               <tr>
                 <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-5">Update</th>
                 <th className="text-left text-xs font-medium text-gray-500 uppercase py-3 px-5">Sent</th>
@@ -440,15 +440,15 @@ export default function InvestorUpdates() {
               {sent.map((update) => {
                 const StatusIcon = getStatusIcon(update.status);
                 return (
-                  <tr key={update.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={update.id} className="border-b border-white/5 hover:bg-white/5">
                     <td className="py-3 px-5">
-                      <p className="font-medium text-gray-900">{update.title}</p>
+                      <p className="font-medium text-white">{update.title}</p>
                       <p className="text-sm text-gray-500">{update.subject_line}</p>
                     </td>
-                    <td className="py-3 px-5 text-gray-600">
+                    <td className="py-3 px-5 text-gray-400">
                       {formatDate(update.sent_at)}
                     </td>
-                    <td className="py-3 px-5 text-center text-gray-600">
+                    <td className="py-3 px-5 text-center text-gray-400">
                       {update.recipient_count}
                     </td>
                     <td className="py-3 px-5 text-center">
@@ -466,7 +466,7 @@ export default function InvestorUpdates() {
                     <td className="py-3 px-5">
                       <button
                         onClick={() => handlePreview(update.id)}
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                        className="p-2 text-gray-400 hover:text-gray-400 hover:bg-white/5 rounded-lg"
                         title="View"
                       >
                         <Eye className="w-4 h-4" />
@@ -491,12 +491,12 @@ export default function InvestorUpdates() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 py-8">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowModal(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-[#1a1d24] px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">
                   {editingUpdate ? 'Edit Update' : 'New Investor Update'}
                 </h2>
-                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -504,7 +504,7 @@ export default function InvestorUpdates() {
               <div className="p-6 space-y-6">
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Title *</label>
                   <input
                     type="text"
                     value={formData.title}
@@ -516,7 +516,7 @@ export default function InvestorUpdates() {
 
                 {/* Subject Line */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Subject</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Email Subject</label>
                   <input
                     type="text"
                     value={formData.subject_line}
@@ -528,7 +528,7 @@ export default function InvestorUpdates() {
 
                 {/* Recipients */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Recipients</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Recipients</label>
                   <div className="flex flex-wrap gap-2">
                     {recipientTypeOptions.map((type) => (
                       <button
@@ -538,7 +538,7 @@ export default function InvestorUpdates() {
                         className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                           formData.recipient_types.includes(type.id)
                             ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                            : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
+                            : 'bg-white/5 text-gray-400 border-2 border-transparent hover:bg-gray-200'
                         }`}
                       >
                         {type.label}
@@ -552,7 +552,7 @@ export default function InvestorUpdates() {
 
                 {/* Metrics to Include */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Include Metrics</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Include Metrics</label>
                   <div className="grid grid-cols-2 gap-2">
                     {metricOptions.map((metric) => (
                       <label
@@ -560,7 +560,7 @@ export default function InvestorUpdates() {
                         className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                           formData.included_metrics.includes(metric.id)
                             ? 'border-blue-300 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            : 'border-white/10 hover:border-gray-300'
                         }`}
                       >
                         <input
@@ -570,7 +570,7 @@ export default function InvestorUpdates() {
                           className="sr-only"
                         />
                         <metric.icon className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">{metric.label}</span>
+                        <span className="text-sm text-gray-300">{metric.label}</span>
                       </label>
                     ))}
                   </div>
@@ -578,7 +578,7 @@ export default function InvestorUpdates() {
 
                 {/* Greeting */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Greeting</label>
                   <input
                     type="text"
                     value={formData.greeting}
@@ -590,7 +590,7 @@ export default function InvestorUpdates() {
 
                 {/* Highlights */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Key Highlights</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Key Highlights</label>
                   <div className="space-y-2">
                     {formData.highlights.map((highlight, index) => (
                       <div key={index} className="flex gap-2">
@@ -624,7 +624,7 @@ export default function InvestorUpdates() {
 
                 {/* Body Content */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Content</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Additional Content</label>
                   <textarea
                     value={formData.body_content}
                     onChange={(e) => setFormData({ ...formData, body_content: e.target.value })}
@@ -636,7 +636,7 @@ export default function InvestorUpdates() {
 
                 {/* Closing */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Closing</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Closing</label>
                   <textarea
                     value={formData.closing}
                     onChange={(e) => setFormData({ ...formData, closing: e.target.value })}
@@ -649,7 +649,7 @@ export default function InvestorUpdates() {
                 {/* Signature */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Your Name</label>
                     <input
                       type="text"
                       value={formData.signature_name}
@@ -659,7 +659,7 @@ export default function InvestorUpdates() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Title</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Your Title</label>
                     <input
                       type="text"
                       value={formData.signature_title}
@@ -671,11 +671,11 @@ export default function InvestorUpdates() {
                 </div>
               </div>
 
-              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <div className="sticky bottom-0 bg-white/5 px-6 py-4 border-t border-white/10 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-gray-300 hover:bg-white/5 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -697,13 +697,13 @@ export default function InvestorUpdates() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 py-8">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowPreview(false)} />
-            <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between z-10">
+            <div className="relative bg-[#1a1d24] rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+              <div className="sticky top-0 bg-[#1a1d24] px-6 py-4 border-b border-white/10 flex items-center justify-between z-10">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Email Preview</h2>
+                  <h2 className="text-lg font-semibold text-white">Email Preview</h2>
                   <p className="text-sm text-gray-500">{previewRecipients.length} recipients</p>
                 </div>
-                <button onClick={() => setShowPreview(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowPreview(false)} className="text-gray-400 hover:text-gray-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
