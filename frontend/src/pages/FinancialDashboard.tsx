@@ -47,21 +47,21 @@ function formatRunway(months: number): string {
 }
 
 function getRunwayColor(months: number): string {
-  if (months >= 999) return 'text-green-600';
-  if (months >= 18) return 'text-green-600';
-  if (months >= 12) return 'text-yellow-600';
-  if (months >= 6) return 'text-orange-500';
-  return 'text-red-600';
+  if (months >= 999) return 'text-green-400';
+  if (months >= 18) return 'text-green-400';
+  if (months >= 12) return 'text-yellow-400';
+  if (months >= 6) return 'text-orange-400';
+  return 'text-red-400';
 }
 
 function getTrendIcon(trend: string) {
   switch (trend) {
     case 'improving':
-      return <TrendingUp className="w-5 h-5 text-green-500" />;
+      return <TrendingUp className="w-5 h-5 text-green-400" />;
     case 'declining':
-      return <TrendingDown className="w-5 h-5 text-red-500" />;
+      return <TrendingDown className="w-5 h-5 text-red-400" />;
     default:
-      return <span className="w-5 h-5 text-gray-400">—</span>;
+      return <span className="w-5 h-5 text-gray-500">—</span>;
   }
 }
 
@@ -138,23 +138,23 @@ export default function FinancialDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Financial Dashboard</h1>
-          <p className="text-gray-600">Real-time visibility into your cash position and runway</p>
+          <h1 className="text-2xl font-bold text-white">Cash & Runway</h1>
+          <p className="text-gray-400">Real-time visibility into your cash position and runway</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={loadData}
-            className="inline-flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+            className="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -167,19 +167,19 @@ export default function FinancialDashboard() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
       {!hasLinkedAccounts ? (
         /* Empty State */
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <Building2 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-12 text-center">
+          <Building2 className="w-16 h-16 mx-auto text-gray-500 mb-4" />
+          <h2 className="text-xl font-semibold text-white mb-2">
             Connect Your Bank Accounts
           </h2>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          <p className="text-gray-400 mb-6 max-w-md mx-auto">
             Link your bank accounts to see real-time cash position, calculate runway,
             and automatically track expenses.
           </p>
@@ -193,12 +193,12 @@ export default function FinancialDashboard() {
           {/* Key Metrics Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Cash Position */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-500">Total Cash</span>
-                <DollarSign className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium text-gray-400">Total Cash</span>
+                <DollarSign className="w-5 h-5 text-green-400" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-white">
                 {formatCurrency(cashPosition?.total_cash || 0)}
               </div>
               <div className="text-sm text-gray-500 mt-1">
@@ -207,10 +207,10 @@ export default function FinancialDashboard() {
             </div>
 
             {/* Runway */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-500">Runway</span>
-                <Clock className="w-5 h-5 text-blue-500" />
+                <span className="text-sm font-medium text-gray-400">Runway</span>
+                <Clock className="w-5 h-5 text-cyan-400" />
               </div>
               <div className={`text-2xl font-bold ${getRunwayColor(runway?.runway_months || 0)}`}>
                 {formatRunway(runway?.runway_months || 0)}
@@ -225,12 +225,12 @@ export default function FinancialDashboard() {
             </div>
 
             {/* Monthly Burn */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-500">Monthly Burn</span>
-                <TrendingDown className="w-5 h-5 text-orange-500" />
+                <span className="text-sm font-medium text-gray-400">Monthly Burn</span>
+                <TrendingDown className="w-5 h-5 text-orange-400" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-white">
                 {formatCurrency(runway?.monthly_burn_rate || 0)}
               </div>
               <div className="text-sm text-gray-500 mt-1">
@@ -239,16 +239,16 @@ export default function FinancialDashboard() {
             </div>
 
             {/* 30-Day Net */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-500">30-Day Net</span>
+                <span className="text-sm font-medium text-gray-400">30-Day Net</span>
                 {(summary?.net || 0) >= 0 ? (
-                  <ArrowUpRight className="w-5 h-5 text-green-500" />
+                  <ArrowUpRight className="w-5 h-5 text-green-400" />
                 ) : (
-                  <ArrowDownRight className="w-5 h-5 text-red-500" />
+                  <ArrowDownRight className="w-5 h-5 text-red-400" />
                 )}
               </div>
-              <div className={`text-2xl font-bold ${(summary?.net || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-2xl font-bold ${(summary?.net || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {(summary?.net || 0) >= 0 ? '+' : ''}{formatCurrency(summary?.net || 0)}
               </div>
               <div className="text-sm text-gray-500 mt-1">
@@ -259,11 +259,11 @@ export default function FinancialDashboard() {
 
           {/* Runway Alert */}
           {runway && runway.runway_months < 6 && runway.runway_months < 999 && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-              <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-red-800">Low Runway Warning</h3>
-                <p className="text-red-700">
+                <h3 className="font-semibold text-red-400">Low Runway Warning</h3>
+                <p className="text-red-300">
                   Your current runway is less than 6 months. Consider reducing burn rate or raising additional capital.
                 </p>
               </div>
@@ -275,33 +275,33 @@ export default function FinancialDashboard() {
             {/* Left Column - Accounts & Transactions */}
             <div className="lg:col-span-2 space-y-6">
               {/* Linked Accounts */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900">Linked Accounts</h2>
+              <div className="bg-[#1a1d24] rounded-xl border border-white/10">
+                <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+                  <h2 className="font-semibold text-white">Linked Accounts</h2>
                   <PlaidLinkButton onSuccess={loadData} className="text-sm py-1.5 px-3">
                     <Building2 className="w-4 h-4" />
                     <span>Add</span>
                   </PlaidLinkButton>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-white/5">
                   {items.map((item) => (
                     <div key={item.id} className="p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-blue-600" />
+                          <div className="w-10 h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center">
+                            <Building2 className="w-5 h-5 text-cyan-400" />
                           </div>
                           <div>
-                            <h3 className="font-medium text-gray-900">
+                            <h3 className="font-medium text-white">
                               {item.institution_name || 'Bank Account'}
                             </h3>
                             <div className="flex items-center gap-2 text-sm text-gray-500">
                               {item.sync_status === 'synced' ? (
-                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <CheckCircle className="w-4 h-4 text-green-400" />
                               ) : item.sync_status === 'error' ? (
-                                <AlertTriangle className="w-4 h-4 text-red-500" />
+                                <AlertTriangle className="w-4 h-4 text-red-400" />
                               ) : (
-                                <Clock className="w-4 h-4 text-yellow-500" />
+                                <Clock className="w-4 h-4 text-yellow-400" />
                               )}
                               <span>
                                 {item.last_sync_at
@@ -315,14 +315,14 @@ export default function FinancialDashboard() {
                           <button
                             onClick={() => handleSync(item.id)}
                             disabled={syncing === item.id}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
                             title="Sync now"
                           >
                             <RefreshCw className={`w-4 h-4 ${syncing === item.id ? 'animate-spin' : ''}`} />
                           </button>
                           <button
                             onClick={() => handleDisconnect(item.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Disconnect"
                           >
                             <Unlink className="w-4 h-4" />
@@ -335,21 +335,21 @@ export default function FinancialDashboard() {
                         {item.accounts.map((account) => (
                           <div
                             key={account.id}
-                            className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
+                            className="flex items-center justify-between py-2 px-3 bg-white/5 rounded-lg"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-gray-300">
                                 {account.name || account.official_name}
                               </span>
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-gray-500">
                                 ••••{account.mask}
                               </span>
-                              <span className="text-xs px-2 py-0.5 bg-gray-200 rounded text-gray-600 capitalize">
+                              <span className="text-xs px-2 py-0.5 bg-white/10 rounded text-gray-400 capitalize">
                                 {account.account_subtype || account.account_type}
                               </span>
                             </div>
                             <div className="text-right">
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-white">
                                 {formatCurrency(account.balance_current || 0)}
                               </div>
                               {account.balance_available !== null && account.balance_available !== account.balance_current && (
@@ -367,37 +367,37 @@ export default function FinancialDashboard() {
               </div>
 
               {/* Recent Transactions */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="font-semibold text-gray-900">Recent Transactions</h2>
+              <div className="bg-[#1a1d24] rounded-xl border border-white/10">
+                <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+                  <h2 className="font-semibold text-white">Recent Transactions</h2>
                   <span className="text-sm text-gray-500">Last 30 days</span>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-white/5">
                   {transactions.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
                       No transactions yet. Sync your accounts to see transactions.
                     </div>
                   ) : (
                     transactions.slice(0, 10).map((txn) => (
-                      <div key={txn.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
+                      <div key={txn.id} className="px-5 py-3 flex items-center justify-between hover:bg-white/5">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            txn.amount < 0 ? 'bg-green-100' : 'bg-red-100'
+                            txn.amount < 0 ? 'bg-green-500/10' : 'bg-red-500/10'
                           }`}>
                             {txn.amount < 0 ? (
-                              <ArrowDownRight className="w-4 h-4 text-green-600" />
+                              <ArrowDownRight className="w-4 h-4 text-green-400" />
                             ) : (
-                              <ArrowUpRight className="w-4 h-4 text-red-600" />
+                              <ArrowUpRight className="w-4 h-4 text-red-400" />
                             )}
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-white">
                               {txn.merchant_name || txn.name}
                             </div>
                             <div className="text-sm text-gray-500 flex items-center gap-2">
                               <span>{txn.category}</span>
                               {txn.pending && (
-                                <span className="text-xs px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded">
+                                <span className="text-xs px-1.5 py-0.5 bg-yellow-500/10 text-yellow-400 rounded">
                                   Pending
                                 </span>
                               )}
@@ -405,7 +405,7 @@ export default function FinancialDashboard() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className={`font-medium ${txn.amount < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <div className={`font-medium ${txn.amount < 0 ? 'text-green-400' : 'text-red-400'}`}>
                             {txn.amount < 0 ? '+' : '-'}{formatCurrency(Math.abs(txn.amount))}
                           </div>
                           <div className="text-sm text-gray-500">
@@ -417,8 +417,8 @@ export default function FinancialDashboard() {
                   )}
                 </div>
                 {transactions.length > 10 && (
-                  <div className="px-5 py-3 border-t border-gray-100">
-                    <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                  <div className="px-5 py-3 border-t border-white/10">
+                    <button className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
                       View all transactions
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -430,17 +430,17 @@ export default function FinancialDashboard() {
             {/* Right Column - Summary */}
             <div className="space-y-6">
               {/* Income vs Expenses */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <h2 className="font-semibold text-gray-900 mb-4">30-Day Summary</h2>
+              <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
+                <h2 className="font-semibold text-white mb-4">30-Day Summary</h2>
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-600">Income</span>
-                      <span className="font-medium text-green-600">
+                      <span className="text-sm text-gray-400">Income</span>
+                      <span className="font-medium text-green-400">
                         +{formatCurrency(summary?.total_income || 0)}
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-500 rounded-full"
                         style={{
@@ -451,12 +451,12 @@ export default function FinancialDashboard() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-600">Expenses</span>
-                      <span className="font-medium text-red-600">
+                      <span className="text-sm text-gray-400">Expenses</span>
+                      <span className="font-medium text-red-400">
                         -{formatCurrency(summary?.total_expenses || 0)}
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-red-500 rounded-full"
                         style={{
@@ -469,18 +469,18 @@ export default function FinancialDashboard() {
               </div>
 
               {/* Top Expense Categories */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <h2 className="font-semibold text-gray-900 mb-4">Top Expense Categories</h2>
+              <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-5">
+                <h2 className="font-semibold text-white mb-4">Top Expense Categories</h2>
                 <div className="space-y-3">
                   {Object.entries(summary?.by_category || {})
                     .sort(([, a], [, b]) => b - a)
                     .slice(0, 5)
                     .map(([category, amount]) => (
                       <div key={category} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 truncate max-w-[60%]">
+                        <span className="text-sm text-gray-400 truncate max-w-[60%]">
                           {category}
                         </span>
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-white">
                           {formatCurrency(amount)}
                         </span>
                       </div>
@@ -492,24 +492,24 @@ export default function FinancialDashboard() {
               </div>
 
               {/* Quick Stats */}
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-sm p-5 text-white">
-                <h2 className="font-semibold mb-4">Runway Details</h2>
+              <div className="bg-gradient-to-br from-cyan-500/20 to-violet-500/20 rounded-xl border border-cyan-500/30 p-5">
+                <h2 className="font-semibold text-white mb-4">Runway Details</h2>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-blue-100">Avg Monthly Income</span>
-                    <span className="font-medium">{formatCurrency(runway?.avg_monthly_income || 0)}</span>
+                    <span className="text-gray-400">Avg Monthly Income</span>
+                    <span className="font-medium text-white">{formatCurrency(runway?.avg_monthly_income || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-100">Avg Monthly Expenses</span>
-                    <span className="font-medium">{formatCurrency(runway?.avg_monthly_expenses || 0)}</span>
+                    <span className="text-gray-400">Avg Monthly Expenses</span>
+                    <span className="font-medium text-white">{formatCurrency(runway?.avg_monthly_expenses || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-100">Net Burn Rate</span>
-                    <span className="font-medium">{formatCurrency(runway?.monthly_burn_rate || 0)}</span>
+                    <span className="text-gray-400">Net Burn Rate</span>
+                    <span className="font-medium text-white">{formatCurrency(runway?.monthly_burn_rate || 0)}</span>
                   </div>
-                  <div className="border-t border-blue-400 pt-3 flex justify-between">
-                    <span className="text-blue-100">Runway at Current Burn</span>
-                    <span className="font-bold text-lg">{formatRunway(runway?.runway_months || 0)}</span>
+                  <div className="border-t border-white/10 pt-3 flex justify-between">
+                    <span className="text-gray-400">Runway at Current Burn</span>
+                    <span className="font-bold text-lg text-cyan-400">{formatRunway(runway?.runway_months || 0)}</span>
                   </div>
                 </div>
               </div>
