@@ -78,9 +78,9 @@ class GoogleMeetRecording(BaseModel):
 
 class GoogleMeetConnectionStatus(BaseModel):
     connected: bool
-    user_email: Optional[str]
-    user_name: Optional[str]
-    connected_at: Optional[datetime]
+    user_email: Optional[str] = None
+    user_name: Optional[str] = None
+    connected_at: Optional[datetime] = None
 
 
 # ============ HELPERS ============

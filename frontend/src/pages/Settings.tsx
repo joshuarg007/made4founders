@@ -34,6 +34,9 @@ import {
   Server,
   Cloud,
   DollarSign,
+  Moon,
+  Sun,
+  Monitor,
 } from 'lucide-react';
 import {
   getSubscriptionStatus,
@@ -60,6 +63,7 @@ import {
 } from '../lib/api';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { isSoundMuted, setSoundMuted, getSoundVolume, setSoundVolume, playNotificationSound } from '../lib/sounds';
 
 const plans = [
@@ -107,6 +111,7 @@ export default function Settings() {
   const [searchParams] = useSearchParams();
   const { currentBusiness, refreshBusinesses } = useBusiness();
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -1231,7 +1236,7 @@ export default function Settings() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">Display</h2>
-            <p className="text-sm text-gray-500">Timezone and localization</p>
+            <p className="text-sm text-gray-500">Theme, timezone, and localization</p>
           </div>
         </div>
 
@@ -1258,6 +1263,70 @@ export default function Settings() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Theme */}
+          <div className="p-4 bg-[#0f1117] rounded-lg border border-white/5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-violet-500/20' :
+                  theme === 'light' ? 'bg-amber-500/20' : 'bg-blue-500/20'
+                }`}>
+                  {theme === 'dark' ? (
+                    <Moon className="w-5 h-5 text-violet-400" />
+                  ) : theme === 'light' ? (
+                    <Sun className="w-5 h-5 text-amber-400" />
+                  ) : (
+                    <Monitor className="w-5 h-5 text-blue-400" />
+                  )}
+                </div>
+                <div>
+                  <div className="font-medium text-white">Theme</div>
+                  <div className="text-sm text-gray-400">
+                    {theme === 'dark' ? 'Dark mode' :
+                     theme === 'light' ? 'Light mode' : 'Follows system preference'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Three-way toggle */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTheme('dark')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border transition ${
+                  theme === 'dark'
+                    ? 'bg-violet-500/20 border-violet-500/30 text-violet-400'
+                    : 'border-white/10 text-gray-400 hover:bg-[#1a1d24]/50 hover:text-white'
+                }`}
+              >
+                <Moon className="w-4 h-4" />
+                Dark
+              </button>
+              <button
+                onClick={() => setTheme('light')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border transition ${
+                  theme === 'light'
+                    ? 'bg-amber-500/20 border-amber-500/30 text-amber-400'
+                    : 'border-white/10 text-gray-400 hover:bg-[#1a1d24]/50 hover:text-white'
+                }`}
+              >
+                <Sun className="w-4 h-4" />
+                Light
+              </button>
+              <button
+                onClick={() => setTheme('system')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border transition ${
+                  theme === 'system'
+                    ? 'bg-blue-500/20 border-blue-500/30 text-blue-400'
+                    : 'border-white/10 text-gray-400 hover:bg-[#1a1d24]/50 hover:text-white'
+                }`}
+              >
+                <Monitor className="w-4 h-4" />
+                System
+              </button>
+            </div>
           </div>
         </div>
       </div>
