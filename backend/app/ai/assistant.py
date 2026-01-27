@@ -151,7 +151,7 @@ class BusinessAssistant:
             ],
             "general": [
                 {"label": "Home", "action": "navigate", "target": "/app"},
-                {"label": "Analytics", "action": "navigate", "target": "/app/insights"},
+                {"label": "Analytics", "action": "navigate", "target": "/app/analytics"},
             ]
         }
         return suggestions_map.get(intent, suggestions_map["general"])

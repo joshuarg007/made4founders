@@ -960,7 +960,7 @@ def handle_growth(db: Session, org_id: int, message: str) -> Dict[str, Any]:
         "response": "\n".join(parts),
         "data_cards": data_cards,
         "suggested_actions": [
-            {"label": "View Analytics", "action": "navigate", "target": "/app/insights"},
+            {"label": "View Analytics", "action": "navigate", "target": "/app/analytics"},
         ],
         "intent": "growth",
         "source": "smart_response"
@@ -1060,7 +1060,7 @@ Calculate it as: (Customers lost this month / Customers at start of month) × 10
         "response": response,
         "data_cards": data_cards,
         "suggested_actions": [
-            {"label": "Add Metrics", "action": "navigate", "target": "/app/insights"},
+            {"label": "Add Metrics", "action": "navigate", "target": "/app/analytics"},
         ],
         "intent": "churn",
         "source": "smart_response"
@@ -1786,7 +1786,7 @@ def handle_unit_economics(db: Session, org_id: int, message: str) -> Dict[str, A
     return {
         "response": "\n".join(parts),
         "data_cards": [],
-        "suggested_actions": [{"label": "Add Metrics", "action": "navigate", "target": "/app/insights"}],
+        "suggested_actions": [{"label": "Add Metrics", "action": "navigate", "target": "/app/analytics"}],
         "intent": "unit_economics",
         "source": "smart_response"
     }
@@ -2147,7 +2147,7 @@ Deadlines sync to your calendar if connected.""",
 3. Choose metric type (MRR, users, etc.)
 4. Enter value and date
 5. Set goals to track progress""",
-            "target": "/app/insights"
+            "target": "/app/analytics"
         },
         # Team/Employee
         ("employee", "team member", "hire"): {
