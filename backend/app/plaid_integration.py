@@ -158,6 +158,21 @@ class TransactionSummary(BaseModel):
 # ENDPOINTS
 # ============================================================================
 
+@router.get("/status")
+async def get_plaid_status():
+    """Check if Plaid is configured and available."""
+    client_id = os.getenv("PLAID_CLIENT_ID")
+    secret = os.getenv("PLAID_SECRET")
+
+    is_configured = bool(client_id and secret)
+
+    return {
+        "configured": is_configured,
+        "environment": os.getenv("PLAID_ENVIRONMENT", "sandbox") if is_configured else None,
+        "message": "Plaid is ready" if is_configured else "Plaid credentials not configured"
+    }
+
+
 @router.post("/link-token", response_model=LinkTokenResponse)
 async def create_link_token(
     current_user: User = Depends(get_current_user),
