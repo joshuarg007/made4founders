@@ -22,6 +22,10 @@ import {
   Crown,
   HelpCircle,
   X,
+  Send,
+  Twitter,
+  Linkedin,
+  Instagram,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
@@ -540,40 +544,48 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Objectives */}
-          {activeQuests.length > 0 && (
-            <div className="rounded-2xl bg-[#1a1d24] border border-white/10 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-cyan-400" />
-                  <h3 className="font-semibold text-white">Objectives</h3>
-                </div>
-                <span className="text-xs text-gray-500">{activeQuests.length} in progress</span>
+          {/* Quick Post to Social */}
+          <div className="rounded-2xl bg-[#1a1d24] border border-white/10 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Send className="w-5 h-5 text-violet-400" />
+                <h3 className="font-semibold text-white">Quick Post</h3>
               </div>
+              <Link
+                to="/app/marketing"
+                className="text-xs text-violet-400 hover:text-violet-300 transition"
+              >
+                Open Hub
+              </Link>
+            </div>
 
-              <div className="space-y-3">
-                {activeQuests.map(quest => (
-                  <div key={quest.id} className="p-3 rounded-xl bg-[#1a1d24]/5 border border-white/5">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-white">{quest.quest?.name || 'Quest'}</span>
-                      <span className="text-xs text-cyan-400">+{quest.quest?.xp_reward || 0} XP</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-[#1a1d24]/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full"
-                          style={{ width: `${(quest.current_count / quest.target_count) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-400">
-                        {quest.current_count}/{quest.target_count}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+            <p className="text-sm text-gray-400 mb-4">
+              Share an update with your audience
+            </p>
+
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs text-gray-500">Post to:</span>
+              <div className="flex gap-2">
+                <div className="p-2 rounded-lg bg-black/50 border border-white/10 hover:border-white/20 transition cursor-pointer">
+                  <Twitter className="w-4 h-4 text-white" />
+                </div>
+                <div className="p-2 rounded-lg bg-[#0A66C2]/20 border border-[#0A66C2]/30 hover:border-[#0A66C2]/50 transition cursor-pointer">
+                  <Linkedin className="w-4 h-4 text-[#0A66C2]" />
+                </div>
+                <div className="p-2 rounded-lg bg-gradient-to-br from-[#833AB4]/20 via-[#E1306C]/20 to-[#F77737]/20 border border-[#E1306C]/30 hover:border-[#E1306C]/50 transition cursor-pointer">
+                  <Instagram className="w-4 h-4 text-[#E1306C]" />
+                </div>
               </div>
             </div>
-          )}
+
+            <Link
+              to="/app/marketing"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium transition"
+            >
+              <Send className="w-4 h-4" />
+              Create Post
+            </Link>
+          </div>
         </div>
 
         {/* Middle Column - Stats & Deadlines */}
