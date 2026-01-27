@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { getGoogleLoginUrl, getGitHubLoginUrl, getLinkedInLoginUrl, getTwitterLoginUrl } from '../lib/api';
@@ -52,9 +52,9 @@ export default function Login() {
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const from = (location.state as { from?: Location })?.from?.pathname || '/app';
+  // Always redirect to dashboard after login
+  const redirectTo = '/app';
 
   const handleOAuthLogin = async (provider: 'google' | 'github' | 'linkedin' | 'twitter') => {
     setError('');
@@ -97,7 +97,7 @@ export default function Login() {
       } else {
         await login(email, password);
       }
-      navigate(from, { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
