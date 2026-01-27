@@ -384,11 +384,24 @@ async def chat_with_assistant(
     # Track AI usage
     increment_ai_usage(db, current_user.organization_id)
 
-    # Filter out invalid data cards (must be dicts with required fields)
+    # Filter out invalid data cards (must be dicts with required fields and valid values)
     raw_cards = result.get("data_cards", [])
     valid_cards = []
     for card in raw_cards:
         if isinstance(card, dict) and "type" in card and "title" in card:
+            # Filter out hallucinated monetary values (> $1 trillion is impossible for startups)
+            value = card.get("value", "")
+            if isinstance(value, str) and "$" in value:
+                # Extract numeric value from string like "$1,000.00"
+                try:
+                    numeric_str = value.replace("$", "").replace(",", "").strip()
+                    numeric_val = float(numeric_str)
+                    # Skip if value is impossibly large (> $1 trillion)
+                    if numeric_val > 1_000_000_000_000:
+                        logger.warning(f"Filtered hallucinated value: {value}")
+                        continue
+                except (ValueError, TypeError):
+                    pass  # Not a numeric value, keep it
             valid_cards.append(card)
 
     # Filter out invalid suggested actions

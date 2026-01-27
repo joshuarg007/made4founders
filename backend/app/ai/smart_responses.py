@@ -118,7 +118,8 @@ QUESTION_PATTERNS = {
     r"(overdue|late|missed|past.?due)": "handle_overdue",
     r"(tax|taxes|filing|irs|state)": "handle_tax_deadlines",
     r"(compliance|regulatory|legal).*(status|check|item)": "handle_compliance",
-    r"(checklist|getting.?started|setup)": "handle_checklist",
+    r"(checklist|getting.?started|setup|to.?do.?list|todo.?list)": "handle_checklist",
+    r"(what.*left|what.*remaining).*(to.?do|todo|list)": "handle_checklist",
 
     # -------------------------------------------------------------------------
     # BUDGET
@@ -129,22 +130,24 @@ QUESTION_PATTERNS = {
     r"(forecast|project|predict).*(spend|expense|cost)": "handle_forecast",
 
     # -------------------------------------------------------------------------
+    # TASKS & PRODUCTIVITY (before team to catch "how many tasks")
+    # -------------------------------------------------------------------------
+    r"(task|tasks|action.?item)": "handle_tasks",
+    r"(how many|what).*(task|tasks)": "handle_tasks",
+    r"(what|anything).*(need|should|must).*(do|done|complete)": "handle_tasks",
+    r"(overdue|late|pending).*(task|item)": "handle_tasks",
+    r"(priority|priorities|urgent|important)": "handle_priorities",
+
+    # -------------------------------------------------------------------------
     # TEAM & HR
     # -------------------------------------------------------------------------
-    r"(how many|team|employee|headcount|staff|people)": "handle_team",
+    r"(how many).*(employee|people|staff|team member)": "handle_team",
+    r"(team|employee|headcount|staff|people)(?!.*task)": "handle_team",
     r"(pto|time.?off|vacation|leave|out of office)": "handle_pto",
     r"(hire|hiring|recruit|open.*(position|role))": "handle_hiring",
     r"(payroll|salary|salaries|compensation|pay)": "handle_payroll",
     r"(contractor|freelance|1099)": "handle_contractors",
     r"(onboard|onboarding|new.*(hire|employee))": "handle_onboarding",
-
-    # -------------------------------------------------------------------------
-    # TASKS & PRODUCTIVITY
-    # -------------------------------------------------------------------------
-    r"(task|todo|to.?do|action.?item)": "handle_tasks",
-    r"(what|anything).*(need|should|must).*(do|done|complete)": "handle_tasks",
-    r"(overdue|late|pending).*(task|item)": "handle_tasks",
-    r"(priority|priorities|urgent|important)": "handle_priorities",
 
     # -------------------------------------------------------------------------
     # MEETINGS & CALENDAR
@@ -1477,10 +1480,11 @@ def handle_pto(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 
 def handle_tasks(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle task questions."""
-    from ..models import Task
+    from ..models import Task, TaskBoard
 
-    tasks = db.query(Task).filter(
-        Task.organization_id == org_id,
+    # Tasks don't have organization_id directly - join through TaskBoard
+    tasks = db.query(Task).join(TaskBoard).filter(
+        TaskBoard.organization_id == org_id,
         Task.status != 'done'
     ).all()
 
