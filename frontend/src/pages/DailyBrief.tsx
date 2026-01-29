@@ -214,6 +214,8 @@ export default function DailyBrief() {
   };
 
   const handleCompleteDeadline = async (id: number) => {
+    if (!confirm('Mark this deadline as complete?')) return;
+
     setCompleting(id);
     try {
       await completeDeadlineAction(id);
@@ -228,6 +230,8 @@ export default function DailyBrief() {
   };
 
   const handleCompleteTask = async (id: number) => {
+    if (!confirm('Mark this task as complete?')) return;
+
     setCompleting(id);
     try {
       await completeTaskFromBrief(id);

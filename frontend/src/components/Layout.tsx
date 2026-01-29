@@ -88,7 +88,7 @@ const navSections: NavSection[] = [
       { to: '/app/activity', icon: Activity, label: 'Activity' },
       { to: '/app/notifications', icon: Bell, label: 'Notifications' },
       { to: '/app/integrations', icon: Plug, label: 'Integrations' },
-      { to: '/app/vault', icon: Shield, label: 'Vault' },
+      { to: '/app/vault', icon: Shield, label: 'Credential Vault' },
     ],
   },
   {

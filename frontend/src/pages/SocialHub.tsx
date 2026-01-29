@@ -73,7 +73,7 @@ const TEMPLATE_TYPES = [
 ];
 
 const PLATFORMS = [
-  { id: 'twitter', label: 'Twitter/X', icon: Twitter, color: 'bg-black', hoverColor: 'hover:bg-neutral-900', borderColor: 'border-neutral-700', charLimit: 280, supportsImages: true, imageNote: 'Up to 4 images, JPG/PNG/GIF', disabled: false },
+  { id: 'twitter', label: 'Twitter/X', icon: Twitter, color: 'bg-neutral-800', hoverColor: 'hover:bg-neutral-700', borderColor: 'border-neutral-500', charLimit: 280, supportsImages: true, imageNote: 'Up to 4 images, JPG/PNG/GIF', disabled: false },
   { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'bg-[#0A66C2]', hoverColor: 'hover:bg-[#004182]', borderColor: 'border-[#0A66C2]', charLimit: 3000, supportsImages: true, imageNote: 'Single image or document', disabled: false },
   { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'bg-[#1877F2]', hoverColor: 'hover:bg-[#0d65d9]', borderColor: 'border-[#1877F2]', charLimit: 63206, supportsImages: true, imageNote: 'Multiple images supported', disabled: false },
   { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737]', hoverColor: 'hover:opacity-90', borderColor: 'border-[#E1306C]', charLimit: 2200, supportsImages: true, imageNote: 'Image required, square recommended', disabled: false },
