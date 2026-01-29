@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import SEO, { pageSEO } from '../../components/SEO';
 import { validators, validationMessages } from '../../lib/validation';
 
@@ -120,14 +120,34 @@ export default function Signup() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex">
+    <div className="min-h-screen bg-[#0f1117] flex">
       <SEO {...pageSEO.signup} />
+
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Start your free trial</h1>
-            <p className="text-gray-400">
+      <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+        {/* Back to Home */}
+        <Link
+          to="/"
+          className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-white transition text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Link>
+
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-3 mb-8 hover:opacity-80 transition-opacity">
+          <img src="/logo.webp" alt="Made4Founders" className="h-20 w-auto" width={68} height={83} />
+          <div>
+            <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
+            <p className="text-sm text-gray-400">By Founders, For Founders</p>
+          </div>
+        </Link>
+
+        {/* Card */}
+        <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8">
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Start your free trial</h2>
+            <p className="text-gray-400 text-sm">
               {plan !== 'free'
                 ? `You selected the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan`
                 : 'Get started with Made4Founders today'}
@@ -299,24 +319,28 @@ export default function Signup() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-400">
             Already have an account?{' '}
             <Link to="/login" className="text-cyan-400 hover:text-cyan-300 transition-colors">
               Sign in
             </Link>
           </p>
 
-          <p className="mt-4 text-center text-xs text-gray-600">
+          <p className="mt-4 text-center text-xs text-gray-500">
             By signing up, you agree to our{' '}
-            <Link to="/terms" className="text-gray-500 hover:text-white">Terms of Service</Link>
+            <Link to="/terms" className="text-gray-400 hover:text-white transition">Terms of Service</Link>
             {' '}and{' '}
-            <Link to="/privacy" className="text-gray-500 hover:text-white">Privacy Policy</Link>
+            <Link to="/privacy" className="text-gray-400 hover:text-white transition">Privacy Policy</Link>
           </p>
         </div>
+
+        <p className="mt-8 text-xs text-gray-500">
+          Made4Founders — Built by founders, for founders
+        </p>
       </div>
 
-      {/* Right side - Benefits */}
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-cyan-500/10 to-blue-600/10 border-l border-white/5 px-8">
+      {/* Right side - Benefits (hidden on mobile) */}
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-cyan-500/10 to-violet-600/10 border-l border-white/10 px-8">
         <div className="max-w-md">
           <h2 className="text-2xl font-bold text-white mb-6">
             Why founders choose Made4Founders
@@ -324,7 +348,7 @@ export default function Signup() {
           <ul className="space-y-4">
             {benefits.map((benefit) => (
               <li key={benefit} className="flex items-center gap-3 text-gray-300">
-                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                 {benefit}
               </li>
             ))}
@@ -335,7 +359,7 @@ export default function Signup() {
               "Made4Founders saved me 10+ hours a week. I can finally focus on building instead of managing spreadsheets."
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-medium">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center text-white font-medium">
                 SC
               </div>
               <div>
