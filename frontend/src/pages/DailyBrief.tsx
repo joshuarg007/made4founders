@@ -340,8 +340,15 @@ export default function DailyBrief() {
       </div>
     );
 
+    // Wrap with appropriate link based on type
     if (isTask && !isCompleted) {
       return <Link to="/app/tasks" className="block">{content}</Link>;
+    }
+    if (isDeadline && !isCompleted) {
+      return <Link to="/app/deadlines" className="block">{content}</Link>;
+    }
+    if (isDocument) {
+      return <Link to="/app/documents" className="block">{content}</Link>;
     }
 
     return content;
