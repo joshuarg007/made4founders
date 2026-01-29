@@ -21,6 +21,20 @@ import {
   Sparkles,
   ImageIcon,
   AlertCircle,
+  Globe,
+  CheckCircle2,
+  Circle,
+  ChevronRight,
+  ExternalLink,
+  Search,
+  FileText,
+  Image,
+  Link2,
+  Smartphone,
+  Zap,
+  Shield,
+  Users,
+  TrendingUp,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import api from '../lib/api';
@@ -91,7 +105,7 @@ const PLATFORMS = [
 // Filter out disabled platforms for UI display
 const ACTIVE_PLATFORMS = PLATFORMS.filter(p => !p.disabled);
 
-type Tab = 'templates' | 'campaigns' | 'social' | 'integrations' | 'analytics';
+type Tab = 'templates' | 'campaigns' | 'social' | 'integrations' | 'analytics' | 'web';
 
 export default function Marketing() {
   const [activeTab, setActiveTab] = useState<Tab>('social');
@@ -137,6 +151,7 @@ export default function Marketing() {
 
   const tabs = [
     { id: 'social', label: 'Social Publisher', icon: Share2, count: null },
+    { id: 'web', label: 'Web & SEO', icon: Globe, count: null },
     { id: 'templates', label: 'Email Templates', icon: Mail, count: templates.length },
     { id: 'campaigns', label: 'Campaigns', icon: Send, count: campaigns.length },
     { id: 'analytics', label: 'Analytics', icon: BarChart2, count: null },
@@ -222,6 +237,10 @@ export default function Marketing() {
 
       {activeTab === 'analytics' && analytics && (
         <AnalyticsTab analytics={analytics} />
+      )}
+
+      {activeTab === 'web' && (
+        <WebSEOTab />
       )}
 
       {/* Modals */}
@@ -1363,6 +1382,584 @@ function AnalyticsTab({ analytics }: { analytics: AnalyticsSummary }) {
           Detailed analytics will be available once you start sending campaigns and connect your social accounts.
         </p>
       </div>
+    </div>
+  );
+}
+
+// ============ Web & SEO Tab ============
+interface SEOTask {
+  id: string;
+  title: string;
+  category: string;
+  importance: 'critical' | 'high' | 'medium' | 'low';
+  description: string;
+  steps: string[];
+  tools?: string[];
+  learnMoreUrl?: string;
+}
+
+const SEO_TASKS: SEOTask[] = [
+  {
+    id: 'meta-titles',
+    title: 'Optimize Meta Titles',
+    category: 'On-Page SEO',
+    importance: 'critical',
+    description: 'Meta titles appear in search results and browser tabs. They should be unique, descriptive, and under 60 characters to avoid truncation.',
+    steps: [
+      'Review each page\'s title tag',
+      'Include primary keyword near the beginning',
+      'Keep titles under 60 characters',
+      'Make each title unique and descriptive',
+      'Include your brand name at the end'
+    ],
+    tools: ['Google Search Console', 'Screaming Frog', 'Ahrefs'],
+  },
+  {
+    id: 'meta-descriptions',
+    title: 'Write Meta Descriptions',
+    category: 'On-Page SEO',
+    importance: 'critical',
+    description: 'Meta descriptions appear below titles in search results. While not a direct ranking factor, they significantly impact click-through rates.',
+    steps: [
+      'Write compelling descriptions for each page',
+      'Keep descriptions between 150-160 characters',
+      'Include a call-to-action when appropriate',
+      'Use relevant keywords naturally',
+      'Make each description unique'
+    ],
+    tools: ['Google Search Console', 'Yoast SEO'],
+  },
+  {
+    id: 'h1-headings',
+    title: 'Add H1 Headings',
+    category: 'On-Page SEO',
+    importance: 'critical',
+    description: 'Every page should have exactly one H1 heading that clearly describes the page content. H1s are a strong ranking signal.',
+    steps: [
+      'Ensure each page has exactly one H1',
+      'Make H1 descriptive (20+ characters)',
+      'Include primary keyword in H1',
+      'H1 should match page intent',
+      'Use proper heading hierarchy (H1 > H2 > H3)'
+    ],
+  },
+  {
+    id: 'image-optimization',
+    title: 'Optimize Images',
+    category: 'On-Page SEO',
+    importance: 'high',
+    description: 'Image optimization improves page speed and provides SEO value through alt text. Properly optimized images rank in Google Images.',
+    steps: [
+      'Add descriptive alt text to all images',
+      'Compress images (use WebP format)',
+      'Use descriptive file names',
+      'Implement lazy loading',
+      'Add width/height attributes'
+    ],
+    tools: ['TinyPNG', 'Squoosh', 'ImageOptim'],
+  },
+  {
+    id: 'internal-linking',
+    title: 'Build Internal Links',
+    category: 'On-Page SEO',
+    importance: 'high',
+    description: 'Internal links help search engines discover content and distribute page authority. They also improve user navigation.',
+    steps: [
+      'Link related pages together naturally',
+      'Use descriptive anchor text',
+      'Ensure important pages have multiple internal links',
+      'Create a logical site hierarchy',
+      'Fix any broken internal links'
+    ],
+  },
+  {
+    id: 'sitemap',
+    title: 'Create XML Sitemap',
+    category: 'Technical SEO',
+    importance: 'critical',
+    description: 'XML sitemaps help search engines discover and index all your pages. Essential for larger sites or sites with dynamic content.',
+    steps: [
+      'Generate an XML sitemap',
+      'Include all important pages',
+      'Exclude noindex pages',
+      'Submit to Google Search Console',
+      'Keep sitemap updated automatically'
+    ],
+    tools: ['Google Search Console', 'Yoast SEO', 'Next.js Sitemap'],
+  },
+  {
+    id: 'robots-txt',
+    title: 'Configure robots.txt',
+    category: 'Technical SEO',
+    importance: 'high',
+    description: 'robots.txt tells search engines which pages to crawl or ignore. Misconfiguration can block important pages from indexing.',
+    steps: [
+      'Create robots.txt in root directory',
+      'Allow crawling of important pages',
+      'Block admin/private areas',
+      'Reference your sitemap',
+      'Test with Google\'s robots.txt tester'
+    ],
+  },
+  {
+    id: 'ssl-https',
+    title: 'Enable HTTPS/SSL',
+    category: 'Technical SEO',
+    importance: 'critical',
+    description: 'HTTPS is a ranking signal and required for user trust. All pages should load over secure HTTPS connections.',
+    steps: [
+      'Install SSL certificate',
+      'Redirect all HTTP to HTTPS',
+      'Update internal links to HTTPS',
+      'Check for mixed content warnings',
+      'Update sitemap and canonical URLs'
+    ],
+  },
+  {
+    id: 'mobile-responsive',
+    title: 'Mobile Responsiveness',
+    category: 'Technical SEO',
+    importance: 'critical',
+    description: 'Google uses mobile-first indexing. Your site must be fully functional and readable on mobile devices.',
+    steps: [
+      'Test on multiple device sizes',
+      'Ensure text is readable without zooming',
+      'Make buttons/links easily tappable',
+      'Avoid horizontal scrolling',
+      'Test with Google Mobile-Friendly Test'
+    ],
+    tools: ['Google Mobile-Friendly Test', 'Chrome DevTools'],
+  },
+  {
+    id: 'page-speed',
+    title: 'Improve Page Speed',
+    category: 'Technical SEO',
+    importance: 'high',
+    description: 'Page speed is a ranking factor and crucial for user experience. Core Web Vitals measure loading, interactivity, and visual stability.',
+    steps: [
+      'Run Google PageSpeed Insights',
+      'Optimize images and enable compression',
+      'Minimize CSS/JS files',
+      'Enable browser caching',
+      'Use a CDN for static assets'
+    ],
+    tools: ['PageSpeed Insights', 'GTmetrix', 'WebPageTest'],
+  },
+  {
+    id: 'structured-data',
+    title: 'Add Structured Data',
+    category: 'Technical SEO',
+    importance: 'medium',
+    description: 'Structured data (JSON-LD) helps search engines understand your content and can enable rich snippets in search results.',
+    steps: [
+      'Add Organization schema',
+      'Add WebSite schema with search',
+      'Add relevant page-specific schemas',
+      'Test with Rich Results Test',
+      'Monitor in Search Console'
+    ],
+    tools: ['Google Rich Results Test', 'Schema.org'],
+  },
+  {
+    id: 'og-tags',
+    title: 'Social Media Meta Tags',
+    category: 'Social SEO',
+    importance: 'medium',
+    description: 'Open Graph and Twitter Card tags control how your pages appear when shared on social media.',
+    steps: [
+      'Add og:title, og:description, og:image',
+      'Add Twitter Card tags',
+      'Use high-quality images (1200x630)',
+      'Test with social debuggers',
+      'Ensure unique tags per page'
+    ],
+    tools: ['Facebook Debugger', 'Twitter Card Validator'],
+  },
+  {
+    id: 'google-search-console',
+    title: 'Setup Search Console',
+    category: 'Analytics & Monitoring',
+    importance: 'critical',
+    description: 'Google Search Console provides insights into how Google sees your site, indexing issues, and search performance.',
+    steps: [
+      'Verify domain ownership',
+      'Submit your sitemap',
+      'Check for crawl errors',
+      'Review search performance',
+      'Set up email alerts'
+    ],
+    learnMoreUrl: 'https://search.google.com/search-console',
+  },
+  {
+    id: 'analytics',
+    title: 'Setup Analytics',
+    category: 'Analytics & Monitoring',
+    importance: 'high',
+    description: 'Web analytics help you understand user behavior, traffic sources, and content performance.',
+    steps: [
+      'Install Google Analytics 4',
+      'Set up conversion tracking',
+      'Configure goal funnels',
+      'Enable enhanced measurement',
+      'Connect to Search Console'
+    ],
+    tools: ['Google Analytics', 'Plausible', 'Fathom'],
+  },
+  {
+    id: 'backlinks',
+    title: 'Build Quality Backlinks',
+    category: 'Off-Page SEO',
+    importance: 'high',
+    description: 'Backlinks from authoritative sites are a major ranking factor. Focus on earning links through quality content and outreach.',
+    steps: [
+      'Create link-worthy content',
+      'Guest post on relevant sites',
+      'Get listed in business directories',
+      'Build relationships with industry peers',
+      'Monitor and disavow toxic links'
+    ],
+    tools: ['Ahrefs', 'Moz', 'Semrush'],
+  },
+  {
+    id: 'local-seo',
+    title: 'Local SEO Setup',
+    category: 'Off-Page SEO',
+    importance: 'medium',
+    description: 'For businesses with physical locations, local SEO helps you appear in "near me" searches and Google Maps.',
+    steps: [
+      'Claim Google Business Profile',
+      'Ensure NAP consistency',
+      'Get customer reviews',
+      'Add local schema markup',
+      'List in local directories'
+    ],
+    tools: ['Google Business Profile'],
+  },
+  {
+    id: 'content-quality',
+    title: 'Create Quality Content',
+    category: 'Content',
+    importance: 'critical',
+    description: 'High-quality, relevant content is the foundation of SEO. Aim for comprehensive coverage of topics your audience cares about.',
+    steps: [
+      'Research target keywords',
+      'Write in-depth, helpful content',
+      'Aim for 800+ words on key pages',
+      'Update content regularly',
+      'Address user intent'
+    ],
+  },
+  {
+    id: 'social-profiles',
+    title: 'Link Social Profiles',
+    category: 'Social SEO',
+    importance: 'low',
+    description: 'Linking your social profiles creates trust signals and can improve brand visibility in search results.',
+    steps: [
+      'Add social links to website footer',
+      'Ensure profile URLs are consistent',
+      'Add website URL to all profiles',
+      'Include in structured data',
+      'Keep profiles active and updated'
+    ],
+  },
+];
+
+const IMPORTANCE_CONFIG = {
+  critical: { label: 'Critical', color: 'bg-red-500/20 text-red-400 border-red-500/30', dot: 'bg-red-500' },
+  high: { label: 'High', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', dot: 'bg-orange-500' },
+  medium: { label: 'Medium', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', dot: 'bg-yellow-500' },
+  low: { label: 'Low', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30', dot: 'bg-gray-500' },
+};
+
+const CATEGORY_ICONS: Record<string, any> = {
+  'On-Page SEO': FileText,
+  'Technical SEO': Zap,
+  'Off-Page SEO': Link2,
+  'Social SEO': Users,
+  'Analytics & Monitoring': TrendingUp,
+  'Content': Search,
+};
+
+function WebSEOTab() {
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('seo-completed-tasks');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [selectedTask, setSelectedTask] = useState<SEOTask | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  const categories = ['all', ...Array.from(new Set(SEO_TASKS.map(t => t.category)))];
+
+  const filteredTasks = filterCategory === 'all'
+    ? SEO_TASKS
+    : SEO_TASKS.filter(t => t.category === filterCategory);
+
+  const toggleTask = (taskId: string) => {
+    const newCompleted = new Set(completedTasks);
+    if (newCompleted.has(taskId)) {
+      newCompleted.delete(taskId);
+    } else {
+      newCompleted.add(taskId);
+    }
+    setCompletedTasks(newCompleted);
+    localStorage.setItem('seo-completed-tasks', JSON.stringify(Array.from(newCompleted)));
+  };
+
+  const completionRate = Math.round((completedTasks.size / SEO_TASKS.length) * 100);
+  const criticalCompleted = SEO_TASKS.filter(t => t.importance === 'critical' && completedTasks.has(t.id)).length;
+  const criticalTotal = SEO_TASKS.filter(t => t.importance === 'critical').length;
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="relative mb-8 p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-cyan-500/10 to-blue-500/10 border border-white/10 overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+          <Globe className="w-full h-full" />
+        </div>
+        <div className="relative">
+          <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+              <Search className="w-5 h-5 text-white" />
+            </div>
+            SEO Checklist
+          </h2>
+          <p className="text-gray-400 text-sm max-w-xl">
+            Track your website's SEO optimization progress. Click any task for detailed instructions and best practices.
+          </p>
+        </div>
+      </div>
+
+      {/* Progress Overview */}
+      <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-[#1a1d24]/50 rounded-xl border border-white/10 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-gray-400 text-sm">Overall Progress</span>
+            <span className="text-2xl font-bold text-white">{completionRate}%</span>
+          </div>
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
+              style={{ width: `${completionRate}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">{completedTasks.size} of {SEO_TASKS.length} tasks completed</p>
+        </div>
+
+        <div className="bg-[#1a1d24]/50 rounded-xl border border-white/10 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-gray-400 text-sm">Critical Tasks</span>
+            <span className="text-2xl font-bold text-red-400">{criticalCompleted}/{criticalTotal}</span>
+          </div>
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-red-500 transition-all duration-500"
+              style={{ width: `${(criticalCompleted / criticalTotal) * 100}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Complete these first for maximum impact</p>
+        </div>
+
+        <div className="bg-[#1a1d24]/50 rounded-xl border border-white/10 p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <Shield className="w-5 h-5 text-emerald-400" />
+            <span className="text-gray-400 text-sm">SEO Health</span>
+          </div>
+          <div className="text-2xl font-bold text-white">
+            {completionRate >= 80 ? '🟢 Excellent' : completionRate >= 60 ? '🟡 Good' : completionRate >= 40 ? '🟠 Fair' : '🔴 Needs Work'}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Based on completed tasks</p>
+        </div>
+      </div>
+
+      {/* Category Filter */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setFilterCategory(cat)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
+              filterCategory === cat
+                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                : 'bg-[#1a1d24]/50 text-gray-400 border border-white/10 hover:text-white hover:border-white/20'
+            }`}
+          >
+            {cat === 'all' ? 'All Tasks' : cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Task List */}
+      <div className="space-y-3">
+        {filteredTasks.map((task) => {
+          const isCompleted = completedTasks.has(task.id);
+          const importanceConfig = IMPORTANCE_CONFIG[task.importance];
+          const CategoryIcon = CATEGORY_ICONS[task.category] || FileText;
+
+          return (
+            <div
+              key={task.id}
+              className={`group bg-[#1a1d24]/50 rounded-xl border transition-all cursor-pointer hover:bg-[#1a1d24]/70 ${
+                isCompleted ? 'border-emerald-500/30' : 'border-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center gap-4 p-4">
+                {/* Checkbox */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
+                  className={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition ${
+                    isCompleted
+                      ? 'bg-emerald-500 border-emerald-500 text-white'
+                      : 'border-white/20 hover:border-emerald-500/50'
+                  }`}
+                >
+                  {isCompleted && <Check className="w-4 h-4" />}
+                </button>
+
+                {/* Content */}
+                <div
+                  className="flex-1 min-w-0"
+                  onClick={() => setSelectedTask(task)}
+                >
+                  <div className="flex items-center gap-3 mb-1">
+                    <h3 className={`font-medium ${isCompleted ? 'text-gray-400 line-through' : 'text-white'}`}>
+                      {task.title}
+                    </h3>
+                    <span className={`px-2 py-0.5 rounded text-xs border ${importanceConfig.color}`}>
+                      {importanceConfig.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <CategoryIcon className="w-3 h-3" />
+                    <span>{task.category}</span>
+                  </div>
+                </div>
+
+                {/* Arrow */}
+                <ChevronRight
+                  className="w-5 h-5 text-gray-500 group-hover:text-white transition flex-shrink-0"
+                  onClick={() => setSelectedTask(task)}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedTask(null)}
+        >
+          <div
+            className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[85vh] overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-6 border-b border-white/10">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className={`px-2 py-0.5 rounded text-xs border ${IMPORTANCE_CONFIG[selectedTask.importance].color}`}>
+                      {IMPORTANCE_CONFIG[selectedTask.importance].label} Priority
+                    </span>
+                    <span className="text-xs text-gray-500">{selectedTask.category}</span>
+                  </div>
+                  <h2 className="text-xl font-semibold text-white">{selectedTask.title}</h2>
+                </div>
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)]">
+              {/* Description */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">Why It Matters</h3>
+                <p className="text-gray-300 leading-relaxed">{selectedTask.description}</p>
+              </div>
+
+              {/* Steps */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">How To Do It</h3>
+                <div className="space-y-2">
+                  {selectedTask.steps.map((step, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-medium">
+                        {i + 1}
+                      </span>
+                      <span className="text-gray-300 text-sm">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tools */}
+              {selectedTask.tools && selectedTask.tools.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">Recommended Tools</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTask.tools.map((tool) => (
+                      <span key={tool} className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 text-sm border border-white/10">
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Learn More */}
+              {selectedTask.learnMoreUrl && (
+                <a
+                  href={selectedTask.learnMoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm transition"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Learn more
+                </a>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-white/10 flex items-center justify-between">
+              <button
+                onClick={() => setSelectedTask(null)}
+                className="px-4 py-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => { toggleTask(selectedTask.id); setSelectedTask(null); }}
+                className={`px-6 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                  completedTasks.has(selectedTask.id)
+                    ? 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    : 'bg-emerald-500 text-white hover:bg-emerald-400'
+                }`}
+              >
+                {completedTasks.has(selectedTask.id) ? (
+                  <>
+                    <Circle className="w-4 h-4" />
+                    Mark Incomplete
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Mark Complete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
