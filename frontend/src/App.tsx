@@ -5,6 +5,7 @@ import PublicLayout from './components/PublicLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import GlobalErrorToast from './components/GlobalErrorToast'
 import ScrollToTop from './components/ScrollToTop'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // Loading spinner for lazy loaded pages
 const PageLoader = () => (
@@ -96,8 +97,9 @@ function App() {
     <>
     <ScrollToTop />
     <GlobalErrorToast />
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
         {/* Public routes */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
@@ -189,8 +191,9 @@ function App() {
         <Route path="/app/web-links" element={<Navigate to="/app/offerings" replace />} />
         <Route path="/app/banking" element={<Navigate to="/app/finance" replace />} />
         <Route path="/app/vault" element={<Navigate to="/app/finance" replace />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
     </>
   )
 }
