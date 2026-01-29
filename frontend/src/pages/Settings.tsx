@@ -848,19 +848,19 @@ export default function Settings() {
             {currentBusiness.gamification_enabled && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-amber-400">{currentBusiness.level}</div>
+                  <div className="text-2xl font-bold text-amber-400">{currentBusiness.level ?? 1}</div>
                   <div className="text-xs text-gray-500">Level</div>
                 </div>
                 <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-cyan-400">{currentBusiness.xp.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-cyan-400">{(currentBusiness.xp ?? 0).toLocaleString()}</div>
                   <div className="text-xs text-gray-500">Total XP</div>
                 </div>
                 <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-orange-400">{currentBusiness.current_streak}</div>
+                  <div className="text-2xl font-bold text-orange-400">{currentBusiness.current_streak ?? 0}</div>
                   <div className="text-xs text-gray-500">Day Streak</div>
                 </div>
                 <div className="p-3 bg-[#0f1117] rounded-lg border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-violet-400">{currentBusiness.longest_streak}</div>
+                  <div className="text-2xl font-bold text-violet-400">{currentBusiness.longest_streak ?? 0}</div>
                   <div className="text-xs text-gray-500">Best Streak</div>
                 </div>
               </div>
