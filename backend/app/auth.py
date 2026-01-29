@@ -214,6 +214,43 @@ async def login(
             "message": "MFA verification required"
         }
 
+    # Check if MFA setup is required (user doesn't have MFA enabled)
+    # For now, MFA is mandatory for all users
+    if not user.mfa_enabled:
+        setup_token = jwt.encode(
+            {
+                "sub": user.email,
+                "typ": "mfa_setup",
+                "exp": datetime.utcnow() + timedelta(minutes=30),
+            },
+            security.SECRET_KEY,
+            algorithm=security.ALGORITHM,
+        )
+        # Set temporary auth cookies for the setup flow
+        access = security.create_access_token(user.email)
+        refresh = security.create_refresh_token(user.email)
+        security.set_auth_cookies(response, access, refresh)
+
+        # Create session record for setup flow
+        payload = security.decode_token_full(access)
+        if payload:
+            device_info = parse_device_info(request.headers.get("user-agent", ""))
+            ip_address = request.client.host if request.client else None
+            create_session(
+                db=db,
+                user=user,
+                token_id=payload.get("jti"),
+                device_info=device_info,
+                ip_address=ip_address,
+                expires_at=datetime.utcfromtimestamp(payload.get("exp"))
+            )
+
+        return {
+            "mfa_setup_required": True,
+            "setup_token": setup_token,
+            "message": "MFA setup required"
+        }
+
     access = security.create_access_token(user.email)
     refresh = security.create_refresh_token(user.email)
     security.set_auth_cookies(response, access, refresh)
@@ -283,6 +320,43 @@ async def login_with_captcha(
             "mfa_required": True,
             "mfa_token": mfa_token,
             "message": "MFA verification required"
+        }
+
+    # Check if MFA setup is required (user doesn't have MFA enabled)
+    # For now, MFA is mandatory for all users
+    if not user.mfa_enabled:
+        setup_token = jwt.encode(
+            {
+                "sub": user.email,
+                "typ": "mfa_setup",
+                "exp": datetime.utcnow() + timedelta(minutes=30),
+            },
+            security.SECRET_KEY,
+            algorithm=security.ALGORITHM,
+        )
+        # Set temporary auth cookies for the setup flow
+        access = security.create_access_token(user.email)
+        refresh = security.create_refresh_token(user.email)
+        security.set_auth_cookies(response, access, refresh)
+
+        # Create session record for setup flow
+        payload = security.decode_token_full(access)
+        if payload:
+            device_info = parse_device_info(http_request.headers.get("user-agent", ""))
+            ip_address = http_request.client.host if http_request.client else None
+            create_session(
+                db=db,
+                user=user,
+                token_id=payload.get("jti"),
+                device_info=device_info,
+                ip_address=ip_address,
+                expires_at=datetime.utcfromtimestamp(payload.get("exp"))
+            )
+
+        return {
+            "mfa_setup_required": True,
+            "setup_token": setup_token,
+            "message": "MFA setup required"
         }
 
     access = security.create_access_token(user.email)

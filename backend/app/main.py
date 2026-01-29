@@ -4790,7 +4790,8 @@ def get_vault_status(current_user: User = Depends(get_current_user), db: Session
     session_id = get_session_id()
     return VaultStatus(
         is_setup=config is not None,
-        is_unlocked=VaultSession.is_unlocked(session_id)
+        is_unlocked=VaultSession.is_unlocked(session_id),
+        mfa_required=current_user.mfa_enabled
     )
 
 
@@ -4825,7 +4826,9 @@ def setup_vault(setup: VaultSetup, current_user: User = Depends(get_current_user
 
 @app.post("/api/vault/unlock", response_model=VaultStatus)
 def unlock_vault(unlock: VaultUnlock, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Unlock the vault with the master password."""
+    """Unlock the vault with the master password and MFA code (if enabled)."""
+    from .mfa import verify_mfa_code_or_backup
+
     config = db.query(VaultConfig).first()
     if not config:
         raise HTTPException(status_code=400, detail="Vault not set up")
@@ -4833,11 +4836,18 @@ def unlock_vault(unlock: VaultUnlock, current_user: User = Depends(get_current_u
     if not verify_master_password(unlock.master_password, config.master_password_hash):
         raise HTTPException(status_code=401, detail="Invalid master password")
 
+    # Verify MFA if user has it enabled (3FA: session + master password + TOTP)
+    if current_user.mfa_enabled and current_user.mfa_secret:
+        if not unlock.mfa_code:
+            raise HTTPException(status_code=400, detail="MFA code required")
+        if not verify_mfa_code_or_backup(current_user, unlock.mfa_code, db):
+            raise HTTPException(status_code=401, detail="Invalid MFA code")
+
     session_id = get_session_id()
     key = derive_key(unlock.master_password, config.salt)
     VaultSession.unlock(session_id, key)
 
-    return VaultStatus(is_setup=True, is_unlocked=True)
+    return VaultStatus(is_setup=True, is_unlocked=True, mfa_required=current_user.mfa_enabled)
 
 
 @app.post("/api/vault/lock", response_model=VaultStatus)

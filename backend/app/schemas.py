@@ -852,11 +852,13 @@ class VaultSetup(BaseModel):
 
 class VaultUnlock(BaseModel):
     master_password: str
+    mfa_code: Optional[str] = None  # Required if user has MFA enabled
 
 
 class VaultStatus(BaseModel):
     is_setup: bool
     is_unlocked: bool
+    mfa_required: Optional[bool] = False  # True if user has MFA enabled
 
 
 class CustomField(BaseModel):
