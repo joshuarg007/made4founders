@@ -114,8 +114,22 @@ export default function Login() {
       } else {
         await login(email, password);
       }
-      // Small delay to allow browser to detect successful login and prompt to save password
-      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Use Credential Management API to prompt browser to save password
+      if (window.PasswordCredential) {
+        try {
+          const credential = new window.PasswordCredential({
+            id: email,
+            password: password,
+            name: name || email,
+          });
+          await navigator.credentials.store(credential);
+        } catch {
+          // Credential storage failed, but login succeeded - continue
+        }
+      }
+
+      // Navigate to app
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
