@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, X, ExternalLink } from 'lucide-react';
+import { AlertTriangle, X, RefreshCw, MessageCircle } from 'lucide-react';
 import { apiErrorEvent, ApiError } from '../lib/api';
 
 interface ErrorNotification {
@@ -27,10 +27,10 @@ export default function GlobalErrorToast() {
 
       setErrors(prev => [...prev, notification]);
 
-      // Auto-dismiss after 8 seconds
+      // Auto-dismiss after 10 seconds
       setTimeout(() => {
         setErrors(prev => prev.filter(e => e.id !== notification.id));
-      }, 8000);
+      }, 10000);
     };
 
     apiErrorEvent.addEventListener('api-error', handleError);
@@ -44,41 +44,51 @@ export default function GlobalErrorToast() {
   if (errors.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] space-y-3 max-w-md">
+    <div className="fixed bottom-6 right-6 z-[100] space-y-3 max-w-sm">
       {errors.map((error) => (
         <div
           key={error.id}
-          className="bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-3 rounded-xl shadow-lg backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-300"
+          className="bg-[#1a1d24] border border-amber-500/30 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300"
         >
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-red-100">Something went wrong</p>
-              <p className="text-sm text-red-200/80 mt-1">{error.message}</p>
-              <div className="flex items-center gap-4 mt-3 text-xs">
-                <a
-                  href="https://github.com/joshuarg007/made4founders/issues"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-red-300 hover:text-red-100 transition"
-                >
-                  Report issue
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-red-300 hover:text-red-100 transition"
-                >
-                  Refresh page
-                </button>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-amber-500/10 border-b border-amber-500/20">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
               </div>
+              <span className="font-semibold text-white">Oops!</span>
             </div>
             <button
               onClick={() => dismiss(error.id)}
-              className="text-red-400 hover:text-red-200 transition flex-shrink-0"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* Content */}
+          <div className="px-4 py-3">
+            <p className="text-sm text-gray-300 leading-relaxed">
+              {error.message}
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-t border-white/10">
+            <button
+              onClick={() => window.location.reload()}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition text-sm font-medium"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </button>
+            <a
+              href="mailto:support@made4founders.com?subject=Error%20Report"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition text-sm font-medium"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Support
+            </a>
           </div>
         </div>
       ))}

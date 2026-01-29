@@ -3587,10 +3587,10 @@ def create_contact(contact: ContactCreate, current_user: User = Depends(get_curr
     contact_data = contact.model_dump(exclude={'business_ids'})
     business_ids = contact.business_ids or []
 
-    # Serialize list fields to JSON
-    if contact_data.get('additional_emails'):
+    # Serialize list fields to JSON (must handle empty lists too)
+    if 'additional_emails' in contact_data and isinstance(contact_data['additional_emails'], list):
         contact_data['additional_emails'] = json.dumps(contact_data['additional_emails'])
-    if contact_data.get('additional_phones'):
+    if 'additional_phones' in contact_data and isinstance(contact_data['additional_phones'], list):
         contact_data['additional_phones'] = json.dumps(contact_data['additional_phones'])
 
     db_contact = Contact(**contact_data, organization_id=current_user.organization_id)
