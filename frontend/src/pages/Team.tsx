@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Users,
   UserPlus,
@@ -84,7 +85,22 @@ const employmentStatuses = [
 
 
 export default function Team() {
-  const [activeTab, setActiveTab] = useState<Tab>('directory');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read tab from URL, default to 'directory'
+  const tabFromUrl = searchParams.get('tab') as Tab | null;
+  const activeTab: Tab = tabFromUrl && ['directory', 'org-chart', 'pto', 'onboarding', 'analytics'].includes(tabFromUrl)
+    ? tabFromUrl
+    : 'directory';
+
+  const setActiveTab = (tab: Tab) => {
+    if (tab === 'directory') {
+      setSearchParams({});  // Remove tab param for directory (default)
+    } else {
+      setSearchParams({ tab });
+    }
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
