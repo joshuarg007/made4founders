@@ -1,18 +1,34 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, AlertCircle, ArrowLeft, Mail } from 'lucide-react';
+import { validators, validationMessages } from '../lib/validation';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const validateEmail = (value: string): boolean => {
+    if (!value || !validators.email(value)) {
+      setEmailError(validationMessages.email);
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!validateEmail(email)) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -110,17 +126,36 @@ export default function ForgotPassword() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
-              placeholder="you@company.com"
-            />
+            <div className="relative">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) validateEmail(e.target.value);
+                }}
+                onBlur={(e) => e.target.value && validateEmail(e.target.value)}
+                required
+                className={`w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-500 focus:outline-none transition ${
+                  emailError
+                    ? 'border-red-500/50 focus:border-red-500'
+                    : 'border-white/10 focus:border-cyan-500/50'
+                }`}
+                placeholder="you@company.com"
+              />
+              {emailError && (
+                <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+              )}
+            </div>
+            {emailError && (
+              <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {emailError}
+              </p>
+            )}
           </div>
 
           <button

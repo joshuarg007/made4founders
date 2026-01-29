@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, ArrowLeft, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
+import { validators } from '../lib/validation';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
 
@@ -13,6 +14,7 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -23,6 +25,12 @@ export default function ResetPassword() {
     }
   }, [token, navigate]);
 
+  const validatePassword = (value: string): boolean => {
+    const result = validators.password(value);
+    setPasswordErrors(result.errors);
+    return result.valid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -32,8 +40,7 @@ export default function ResetPassword() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!validatePassword(password)) {
       return;
     }
 
@@ -134,11 +141,19 @@ export default function ResetPassword() {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordErrors.length > 0) validatePassword(e.target.value);
+                }}
+                onBlur={(e) => e.target.value && validatePassword(e.target.value)}
                 required
-                minLength={6}
-                className="w-full px-4 py-3 pr-12 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
-                placeholder="At least 6 characters"
+                minLength={8}
+                className={`w-full px-4 py-3 pr-12 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-500 focus:outline-none transition ${
+                  passwordErrors.length > 0
+                    ? 'border-red-500/50 focus:border-red-500'
+                    : 'border-white/10 focus:border-cyan-500/50'
+                }`}
+                placeholder="Strong password required"
               />
               <button
                 type="button"
@@ -148,6 +163,19 @@ export default function ResetPassword() {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {passwordErrors.length > 0 && (
+              <div className="mt-2 text-xs text-red-400">
+                <p className="flex items-center gap-1 mb-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Password must include:
+                </p>
+                <ul className="ml-4 space-y-0.5">
+                  {passwordErrors.map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div>

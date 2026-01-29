@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import SEO, { pageSEO } from '../../components/SEO';
+import { validators, validationMessages } from '../../lib/validation';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
@@ -19,15 +20,54 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<{ email?: string; password?: string[] }>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear validation error when user types
+    if (e.target.name === 'email' && validationErrors.email) {
+      validateEmail(e.target.value);
+    }
+    if (e.target.name === 'password' && validationErrors.password) {
+      validatePassword(e.target.value);
+    }
+  };
+
+  const validateEmail = (value: string): boolean => {
+    if (!value || !validators.email(value)) {
+      setValidationErrors(prev => ({ ...prev, email: validationMessages.email }));
+      return false;
+    }
+    setValidationErrors(prev => ({ ...prev, email: undefined }));
+    return true;
+  };
+
+  const validatePassword = (value: string): boolean => {
+    const result = validators.password(value);
+    if (!result.valid) {
+      setValidationErrors(prev => ({ ...prev, password: result.errors }));
+      return false;
+    }
+    setValidationErrors(prev => ({ ...prev, password: undefined }));
+    return true;
+  };
+
+  const validateForm = (): boolean => {
+    const emailValid = validateEmail(formData.email);
+    const passwordValid = validatePassword(formData.password);
+    return emailValid && passwordValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
+
+    // Validate form before submitting
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {
@@ -166,16 +206,32 @@ export default function Signup() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                 Email Address
               </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors"
-                placeholder="you@company.com"
-              />
+              <div className="relative">
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={(e) => e.target.value && validateEmail(e.target.value)}
+                  required
+                  className={`w-full px-4 py-3 rounded-lg bg-white/5 border text-white placeholder-gray-500 focus:outline-none focus:ring-1 transition-colors ${
+                    validationErrors.email
+                      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50'
+                      : 'border-white/10 focus:border-cyan-500/50 focus:ring-cyan-500/50'
+                  }`}
+                  placeholder="you@company.com"
+                />
+                {validationErrors.email && (
+                  <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                )}
+              </div>
+              {validationErrors.email && (
+                <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {validationErrors.email}
+                </p>
+              )}
             </div>
 
             <div>
@@ -189,9 +245,14 @@ export default function Signup() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  onBlur={(e) => e.target.value && validatePassword(e.target.value)}
                   required
                   minLength={8}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors pr-12"
+                  className={`w-full px-4 py-3 rounded-lg bg-white/5 border text-white placeholder-gray-500 focus:outline-none focus:ring-1 transition-colors pr-12 ${
+                    validationErrors.password
+                      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50'
+                      : 'border-white/10 focus:border-cyan-500/50 focus:ring-cyan-500/50'
+                  }`}
                   placeholder="At least 8 characters"
                 />
                 <button
@@ -202,6 +263,19 @@ export default function Signup() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {validationErrors.password && validationErrors.password.length > 0 && (
+                <div className="mt-2 text-xs text-red-400">
+                  <p className="flex items-center gap-1 mb-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Password must include:
+                  </p>
+                  <ul className="ml-4 space-y-0.5">
+                    {validationErrors.password.map((err, i) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <button

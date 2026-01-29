@@ -82,7 +82,7 @@ const navSections: NavSection[] = [
     },
     items: [
       { to: '/app', icon: LayoutDashboard, label: 'Home' },
-      { to: '/app/getting-started', icon: ClipboardCheck, label: 'To-Do' },
+      { to: '/app/getting-started', icon: ClipboardCheck, label: 'Checklist' },
       { to: '/app/daily-brief', icon: ListTodo, label: 'Today' },
       { to: '/app/tasks', icon: Calendar, label: 'Calendar' },
       { to: '/app/activity', icon: Activity, label: 'Activity' },

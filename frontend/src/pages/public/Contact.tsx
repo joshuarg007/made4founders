@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Mail, MessageSquare, Building2, Send, CheckCircle } from 'lucide-react';
+import { Mail, MessageSquare, Building2, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import SEO from '../../components/SEO';
+import { validators, validationMessages } from '../../lib/validation';
 
 interface FormData {
   name: string;
@@ -20,15 +21,33 @@ export default function Contact() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const validateEmail = (value: string): boolean => {
+    if (!value || !validators.email(value)) {
+      setEmailError(validationMessages.email);
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    if (e.target.name === 'email' && emailError) {
+      validateEmail(e.target.value);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setStatus(null);
+
+    if (!validateEmail(formData.email)) {
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       const res = await fetch('/api/contact', {
@@ -158,16 +177,32 @@ export default function Contact() {
                   <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                     Email <span className="text-red-400">*</span>
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="you@company.com"
-                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onBlur={(e) => e.target.value && validateEmail(e.target.value)}
+                      required
+                      placeholder="you@company.com"
+                      className={`w-full px-4 py-3 rounded-lg bg-white/5 border text-white placeholder-gray-500 focus:ring-2 focus:border-transparent transition-all ${
+                        emailError
+                          ? 'border-red-500/50 focus:ring-red-500'
+                          : 'border-white/10 focus:ring-cyan-500'
+                      }`}
+                    />
+                    {emailError && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  {emailError && (
+                    <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {emailError}
+                    </p>
+                  )}
                 </div>
               </div>
 

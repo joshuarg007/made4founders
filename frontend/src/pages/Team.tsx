@@ -13,6 +13,7 @@ import {
   X,
   Clock,
   AlertTriangle,
+  AlertCircle,
   Loader2,
   Briefcase,
   MapPin,
@@ -24,6 +25,7 @@ import {
   ChevronRight,
   BarChart3,
 } from 'lucide-react';
+import { validators, validationMessages } from '../lib/validation';
 import {
   getTeamSummary,
   getEmployees,
@@ -127,6 +129,16 @@ export default function Team() {
   const [policyForm, setPolicyForm] = useState({ name: '', pto_type: 'vacation', annual_days: 0, requires_approval: true });
   const [templateForm, setTemplateForm] = useState({ name: '', description: '', role: '', department: '', tasks: [] as Array<{ name: string; description: string; category: string; due_days: number }> });
   const [checklistForm, setChecklistForm] = useState({ employee_id: 0, template_id: 0, name: '', start_date: '' });
+  const [employeeEmailError, setEmployeeEmailError] = useState<string | null>(null);
+
+  const validateEmployeeEmail = (email: string): boolean => {
+    if (!email || !validators.email(email)) {
+      setEmployeeEmailError(validationMessages.email);
+      return false;
+    }
+    setEmployeeEmailError(null);
+    return true;
+  };
 
   const loadData = async () => {
     try {
@@ -189,6 +201,11 @@ export default function Team() {
   const departments = [...new Set(employees.map(e => e.department).filter((d): d is string => Boolean(d)))];
 
   const handleSaveEmployee = async () => {
+    // Validate email before saving
+    if (!validateEmployeeEmail(employeeForm.email || '')) {
+      return;
+    }
+
     setSaving(true);
     try {
       if (editingEmployee) {
@@ -197,6 +214,7 @@ export default function Team() {
         await createEmployee(employeeForm);
       }
       setShowEmployeeModal(false);
+      setEmployeeEmailError(null);
       setEditingEmployee(null);
       setEmployeeForm({});
       loadData();
@@ -1226,13 +1244,32 @@ export default function Team() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    value={employeeForm.email || ''}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={employeeForm.email || ''}
+                      onChange={(e) => {
+                        setEmployeeForm({ ...employeeForm, email: e.target.value });
+                        if (employeeEmailError) validateEmployeeEmail(e.target.value);
+                      }}
+                      onBlur={(e) => e.target.value && validateEmployeeEmail(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 ${
+                        employeeEmailError
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                      required
+                    />
+                    {employeeEmailError && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  {employeeEmailError && (
+                    <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {employeeEmailError}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -17,10 +17,12 @@ import {
   Smartphone,
   Eye,
   MessageCircle,
+  AlertCircle,
 } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
 import { getContacts, createContact, updateContact, deleteContact, type Contact } from '../lib/api';
 import { format } from 'date-fns';
+import { validators, validationMessages } from '../lib/validation';
 
 // Job titles by contact type
 const titlesByType: Record<string, string[]> = {
@@ -629,6 +631,133 @@ export default function Contacts() {
   const [additionalEmails, setAdditionalEmails] = useState<string[]>([]);
   const [additionalPhones, setAdditionalPhones] = useState<string[]>([]);
 
+  // Form validation errors
+  const [validationErrors, setValidationErrors] = useState<{
+    email?: string;
+    additionalEmails?: { [key: number]: string };
+    phone?: string;
+    additionalPhones?: { [key: number]: string };
+    website?: string;
+    linkedin_url?: string;
+    twitter_handle?: string;
+  }>({});
+
+  // Validate a specific field
+  const validateField = (field: string, value: string, index?: number) => {
+    let error: string | undefined;
+
+    switch (field) {
+      case 'email':
+      case 'additionalEmail':
+        if (value && !validators.email(value)) {
+          error = validationMessages.email;
+        }
+        break;
+      case 'phone':
+      case 'additionalPhone':
+        if (value && !validators.phone(value)) {
+          error = validationMessages.phone;
+        }
+        break;
+      case 'website':
+        if (value && !validators.url(value)) {
+          error = validationMessages.url;
+        }
+        break;
+      case 'linkedin_url':
+        if (value && !validators.linkedinUrl(value)) {
+          error = validationMessages.linkedinUrl;
+        }
+        break;
+      case 'twitter_handle':
+        if (value && !validators.twitterHandle(value)) {
+          error = validationMessages.twitterHandle;
+        }
+        break;
+    }
+
+    setValidationErrors(prev => {
+      if (field === 'additionalEmail' && index !== undefined) {
+        return {
+          ...prev,
+          additionalEmails: { ...prev.additionalEmails, [index]: error || '' }
+        };
+      }
+      if (field === 'additionalPhone' && index !== undefined) {
+        return {
+          ...prev,
+          additionalPhones: { ...prev.additionalPhones, [index]: error || '' }
+        };
+      }
+      return { ...prev, [field]: error };
+    });
+
+    return !error;
+  };
+
+  // Validate all fields before submit
+  const validateForm = (): boolean => {
+    let isValid = true;
+    const errors: typeof validationErrors = {};
+
+    // Validate primary email
+    if (formData.email && !validators.email(formData.email)) {
+      errors.email = validationMessages.email;
+      isValid = false;
+    }
+
+    // Validate additional emails
+    const additionalEmailErrors: { [key: number]: string } = {};
+    additionalEmails.forEach((email, idx) => {
+      if (email && !validators.email(email)) {
+        additionalEmailErrors[idx] = validationMessages.email;
+        isValid = false;
+      }
+    });
+    if (Object.keys(additionalEmailErrors).length > 0) {
+      errors.additionalEmails = additionalEmailErrors;
+    }
+
+    // Validate primary phone
+    if (formData.phone && !validators.phone(formData.phone)) {
+      errors.phone = validationMessages.phone;
+      isValid = false;
+    }
+
+    // Validate additional phones
+    const additionalPhoneErrors: { [key: number]: string } = {};
+    additionalPhones.forEach((phone, idx) => {
+      if (phone && !validators.phone(phone)) {
+        additionalPhoneErrors[idx] = validationMessages.phone;
+        isValid = false;
+      }
+    });
+    if (Object.keys(additionalPhoneErrors).length > 0) {
+      errors.additionalPhones = additionalPhoneErrors;
+    }
+
+    // Validate website
+    if (formData.website && !validators.url(formData.website)) {
+      errors.website = validationMessages.url;
+      isValid = false;
+    }
+
+    // Validate LinkedIn URL
+    if (formData.linkedin_url && !validators.linkedinUrl(formData.linkedin_url)) {
+      errors.linkedin_url = validationMessages.linkedinUrl;
+      isValid = false;
+    }
+
+    // Validate Twitter handle
+    if (formData.twitter_handle && !validators.twitterHandle(formData.twitter_handle)) {
+      errors.twitter_handle = validationMessages.twitterHandle;
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   // Title dropdown state
   const [showTitleDropdown, setShowTitleDropdown] = useState(false);
   const [titleSearch, setTitleSearch] = useState('');
@@ -713,6 +842,12 @@ export default function Contacts() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all fields before submitting
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       // Build birthday from parts
       let birthday: string | null = null;
@@ -754,6 +889,7 @@ export default function Contacts() {
       setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' });
       setAdditionalEmails([]);
       setAdditionalPhones([]);
+      setValidationErrors({});
       setShowResponsibilitiesDropdown(false);
       setResponsibilitySearch('');
       setShowTitleDropdown(false);
@@ -802,6 +938,7 @@ export default function Contacts() {
     });
     setAdditionalEmails(contact.additional_emails || []);
     setAdditionalPhones(contact.additional_phones || []);
+    setValidationErrors({});
     setShowResponsibilitiesDropdown(false);
     setResponsibilitySearch('');
     setShowTitleDropdown(false);
@@ -831,7 +968,7 @@ export default function Contacts() {
           <p className="text-gray-400 mt-1">Your business rolodex</p>
         </div>
         <button
-          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' }); setAdditionalEmails([]); setAdditionalPhones([]); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
+          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' }); setAdditionalEmails([]); setAdditionalPhones([]); setValidationErrors({}); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
         >
           <Plus className="w-4 h-4" />
@@ -1160,33 +1297,71 @@ export default function Contacts() {
                 </div>
                 <div className="col-span-2 space-y-2">
                   <label className="block text-sm text-gray-400 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="Primary email"
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value });
+                        if (validationErrors.email) validateField('email', e.target.value);
+                      }}
+                      onBlur={(e) => validateField('email', e.target.value)}
+                      placeholder="Primary email"
+                      className={`w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-600 focus:outline-none transition ${
+                        validationErrors.email
+                          ? 'border-red-500/50 focus:border-red-500'
+                          : 'border-white/10 focus:border-cyan-500/50'
+                      }`}
+                    />
+                    {validationErrors.email && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  {validationErrors.email && (
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validationErrors.email}
+                    </p>
+                  )}
                   {additionalEmails.map((email, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => {
-                          const updated = [...additionalEmails];
-                          updated[idx] = e.target.value;
-                          setAdditionalEmails(updated);
-                        }}
-                        placeholder="Additional email"
-                        className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setAdditionalEmails(additionalEmails.filter((_, i) => i !== idx))}
-                        className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div key={idx} className="space-y-1">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => {
+                              const updated = [...additionalEmails];
+                              updated[idx] = e.target.value;
+                              setAdditionalEmails(updated);
+                              if (validationErrors.additionalEmails?.[idx]) validateField('additionalEmail', e.target.value, idx);
+                            }}
+                            onBlur={(e) => validateField('additionalEmail', e.target.value, idx)}
+                            placeholder="Additional email"
+                            className={`w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-600 focus:outline-none transition ${
+                              validationErrors.additionalEmails?.[idx]
+                                ? 'border-red-500/50 focus:border-red-500'
+                                : 'border-white/10 focus:border-cyan-500/50'
+                            }`}
+                          />
+                          {validationErrors.additionalEmails?.[idx] && (
+                            <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAdditionalEmails(additionalEmails.filter((_, i) => i !== idx))}
+                          className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {validationErrors.additionalEmails?.[idx] && (
+                        <p className="text-xs text-red-400 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {validationErrors.additionalEmails[idx]}
+                        </p>
+                      )}
                     </div>
                   ))}
                   <button
@@ -1199,33 +1374,71 @@ export default function Contacts() {
                 </div>
                 <div className="col-span-2 space-y-2">
                   <label className="block text-sm text-gray-400 mb-1">Phone</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Primary phone"
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                  />
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        setFormData({ ...formData, phone: e.target.value });
+                        if (validationErrors.phone) validateField('phone', e.target.value);
+                      }}
+                      onBlur={(e) => validateField('phone', e.target.value)}
+                      placeholder="Primary phone"
+                      className={`w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-600 focus:outline-none transition ${
+                        validationErrors.phone
+                          ? 'border-red-500/50 focus:border-red-500'
+                          : 'border-white/10 focus:border-cyan-500/50'
+                      }`}
+                    />
+                    {validationErrors.phone && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  {validationErrors.phone && (
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validationErrors.phone}
+                    </p>
+                  )}
                   {additionalPhones.map((phone, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => {
-                          const updated = [...additionalPhones];
-                          updated[idx] = e.target.value;
-                          setAdditionalPhones(updated);
-                        }}
-                        placeholder="Additional phone"
-                        className="flex-1 px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setAdditionalPhones(additionalPhones.filter((_, i) => i !== idx))}
-                        className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div key={idx} className="space-y-1">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => {
+                              const updated = [...additionalPhones];
+                              updated[idx] = e.target.value;
+                              setAdditionalPhones(updated);
+                              if (validationErrors.additionalPhones?.[idx]) validateField('additionalPhone', e.target.value, idx);
+                            }}
+                            onBlur={(e) => validateField('additionalPhone', e.target.value, idx)}
+                            placeholder="Additional phone"
+                            className={`w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-600 focus:outline-none transition ${
+                              validationErrors.additionalPhones?.[idx]
+                                ? 'border-red-500/50 focus:border-red-500'
+                                : 'border-white/10 focus:border-cyan-500/50'
+                            }`}
+                          />
+                          {validationErrors.additionalPhones?.[idx] && (
+                            <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAdditionalPhones(additionalPhones.filter((_, i) => i !== idx))}
+                          className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {validationErrors.additionalPhones?.[idx] && (
+                        <p className="text-xs text-red-400 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {validationErrors.additionalPhones[idx]}
+                        </p>
+                      )}
                     </div>
                   ))}
                   <button
@@ -1243,33 +1456,90 @@ export default function Contacts() {
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Website</label>
-                  <input
-                    type="url"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                  />
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={formData.website}
+                      onChange={(e) => {
+                        setFormData({ ...formData, website: e.target.value });
+                        if (validationErrors.website) validateField('website', e.target.value);
+                      }}
+                      onBlur={(e) => validateField('website', e.target.value)}
+                      placeholder="https://..."
+                      className={`w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-600 focus:outline-none transition ${
+                        validationErrors.website
+                          ? 'border-red-500/50 focus:border-red-500'
+                          : 'border-white/10 focus:border-cyan-500/50'
+                      }`}
+                    />
+                    {validationErrors.website && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  {validationErrors.website && (
+                    <p className="text-xs text-red-400 flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validationErrors.website}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">LinkedIn URL</label>
-                  <input
-                    type="url"
-                    value={formData.linkedin_url}
-                    onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
-                    placeholder="https://linkedin.com/in/..."
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                  />
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={formData.linkedin_url}
+                      onChange={(e) => {
+                        setFormData({ ...formData, linkedin_url: e.target.value });
+                        if (validationErrors.linkedin_url) validateField('linkedin_url', e.target.value);
+                      }}
+                      onBlur={(e) => validateField('linkedin_url', e.target.value)}
+                      placeholder="https://linkedin.com/in/..."
+                      className={`w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-600 focus:outline-none transition ${
+                        validationErrors.linkedin_url
+                          ? 'border-red-500/50 focus:border-red-500'
+                          : 'border-white/10 focus:border-cyan-500/50'
+                      }`}
+                    />
+                    {validationErrors.linkedin_url && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  {validationErrors.linkedin_url && (
+                    <p className="text-xs text-red-400 flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validationErrors.linkedin_url}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Twitter/X Handle</label>
-                  <input
-                    type="text"
-                    value={formData.twitter_handle}
-                    onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
-                    placeholder="@username"
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.twitter_handle}
+                      onChange={(e) => {
+                        setFormData({ ...formData, twitter_handle: e.target.value });
+                        if (validationErrors.twitter_handle) validateField('twitter_handle', e.target.value);
+                      }}
+                      onBlur={(e) => validateField('twitter_handle', e.target.value)}
+                      placeholder="@username"
+                      className={`w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-600 focus:outline-none transition ${
+                        validationErrors.twitter_handle
+                          ? 'border-red-500/50 focus:border-red-500'
+                          : 'border-white/10 focus:border-cyan-500/50'
+                      }`}
+                    />
+                    {validationErrors.twitter_handle && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  {validationErrors.twitter_handle && (
+                    <p className="text-xs text-red-400 flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validationErrors.twitter_handle}
+                    </p>
+                  )}
                 </div>
 
                 {/* Location Section */}

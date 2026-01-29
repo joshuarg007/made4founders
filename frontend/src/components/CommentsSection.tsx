@@ -142,7 +142,8 @@ export default function CommentsSection({
       } else if (e.key === 'Escape') {
         setShowMentions(false);
       }
-    } else if (e.key === 'Enter' && e.metaKey) {
+    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
       handleSubmit();
     }
   };
@@ -307,7 +308,7 @@ export default function CommentsSection({
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       {showMenu === comment.id && (
-                        <div className="absolute right-0 top-6 z-10 bg-gray-800 border border-white/10 rounded-lg shadow-xl py-1 min-w-[100px]">
+                        <div className="absolute right-0 top-6 z-50 bg-gray-800 border border-white/10 rounded-lg shadow-xl py-1 min-w-[100px]">
                           <button
                             onClick={() => startEdit(comment)}
                             className="w-full px-3 py-1.5 text-left text-sm text-gray-300 hover:bg-[#1a1d24]/10 flex items-center gap-2"
@@ -401,7 +402,7 @@ export default function CommentsSection({
           )}
         </div>
         <p className="mt-1 text-xs text-gray-500">
-          Press <kbd className="px-1 py-0.5 bg-[#1a1d24]/10 rounded text-gray-400">Cmd+Enter</kbd> to send
+          Press <kbd className="px-1 py-0.5 bg-[#1a1d24]/10 rounded text-gray-400">{navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter</kbd> to send
         </p>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { getGoogleLoginUrl, getGitHubLoginUrl, getLinkedInLoginUrl, getTwitterLoginUrl } from '../lib/api';
+import { validators, validationMessages } from '../lib/validation';
 
 // SVG Icons for OAuth providers
 const GoogleIcon = () => (
@@ -49,8 +50,18 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | 'linkedin' | 'twitter' | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const { login, register } = useAuth();
+
+  const validateEmail = (value: string): boolean => {
+    if (!value || !validators.email(value)) {
+      setEmailError(validationMessages.email);
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  };
   const navigate = useNavigate();
 
   // Always redirect to dashboard after login
@@ -89,6 +100,12 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate email before submitting
+    if (!validateEmail(email)) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -161,17 +178,36 @@ export default function Login() {
 
           <div>
             <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition"
-              placeholder="you@company.com"
-            />
+            <div className="relative">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) validateEmail(e.target.value);
+                }}
+                onBlur={(e) => e.target.value && validateEmail(e.target.value)}
+                required
+                className={`w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border text-white placeholder-gray-500 focus:outline-none transition ${
+                  emailError
+                    ? 'border-red-500/50 focus:border-red-500'
+                    : 'border-white/10 focus:border-cyan-500/50'
+                }`}
+                placeholder="you@company.com"
+              />
+              {emailError && (
+                <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+              )}
+            </div>
+            {emailError && (
+              <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {emailError}
+              </p>
+            )}
           </div>
 
           <div>
