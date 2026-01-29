@@ -2118,18 +2118,18 @@ class AuditLog(Base):
 
 
 # ============================================================================
-# PLAID INTEGRATION MODELS
+# TELLER INTEGRATION MODELS (Bank data via Teller API)
 # ============================================================================
 
-class PlaidItem(Base):
-    """Plaid Item - represents a connection to a financial institution via Plaid."""
-    __tablename__ = "plaid_items"
+class TellerEnrollment(Base):
+    """Teller Enrollment - represents a connection to a financial institution via Teller."""
+    __tablename__ = "teller_enrollments"
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
 
-    # Plaid identifiers
-    item_id = Column(String(100), unique=True, nullable=False, index=True)
+    # Teller identifiers
+    enrollment_id = Column(String(100), unique=True, nullable=False, index=True)
     access_token = Column(String(255), nullable=False)  # Encrypted in production
 
     # Institution info
@@ -2137,32 +2137,30 @@ class PlaidItem(Base):
     institution_name = Column(String(255), nullable=True)
 
     # Sync state
-    cursor = Column(String(255), nullable=True)  # For transactions sync
     last_sync_at = Column(DateTime, nullable=True)
     sync_status = Column(String(50), default="pending")  # pending, syncing, synced, error
     sync_error = Column(Text, nullable=True)
 
     # Status
     is_active = Column(Boolean, default=True)
-    consent_expires_at = Column(DateTime, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    organization = relationship("Organization", backref="plaid_items")
-    accounts = relationship("PlaidAccount", back_populates="plaid_item", cascade="all, delete-orphan")
+    organization = relationship("Organization", backref="teller_enrollments")
+    accounts = relationship("TellerAccount", back_populates="teller_enrollment", cascade="all, delete-orphan")
 
 
-class PlaidAccount(Base):
-    """Plaid Account - individual bank account linked via Plaid."""
-    __tablename__ = "plaid_accounts"
+class TellerAccount(Base):
+    """Teller Account - individual bank account linked via Teller."""
+    __tablename__ = "teller_accounts"
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    plaid_item_id = Column(Integer, ForeignKey("plaid_items.id", ondelete="CASCADE"), nullable=False)
+    teller_enrollment_id = Column(Integer, ForeignKey("teller_enrollments.id", ondelete="CASCADE"), nullable=False)
 
-    # Plaid identifiers
+    # Teller identifiers
     account_id = Column(String(100), unique=True, nullable=False, index=True)
 
     # Account info
@@ -2185,20 +2183,20 @@ class PlaidAccount(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    organization = relationship("Organization", backref="plaid_accounts")
-    plaid_item = relationship("PlaidItem", back_populates="accounts")
-    transactions = relationship("PlaidTransaction", back_populates="account", cascade="all, delete-orphan")
+    organization = relationship("Organization", backref="teller_accounts")
+    teller_enrollment = relationship("TellerEnrollment", back_populates="accounts")
+    transactions = relationship("TellerTransaction", back_populates="account", cascade="all, delete-orphan")
 
 
-class PlaidTransaction(Base):
-    """Plaid Transaction - synced from bank via Plaid."""
-    __tablename__ = "plaid_transactions"
+class TellerTransaction(Base):
+    """Teller Transaction - synced from bank via Teller."""
+    __tablename__ = "teller_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    plaid_account_id = Column(Integer, ForeignKey("plaid_accounts.id", ondelete="CASCADE"), nullable=False)
+    teller_account_id = Column(Integer, ForeignKey("teller_accounts.id", ondelete="CASCADE"), nullable=False)
 
-    # Plaid identifiers
+    # Teller identifiers
     transaction_id = Column(String(100), unique=True, nullable=False, index=True)
 
     # Transaction details
@@ -2212,9 +2210,9 @@ class PlaidTransaction(Base):
     merchant_name = Column(String(255), nullable=True)
 
     # Categorization
-    category = Column(String(255), nullable=True)  # Primary category
+    category = Column(String(255), nullable=True)  # Mapped category
     category_detailed = Column(String(255), nullable=True)  # Detailed category
-    personal_finance_category = Column(String(100), nullable=True)  # Plaid's PFC
+    personal_finance_category = Column(String(100), nullable=True)  # Teller's raw category
 
     # Status
     pending = Column(Boolean, default=False)
@@ -2232,8 +2230,8 @@ class PlaidTransaction(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    organization = relationship("Organization", backref="plaid_transactions")
-    account = relationship("PlaidAccount", back_populates="transactions")
+    organization = relationship("Organization", backref="teller_transactions")
+    account = relationship("TellerAccount", back_populates="transactions")
 
 
 # ============================================================================

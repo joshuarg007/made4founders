@@ -2,9 +2,9 @@
 Budget API - Budget vs Actuals tracking.
 
 Features:
-- Budget categories with Plaid mapping
+- Budget categories with Teller mapping
 - Budget periods (monthly, quarterly, annual)
-- Automatic actual calculation from Plaid transactions
+- Automatic actual calculation from Teller transactions
 - Variance reporting and forecasting
 """
 
@@ -17,7 +17,7 @@ from sqlalchemy import func
 
 from .database import get_db
 from .auth import get_current_user
-from .models import User, BudgetCategory, BudgetPeriod, BudgetLineItem, PlaidTransaction
+from .models import User, BudgetCategory, BudgetPeriod, BudgetLineItem, TellerTransaction
 from .schemas import (
     BudgetCategoryCreate, BudgetCategoryUpdate, BudgetCategoryResponse,
     BudgetLineItemCreate, BudgetLineItemUpdate, BudgetLineItemResponse,
@@ -664,13 +664,13 @@ def delete_line_item(
 # VARIANCE & REPORTING
 # ============================================
 
-def categorize_transaction(transaction: PlaidTransaction, categories: List[BudgetCategory]) -> Optional[int]:
+def categorize_transaction(transaction: TellerTransaction, categories: List[BudgetCategory]) -> Optional[int]:
     """Match a transaction to a budget category."""
     tx_category = transaction.personal_finance_category or transaction.category or ""
     tx_name = (transaction.merchant_name or transaction.name or "").lower()
 
     for cat in categories:
-        # Check Plaid category match
+        # Check category match (from bank provider)
         if cat.plaid_categories:
             plaid_cats = json.loads(cat.plaid_categories) if isinstance(cat.plaid_categories, str) else cat.plaid_categories
             for pc in plaid_cats:
@@ -695,7 +695,7 @@ def calculate_actuals(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Calculate actual spending from Plaid transactions for a budget period."""
+    """Calculate actual spending from Teller transactions for a budget period."""
     period = db.query(BudgetPeriod).filter(
         BudgetPeriod.id == period_id,
         BudgetPeriod.organization_id == current_user.organization_id
@@ -711,12 +711,12 @@ def calculate_actuals(
     ).all()
 
     # Get transactions for the period
-    transactions = db.query(PlaidTransaction).filter(
-        PlaidTransaction.organization_id == current_user.organization_id,
-        PlaidTransaction.date >= period.start_date,
-        PlaidTransaction.date <= period.end_date,
-        PlaidTransaction.is_excluded == False,
-        PlaidTransaction.amount > 0  # Only expenses (positive amounts in Plaid are debits)
+    transactions = db.query(TellerTransaction).filter(
+        TellerTransaction.organization_id == current_user.organization_id,
+        TellerTransaction.date >= period.start_date,
+        TellerTransaction.date <= period.end_date,
+        TellerTransaction.is_excluded == False,
+        TellerTransaction.amount > 0  # Only expenses (positive amounts are debits)
     ).all()
 
     # Categorize and sum

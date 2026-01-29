@@ -14,17 +14,17 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import PlaidLinkButton from '../components/PlaidLink';
+import TellerConnectButton from '../components/TellerConnect';
 import {
-  getPlaidItems,
+  getTellerItems,
   getCashPosition,
   getRunwayData,
-  getPlaidTransactions,
+  getTellerTransactions,
   getTransactionSummary,
-  syncPlaidItem,
-  disconnectPlaidItem,
-  type PlaidItem,
-  type PlaidTransaction,
+  syncTellerItem,
+  disconnectTellerItem,
+  type TellerEnrollment,
+  type TellerTransaction,
   type CashPosition,
   type RunwayData,
   type TransactionSummary,
@@ -66,10 +66,10 @@ function getTrendIcon(trend: string) {
 }
 
 export default function FinancialDashboard() {
-  const [items, setItems] = useState<PlaidItem[]>([]);
+  const [items, setItems] = useState<TellerEnrollment[]>([]);
   const [cashPosition, setCashPosition] = useState<CashPosition | null>(null);
   const [runway, setRunway] = useState<RunwayData | null>(null);
-  const [transactions, setTransactions] = useState<PlaidTransaction[]>([]);
+  const [transactions, setTransactions] = useState<TellerTransaction[]>([]);
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<number | null>(null);
@@ -81,10 +81,10 @@ export default function FinancialDashboard() {
       setError(null);
 
       const [itemsData, cashData, runwayData, txnData, summaryData] = await Promise.all([
-        getPlaidItems(),
+        getTellerItems(),
         getCashPosition(),
         getRunwayData(3),
-        getPlaidTransactions({ days: 30, limit: 20 }),
+        getTellerTransactions({ days: 30, limit: 20 }),
         getTransactionSummary(30),
       ]);
 
@@ -108,7 +108,7 @@ export default function FinancialDashboard() {
   const handleSync = async (itemId: number) => {
     setSyncing(itemId);
     try {
-      await syncPlaidItem(itemId);
+      await syncTellerItem(itemId);
       // Wait a bit for sync to complete
       setTimeout(() => {
         loadData();
@@ -126,7 +126,7 @@ export default function FinancialDashboard() {
     }
 
     try {
-      await disconnectPlaidItem(itemId);
+      await disconnectTellerItem(itemId);
       loadData();
     } catch (err) {
       console.error('Disconnect failed:', err);
@@ -159,10 +159,10 @@ export default function FinancialDashboard() {
             <RefreshCw className="w-4 h-4" />
             Refresh
           </button>
-          <PlaidLinkButton onSuccess={loadData}>
+          <TellerConnectButton onSuccess={loadData}>
             <Building2 className="w-5 h-5" />
             <span>Link Bank</span>
-          </PlaidLinkButton>
+          </TellerConnectButton>
         </div>
       </div>
 
@@ -183,9 +183,9 @@ export default function FinancialDashboard() {
             Link your bank accounts to see real-time cash position, calculate runway,
             and automatically track expenses.
           </p>
-          <PlaidLinkButton onSuccess={loadData} className="mx-auto" />
+          <TellerConnectButton onSuccess={loadData} className="mx-auto" />
           <p className="mt-4 text-sm text-gray-500">
-            Secured by Plaid. Bank-level encryption.
+            Secured by Teller. Bank-level encryption.
           </p>
         </div>
       ) : (
@@ -278,10 +278,10 @@ export default function FinancialDashboard() {
               <div className="bg-[#1a1d24] rounded-xl border border-white/10">
                 <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
                   <h2 className="font-semibold text-white">Linked Accounts</h2>
-                  <PlaidLinkButton onSuccess={loadData} className="text-sm py-1.5 px-3">
+                  <TellerConnectButton onSuccess={loadData} className="text-sm py-1.5 px-3">
                     <Building2 className="w-4 h-4" />
                     <span>Add</span>
-                  </PlaidLinkButton>
+                  </TellerConnectButton>
                 </div>
                 <div className="divide-y divide-white/5">
                   {items.map((item) => (

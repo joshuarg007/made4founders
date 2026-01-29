@@ -295,13 +295,13 @@ def get_metric_with_trend(db: Session, org_id: int, metric_type: str, days_back:
 
 def get_period_transactions(db: Session, org_id: int, days: int = 30) -> Dict[str, float]:
     """Get transaction totals for a period."""
-    from ..models import PlaidTransaction
+    from ..models import TellerTransaction
 
     start_date = (datetime.utcnow() - timedelta(days=days)).date()
 
-    transactions = db.query(PlaidTransaction).filter(
-        PlaidTransaction.organization_id == org_id,
-        PlaidTransaction.date >= start_date
+    transactions = db.query(TellerTransaction).filter(
+        TellerTransaction.organization_id == org_id,
+        TellerTransaction.date >= start_date
     ).all()
 
     expenses = sum(t.amount for t in transactions if t.amount > 0)
@@ -431,7 +431,7 @@ def handle_help(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 • Compare periods: "Compare to last month"
 • Get specific: "What's my biggest expense?"
 
-I pull real data from your connected integrations. Connect Plaid, Stripe, and others in Settings → Integrations for the most accurate insights.""",
+I pull real data from your connected integrations. Connect Teller, Stripe, and others in Settings → Integrations for the most accurate insights.""",
         "data_cards": [],
         "suggested_actions": [
             {"label": "Connect Integrations", "action": "navigate", "target": "/app/integrations"},
@@ -445,15 +445,15 @@ I pull real data from your connected integrations. Connect Plaid, Stripe, and ot
 
 def handle_runway(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle runway and cash position questions with trend analysis."""
-    from ..models import PlaidAccount, PlaidTransaction, Metric
+    from ..models import TellerAccount, TellerTransaction, Metric
 
     # Get cash from connected accounts
-    accounts = db.query(PlaidAccount).filter(
-        PlaidAccount.organization_id == org_id,
-        PlaidAccount.account_type.in_(['depository', 'checking', 'savings'])
+    accounts = db.query(TellerAccount).filter(
+        TellerAccount.organization_id == org_id,
+        TellerAccount.account_type.in_(['depository', 'checking', 'savings'])
     ).all()
 
-    total_cash = sum(acc.current_balance or 0 for acc in accounts)
+    total_cash = sum(acc.balance_current or 0 for acc in accounts)
 
     # Get burn rate for current and previous period
     current_period = get_period_transactions(db, org_id, 30)
@@ -470,7 +470,7 @@ def handle_runway(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     runway_metric = get_metric_with_trend(db, org_id, "runway")
     cash_metric = get_metric_with_trend(db, org_id, "cash")
 
-    # Use manual metrics if no Plaid data
+    # Use manual metrics if no Teller data
     if total_cash == 0 and cash_metric["current"]:
         total_cash = cash_metric["current"]
 
@@ -539,7 +539,7 @@ I don't have enough transaction history to calculate your burn rate yet.
 
 • **Runway:** {runway_metric['current']:.1f} months
 
-For automatic tracking, connect your bank account via Plaid."""
+For automatic tracking, connect your bank account via Teller."""
 
         data_cards = [
             {"type": "metric", "title": "Runway", "value": f"{runway_metric['current']:.1f} mo", "trend": runway_metric["trend"]},
@@ -551,7 +551,7 @@ For automatic tracking, connect your bank account via Plaid."""
 I don't have cash or transaction data to calculate your runway.
 
 **Get started:**
-1. **Connect your bank** → Settings → Integrations → Plaid
+1. **Connect your bank** → Settings → Integrations → Teller
 2. **Or** manually add "cash" and "burn_rate" metrics
 
 Once connected, I'll automatically track your runway and alert you to any concerns."""
@@ -571,19 +571,19 @@ Once connected, I'll automatically track your runway and alert you to any concer
 
 def handle_cash_position(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle cash position / bank balance questions."""
-    from ..models import PlaidAccount
+    from ..models import TellerAccount
 
-    accounts = db.query(PlaidAccount).filter(
-        PlaidAccount.organization_id == org_id
+    accounts = db.query(TellerAccount).filter(
+        TellerAccount.organization_id == org_id
     ).all()
 
     if accounts:
-        checking = sum(a.current_balance or 0 for a in accounts if a.account_type in ['checking', 'depository'])
-        savings = sum(a.current_balance or 0 for a in accounts if a.account_type == 'savings')
+        checking = sum(a.balance_current or 0 for a in accounts if a.account_type in ['checking', 'depository'])
+        savings = sum(a.balance_current or 0 for a in accounts if a.account_type == 'savings')
         total = checking + savings
 
         account_list = "\n".join([
-            f"• **{a.name}** ({a.account_type}): {format_currency(a.current_balance or 0)}"
+            f"• **{a.name}** ({a.account_type}): {format_currency(a.balance_current or 0)}"
             for a in accounts[:5]
         ])
 
@@ -604,7 +604,7 @@ def handle_cash_position(db: Session, org_id: int, message: str) -> Dict[str, An
     else:
         response = """**No Bank Accounts Connected** 🏦
 
-Connect your bank via Plaid to see real-time balances and automatic cash tracking.
+Connect your bank via Teller to see real-time balances and automatic cash tracking.
 
 Go to **Settings → Integrations → Connect Bank Account**"""
         data_cards = []
@@ -622,7 +622,7 @@ Go to **Settings → Integrations → Connect Bank Account**"""
 
 def handle_burn_rate(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle burn rate questions with trend analysis."""
-    from ..models import PlaidTransaction, Metric
+    from ..models import TellerTransaction, Metric
 
     current = get_period_transactions(db, org_id, 30)
     previous = get_period_transactions(db, org_id, 60)
@@ -674,7 +674,7 @@ def handle_burn_rate(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 • Monthly Burn: **{format_currency(burn_metric['current'])}**
 • Trend: {burn_metric['emoji']} {burn_metric['change']} vs previous
 
-Connect your bank via Plaid for automatic, detailed tracking."""
+Connect your bank via Teller for automatic, detailed tracking."""
             data_cards = [{"type": "metric", "title": "Burn Rate", "value": format_currency(burn_metric['current']), "trend": burn_metric["trend"]}]
         else:
             response = """**No Burn Rate Data** 📭
@@ -682,7 +682,7 @@ Connect your bank via Plaid for automatic, detailed tracking."""
 I need transaction data to calculate your burn rate.
 
 **Options:**
-1. Connect your bank via **Plaid** for automatic tracking
+1. Connect your bank via **Teller** for automatic tracking
 2. Add a "burn_rate" metric manually in **Insights**"""
             data_cards = []
 
@@ -700,14 +700,14 @@ I need transaction data to calculate your burn rate.
 
 def handle_expenses_breakdown(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle expense breakdown questions."""
-    from ..models import PlaidTransaction
+    from ..models import TellerTransaction
 
     thirty_days_ago = (datetime.utcnow() - timedelta(days=30)).date()
 
-    transactions = db.query(PlaidTransaction).filter(
-        PlaidTransaction.organization_id == org_id,
-        PlaidTransaction.date >= thirty_days_ago,
-        PlaidTransaction.amount > 0  # Expenses only
+    transactions = db.query(TellerTransaction).filter(
+        TellerTransaction.organization_id == org_id,
+        TellerTransaction.date >= thirty_days_ago,
+        TellerTransaction.amount > 0  # Expenses only
     ).all()
 
     if transactions:
@@ -746,7 +746,7 @@ def handle_expenses_breakdown(db: Session, org_id: int, message: str) -> Dict[st
     else:
         response = """**No Expense Data** 📭
 
-Connect your bank via Plaid to see expense breakdowns by category."""
+Connect your bank via Teller to see expense breakdowns by category."""
         data_cards = []
 
     return {
@@ -1705,11 +1705,11 @@ def handle_work_overview(db: Session, org_id: int, message: str) -> Dict[str, An
 
 def handle_overview(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle overview/dashboard questions."""
-    from ..models import PlaidAccount, Metric, Deadline, StripeSubscriptionSync
+    from ..models import TellerAccount, Metric, Deadline, StripeSubscriptionSync
 
     # Gather all key metrics
-    accounts = db.query(PlaidAccount).filter(PlaidAccount.organization_id == org_id).all()
-    cash = sum(acc.current_balance or 0 for acc in accounts if acc.account_type in ['depository', 'checking', 'savings'])
+    accounts = db.query(TellerAccount).filter(TellerAccount.organization_id == org_id).all()
+    cash = sum(acc.balance_current or 0 for acc in accounts if acc.account_type in ['depository', 'checking', 'savings'])
 
     mrr_data = get_metric_with_trend(db, org_id, "mrr")
     burn_period = get_period_transactions(db, org_id, 30)
@@ -1785,7 +1785,7 @@ def handle_overview(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 
     if len(parts) == 1:
         parts.append("Connect your integrations to see your business overview!\n")
-        parts.append("Go to **Settings → Integrations** to connect:\n• Plaid (banking)\n• Stripe (revenue)")
+        parts.append("Go to **Settings → Integrations** to connect:\n• Teller (banking)\n• Stripe (revenue)")
 
     return {
         "response": "\n".join(parts),
@@ -1895,7 +1895,7 @@ def handle_profitability(db: Session, org_id: int, message: str) -> Dict[str, An
 
 {status}"""
     else:
-        response = "I need revenue and expense data to analyze profitability. Connect Plaid and Stripe, or add metrics."
+        response = "I need revenue and expense data to analyze profitability. Connect Teller and Stripe, or add metrics."
 
     return {
         "response": response,
@@ -2240,7 +2240,7 @@ Deadlines sync to your calendar if connected.""",
             "target": "/app/team"
         },
         # Integrations
-        ("integrate", "integration", "connect", "plaid", "stripe", "calendar"): {
+        ("integrate", "integration", "connect", "teller", "stripe", "calendar"): {
             "response": """**How to Connect Integrations** 🔗
 
 1. Go to **Settings** → **Integrations**
@@ -2248,7 +2248,7 @@ Deadlines sync to your calendar if connected.""",
 3. Click **"Connect"** and authorize access
 
 Available integrations:
-• **Plaid** - Bank accounts & transactions
+• **Teller** - Bank accounts & transactions
 • **Stripe** - Revenue & subscriptions
 • **Google Calendar** - Sync deadlines
 • **Slack** - Notifications""",

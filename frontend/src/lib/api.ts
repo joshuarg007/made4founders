@@ -1926,14 +1926,9 @@ export const exportMetricsCsv = () =>
   downloadFile('/export/metrics', `metrics_${new Date().toISOString().slice(0, 10)}.csv`);
 
 
-// =============== Plaid Integration ===============
+// =============== Teller Integration (Banking) ===============
 
-export interface PlaidLinkToken {
-  link_token: string;
-  expiration: string;
-}
-
-export interface PlaidAccount {
+export interface TellerAccount {
   id: number;
   account_id: string;
   name: string | null;
@@ -1950,18 +1945,18 @@ export interface PlaidAccount {
   last_sync_at: string | null;
 }
 
-export interface PlaidItem {
+export interface TellerEnrollment {
   id: number;
-  item_id: string;
+  enrollment_id: string;
   institution_id: string | null;
   institution_name: string | null;
   sync_status: string;
   last_sync_at: string | null;
   is_active: boolean;
-  accounts: PlaidAccount[];
+  accounts: TellerAccount[];
 }
 
-export interface PlaidTransaction {
+export interface TellerTransaction {
   id: number;
   transaction_id: string;
   amount: number;
@@ -1982,7 +1977,7 @@ export interface CashPosition {
   total_cash: number;
   total_credit_available: number;
   total_credit_used: number;
-  accounts: PlaidAccount[];
+  accounts: TellerAccount[];
   last_updated: string | null;
 }
 
@@ -2004,45 +1999,44 @@ export interface TransactionSummary {
   period_end: string;
 }
 
-// Plaid API functions
-export interface PlaidStatus {
+// Teller API functions
+export interface TellerStatus {
   configured: boolean;
   environment: string | null;
+  application_id: string | null;
   message: string;
 }
 
-export const getPlaidStatus = () =>
-  fetchApi<PlaidStatus>('/plaid/status');
+export const getTellerStatus = () =>
+  fetchApi<TellerStatus>('/teller/status');
 
-export const createPlaidLinkToken = () =>
-  fetchApi<PlaidLinkToken>('/plaid/link-token', { method: 'POST' });
-
-export const exchangePlaidPublicToken = (data: {
-  public_token: string;
+export const createTellerEnrollment = (data: {
+  access_token: string;
+  enrollment_id: string;
   institution_id?: string;
   institution_name?: string;
 }) =>
-  fetchApi<{ status: string; item_id: number }>('/plaid/exchange-token', {
+  fetchApi<{ status: string; enrollment_id: number }>('/teller/enrollment', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 
-export const getPlaidItems = () =>
-  fetchApi<PlaidItem[]>('/plaid/items');
+export const getTellerItems = () =>
+  fetchApi<TellerEnrollment[]>('/teller/items');
 
-export const disconnectPlaidItem = (itemId: number) =>
-  fetchApi<{ status: string }>(`/plaid/items/${itemId}`, { method: 'DELETE' });
+export const disconnectTellerItem = (itemId: number) =>
+  fetchApi<{ status: string }>(`/teller/items/${itemId}`, { method: 'DELETE' });
 
-export const syncPlaidItem = (itemId: number) =>
-  fetchApi<{ status: string }>(`/plaid/sync/${itemId}`, { method: 'POST' });
+export const syncTellerItem = (itemId: number) =>
+  fetchApi<{ status: string }>(`/teller/sync/${itemId}`, { method: 'POST' });
 
-export const getPlaidAccounts = () =>
-  fetchApi<PlaidAccount[]>('/plaid/accounts');
+export const getTellerAccounts = () =>
+  fetchApi<TellerAccount[]>('/teller/accounts');
 
 export const getCashPosition = () =>
-  fetchApi<CashPosition>('/plaid/cash-position');
+  fetchApi<CashPosition>('/teller/cash-position');
 
-export const getPlaidTransactions = (params?: {
+export const getTellerTransactions = (params?: {
   days?: number;
   account_id?: number;
   category?: string;
@@ -2056,24 +2050,47 @@ export const getPlaidTransactions = (params?: {
   if (params?.limit) searchParams.set('limit', params.limit.toString());
   if (params?.offset) searchParams.set('offset', params.offset.toString());
   const query = searchParams.toString();
-  return fetchApi<PlaidTransaction[]>(`/plaid/transactions${query ? `?${query}` : ''}`);
+  return fetchApi<TellerTransaction[]>(`/teller/transactions${query ? `?${query}` : ''}`);
 };
 
 export const getRunwayData = (months?: number) =>
-  fetchApi<RunwayData>(`/plaid/runway${months ? `?months=${months}` : ''}`);
+  fetchApi<RunwayData>(`/teller/runway${months ? `?months=${months}` : ''}`);
 
 export const getTransactionSummary = (days?: number) =>
-  fetchApi<TransactionSummary>(`/plaid/summary${days ? `?days=${days}` : ''}`);
+  fetchApi<TransactionSummary>(`/teller/summary${days ? `?days=${days}` : ''}`);
 
-export const updatePlaidTransaction = (transactionId: number, data: {
+export const updateTellerTransaction = (transactionId: number, data: {
   custom_category?: string;
   notes?: string;
   is_excluded?: boolean;
 }) =>
-  fetchApi<{ status: string }>(`/plaid/transactions/${transactionId}`, {
+  fetchApi<{ status: string }>(`/teller/transactions/${transactionId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+
+// Backwards compatibility aliases (deprecated - use Teller* versions)
+export type PlaidAccount = TellerAccount;
+export type PlaidItem = TellerEnrollment;
+export type PlaidTransaction = TellerTransaction;
+export const getPlaidItems = getTellerItems;
+export const disconnectPlaidItem = disconnectTellerItem;
+export const syncPlaidItem = syncTellerItem;
+export const getPlaidTransactions = getTellerTransactions;
+
+// Deprecated Plaid functions (now using Teller)
+export const getPlaidStatus = async () => {
+  console.warn('getPlaidStatus is deprecated. Plaid has been replaced with Teller.');
+  return { configured: false };
+};
+export const createPlaidLinkToken = async () => {
+  console.warn('createPlaidLinkToken is deprecated. Plaid has been replaced with Teller.');
+  return { link_token: null };
+};
+export const exchangePlaidPublicToken = async (_data: { public_token: string; institution_id?: string; institution_name?: string }) => {
+  console.warn('exchangePlaidPublicToken is deprecated. Plaid has been replaced with Teller.');
+  return { success: false };
+};
 
 
 // =============== Stripe Revenue Integration ===============

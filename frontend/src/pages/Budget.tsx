@@ -584,7 +584,7 @@ export default function Budget() {
               <thead>
                 <tr className="border-b border-white/10">
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-400 uppercase">Category</th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-400 uppercase">Plaid Categories</th>
+                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-400 uppercase">Bank Categories</th>
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-400 uppercase">Keywords</th>
                 </tr>
               </thead>

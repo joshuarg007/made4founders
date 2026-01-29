@@ -33,7 +33,7 @@ from .models import (
     EmailAnalytics, SocialAnalytics, EmailIntegration, OAuthConnection, DocumentTemplate,
     AccountingConnection, ZoomConnection, Business, Quest, BusinessQuest, Achievement, BusinessAchievement,
     Challenge, ChallengeParticipant, Marketplace, ContactSubmission, Meeting, MeetingTranscript,
-    AuditLog, PlaidItem, PlaidAccount, PlaidTransaction,
+    AuditLog, TellerEnrollment, TellerAccount, TellerTransaction,
     StripeConnection, StripeCustomerSync, StripeSubscriptionSync,
     GoogleCalendarConnection, SlackConnection,
     Shareholder, ShareClass, EquityGrant, StockOption, SafeNote, ConvertibleNote, FundingRound,
@@ -67,7 +67,7 @@ from .audit_logs import router as audit_logs_router
 from .data_export import router as data_export_router
 from .support import router as support_router
 from .analytics import router as analytics_router, AnalyticsEvent
-from .plaid_integration import router as plaid_router
+from .teller_integration import router as teller_router
 from .stripe_revenue import router as stripe_revenue_router
 from .google_calendar import router as google_calendar_router
 from .slack_integration import router as slack_router
@@ -437,7 +437,7 @@ app.include_router(audit_logs_router, prefix="/api/audit-logs", tags=["audit-log
 app.include_router(data_export_router, prefix="/api/export", tags=["export"])
 app.include_router(support_router, prefix="/api/support", tags=["support"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
-app.include_router(plaid_router)
+app.include_router(teller_router)
 app.include_router(stripe_revenue_router)
 app.include_router(google_calendar_router)
 app.include_router(slack_router)

@@ -18,7 +18,7 @@ import httpx
 from .database import get_db
 from .models import (
     User, SlackConnection, Deadline, Task, TaskBoard,
-    Metric, PlaidAccount, PlaidItem, StripeSubscriptionSync
+    Metric, TellerAccount, TellerEnrollment, StripeSubscriptionSync
 )
 from .auth import get_current_user
 
@@ -498,17 +498,17 @@ async def send_daily_digest(
             Task.status.in_(["todo", "in_progress"])
         ).limit(5).all()
 
-        # Get cash position if Plaid is connected
+        # Get cash position if Teller is connected
         cash_total = 0.0
-        plaid_accounts = db.query(PlaidAccount).join(PlaidItem).filter(
-            PlaidAccount.organization_id == org_id,
-            PlaidAccount.is_active == True,
-            PlaidItem.is_active == True,
-            PlaidAccount.account_type.in_(["depository", "investment"])
+        teller_accounts = db.query(TellerAccount).join(TellerEnrollment).filter(
+            TellerAccount.organization_id == org_id,
+            TellerAccount.is_active == True,
+            TellerEnrollment.is_active == True,
+            TellerAccount.account_type.in_(["depository", "investment"])
         ).all()
 
-        if plaid_accounts:
-            cash_total = sum(acc.balance_current or 0 for acc in plaid_accounts)
+        if teller_accounts:
+            cash_total = sum(acc.balance_current or 0 for acc in teller_accounts)
 
         # Get MRR if Stripe is connected
         mrr = 0.0

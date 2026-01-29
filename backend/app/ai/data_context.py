@@ -68,23 +68,23 @@ class DataContextBuilder:
 
     def _get_financial_context(self) -> Dict[str, Any]:
         """Get financial context (cash position, burn rate, runway)."""
-        from ..models import PlaidAccount, PlaidTransaction, Metric
+        from ..models import TellerAccount, TellerTransaction, Metric
 
-        # Get Plaid accounts
-        accounts = self.db.query(PlaidAccount).filter(
-            PlaidAccount.organization_id == self.organization_id
+        # Get Teller accounts
+        accounts = self.db.query(TellerAccount).filter(
+            TellerAccount.organization_id == self.organization_id
         ).all()
 
         total_cash = sum(
-            acc.current_balance or 0 for acc in accounts
+            acc.balance_current or 0 for acc in accounts
             if acc.account_type in ['depository', 'checking', 'savings']
         )
 
         # Get recent transactions for burn rate
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-        transactions = self.db.query(PlaidTransaction).filter(
-            PlaidTransaction.organization_id == self.organization_id,
-            PlaidTransaction.date >= thirty_days_ago.date()
+        transactions = self.db.query(TellerTransaction).filter(
+            TellerTransaction.organization_id == self.organization_id,
+            TellerTransaction.date >= thirty_days_ago.date()
         ).all()
 
         expenses = sum(t.amount for t in transactions if t.amount > 0)

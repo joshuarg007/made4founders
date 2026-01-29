@@ -48,6 +48,11 @@ services:
       - FRESHBOOKS_CLIENT_SECRET=${FRESHBOOKS_CLIENT_SECRET}
       - ZOHO_CLIENT_ID=${ZOHO_CLIENT_ID}
       - ZOHO_CLIENT_SECRET=${ZOHO_CLIENT_SECRET}
+      # LLM Providers
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LLM_PREFER_LOCAL=false
+      - LLM_ENABLE_FALLBACK=true
     volumes:
       - backend-data:/app/data
       - uploads-data:/app/uploads
