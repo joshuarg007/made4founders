@@ -309,23 +309,31 @@ function LayoutContent() {
                 {/* Section Items */}
                 {isExpanded && (
                   <div className="mt-1.5 ml-3 space-y-0.5 border-l-2 border-white/5 pl-3">
-                    {section.items.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        end={item.to === '/app'}
-                        className={({ isActive: itemActive }) =>
-                          `flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
-                            itemActive
+                    {section.items.map((item) => {
+                      // Custom isActive check that includes query params
+                      const currentPath = location.pathname + location.search;
+                      const itemPath = item.to;
+                      // For items without query params, check exact match or if it's the base path without any tab
+                      const isItemActive = itemPath.includes('?')
+                        ? currentPath === itemPath
+                        : currentPath === itemPath || (location.pathname === itemPath && !location.search);
+
+                      return (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          end={item.to === '/app'}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
+                            isItemActive
                               ? `${section.color.activeBg} ${section.color.text} font-medium`
                               : `text-gray-400 hover:bg-[#1a1d24]/5 ${section.color.hoverText}`
-                          }`
-                        }
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    ))}
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.label}</span>
+                        </NavLink>
+                      );
+                    })}
                   </div>
                 )}
               </div>
