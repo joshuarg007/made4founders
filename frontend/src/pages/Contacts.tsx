@@ -645,6 +645,8 @@ export default function Contacts() {
     linkedin_url?: string;
     twitter_handle?: string;
   }>({});
+  const [showValidationSummary, setShowValidationSummary] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Validate a specific field
   const validateField = (field: string, value: string, index?: number) => {
@@ -767,6 +769,25 @@ export default function Contacts() {
     return isValid;
   };
 
+  // Get list of validation errors for summary
+  const getValidationErrorList = (): string[] => {
+    const errorList: string[] = [];
+    if (validationErrors.email) errorList.push('Email address is invalid');
+    if (validationErrors.phone) errorList.push('Phone number is invalid (must be 10+ digits)');
+    if (validationErrors.website) errorList.push('Website URL is invalid');
+    if (validationErrors.linkedin_url) errorList.push('LinkedIn URL is invalid');
+    if (validationErrors.twitter_handle) errorList.push('Twitter handle is invalid');
+    if (validationErrors.additionalEmails) {
+      const count = Object.keys(validationErrors.additionalEmails).filter(k => validationErrors.additionalEmails![Number(k)]).length;
+      if (count > 0) errorList.push(`${count} additional email(s) invalid`);
+    }
+    if (validationErrors.additionalPhones) {
+      const count = Object.keys(validationErrors.additionalPhones).filter(k => validationErrors.additionalPhones![Number(k)]).length;
+      if (count > 0) errorList.push(`${count} additional phone(s) invalid`);
+    }
+    return errorList;
+  };
+
   // Title dropdown state
   const [showTitleDropdown, setShowTitleDropdown] = useState(false);
   const [titleSearch, setTitleSearch] = useState('');
@@ -854,8 +875,12 @@ export default function Contacts() {
 
     // Validate all fields before submitting
     if (!validateForm()) {
+      setShowValidationSummary(true);
+      // Scroll modal to top to show error summary
+      modalRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
+    setShowValidationSummary(false);
 
     try {
       // Build birthday from parts
@@ -948,6 +973,7 @@ export default function Contacts() {
     setAdditionalEmails(contact.additional_emails || []);
     setAdditionalPhones(contact.additional_phones || []);
     setValidationErrors({});
+    setShowValidationSummary(false);
     setShowResponsibilitiesDropdown(false);
     setResponsibilitySearch('');
     setShowTitleDropdown(false);
@@ -977,7 +1003,7 @@ export default function Contacts() {
           <p className="text-gray-400 mt-1">Your business rolodex</p>
         </div>
         <button
-          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' }); setAdditionalEmails([]); setAdditionalPhones([]); setValidationErrors({}); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
+          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' }); setAdditionalEmails([]); setAdditionalPhones([]); setValidationErrors({}); setShowValidationSummary(false); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
         >
           <Plus className="w-4 h-4" />
@@ -1177,7 +1203,7 @@ export default function Contacts() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div ref={modalRef} className="bg-[#1a1d24] rounded-xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingContact ? 'Edit Contact' : 'Add Contact'}
@@ -1186,6 +1212,24 @@ export default function Contacts() {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Validation Error Summary */}
+            {showValidationSummary && getValidationErrorList().length > 0 && (
+              <div className="mx-4 mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-400">Please fix the following errors:</p>
+                    <ul className="mt-1 text-sm text-red-300 list-disc list-inside">
+                      {getValidationErrorList().map((error, idx) => (
+                        <li key={idx}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
