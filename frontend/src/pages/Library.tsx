@@ -15,6 +15,10 @@ import {
   Hash,
   Lock,
 } from 'lucide-react';
+import CountrySelect from '../components/CountrySelect';
+import StateSelect from '../components/StateSelect';
+import AddressAutocomplete from '../components/AddressAutocomplete';
+import { getCountryByName } from '../lib/countries';
 
 const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
 
@@ -365,11 +369,11 @@ export default function Library() {
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Formation State</label>
-              <input
-                type="text"
+              <StateSelect
                 value={infoForm.formation_state || ''}
-                onChange={(e) => setInfoForm({ ...infoForm, formation_state: e.target.value })}
-                className="w-full px-3 py-2 bg-[#0f1117] border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50"
+                countryCode="US"
+                onChange={(_code, name) => setInfoForm({ ...infoForm, formation_state: name })}
+                placeholder="Select state..."
               />
             </div>
             <div>
@@ -392,14 +396,23 @@ export default function Library() {
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm text-gray-400 mb-1">Address</label>
-              <input
-                type="text"
+              <AddressAutocomplete
                 value={infoForm.address_line1 || ''}
-                onChange={(e) => setInfoForm({ ...infoForm, address_line1: e.target.value })}
-                placeholder="Street address"
-                className="w-full px-3 py-2 bg-[#0f1117] border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50 mb-2"
+                onChange={(value) => setInfoForm({ ...infoForm, address_line1: value })}
+                onAddressSelect={(parsed) => {
+                  setInfoForm({
+                    ...infoForm,
+                    address_line1: parsed.address,
+                    city: parsed.city,
+                    state: parsed.state,
+                    zip_code: parsed.postalCode,
+                    country: parsed.country,
+                  });
+                }}
+                placeholder="Start typing an address..."
+                className="mb-2"
               />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-2">
                 <input
                   type="text"
                   value={infoForm.city || ''}
@@ -409,17 +422,23 @@ export default function Library() {
                 />
                 <input
                   type="text"
-                  value={infoForm.state || ''}
-                  onChange={(e) => setInfoForm({ ...infoForm, state: e.target.value })}
-                  placeholder="State"
-                  className="w-full px-3 py-2 bg-[#0f1117] border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50"
-                />
-                <input
-                  type="text"
                   value={infoForm.zip_code || ''}
                   onChange={(e) => setInfoForm({ ...infoForm, zip_code: e.target.value })}
-                  placeholder="ZIP"
+                  placeholder="ZIP / Postal Code"
                   className="w-full px-3 py-2 bg-[#0f1117] border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <CountrySelect
+                  value={infoForm.country || 'United States'}
+                  onChange={(_code, name) => setInfoForm({ ...infoForm, country: name, state: '' })}
+                  placeholder="Select country..."
+                />
+                <StateSelect
+                  value={infoForm.state || ''}
+                  countryCode={getCountryByName(infoForm.country || 'United States')?.code || 'US'}
+                  onChange={(_code, name) => setInfoForm({ ...infoForm, state: name })}
+                  placeholder="State/Province"
                 />
               </div>
             </div>

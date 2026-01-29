@@ -1,5 +1,7 @@
 // Validation utilities for form fields
 
+import { getCountryByCode } from './countries';
+
 export const validators = {
   // Email validation - RFC 5322 compliant (simplified)
   email: (value: string): boolean => {
@@ -8,13 +10,50 @@ export const validators = {
     return emailRegex.test(value.trim());
   },
 
-  // Phone validation - allows various formats
-  phone: (value: string): boolean => {
+  // Phone validation - validates based on country if provided
+  phone: (value: string, countryCode?: string): boolean => {
     if (!value) return true;
-    // Remove all formatting characters
-    const cleaned = value.replace(/[\s\-().+]/g, '');
-    // Should be 7-15 digits
-    return /^\d{7,15}$/.test(cleaned);
+    // Remove all formatting characters except +
+    const cleaned = value.replace(/[\s\-().]/g, '');
+
+    // If country code is provided, use country-specific validation
+    if (countryCode) {
+      const country = getCountryByCode(countryCode);
+      if (country?.phoneFormat) {
+        const regex = new RegExp(country.phoneFormat);
+        return regex.test(cleaned);
+      }
+    }
+
+    // Generic international phone validation
+    // Must be 10-15 digits (E.164 format)
+    // Can optionally start with + and country code
+    const digitsOnly = cleaned.replace(/\D/g, '');
+
+    // Minimum 10 digits for a valid phone number (most countries)
+    // Maximum 15 digits (E.164 max)
+    if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+      return false;
+    }
+
+    // Basic format check: optional + followed by digits
+    return /^\+?\d{10,15}$/.test(cleaned);
+  },
+
+  // US/Canada (NANP) phone validation
+  phoneNANP: (value: string): boolean => {
+    if (!value) return true;
+    const cleaned = value.replace(/\D/g, '');
+    // NANP: 10 digits, area code can't start with 0 or 1
+    // Format: NXX-NXX-XXXX where N is 2-9 and X is 0-9
+    if (cleaned.length === 10) {
+      return /^[2-9]\d{2}[2-9]\d{6}$/.test(cleaned);
+    }
+    // With country code (1)
+    if (cleaned.length === 11 && cleaned.startsWith('1')) {
+      return /^1[2-9]\d{2}[2-9]\d{6}$/.test(cleaned);
+    }
+    return false;
   },
 
   // URL validation
@@ -109,7 +148,9 @@ export const validators = {
 // Error messages for validation
 export const validationMessages = {
   email: 'Please enter a valid email address',
-  phone: 'Please enter a valid phone number',
+  phone: 'Please enter a valid phone number (10-15 digits)',
+  phoneNANP: 'Please enter a valid US/Canada phone number (10 digits)',
+  phoneFormat: 'Phone number format is invalid for the selected country',
   url: 'Please enter a valid URL (e.g., https://example.com)',
   linkedinUrl: 'Please enter a valid LinkedIn URL',
   twitterHandle: 'Please enter a valid Twitter handle (1-15 characters, letters, numbers, underscores)',

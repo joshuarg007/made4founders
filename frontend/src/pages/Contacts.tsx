@@ -20,9 +20,13 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
+import CountrySelect from '../components/CountrySelect';
+import StateSelect from '../components/StateSelect';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 import { getContacts, createContact, updateContact, deleteContact, type Contact } from '../lib/api';
 import { format } from 'date-fns';
 import { validators, validationMessages } from '../lib/validation';
+import { getCountryByName } from '../lib/countries';
 
 // Job titles by contact type
 const titlesByType: Record<string, string[]> = {
@@ -655,8 +659,12 @@ export default function Contacts() {
         break;
       case 'phone':
       case 'additionalPhone':
-        if (value && !validators.phone(value)) {
-          error = validationMessages.phone;
+        if (value) {
+          // Get country code for validation
+          const country = getCountryByName(formData.country);
+          if (!validators.phone(value, country?.code)) {
+            error = validationMessages.phone;
+          }
         }
         break;
       case 'website':
@@ -718,8 +726,9 @@ export default function Contacts() {
       errors.additionalEmails = additionalEmailErrors;
     }
 
-    // Validate primary phone
-    if (formData.phone && !validators.phone(formData.phone)) {
+    // Validate primary phone (country-aware)
+    const country = getCountryByName(formData.country);
+    if (formData.phone && !validators.phone(formData.phone, country?.code)) {
       errors.phone = validationMessages.phone;
       isValid = false;
     }
@@ -727,7 +736,7 @@ export default function Contacts() {
     // Validate additional phones
     const additionalPhoneErrors: { [key: number]: string } = {};
     additionalPhones.forEach((phone, idx) => {
-      if (phone && !validators.phone(phone)) {
+      if (phone && !validators.phone(phone, country?.code)) {
         additionalPhoneErrors[idx] = validationMessages.phone;
         isValid = false;
       }
@@ -1548,12 +1557,19 @@ export default function Contacts() {
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Address</label>
-                  <input
-                    type="text"
+                  <AddressAutocomplete
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Street address"
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50"
+                    onChange={(value) => setFormData({ ...formData, address: value })}
+                    onAddressSelect={(parsed) => {
+                      setFormData({
+                        ...formData,
+                        address: parsed.address,
+                        city: parsed.city,
+                        state: parsed.state,
+                        country: parsed.country,
+                      });
+                    }}
+                    placeholder="Start typing an address..."
                   />
                 </div>
                 <div>
@@ -1566,21 +1582,22 @@ export default function Contacts() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">State/Province</label>
-                  <input
-                    type="text"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  <label className="block text-sm text-gray-400 mb-1">Country</label>
+                  <CountrySelect
+                    value={formData.country}
+                    onChange={(_code, name) => {
+                      setFormData({ ...formData, country: name, state: '' });
+                    }}
+                    placeholder="Select country..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Country</label>
-                  <input
-                    type="text"
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  <label className="block text-sm text-gray-400 mb-1">State/Province</label>
+                  <StateSelect
+                    value={formData.state}
+                    countryCode={getCountryByName(formData.country)?.code || ''}
+                    onChange={(_code, name) => setFormData({ ...formData, state: name })}
+                    placeholder="Select state..."
                   />
                 </div>
                 <div>

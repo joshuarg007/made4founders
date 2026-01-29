@@ -13,9 +13,11 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build argument for API URL (should NOT include /api - code adds it)
+# Build arguments for environment variables
 ARG VITE_API_URL=http://localhost:8000
+ARG VITE_MAPBOX_TOKEN
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_MAPBOX_TOKEN=$VITE_MAPBOX_TOKEN
 
 # Build the app
 RUN npm run build
