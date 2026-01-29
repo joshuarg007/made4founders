@@ -114,6 +114,8 @@ export default function Login() {
       } else {
         await login(email, password);
       }
+      // Small delay to allow browser to detect successful login and prompt to save password
+      await new Promise(resolve => setTimeout(resolve, 100));
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -158,6 +160,8 @@ export default function Login() {
         {/* Email/Password Form First */}
         <form
           onSubmit={handleSubmit}
+          method="post"
+          action="/login"
           className="space-y-4"
         >
           {isRegister && (
@@ -183,7 +187,7 @@ export default function Login() {
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
+                autoComplete={isRegister ? "email" : "username"}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);

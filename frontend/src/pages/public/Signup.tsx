@@ -82,6 +82,8 @@ export default function Signup() {
         throw new Error(data.detail || 'Registration failed');
       }
 
+      // Small delay to allow browser to detect successful signup and prompt to save password
+      await new Promise(resolve => setTimeout(resolve, 100));
       navigate('/app');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -186,7 +188,7 @@ export default function Signup() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} method="post" action="/signup" className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
                 Full Name
@@ -195,6 +197,7 @@ export default function Signup() {
                 type="text"
                 id="name"
                 name="name"
+                autoComplete="name"
                 value={formData.name}
                 onChange={handleChange}
                 className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors"
@@ -211,6 +214,7 @@ export default function Signup() {
                   type="email"
                   id="email"
                   name="email"
+                  autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
                   onBlur={(e) => e.target.value && validateEmail(e.target.value)}
@@ -243,6 +247,7 @@ export default function Signup() {
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
                   onBlur={(e) => e.target.value && validatePassword(e.target.value)}
