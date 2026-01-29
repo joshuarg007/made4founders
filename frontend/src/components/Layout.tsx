@@ -383,8 +383,16 @@ function LayoutContent() {
               </button>
             </>
           )}
-          <div className="text-[10px] text-gray-400 text-center">
-            Made4Founders v1.0
+          <div className="text-[10px] text-gray-500 text-center space-y-1">
+            <div>Made4Founders v1.0</div>
+            <a
+              href="https://www.axiondeep.com"
+              target="_blank"
+              rel="noopener"
+              className="text-gray-600 hover:text-gray-400 transition"
+            >
+              Built by Axion Deep Labs
+            </a>
           </div>
         </div>
       </aside>
