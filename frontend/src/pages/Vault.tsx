@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Shield,
   Lock,
@@ -1636,6 +1637,7 @@ const predefinedFieldTypes = [
 ];
 
 export default function Vault() {
+  const navigate = useNavigate();
   const [vaultStatus, setVaultStatus] = useState<VaultStatus | null>(null);
   const [credentials, setCredentials] = useState<CredentialMasked[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1785,7 +1787,8 @@ export default function Vault() {
       setMfaCode('');
     } catch (err) {
       if (err instanceof Error) {
-        if (err.message.includes('MFA')) {
+        // Only show MFA error if MFA is actually required and visible
+        if (err.message.includes('MFA') && vaultStatus?.mfa_required) {
           setPasswordError('Invalid MFA code');
         } else {
           setPasswordError('Invalid master password');
@@ -1802,6 +1805,8 @@ export default function Vault() {
       setVaultStatus(status);
       setCredentials([]);
       setViewingCredential(null);
+      // Navigate to dashboard after locking
+      navigate('/dashboard');
     } catch (err) {
       setError('Failed to lock vault');
     }
