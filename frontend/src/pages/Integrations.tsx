@@ -6,11 +6,18 @@ import {
   Share2,
   Calculator,
   Loader2,
-  ExternalLink,
   CheckCircle2,
   RefreshCw,
   Link,
   Unlink,
+  X,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Key,
+  AlertTriangle,
+  Clock,
 } from 'lucide-react';
 import api from '../lib/api';
 import CalendarSync from '../components/CalendarSync';
@@ -22,6 +29,7 @@ import googleMeetLogo from '../assets/integrations/google-meet.svg';
 import teamsLogo from '../assets/integrations/microsoft-teams.svg';
 import twitterLogo from '../assets/integrations/twitter-x.svg';
 import linkedinLogo from '../assets/integrations/linkedin.svg';
+import facebookLogo from '../assets/integrations/facebook.svg';
 import instagramLogo from '../assets/integrations/instagram.svg';
 import quickbooksLogo from '../assets/integrations/quickbooks.svg';
 import xeroLogo from '../assets/integrations/xero.svg';
@@ -113,18 +121,17 @@ const INTEGRATIONS: Integration[] = [
     statusEndpoint: '/api/social/accounts',
     disconnectEndpoint: '/api/social/accounts/linkedin',
   },
-  // Facebook temporarily disabled
-  // {
-  //   id: 'facebook',
-  //   name: 'Facebook',
-  //   description: 'Post to your business page',
-  //   logo: facebookLogo,
-  //   color: 'blue',
-  //   categories: ['social', 'auth'],
-  //   connectEndpoint: '/api/social/facebook/connect',
-  //   statusEndpoint: '/api/social/accounts',
-  //   disconnectEndpoint: '/api/social/accounts/facebook',
-  // },
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    description: 'Post to your business page and manage content',
+    logo: facebookLogo,
+    color: 'blue',
+    categories: ['social', 'auth'],
+    connectEndpoint: '/api/social/facebook/connect',
+    statusEndpoint: '/api/social/accounts',
+    disconnectEndpoint: '/api/social/accounts/facebook',
+  },
   {
     id: 'instagram',
     name: 'Instagram',
@@ -233,6 +240,7 @@ export default function Integrations() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
     loadAllStatuses();
@@ -459,7 +467,7 @@ export default function Integrations() {
       </div>
 
       {/* Integration Cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredIntegrations.map(integration => {
           const colors = COLOR_CLASSES[integration.color] || COLOR_CLASSES.gray;
           const isConnected = integration.status?.connected;
@@ -468,18 +476,18 @@ export default function Integrations() {
           return (
             <div
               key={integration.id}
-              className={`relative p-5 rounded-xl border transition ${
+              className={`relative p-5 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] ${
                 isConnected
-                  ? `${colors.bg} ${colors.border}`
-                  : 'bg-[#1a1d24]/5 border-white/10 hover:border-white/20'
-              } ${isComingSoon ? 'opacity-60' : ''}`}
+                  ? `${colors.bg} ${colors.border} shadow-lg ${colors.glow}`
+                  : 'bg-[#12151a] border-white/10 hover:border-white/20 hover:bg-[#1a1d24]'
+              } ${isComingSoon ? 'opacity-50 hover:scale-100' : ''}`}
             >
               {/* Status Indicator */}
               <div className="absolute top-4 right-4">
                 <div
-                  className={`w-3 h-3 rounded-full ${
+                  className={`w-3 h-3 rounded-full transition-all ${
                     isConnected
-                      ? 'bg-green-500 shadow-lg shadow-green-500/50'
+                      ? 'bg-green-500 shadow-lg shadow-green-500/50 animate-pulse'
                       : 'bg-gray-600'
                   }`}
                   title={isConnected ? 'Connected' : 'Not connected'}
@@ -487,30 +495,32 @@ export default function Integrations() {
               </div>
 
               {/* Icon and Name */}
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`w-8 h-8 flex items-center justify-center ${isComingSoon ? 'grayscale opacity-50' : ''}`}>
-                  <img src={integration.logo} alt={integration.name} className="w-8 h-8 object-contain" />
+              <div className="flex items-center gap-4 mb-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  isConnected ? 'bg-white/10' : 'bg-white/5'
+                } ${isComingSoon ? 'grayscale opacity-50' : ''}`}>
+                  <img src={integration.logo} alt={integration.name} className="w-7 h-7 object-contain" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">{integration.name}</h3>
+                  <h3 className="font-semibold text-white text-lg">{integration.name}</h3>
                   {isConnected && integration.status?.user_name && (
-                    <p className="text-xs text-gray-400">{integration.status.user_name}</p>
+                    <p className="text-xs text-green-400 font-medium">{integration.status.user_name}</p>
                   )}
                   {isConnected && integration.status?.account_name && (
-                    <p className="text-xs text-gray-400">{integration.status.account_name}</p>
+                    <p className="text-xs text-green-400 font-medium">{integration.status.account_name}</p>
                   )}
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-sm text-gray-400 mb-4">{integration.description}</p>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">{integration.description}</p>
 
               {/* Categories */}
-              <div className="flex flex-wrap gap-1 mb-4">
+              <div className="flex flex-wrap gap-2 mb-5">
                 {integration.categories.map(cat => (
                   <span
                     key={cat}
-                    className="px-2 py-0.5 rounded text-xs bg-[#1a1d24]/10 text-gray-400 capitalize"
+                    className="px-2.5 py-1 rounded-lg text-xs bg-white/5 text-gray-400 capitalize font-medium"
                   >
                     {cat}
                   </span>
@@ -519,18 +529,20 @@ export default function Integrations() {
 
               {/* Actions */}
               {isComingSoon ? (
-                <span className="text-xs text-gray-500">Coming soon</span>
+                <div className="pt-3 border-t border-white/5">
+                  <span className="text-xs text-gray-500 font-medium">Coming soon</span>
+                </div>
               ) : isConnected ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-green-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                  <span className="text-sm text-green-400 flex items-center gap-1.5 font-medium">
+                    <CheckCircle2 className="w-4 h-4" />
                     Connected
                   </span>
                   {integration.disconnectEndpoint && (
                     <button
                       onClick={() => handleDisconnect(integration)}
                       disabled={integration.loading}
-                      className="text-xs text-gray-400 hover:text-red-400 flex items-center gap-1 transition"
+                      className="text-xs text-gray-400 hover:text-red-400 flex items-center gap-1.5 transition px-3 py-1.5 rounded-lg hover:bg-red-500/10"
                     >
                       {integration.loading ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -545,7 +557,7 @@ export default function Integrations() {
                 <button
                   onClick={() => handleConnect(integration)}
                   disabled={integration.loading}
-                  className="w-full py-2 rounded-lg bg-[#1a1d24]/10 text-white hover:bg-[#1a1d24]/20 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl bg-white/5 text-white hover:bg-white/10 transition flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 border border-white/10 hover:border-white/20"
                 >
                   {integration.loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -567,15 +579,257 @@ export default function Integrations() {
           Each integration requires you to authorize Made4Founders to access your account.
           Your credentials are securely stored and you can disconnect at any time.
         </p>
-        <a
-          href="https://made4founders.com/docs/integrations"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1"
+        <button
+          onClick={() => setShowHelpModal(true)}
+          className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1 transition"
         >
-          View integration documentation
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+          <HelpCircle className="w-4 h-4" />
+          View integration documentation & FAQ
+        </button>
+      </div>
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <IntegrationHelpModal onClose={() => setShowHelpModal(false)} />
+      )}
+    </div>
+  );
+}
+
+// ============ Integration Help Modal ============
+function IntegrationHelpModal({ onClose }: { onClose: () => void }) {
+  const [openSection, setOpenSection] = useState<string | null>('getting-started');
+
+  const toggleSection = (id: string) => {
+    setOpenSection(openSection === id ? null : id);
+  };
+
+  const sections = [
+    {
+      id: 'getting-started',
+      title: 'Getting Started',
+      icon: Plug,
+      content: (
+        <div className="space-y-3 text-sm text-gray-300">
+          <p>To connect an integration:</p>
+          <ol className="list-decimal list-inside space-y-2 ml-2">
+            <li>Click the <strong className="text-white">Connect</strong> button on any integration card</li>
+            <li>You'll be redirected to the service's authorization page</li>
+            <li>Sign in and grant Made4Founders the requested permissions</li>
+            <li>You'll be redirected back and see the integration as "Connected"</li>
+          </ol>
+          <p className="text-gray-400 mt-4">
+            You can disconnect any integration at any time by clicking the Disconnect button.
+          </p>
+        </div>
+      ),
+    },
+    {
+      id: 'security',
+      title: 'Security & Privacy',
+      icon: Shield,
+      content: (
+        <div className="space-y-3 text-sm text-gray-300">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+            <Shield className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-green-400">Your data is secure</p>
+              <p className="text-gray-400 text-xs mt-1">All credentials are encrypted with AES-256-GCM</p>
+            </div>
+          </div>
+          <ul className="space-y-2 ml-2">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <span>We use OAuth 2.0 - we never see your passwords</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <span>Access tokens are encrypted at rest</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <span>You can revoke access anytime from here or the provider's settings</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <span>We only request permissions needed for the integration to work</span>
+            </li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'permissions',
+      title: 'Permissions Explained',
+      icon: Key,
+      content: (
+        <div className="space-y-4 text-sm text-gray-300">
+          <div className="space-y-3">
+            <h4 className="font-medium text-white">Social Media (Twitter, LinkedIn, Facebook, Instagram)</h4>
+            <ul className="space-y-1 ml-4 text-gray-400">
+              <li>• <strong className="text-gray-300">Post on your behalf</strong> - Create posts from Made4Founders</li>
+              <li>• <strong className="text-gray-300">Read profile</strong> - Display your username and avatar</li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-white">Meeting Platforms (Zoom, Google Meet, Teams)</h4>
+            <ul className="space-y-1 ml-4 text-gray-400">
+              <li>• <strong className="text-gray-300">Read recordings</strong> - Import meeting transcripts</li>
+              <li>• <strong className="text-gray-300">Read meeting info</strong> - Show meeting details</li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-white">Accounting (QuickBooks, Xero, FreshBooks)</h4>
+            <ul className="space-y-1 ml-4 text-gray-400">
+              <li>• <strong className="text-gray-300">Read financials</strong> - Sync invoices and expenses</li>
+              <li>• <strong className="text-gray-300">Read company info</strong> - Display company name</li>
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'troubleshooting',
+      title: 'Troubleshooting',
+      icon: AlertTriangle,
+      content: (
+        <div className="space-y-4 text-sm text-gray-300">
+          <div className="space-y-2">
+            <h4 className="font-medium text-white">"Connection failed" error</h4>
+            <p className="text-gray-400 ml-4">Make sure you're logged into the correct account on the service. Try logging out and back in, then reconnect.</p>
+          </div>
+          <div className="space-y-2">
+            <h4 className="font-medium text-white">"Permission denied" error</h4>
+            <p className="text-gray-400 ml-4">You may have declined a required permission. Disconnect and reconnect, making sure to accept all permissions.</p>
+          </div>
+          <div className="space-y-2">
+            <h4 className="font-medium text-white">Integration shows connected but isn't working</h4>
+            <p className="text-gray-400 ml-4">The access token may have expired. Disconnect and reconnect to refresh it.</p>
+          </div>
+          <div className="space-y-2">
+            <h4 className="font-medium text-white">Can't find my account after connecting</h4>
+            <p className="text-gray-400 ml-4">For Facebook/Instagram, make sure you have a Business account linked. For accounting apps, ensure you selected the correct company.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'token-expiry',
+      title: 'Token Expiration',
+      icon: Clock,
+      content: (
+        <div className="space-y-3 text-sm text-gray-300">
+          <p>Most integrations use tokens that expire after a period of time:</p>
+          <div className="grid gap-2 mt-3">
+            <div className="flex justify-between p-2 rounded bg-white/5">
+              <span className="text-gray-400">Twitter/X</span>
+              <span className="text-white">2 hours (auto-refreshes)</span>
+            </div>
+            <div className="flex justify-between p-2 rounded bg-white/5">
+              <span className="text-gray-400">LinkedIn</span>
+              <span className="text-white">60 days</span>
+            </div>
+            <div className="flex justify-between p-2 rounded bg-white/5">
+              <span className="text-gray-400">Facebook/Instagram</span>
+              <span className="text-white">60 days</span>
+            </div>
+            <div className="flex justify-between p-2 rounded bg-white/5">
+              <span className="text-gray-400">Google (Meet, Calendar)</span>
+              <span className="text-white">Auto-refreshes</span>
+            </div>
+            <div className="flex justify-between p-2 rounded bg-white/5">
+              <span className="text-gray-400">Zoom</span>
+              <span className="text-white">Auto-refreshes</span>
+            </div>
+            <div className="flex justify-between p-2 rounded bg-white/5">
+              <span className="text-gray-400">Accounting apps</span>
+              <span className="text-white">Varies (usually 60 days)</span>
+            </div>
+          </div>
+          <p className="text-gray-400 mt-3">
+            If a token expires, simply reconnect the integration to get a fresh token.
+          </p>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-[#12151a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+              <HelpCircle className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Integration Help</h2>
+              <p className="text-sm text-gray-400">Documentation & FAQ</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)]">
+          <div className="space-y-3">
+            {sections.map(section => (
+              <div key={section.id} className="rounded-xl border border-white/10 overflow-hidden">
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <section.icon className="w-5 h-5 text-cyan-400" />
+                    <span className="font-medium text-white">{section.title}</span>
+                  </div>
+                  {openSection === section.id ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                {openSection === section.id && (
+                  <div className="px-4 pb-4 pt-0">
+                    <div className="pl-8">
+                      {section.content}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-white/10 bg-white/5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-400">
+              Still need help?{' '}
+              <a
+                href="mailto:support@made4founders.com?subject=Integration%20Help"
+                className="text-cyan-400 hover:text-cyan-300 transition"
+              >
+                Contact support
+              </a>
+            </p>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition text-sm font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
