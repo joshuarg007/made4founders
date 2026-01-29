@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ComponentType } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import PublicLayout from './components/PublicLayout'
@@ -13,57 +13,83 @@ const PageLoader = () => (
   </div>
 )
 
-// Public pages (lazy loaded)
-const Home = lazy(() => import('./pages/public/Home'))
-const Features = lazy(() => import('./pages/public/Features'))
-const Pricing = lazy(() => import('./pages/public/Pricing'))
-const About = lazy(() => import('./pages/public/About'))
-const Signup = lazy(() => import('./pages/public/Signup'))
-const Privacy = lazy(() => import('./pages/public/Privacy'))
-const Terms = lazy(() => import('./pages/public/Terms'))
-const Security = lazy(() => import('./pages/public/Security'))
-const Contact = lazy(() => import('./pages/public/Contact'))
-const FacebookDataDeletion = lazy(() => import('./pages/FacebookDataDeletion'))
+// Retry wrapper for lazy loading - retries up to 3 times with delay
+function lazyWithRetry<T extends ComponentType<unknown>>(
+  importFn: () => Promise<{ default: T }>,
+  retries = 3,
+  interval = 500
+): React.LazyExoticComponent<T> {
+  return lazy(async () => {
+    let lastError: unknown;
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await importFn();
+      } catch (error) {
+        lastError = error;
+        console.warn(`Chunk load failed, retry ${i + 1}/${retries}...`);
+        await new Promise(resolve => setTimeout(resolve, interval * (i + 1)));
+      }
+    }
+    // If all retries failed and it's a chunk load error, reload the page
+    // This handles stale chunks after deployments
+    if (lastError instanceof Error && lastError.message.includes('Loading chunk')) {
+      window.location.reload();
+    }
+    throw lastError;
+  });
+}
+
+// Public pages (lazy loaded with retry)
+const Home = lazyWithRetry(() => import('./pages/public/Home'))
+const Features = lazyWithRetry(() => import('./pages/public/Features'))
+const Pricing = lazyWithRetry(() => import('./pages/public/Pricing'))
+const About = lazyWithRetry(() => import('./pages/public/About'))
+const Signup = lazyWithRetry(() => import('./pages/public/Signup'))
+const Privacy = lazyWithRetry(() => import('./pages/public/Privacy'))
+const Terms = lazyWithRetry(() => import('./pages/public/Terms'))
+const Security = lazyWithRetry(() => import('./pages/public/Security'))
+const Contact = lazyWithRetry(() => import('./pages/public/Contact'))
+const FacebookDataDeletion = lazyWithRetry(() => import('./pages/FacebookDataDeletion'))
 
 // Auth pages
-const Login = lazy(() => import('./pages/Login'))
-const LinkAccount = lazy(() => import('./pages/LinkAccount'))
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
-const ResetPassword = lazy(() => import('./pages/ResetPassword'))
-const VerifyEmail = lazy(() => import('./pages/VerifyEmail'))
+const Login = lazyWithRetry(() => import('./pages/Login'))
+const LinkAccount = lazyWithRetry(() => import('./pages/LinkAccount'))
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'))
+const VerifyEmail = lazyWithRetry(() => import('./pages/VerifyEmail'))
 
-// Protected pages (lazy loaded)
-const DailyBrief = lazy(() => import('./pages/DailyBrief'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-const GettingStarted = lazy(() => import('./pages/GettingStarted'))
-const Documents = lazy(() => import('./pages/Documents'))
-const Meetings = lazy(() => import('./pages/Meetings'))
-const Contacts = lazy(() => import('./pages/Contacts'))
-const Deadlines = lazy(() => import('./pages/Deadlines'))
-const Library = lazy(() => import('./pages/Library'))
-const Users = lazy(() => import('./pages/Users'))
-const Tasks = lazy(() => import('./pages/Tasks'))
-const SocialHub = lazy(() => import('./pages/SocialHub'))
-const AnalyticsPage = lazy(() => import('./pages/Insights'))
-const Offerings = lazy(() => import('./pages/Offerings'))
-const Finance = lazy(() => import('./pages/Finance'))
-const FinancialDashboard = lazy(() => import('./pages/FinancialDashboard'))
-const RevenueDashboard = lazy(() => import('./pages/RevenueDashboard'))
-const CapTable = lazy(() => import('./pages/CapTable'))
-const InvestorUpdates = lazy(() => import('./pages/InvestorUpdates'))
-const DataRoom = lazy(() => import('./pages/DataRoom'))
-const Budget = lazy(() => import('./pages/Budget'))
-const Invoices = lazy(() => import('./pages/Invoices'))
-const Team = lazy(() => import('./pages/Team'))
-const Vault = lazy(() => import('./pages/Vault'))
-const Leaderboard = lazy(() => import('./pages/Leaderboard'))
-const Businesses = lazy(() => import('./pages/Businesses'))
-const Marketplaces = lazy(() => import('./pages/Marketplaces'))
-const Integrations = lazy(() => import('./pages/Integrations'))
-const Settings = lazy(() => import('./pages/Settings'))
-const ActivityFeed = lazy(() => import('./pages/ActivityFeed'))
-const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
-const GuestAccessManager = lazy(() => import('./pages/GuestAccessManager'))
+// Protected pages (lazy loaded with retry)
+const DailyBrief = lazyWithRetry(() => import('./pages/DailyBrief'))
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'))
+const GettingStarted = lazyWithRetry(() => import('./pages/GettingStarted'))
+const Documents = lazyWithRetry(() => import('./pages/Documents'))
+const Meetings = lazyWithRetry(() => import('./pages/Meetings'))
+const Contacts = lazyWithRetry(() => import('./pages/Contacts'))
+const Deadlines = lazyWithRetry(() => import('./pages/Deadlines'))
+const Library = lazyWithRetry(() => import('./pages/Library'))
+const Users = lazyWithRetry(() => import('./pages/Users'))
+const Tasks = lazyWithRetry(() => import('./pages/Tasks'))
+const SocialHub = lazyWithRetry(() => import('./pages/SocialHub'))
+const AnalyticsPage = lazyWithRetry(() => import('./pages/Insights'))
+const Offerings = lazyWithRetry(() => import('./pages/Offerings'))
+const Finance = lazyWithRetry(() => import('./pages/Finance'))
+const FinancialDashboard = lazyWithRetry(() => import('./pages/FinancialDashboard'))
+const RevenueDashboard = lazyWithRetry(() => import('./pages/RevenueDashboard'))
+const CapTable = lazyWithRetry(() => import('./pages/CapTable'))
+const InvestorUpdates = lazyWithRetry(() => import('./pages/InvestorUpdates'))
+const DataRoom = lazyWithRetry(() => import('./pages/DataRoom'))
+const Budget = lazyWithRetry(() => import('./pages/Budget'))
+const Invoices = lazyWithRetry(() => import('./pages/Invoices'))
+const Team = lazyWithRetry(() => import('./pages/Team'))
+const Vault = lazyWithRetry(() => import('./pages/Vault'))
+const Leaderboard = lazyWithRetry(() => import('./pages/Leaderboard'))
+const Businesses = lazyWithRetry(() => import('./pages/Businesses'))
+const Marketplaces = lazyWithRetry(() => import('./pages/Marketplaces'))
+const Integrations = lazyWithRetry(() => import('./pages/Integrations'))
+const Settings = lazyWithRetry(() => import('./pages/Settings'))
+const ActivityFeed = lazyWithRetry(() => import('./pages/ActivityFeed'))
+const NotificationsPage = lazyWithRetry(() => import('./pages/NotificationsPage'))
+const GuestAccessManager = lazyWithRetry(() => import('./pages/GuestAccessManager'))
 
 function App() {
   return (
