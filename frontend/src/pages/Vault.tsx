@@ -1645,6 +1645,7 @@ export default function Vault() {
   const [masterPassword, setMasterPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');  // For 3FA vault unlock
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -1777,11 +1778,21 @@ export default function Vault() {
     setPasswordError(null);
 
     try {
-      const status = await unlockVault(masterPassword);
+      // Pass MFA code if user has MFA enabled
+      const status = await unlockVault(masterPassword, vaultStatus?.mfa_required ? mfaCode : undefined);
       setVaultStatus(status);
       setMasterPassword('');
+      setMfaCode('');
     } catch (err) {
-      setPasswordError('Invalid master password');
+      if (err instanceof Error) {
+        if (err.message.includes('MFA')) {
+          setPasswordError('Invalid MFA code');
+        } else {
+          setPasswordError('Invalid master password');
+        }
+      } else {
+        setPasswordError('Failed to unlock vault');
+      }
     }
   };
 
@@ -2012,11 +2023,16 @@ export default function Vault() {
             <Lock className="w-10 h-10 text-amber-400" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Vault Locked</h1>
-          <p className="text-gray-400">Enter your master password to unlock</p>
+          <p className="text-gray-400">
+            {vaultStatus?.mfa_required
+              ? 'Enter your master password and MFA code to unlock'
+              : 'Enter your master password to unlock'}
+          </p>
         </div>
 
         <form onSubmit={handleUnlock} className="space-y-4">
           <div>
+            <label className="block text-sm text-gray-400 mb-2">Master Password</label>
             <input
               type="password"
               value={masterPassword}
@@ -2027,6 +2043,28 @@ export default function Vault() {
               autoFocus
             />
           </div>
+
+          {/* MFA Code input - shown only when user has MFA enabled */}
+          {vaultStatus?.mfa_required && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">
+                Authenticator Code
+                <span className="text-violet-400 ml-1">(3FA)</span>
+              </label>
+              <input
+                type="text"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                className="w-full px-4 py-3 rounded-lg bg-[#1a1d24] border border-white/10 text-white focus:outline-none focus:border-violet-500 text-center text-lg tracking-widest font-mono"
+                placeholder="000000"
+                autoComplete="one-time-code"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Enter your 6-digit code or backup code
+              </p>
+            </div>
+          )}
 
           {passwordError && (
             <div className="text-red-400 text-sm flex items-center gap-2">
@@ -2043,6 +2081,15 @@ export default function Vault() {
             Unlock Vault
           </button>
         </form>
+
+        {vaultStatus?.mfa_required && (
+          <div className="mt-4 p-3 rounded-lg bg-violet-500/10 border border-violet-500/30">
+            <p className="text-violet-300 text-xs text-center">
+              <Shield className="w-3 h-3 inline mr-1" />
+              3-Factor Authentication: Session + Master Password + TOTP
+            </p>
+          </div>
+        )}
       </div>
     );
   }

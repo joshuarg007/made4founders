@@ -512,6 +512,25 @@ export const verifyMFASetup = (code: string) =>
     body: JSON.stringify({ code }),
   });
 
+// MFA Login Verification (for 2FA at login)
+export interface MFALoginResponse {
+  mfa_required: boolean;
+  mfa_token: string;
+  message: string;
+}
+
+export interface MFASetupRequiredResponse {
+  mfa_setup_required: boolean;
+  setup_token: string;
+  message: string;
+}
+
+export const verifyLoginMFA = (mfaToken: string, code: string) =>
+  fetchApi<{ access_token: string; token_type: string }>('/auth/token/mfa', {
+    method: 'POST',
+    body: JSON.stringify({ mfa_token: mfaToken, code }),
+  });
+
 export const disableMFA = (password: string, code: string) =>
   fetchApi<{ message: string }>('/mfa/disable', {
     method: 'POST',
@@ -793,6 +812,7 @@ export const completeTaskFromBrief = (id: number) =>
 export interface VaultStatus {
   is_setup: boolean;
   is_unlocked: boolean;
+  mfa_required?: boolean;  // True if user has MFA enabled (3FA for vault)
 }
 
 export interface CustomField {
@@ -859,10 +879,10 @@ export const setupVault = (masterPassword: string) =>
     body: JSON.stringify({ master_password: masterPassword })
   });
 
-export const unlockVault = (masterPassword: string) =>
+export const unlockVault = (masterPassword: string, mfaCode?: string) =>
   fetchApi<VaultStatus>('/vault/unlock', {
     method: 'POST',
-    body: JSON.stringify({ master_password: masterPassword })
+    body: JSON.stringify({ master_password: masterPassword, mfa_code: mfaCode || undefined })
   });
 
 export const lockVault = () =>

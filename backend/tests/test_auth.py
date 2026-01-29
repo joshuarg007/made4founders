@@ -208,15 +208,17 @@ class TestLoginAPI:
     """Test login endpoint security."""
 
     def test_login_success(self, client, test_user):
-        """Successful login should return tokens."""
+        """Successful login for user without MFA should require MFA setup."""
         response = client.post("/api/auth/login", json={
             "username": "test@example.com",
             "password": "TestPass123!",
         })
         assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert data["token_type"] == "bearer"
+        # Since MFA is mandatory, users without MFA get mfa_setup_required response
+        assert "mfa_setup_required" in data
+        assert data["mfa_setup_required"] is True
+        assert "setup_token" in data
 
     def test_login_wrong_password(self, client, test_user):
         """Wrong password should fail."""

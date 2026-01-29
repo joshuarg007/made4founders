@@ -58,6 +58,7 @@ const LinkAccount = lazyWithRetry(() => import('./pages/LinkAccount'))
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'))
 const VerifyEmail = lazyWithRetry(() => import('./pages/VerifyEmail'))
+const MFASetup = lazyWithRetry(() => import('./pages/MFASetup'))
 
 // Protected pages (lazy loaded with retry)
 const DailyBrief = lazyWithRetry(() => import('./pages/DailyBrief'))
@@ -122,6 +123,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/setup-mfa" element={<MFASetup />} />
 
         {/* Protected app routes */}
         <Route

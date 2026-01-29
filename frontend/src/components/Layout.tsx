@@ -279,7 +279,7 @@ function LayoutContent() {
         </div>
 
         {/* Navigation - with bottom padding for fixed footer */}
-        <nav className="flex-1 p-3 overflow-y-auto pb-28 space-y-1">
+        <nav className="flex-1 p-3 overflow-y-auto pb-48 space-y-1">
           {navSections.map((section) => {
             const isExpanded = expandedSections[section.id];
             const isActive = isSectionActive(section);
