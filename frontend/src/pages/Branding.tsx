@@ -14,14 +14,17 @@ import {
   Copy,
   Star,
   ExternalLink,
+  Building2,
 } from 'lucide-react';
 import api from '../lib/api';
 import BusinessFilter from '../components/BusinessFilter';
+import { useBusiness } from '../context/BusinessContext';
 
 // Types
 interface BrandColor {
   id: number;
   organization_id: number;
+  business_id: number | null;
   color_type: string;
   hex_value: string;
   name: string | null;
@@ -33,6 +36,7 @@ interface BrandColor {
 interface BrandFont {
   id: number;
   organization_id: number;
+  business_id: number | null;
   font_family: string;
   usage: string;
   font_weight: string | null;
@@ -45,6 +49,7 @@ interface BrandFont {
 interface BrandAsset {
   id: number;
   organization_id: number;
+  business_id: number | null;
   asset_type: string;
   name: string;
   file_path: string;
@@ -62,9 +67,17 @@ interface BrandAsset {
 interface BrandGuideline {
   id: number;
   organization_id: number;
-  title: string;
-  category: string;
-  content: string;
+  business_id: number | null;
+  company_name: string | null;
+  tagline: string | null;
+  mission_statement: string | null;
+  voice_tone: string | null;
+  voice_description: string | null;
+  logo_min_size: string | null;
+  logo_clear_space: string | null;
+  color_usage_notes: string | null;
+  typography_notes: string | null;
+  dos_and_donts: string | null;
   order_index: number;
   created_at: string;
   updated_at: string;
@@ -100,20 +113,10 @@ const ASSET_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
-const GUIDELINE_CATEGORIES = [
-  'Logo Usage',
-  'Color Guidelines',
-  'Typography',
-  'Spacing & Layout',
-  'Imagery',
-  'Voice & Tone',
-  'Do\'s and Don\'ts',
-  'Other',
-];
-
 type Tab = 'colors' | 'fonts' | 'assets' | 'guidelines';
 
 export default function Branding() {
+  const { businesses } = useBusiness();
   const [activeTab, setActiveTab] = useState<Tab>('colors');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -295,6 +298,7 @@ export default function Branding() {
       {showColorModal && (
         <ColorModal
           color={editingItem}
+          businesses={businesses}
           onClose={() => setShowColorModal(false)}
           onSave={loadData}
         />
@@ -303,6 +307,7 @@ export default function Branding() {
       {showFontModal && (
         <FontModal
           font={editingItem}
+          businesses={businesses}
           onClose={() => setShowFontModal(false)}
           onSave={loadData}
         />
@@ -311,6 +316,7 @@ export default function Branding() {
       {showAssetModal && (
         <AssetModal
           asset={editingItem}
+          businesses={businesses}
           onClose={() => setShowAssetModal(false)}
           onSave={loadData}
         />
@@ -319,6 +325,7 @@ export default function Branding() {
       {showGuidelineModal && (
         <GuidelineModal
           guideline={editingItem}
+          businesses={businesses}
           onClose={() => setShowGuidelineModal(false)}
           onSave={loadData}
         />
@@ -700,13 +707,6 @@ function GuidelinesTab({ guidelines, onAdd, onEdit, onRefresh }: {
     }
   };
 
-  // Group guidelines by category
-  const guidelinesByCategory = guidelines.reduce((acc, g) => {
-    if (!acc[g.category]) acc[g.category] = [];
-    acc[g.category].push(g);
-    return acc;
-  }, {} as Record<string, BrandGuideline[]>);
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -724,48 +724,75 @@ function GuidelinesTab({ guidelines, onAdd, onEdit, onRefresh }: {
         <div className="text-center py-12 text-gray-500">
           <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No guidelines defined yet</p>
-          <p className="text-sm mt-1">Document your brand rules and standards</p>
+          <p className="text-sm mt-1">Document your brand identity and voice</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {GUIDELINE_CATEGORIES.map((category) => {
-            const categoryGuidelines = guidelinesByCategory[category] || [];
-            if (categoryGuidelines.length === 0) return null;
-
-            return (
-              <div key={category}>
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">
-                  {category}
-                </h3>
-                <div className="space-y-4">
-                  {categoryGuidelines.map((guideline) => (
-                    <div key={guideline.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 p-6">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="text-lg font-medium text-white">{guideline.title}</h4>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => onEdit(guideline)}
-                            className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(guideline.id)}
-                            className="p-1.5 rounded hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="prose prose-invert prose-sm max-w-none">
-                        <div className="text-gray-300 whitespace-pre-wrap">{guideline.content}</div>
-                      </div>
-                    </div>
-                  ))}
+        <div className="space-y-4">
+          {guidelines.map((guideline) => (
+            <div key={guideline.id} className="bg-[#1a1d24]/5 rounded-xl border border-white/10 p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h4 className="text-lg font-medium text-white">
+                  {guideline.company_name || 'Brand Guidelines'}
+                  {guideline.tagline && (
+                    <span className="text-gray-400 font-normal ml-2">— {guideline.tagline}</span>
+                  )}
+                </h4>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => onEdit(guideline)}
+                    className="p-1.5 rounded hover:bg-[#1a1d24]/10 text-gray-400 hover:text-white transition"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(guideline.id)}
+                    className="p-1.5 rounded hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-            );
-          })}
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {guideline.mission_statement && (
+                  <div className="bg-[#1a1d24]/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-400 mb-2">Mission Statement</h5>
+                    <p className="text-gray-300 text-sm">{guideline.mission_statement}</p>
+                  </div>
+                )}
+                {guideline.voice_tone && (
+                  <div className="bg-[#1a1d24]/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-400 mb-2">Brand Voice</h5>
+                    <p className="text-white font-medium">{guideline.voice_tone}</p>
+                    {guideline.voice_description && (
+                      <p className="text-gray-300 text-sm mt-1">{guideline.voice_description}</p>
+                    )}
+                  </div>
+                )}
+                {guideline.logo_min_size && (
+                  <div className="bg-[#1a1d24]/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-400 mb-2">Logo Guidelines</h5>
+                    <p className="text-gray-300 text-sm">Min size: {guideline.logo_min_size}</p>
+                    {guideline.logo_clear_space && (
+                      <p className="text-gray-300 text-sm">Clear space: {guideline.logo_clear_space}</p>
+                    )}
+                  </div>
+                )}
+                {guideline.color_usage_notes && (
+                  <div className="bg-[#1a1d24]/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-400 mb-2">Color Usage</h5>
+                    <p className="text-gray-300 text-sm">{guideline.color_usage_notes}</p>
+                  </div>
+                )}
+                {guideline.typography_notes && (
+                  <div className="bg-[#1a1d24]/30 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-400 mb-2">Typography</h5>
+                    <p className="text-gray-300 text-sm">{guideline.typography_notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -774,8 +801,9 @@ function GuidelinesTab({ guidelines, onAdd, onEdit, onRefresh }: {
 
 // ============ Modals ============
 
-function ColorModal({ color, onClose, onSave }: {
+function ColorModal({ color, businesses, onClose, onSave }: {
   color: BrandColor | null;
+  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -784,6 +812,7 @@ function ColorModal({ color, onClose, onSave }: {
     hex_value: color?.hex_value || '#000000',
     name: color?.name || '',
     description: color?.description || '',
+    business_id: color?.business_id || null as number | null,
   });
   const [loading, setLoading] = useState(false);
 
@@ -813,6 +842,24 @@ function ColorModal({ color, onClose, onSave }: {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Business Selection */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">
+              <Building2 className="w-3 h-3 inline mr-1" />
+              Business (optional)
+            </label>
+            <select
+              value={formData.business_id ?? ''}
+              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+            >
+              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
+              {businesses.map((b) => (
+                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm text-gray-400 mb-1">Color Type</label>
             <select
@@ -890,8 +937,9 @@ function ColorModal({ color, onClose, onSave }: {
   );
 }
 
-function FontModal({ font, onClose, onSave }: {
+function FontModal({ font, businesses, onClose, onSave }: {
   font: BrandFont | null;
+  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -901,6 +949,7 @@ function FontModal({ font, onClose, onSave }: {
     font_weight: font?.font_weight || '400',
     google_font_url: font?.google_font_url || '',
     fallback_fonts: font?.fallback_fonts || '',
+    business_id: font?.business_id || null as number | null,
   });
   const [loading, setLoading] = useState(false);
 
@@ -930,6 +979,24 @@ function FontModal({ font, onClose, onSave }: {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Business Selection */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">
+              <Building2 className="w-3 h-3 inline mr-1" />
+              Business (optional)
+            </label>
+            <select
+              value={formData.business_id ?? ''}
+              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+            >
+              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
+              {businesses.map((b) => (
+                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm text-gray-400 mb-1">Font Family</label>
             <input
@@ -1019,8 +1086,9 @@ function FontModal({ font, onClose, onSave }: {
   );
 }
 
-function AssetModal({ asset, onClose, onSave }: {
+function AssetModal({ asset, businesses, onClose, onSave }: {
   asset: BrandAsset | null;
+  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -1030,6 +1098,7 @@ function AssetModal({ asset, onClose, onSave }: {
     description: asset?.description || '',
     tags: asset?.tags || '',
     is_primary: asset?.is_primary || false,
+    business_id: asset?.business_id || null as number | null,
   });
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1047,6 +1116,7 @@ function AssetModal({ asset, onClose, onSave }: {
         if (formData.description) form.append('description', formData.description);
         if (formData.tags) form.append('tags', formData.tags);
         form.append('is_primary', String(formData.is_primary));
+        if (formData.business_id) form.append('business_id', String(formData.business_id));
 
         await api.put(`/api/branding/assets/${asset.id}`, form);
       } else {
@@ -1064,6 +1134,7 @@ function AssetModal({ asset, onClose, onSave }: {
         if (formData.description) form.append('description', formData.description);
         if (formData.tags) form.append('tags', formData.tags);
         form.append('is_primary', String(formData.is_primary));
+        if (formData.business_id) form.append('business_id', String(formData.business_id));
 
         await api.post('/api/branding/assets', form);
       }
@@ -1078,12 +1149,30 @@ function AssetModal({ asset, onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+      <div className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-semibold text-white mb-6">
           {asset ? 'Edit Asset' : 'Upload Asset'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Business Selection */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">
+              <Building2 className="w-3 h-3 inline mr-1" />
+              Business (optional)
+            </label>
+            <select
+              value={formData.business_id ?? ''}
+              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
+              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+            >
+              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
+              {businesses.map((b) => (
+                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
+              ))}
+            </select>
+          </div>
+
           {!asset && (
             <div>
               <label className="block text-sm text-gray-400 mb-1">File</label>
@@ -1204,16 +1293,24 @@ function AssetModal({ asset, onClose, onSave }: {
   );
 }
 
-function GuidelineModal({ guideline, onClose, onSave }: {
+function GuidelineModal({ guideline, businesses, onClose, onSave }: {
   guideline: BrandGuideline | null;
+  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
   const [formData, setFormData] = useState({
-    title: guideline?.title || '',
-    category: guideline?.category || 'Other',
-    content: guideline?.content || '',
-    order_index: guideline?.order_index || 0,
+    company_name: guideline?.company_name || '',
+    tagline: guideline?.tagline || '',
+    mission_statement: guideline?.mission_statement || '',
+    voice_tone: guideline?.voice_tone || '',
+    voice_description: guideline?.voice_description || '',
+    logo_min_size: guideline?.logo_min_size || '',
+    logo_clear_space: guideline?.logo_clear_space || '',
+    color_usage_notes: guideline?.color_usage_notes || '',
+    typography_notes: guideline?.typography_notes || '',
+    dos_and_donts: guideline?.dos_and_donts || '',
+    business_id: guideline?.business_id || null as number | null,
   });
   const [loading, setLoading] = useState(false);
 
@@ -1237,47 +1334,95 @@ function GuidelineModal({ guideline, onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
+      <div className="bg-[#1a1d24] rounded-2xl border border-white/10 w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-semibold text-white mb-6">
-          {guideline ? 'Edit Guideline' : 'Add Guideline'}
+          {guideline ? 'Edit Brand Guidelines' : 'Add Brand Guidelines'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Business Selection */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Title</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
-              placeholder="e.g., Minimum Logo Size"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Category</label>
+            <label className="block text-sm text-gray-400 mb-1">
+              <Building2 className="w-3 h-3 inline mr-1" />
+              Business (optional)
+            </label>
             <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              value={formData.business_id ?? ''}
+              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
               className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
             >
-              {GUIDELINE_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat} className="bg-[#1a1d24] text-white">{cat}</option>
+              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
+              {businesses.map((b) => (
+                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
               ))}
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Content</label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              required
-              rows={6}
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
-              placeholder="Describe the guideline in detail..."
-            />
+          <div className="border-t border-white/10 pt-4">
+            <h3 className="text-sm font-medium text-gray-300 mb-3">Company Identity</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Company Name</label>
+                <input
+                  type="text"
+                  value={formData.company_name}
+                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                  placeholder="Your company name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Tagline</label>
+                <input
+                  type="text"
+                  value={formData.tagline}
+                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                  placeholder="Your tagline or slogan"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Mission Statement</label>
+                <textarea
+                  value={formData.mission_statement}
+                  onChange={(e) => setFormData({ ...formData, mission_statement: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+                  placeholder="Your company mission..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 pt-4">
+            <h3 className="text-sm font-medium text-gray-300 mb-3">Brand Voice</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Voice Tone</label>
+                <select
+                  value={formData.voice_tone}
+                  onChange={(e) => setFormData({ ...formData, voice_tone: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
+                >
+                  <option value="" className="bg-[#1a1d24] text-white">Select tone...</option>
+                  <option value="Professional" className="bg-[#1a1d24] text-white">Professional</option>
+                  <option value="Casual" className="bg-[#1a1d24] text-white">Casual</option>
+                  <option value="Friendly" className="bg-[#1a1d24] text-white">Friendly</option>
+                  <option value="Authoritative" className="bg-[#1a1d24] text-white">Authoritative</option>
+                  <option value="Playful" className="bg-[#1a1d24] text-white">Playful</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Voice Description</label>
+                <textarea
+                  value={formData.voice_description}
+                  onChange={(e) => setFormData({ ...formData, voice_description: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition resize-none"
+                  placeholder="Describe your brand voice..."
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
@@ -1294,7 +1439,7 @@ function GuidelineModal({ guideline, onClose, onSave }: {
               className="flex-1 py-3 rounded-lg bg-cyan-500 text-white hover:bg-cyan-400 transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {guideline ? 'Update' : 'Add'}
+              {guideline ? 'Update' : 'Save'}
             </button>
           </div>
         </form>
