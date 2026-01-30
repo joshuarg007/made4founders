@@ -26,3 +26,6 @@ python-docx>=0.8.11
 feedparser>=6.0.10
 dateparser>=1.2.0
 aiohttp>=3.9.0
+
+# Market Intelligence
+yfinance>=0.2.36

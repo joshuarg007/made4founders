@@ -3427,3 +3427,63 @@ class GuestLoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     guest: GuestUserResponse
+
+
+# ============ Market Intelligence Schemas ============
+
+class WatchedStockCreate(BaseModel):
+    """Add a stock to watchlist."""
+    symbol: str
+    name: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class WatchedStockUpdate(BaseModel):
+    """Update watched stock notes."""
+    notes: Optional[str] = None
+
+
+class WatchedStockResponse(BaseModel):
+    """Watched stock response."""
+    id: int
+    symbol: str
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class StockQuote(BaseModel):
+    """Real-time stock quote from Yahoo Finance."""
+    symbol: str
+    name: str
+    price: float
+    change: float
+    change_percent: float
+    market_cap: Optional[float] = None
+    volume: Optional[int] = None
+    day_high: Optional[float] = None
+    day_low: Optional[float] = None
+    fifty_two_week_high: Optional[float] = None
+    fifty_two_week_low: Optional[float] = None
+    last_updated: datetime
+
+
+class StockSearchResult(BaseModel):
+    """Stock search result."""
+    symbol: str
+    name: str
+    exchange: Optional[str] = None
+    type: Optional[str] = None
+
+
+class MarketNewsItem(BaseModel):
+    """Market news article."""
+    title: str
+    description: Optional[str] = None
+    url: str
+    source: str
+    published_at: datetime
+    image_url: Optional[str] = None

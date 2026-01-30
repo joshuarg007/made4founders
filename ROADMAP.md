@@ -145,13 +145,26 @@
 
 | Feature | Description | Priority | Status |
 |---------|-------------|----------|--------|
-| AI business assistant | "How's my runway?" natural language | P0 | Not Started |
-| Document summarization | Auto-summarize uploaded docs | P1 | Not Started |
-| Smart deadline extraction | Parse dates from documents | P2 | Not Started |
-| Competitor monitoring | Track competitor news/changes | P2 | Not Started |
-| Meeting action items | Extract from transcripts | P1 | Started |
+| AI business assistant | "How's my runway?" natural language | P0 | Complete |
+| Document summarization | Auto-summarize uploaded docs | P1 | Complete |
+| Smart deadline extraction | Parse dates from documents | P2 | Complete |
+| Competitor monitoring | Track competitor news/changes | P2 | Complete |
+| Meeting action items | Extract from transcripts | P1 | Complete |
 | Financial insights | "Your burn rate increased 20%" | P0 | Not Started |
 | Anomaly detection | Flag unusual transactions | P1 | Not Started |
+
+---
+
+## Phase 5.5: Market Intelligence (NEW)
+
+> **Goal:** Track market news and stocks relevant to your business
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Market news feed | News API integration with search | P1 | Not Started |
+| Stock watchlist | Track stocks via Yahoo Finance | P1 | Not Started |
+| News categories | Filter by tech, business, startups | P2 | Not Started |
+| Stock quotes | Real-time price, change, market cap | P1 | Not Started |
 
 ---
 
@@ -194,9 +207,10 @@
 | Email digests | Daily/weekly summaries | Complete | Done |
 | Deadline reminders | Email + push | P1 | Partial |
 | Metric alerts | Runway < 6 months warning | P1 | Not Started |
-| TOTP 2FA | Google Authenticator | P0 | Not Started |
+| TOTP 2FA | Google Authenticator (mandatory) | P0 | Complete |
+| 3FA Vault | Login + master password + TOTP | P0 | Complete |
 | SMS backup | For 2FA recovery | P2 | Not Started |
-| Recovery codes | Backup access | P1 | Not Started |
+| Recovery codes | Backup access (one-time use) | P1 | Complete |
 
 ---
 

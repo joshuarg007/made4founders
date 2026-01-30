@@ -160,3 +160,7 @@ security-scan/logs/
 .node_repl_history
 .npm
 .yarn-integrity
+
+# Credentials reference (contains secrets)
+CREDENTIALS_REFERENCE.md
+scripts/add_credentials.py

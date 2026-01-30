@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - 2FA/3FA Security (Phase 8)
+- **Mandatory 2FA** - All users must enable TOTP authentication
+- **MFA on Login** - 6-digit code verification after password
+- **MFA Setup Page** - QR code, manual secret entry, backup codes
+- **3FA Vault** - Master password + TOTP for vault unlock
+- **Backup Codes** - One-time use recovery codes
+
+### Added - Market Intelligence (Phase 5.5) [Planned]
+- **Stock Watchlist** - Track stocks via Yahoo Finance (no API key needed)
+- **Market News** - News API integration with category filtering
+- **Stock Quotes** - Real-time price, change, market cap, 52-week range
+- **Watchlist Management** - Add, remove, and annotate watched stocks
+
 ### Added - Plaid Integration (Phase 1)
 - **Plaid Link** - Connect bank accounts via Plaid Link UI
 - **Real-time balances** - View balances across all linked accounts

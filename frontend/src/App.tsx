@@ -92,6 +92,7 @@ const Settings = lazyWithRetry(() => import('./pages/Settings'))
 const ActivityFeed = lazyWithRetry(() => import('./pages/ActivityFeed'))
 const NotificationsPage = lazyWithRetry(() => import('./pages/NotificationsPage'))
 const GuestAccessManager = lazyWithRetry(() => import('./pages/GuestAccessManager'))
+const MarketIntelligence = lazyWithRetry(() => import('./pages/MarketIntelligence'))
 
 function App() {
   return (
@@ -169,6 +170,9 @@ function App() {
           <Route path="activity" element={<ActivityFeed />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="guests" element={<GuestAccessManager />} />
+
+          {/* Market Intelligence */}
+          <Route path="market-intelligence" element={<MarketIntelligence />} />
         </Route>
 
         {/* Redirect old routes to new structure */}

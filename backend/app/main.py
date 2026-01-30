@@ -41,6 +41,7 @@ from .models import (
     DataRoomFolder, DataRoomDocument, ShareableLink, DataRoomAccess,
     BudgetCategory, BudgetPeriod, BudgetLineItem,
     Invoice, InvoiceLineItem, InvoicePayment,
+    WatchedStock,
     # Junction tables for business taxonomy
     ContactBusiness, DocumentBusiness, CredentialBusiness, WebLinkBusiness,
     ProductOfferedBusiness, ProductUsedBusiness, ServiceBusiness, DeadlineBusiness, MeetingBusiness
@@ -113,7 +114,8 @@ from .schemas import (
     ChallengeJoinByCodeRequest, ChallengeListResponse, ChallengeResultResponse,
     MarketplaceCreate, MarketplaceUpdate, MarketplaceResponse,
     ContactSubmissionCreate,
-    MeetingCreate, MeetingUpdate, MeetingResponse
+    MeetingCreate, MeetingUpdate, MeetingResponse,
+    WatchedStockCreate, WatchedStockUpdate, WatchedStockResponse, StockQuote, StockSearchResult, MarketNewsItem
 )
 from .vault import (
     generate_salt, derive_key, hash_master_password, verify_master_password,
@@ -167,7 +169,7 @@ try:
     # Create missing tables explicitly (for tables added after initial deployment)
     tables_to_check = [
         'bank_accounts', 'achievements', 'business_achievements', 'meetings', 'user_sessions', 'token_blacklist',
-        'audit_logs', 'analytics_events',
+        'audit_logs', 'analytics_events', 'watched_stocks',
         # Business taxonomy junction tables
         'contact_businesses', 'document_businesses', 'credential_businesses', 'web_link_businesses',
         'product_offered_businesses', 'product_used_businesses', 'service_businesses', 'deadline_businesses', 'meeting_businesses'
@@ -8089,3 +8091,394 @@ def delete_transcript(
     db.commit()
 
     return {"ok": True, "message": "Transcript deleted"}
+
+
+# ============ MARKET INTELLIGENCE ENDPOINTS ============
+
+# yfinance import with graceful fallback
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+    yf = None
+    logger.warning("yfinance not installed, stock quotes will be unavailable")
+
+
+@app.get("/api/stocks/watched", response_model=List[WatchedStockResponse])
+def get_watched_stocks(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all watched stocks for the organization."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    stocks = db.query(WatchedStock).filter(
+        WatchedStock.organization_id == current_user.organization_id
+    ).order_by(WatchedStock.created_at.desc()).all()
+
+    return stocks
+
+
+@app.post("/api/stocks/watched", response_model=WatchedStockResponse)
+def add_watched_stock(
+    stock: WatchedStockCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Add a stock to the watchlist."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    # Normalize symbol to uppercase
+    symbol = stock.symbol.strip().upper()
+
+    # Validate symbol format (alphanumeric + dots only)
+    if not re.match(r'^[A-Z0-9.]+$', symbol):
+        raise HTTPException(status_code=400, detail="Invalid stock symbol format")
+
+    # Check if already watching
+    existing = db.query(WatchedStock).filter(
+        WatchedStock.organization_id == current_user.organization_id,
+        WatchedStock.symbol == symbol
+    ).first()
+
+    if existing:
+        raise HTTPException(status_code=409, detail="Stock already in watchlist")
+
+    # Try to get stock name from yfinance if not provided
+    name = stock.name
+    if not name and YFINANCE_AVAILABLE:
+        try:
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+            name = info.get("shortName") or info.get("longName") or symbol
+        except Exception:
+            name = symbol
+
+    db_stock = WatchedStock(
+        organization_id=current_user.organization_id,
+        symbol=symbol,
+        name=name or symbol,
+        notes=stock.notes
+    )
+
+    db.add(db_stock)
+    db.commit()
+    db.refresh(db_stock)
+
+    return db_stock
+
+
+@app.put("/api/stocks/watched/{stock_id}", response_model=WatchedStockResponse)
+def update_watched_stock(
+    stock_id: int,
+    stock_update: WatchedStockUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update notes for a watched stock."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    db_stock = db.query(WatchedStock).filter(
+        WatchedStock.id == stock_id,
+        WatchedStock.organization_id == current_user.organization_id
+    ).first()
+
+    if not db_stock:
+        raise HTTPException(status_code=404, detail="Watched stock not found")
+
+    if stock_update.notes is not None:
+        db_stock.notes = stock_update.notes
+
+    db.commit()
+    db.refresh(db_stock)
+
+    return db_stock
+
+
+@app.delete("/api/stocks/watched/{stock_id}")
+def remove_watched_stock(
+    stock_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Remove a stock from the watchlist."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if current_user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    db_stock = db.query(WatchedStock).filter(
+        WatchedStock.id == stock_id,
+        WatchedStock.organization_id == current_user.organization_id
+    ).first()
+
+    if not db_stock:
+        raise HTTPException(status_code=404, detail="Watched stock not found")
+
+    db.delete(db_stock)
+    db.commit()
+
+    return {"ok": True, "message": "Stock removed from watchlist"}
+
+
+@app.get("/api/stocks/quote/{symbol}", response_model=StockQuote)
+def get_stock_quote(
+    symbol: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get real-time stock quote from Yahoo Finance."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if not YFINANCE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Stock quotes unavailable - yfinance not installed")
+
+    # Normalize symbol
+    symbol = symbol.strip().upper()
+
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+
+        # Check if we got valid data
+        price = info.get("regularMarketPrice") or info.get("currentPrice")
+        if price is None:
+            raise HTTPException(status_code=404, detail=f"No data found for symbol: {symbol}")
+
+        return StockQuote(
+            symbol=symbol,
+            name=info.get("shortName") or info.get("longName") or symbol,
+            price=price,
+            change=info.get("regularMarketChange", 0) or 0,
+            change_percent=info.get("regularMarketChangePercent", 0) or 0,
+            market_cap=info.get("marketCap"),
+            volume=info.get("regularMarketVolume"),
+            day_high=info.get("dayHigh"),
+            day_low=info.get("dayLow"),
+            fifty_two_week_high=info.get("fiftyTwoWeekHigh"),
+            fifty_two_week_low=info.get("fiftyTwoWeekLow"),
+            last_updated=datetime.utcnow()
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching stock quote for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching stock data")
+
+
+@app.get("/api/stocks/quotes")
+def get_stock_quotes_bulk(
+    symbols: str,  # Comma-separated list
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get quotes for multiple stocks at once."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    if not YFINANCE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Stock quotes unavailable - yfinance not installed")
+
+    symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+
+    if len(symbol_list) > 20:
+        raise HTTPException(status_code=400, detail="Maximum 20 symbols per request")
+
+    quotes = {}
+    for symbol in symbol_list:
+        try:
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+            price = info.get("regularMarketPrice") or info.get("currentPrice")
+
+            if price is not None:
+                quotes[symbol] = {
+                    "symbol": symbol,
+                    "name": info.get("shortName") or info.get("longName") or symbol,
+                    "price": price,
+                    "change": info.get("regularMarketChange", 0) or 0,
+                    "change_percent": info.get("regularMarketChangePercent", 0) or 0,
+                    "market_cap": info.get("marketCap"),
+                    "volume": info.get("regularMarketVolume"),
+                    "day_high": info.get("dayHigh"),
+                    "day_low": info.get("dayLow"),
+                    "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
+                    "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
+                    "last_updated": datetime.utcnow().isoformat()
+                }
+        except Exception as e:
+            logger.warning(f"Error fetching quote for {symbol}: {e}")
+            quotes[symbol] = {"error": str(e)}
+
+    return {"quotes": quotes}
+
+
+@app.get("/api/stocks/search", response_model=List[StockSearchResult])
+def search_stocks(
+    q: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Search for stocks by symbol or name."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    query = q.strip().upper()
+
+    if len(query) < 1:
+        return []
+
+    # Common stock symbols for quick matching
+    common_stocks = [
+        {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ"},
+        {"symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ"},
+        {"symbol": "GOOGL", "name": "Alphabet Inc.", "exchange": "NASDAQ"},
+        {"symbol": "AMZN", "name": "Amazon.com Inc.", "exchange": "NASDAQ"},
+        {"symbol": "META", "name": "Meta Platforms Inc.", "exchange": "NASDAQ"},
+        {"symbol": "NVDA", "name": "NVIDIA Corporation", "exchange": "NASDAQ"},
+        {"symbol": "TSLA", "name": "Tesla Inc.", "exchange": "NASDAQ"},
+        {"symbol": "JPM", "name": "JPMorgan Chase & Co.", "exchange": "NYSE"},
+        {"symbol": "V", "name": "Visa Inc.", "exchange": "NYSE"},
+        {"symbol": "JNJ", "name": "Johnson & Johnson", "exchange": "NYSE"},
+        {"symbol": "WMT", "name": "Walmart Inc.", "exchange": "NYSE"},
+        {"symbol": "PG", "name": "Procter & Gamble Co.", "exchange": "NYSE"},
+        {"symbol": "MA", "name": "Mastercard Inc.", "exchange": "NYSE"},
+        {"symbol": "UNH", "name": "UnitedHealth Group Inc.", "exchange": "NYSE"},
+        {"symbol": "HD", "name": "The Home Depot Inc.", "exchange": "NYSE"},
+        {"symbol": "DIS", "name": "The Walt Disney Company", "exchange": "NYSE"},
+        {"symbol": "PYPL", "name": "PayPal Holdings Inc.", "exchange": "NASDAQ"},
+        {"symbol": "NFLX", "name": "Netflix Inc.", "exchange": "NASDAQ"},
+        {"symbol": "ADBE", "name": "Adobe Inc.", "exchange": "NASDAQ"},
+        {"symbol": "CRM", "name": "Salesforce Inc.", "exchange": "NYSE"},
+        {"symbol": "INTC", "name": "Intel Corporation", "exchange": "NASDAQ"},
+        {"symbol": "AMD", "name": "Advanced Micro Devices Inc.", "exchange": "NASDAQ"},
+        {"symbol": "CSCO", "name": "Cisco Systems Inc.", "exchange": "NASDAQ"},
+        {"symbol": "ORCL", "name": "Oracle Corporation", "exchange": "NYSE"},
+        {"symbol": "IBM", "name": "International Business Machines", "exchange": "NYSE"},
+        {"symbol": "BA", "name": "The Boeing Company", "exchange": "NYSE"},
+        {"symbol": "GE", "name": "General Electric Company", "exchange": "NYSE"},
+        {"symbol": "KO", "name": "The Coca-Cola Company", "exchange": "NYSE"},
+        {"symbol": "PEP", "name": "PepsiCo Inc.", "exchange": "NASDAQ"},
+        {"symbol": "MCD", "name": "McDonald's Corporation", "exchange": "NYSE"},
+        {"symbol": "NKE", "name": "Nike Inc.", "exchange": "NYSE"},
+        {"symbol": "SBUX", "name": "Starbucks Corporation", "exchange": "NASDAQ"},
+        {"symbol": "COST", "name": "Costco Wholesale Corporation", "exchange": "NASDAQ"},
+        {"symbol": "TGT", "name": "Target Corporation", "exchange": "NYSE"},
+        {"symbol": "CVS", "name": "CVS Health Corporation", "exchange": "NYSE"},
+        {"symbol": "ABBV", "name": "AbbVie Inc.", "exchange": "NYSE"},
+        {"symbol": "MRK", "name": "Merck & Co. Inc.", "exchange": "NYSE"},
+        {"symbol": "PFE", "name": "Pfizer Inc.", "exchange": "NYSE"},
+        {"symbol": "TMO", "name": "Thermo Fisher Scientific Inc.", "exchange": "NYSE"},
+        {"symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "exchange": "NYSE", "type": "ETF"},
+        {"symbol": "QQQ", "name": "Invesco QQQ Trust", "exchange": "NASDAQ", "type": "ETF"},
+        {"symbol": "VTI", "name": "Vanguard Total Stock Market ETF", "exchange": "NYSE", "type": "ETF"},
+        {"symbol": "BTC-USD", "name": "Bitcoin USD", "exchange": "CCC", "type": "Crypto"},
+        {"symbol": "ETH-USD", "name": "Ethereum USD", "exchange": "CCC", "type": "Crypto"},
+    ]
+
+    # Filter matches
+    results = []
+    for stock in common_stocks:
+        if query in stock["symbol"] or query in stock["name"].upper():
+            results.append(StockSearchResult(
+                symbol=stock["symbol"],
+                name=stock["name"],
+                exchange=stock.get("exchange"),
+                type=stock.get("type", "Stock")
+            ))
+
+    # If no matches in common list and we have yfinance, try to validate the symbol
+    if not results and YFINANCE_AVAILABLE and len(query) <= 10:
+        try:
+            ticker = yf.Ticker(query)
+            info = ticker.info
+            name = info.get("shortName") or info.get("longName")
+            if name:
+                results.append(StockSearchResult(
+                    symbol=query,
+                    name=name,
+                    exchange=info.get("exchange"),
+                    type=info.get("quoteType", "Stock")
+                ))
+        except Exception:
+            pass
+
+    return results[:10]  # Limit to 10 results
+
+
+@app.get("/api/news/market", response_model=List[MarketNewsItem])
+async def get_market_news(
+    q: str = None,
+    category: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get market news from News API."""
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not in an organization")
+
+    from .ai.competitor_monitor import NewsAPIClient
+
+    news_client = NewsAPIClient()
+
+    # Build search query
+    if q:
+        query = q
+    elif category == "technology":
+        query = "technology stocks OR tech companies OR software"
+    elif category == "business":
+        query = "business news OR economy OR markets"
+    elif category == "finance":
+        query = "stock market OR Wall Street OR investing"
+    else:
+        query = "stock market OR business news OR technology stocks"
+
+    try:
+        articles = await news_client.search(
+            query=query,
+            from_date=datetime.utcnow() - timedelta(days=7),
+            page_size=20,
+            sort_by="publishedAt"
+        )
+
+        news_items = []
+        for article in articles:
+            published = article.get("publishedAt", "")
+            try:
+                if published:
+                    published_dt = datetime.fromisoformat(published.replace("Z", "+00:00"))
+                else:
+                    published_dt = datetime.utcnow()
+            except Exception:
+                published_dt = datetime.utcnow()
+
+            source = article.get("source", {})
+            source_name = source.get("name", "") if isinstance(source, dict) else str(source)
+
+            news_items.append(MarketNewsItem(
+                title=article.get("title", ""),
+                description=article.get("description"),
+                url=article.get("url", ""),
+                source=source_name,
+                published_at=published_dt,
+                image_url=article.get("urlToImage")
+            ))
+
+        return news_items
+
+    except Exception as e:
+        logger.error(f"Error fetching market news: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching news")

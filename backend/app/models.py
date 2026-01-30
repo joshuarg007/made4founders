@@ -3893,3 +3893,33 @@ class LLMUsage(Base):
         Index('ix_llm_usage_org_date', 'organization_id', 'created_at'),
         Index('ix_llm_usage_provider', 'provider'),
     )
+
+
+# ============ MARKET INTELLIGENCE ============
+
+class WatchedStock(Base):
+    """
+    Stock watchlist for market intelligence.
+
+    Tracks stocks that an organization wants to monitor.
+    """
+    __tablename__ = "watched_stocks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Stock info
+    symbol = Column(String(20), nullable=False)  # e.g., "AAPL", "MSFT"
+    name = Column(String(255), nullable=True)  # e.g., "Apple Inc."
+    notes = Column(Text, nullable=True)  # User notes about why they're watching
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    organization = relationship("Organization", backref="watched_stocks")
+
+    # Unique constraint: one entry per org+symbol
+    __table_args__ = (
+        UniqueConstraint('organization_id', 'symbol', name='uq_org_watched_stock'),
+        Index('ix_watched_stock_org', 'organization_id'),
+    )

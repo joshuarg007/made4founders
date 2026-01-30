@@ -479,6 +479,9 @@ SQLite database located at `backend/made4founders.db`
 - [x] **Analytics** - Privacy-friendly usage tracking
 - [x] **SEO Optimization** - Meta tags, Open Graph, structured data, sitemap
 
+### In Progress
+- [ ] **Market Intelligence** - Stock watchlist (Yahoo Finance) + market news (News API)
+
 ### Future
 - [ ] **Calendar Integration** - Google/Outlook calendar sync
 - [ ] **Team Collaboration** - Invite members, shared workspaces

@@ -4198,4 +4198,84 @@ export const getGuestTypes = () =>
   fetchApi<{ types: Array<{ value: string; label: string }> }>('/guests/types/list');
 
 
+// ============ Market Intelligence ============
+
+export interface WatchedStock {
+  id: number;
+  symbol: string;
+  name: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface StockQuote {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  change_percent: number;
+  market_cap: number | null;
+  volume: number | null;
+  day_high: number | null;
+  day_low: number | null;
+  fifty_two_week_high: number | null;
+  fifty_two_week_low: number | null;
+  last_updated: string;
+}
+
+export interface StockSearchResult {
+  symbol: string;
+  name: string;
+  exchange: string | null;
+  type: string | null;
+}
+
+export interface MarketNewsItem {
+  title: string;
+  description: string | null;
+  url: string;
+  source: string;
+  published_at: string;
+  image_url: string | null;
+}
+
+// Watchlist
+export const getWatchedStocks = () =>
+  fetchApi<WatchedStock[]>('/stocks/watched');
+
+export const addWatchedStock = (data: { symbol: string; name?: string; notes?: string }) =>
+  fetchApi<WatchedStock>('/stocks/watched', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateWatchedStock = (id: number, data: { notes?: string }) =>
+  fetchApi<WatchedStock>(`/stocks/watched/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const removeWatchedStock = (id: number) =>
+  fetchApi<{ ok: boolean }>(`/stocks/watched/${id}`, { method: 'DELETE' });
+
+// Stock Quotes
+export const getStockQuote = (symbol: string) =>
+  fetchApi<StockQuote>(`/stocks/quote/${encodeURIComponent(symbol)}`);
+
+export const getStockQuotes = (symbols: string) =>
+  fetchApi<{ quotes: Record<string, StockQuote> }>(`/stocks/quotes?symbols=${encodeURIComponent(symbols)}`);
+
+// Stock Search
+export const searchStocks = (query: string) =>
+  fetchApi<StockSearchResult[]>(`/stocks/search?q=${encodeURIComponent(query)}`);
+
+// Market News
+export const getMarketNews = (query?: string, category?: string) => {
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  if (category) params.set('category', category);
+  return fetchApi<MarketNewsItem[]>(`/news/market?${params.toString()}`);
+};
+
+
 export default api;
