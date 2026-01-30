@@ -103,25 +103,46 @@ class BrandAssetResponse(BaseModel):
 
 
 class BrandGuidelineCreate(BaseModel):
-    title: str
-    category: str
-    content: str
+    company_name: Optional[str] = None
+    tagline: Optional[str] = None
+    mission_statement: Optional[str] = None
+    voice_tone: Optional[str] = None
+    voice_description: Optional[str] = None
+    logo_min_size: Optional[str] = None
+    logo_clear_space: Optional[str] = None
+    color_usage_notes: Optional[str] = None
+    typography_notes: Optional[str] = None
+    dos_and_donts: Optional[str] = None
     order_index: Optional[int] = 0
     business_id: Optional[int] = None  # None = org-level, ID = business-specific
 
 class BrandGuidelineUpdate(BaseModel):
-    title: Optional[str] = None
-    category: Optional[str] = None
-    content: Optional[str] = None
+    company_name: Optional[str] = None
+    tagline: Optional[str] = None
+    mission_statement: Optional[str] = None
+    voice_tone: Optional[str] = None
+    voice_description: Optional[str] = None
+    logo_min_size: Optional[str] = None
+    logo_clear_space: Optional[str] = None
+    color_usage_notes: Optional[str] = None
+    typography_notes: Optional[str] = None
+    dos_and_donts: Optional[str] = None
     order_index: Optional[int] = None
 
 class BrandGuidelineResponse(BaseModel):
     id: int
     organization_id: int
     business_id: Optional[int]
-    title: str
-    category: str
-    content: str
+    company_name: Optional[str]
+    tagline: Optional[str]
+    mission_statement: Optional[str]
+    voice_tone: Optional[str]
+    voice_description: Optional[str]
+    logo_min_size: Optional[str]
+    logo_clear_space: Optional[str]
+    color_usage_notes: Optional[str]
+    typography_notes: Optional[str]
+    dos_and_donts: Optional[str]
     order_index: int
     created_at: datetime
     updated_at: datetime
