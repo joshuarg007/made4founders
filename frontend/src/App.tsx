@@ -59,6 +59,7 @@ const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'))
 const VerifyEmail = lazyWithRetry(() => import('./pages/VerifyEmail'))
 const MFASetup = lazyWithRetry(() => import('./pages/MFASetup'))
+const MFAVerify = lazyWithRetry(() => import('./pages/MFAVerify'))
 
 // Protected pages (lazy loaded with retry)
 const DailyBrief = lazyWithRetry(() => import('./pages/DailyBrief'))
@@ -86,6 +87,9 @@ const Team = lazyWithRetry(() => import('./pages/Team'))
 const Vault = lazyWithRetry(() => import('./pages/Vault'))
 const Leaderboard = lazyWithRetry(() => import('./pages/Leaderboard'))
 const Businesses = lazyWithRetry(() => import('./pages/Businesses'))
+const WebPresence = lazyWithRetry(() => import('./pages/Website'))
+const SEOPage = lazyWithRetry(() => import('./pages/SEO'))
+const Branding = lazyWithRetry(() => import('./pages/Branding'))
 const Marketplaces = lazyWithRetry(() => import('./pages/Marketplaces'))
 const Integrations = lazyWithRetry(() => import('./pages/Integrations'))
 const Settings = lazyWithRetry(() => import('./pages/Settings'))
@@ -125,6 +129,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/setup-mfa" element={<MFASetup />} />
+        <Route path="/mfa-verify" element={<MFAVerify />} />
 
         {/* Protected app routes */}
         <Route
@@ -146,7 +151,10 @@ function App() {
           <Route path="tasks" element={<Tasks />} />
           <Route path="users" element={<Users />} />
 
-          {/* New merged pages */}
+          {/* Marketing */}
+          <Route path="web-presence" element={<WebPresence />} />
+          <Route path="branding" element={<Branding />} />
+          <Route path="seo" element={<SEOPage />} />
           <Route path="social-hub" element={<SocialHub />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="offerings" element={<Offerings />} />
@@ -187,8 +195,7 @@ function App() {
 
         {/* Redirect old pages to new merged pages */}
         <Route path="/app/marketing" element={<Navigate to="/app/social-hub" replace />} />
-        <Route path="/app/branding" element={<Navigate to="/app/social-hub" replace />} />
-        <Route path="/app/website" element={<Navigate to="/app/social-hub" replace />} />
+        <Route path="/app/website" element={<Navigate to="/app/web-presence" replace />} />
         <Route path="/app/metrics" element={<Navigate to="/app/analytics" replace />} />
         <Route path="/app/insights" element={<Navigate to="/app/analytics" replace />} />
         <Route path="/app/products-offered" element={<Navigate to="/app/offerings" replace />} />
@@ -196,7 +203,6 @@ function App() {
         <Route path="/app/services" element={<Navigate to="/app/offerings" replace />} />
         <Route path="/app/web-links" element={<Navigate to="/app/offerings" replace />} />
         <Route path="/app/banking" element={<Navigate to="/app/finance" replace />} />
-        <Route path="/app/vault" element={<Navigate to="/app/finance" replace />} />
         </Routes>
       </Suspense>
     </ErrorBoundary>

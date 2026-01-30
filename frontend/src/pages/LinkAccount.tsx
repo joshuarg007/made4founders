@@ -113,8 +113,13 @@ export default function LinkAccount() {
     setError('');
 
     try {
-      await createAccountFromOAuth({ token });
-      navigate('/app');
+      const result = await createAccountFromOAuth({ token });
+      // Navigate to MFA setup or verify page
+      if (result.redirect_url) {
+        window.location.href = result.redirect_url;
+      } else {
+        navigate('/app');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account');
     } finally {
@@ -129,8 +134,13 @@ export default function LinkAccount() {
     setError('');
 
     try {
-      await linkOAuthToAccount({ token, email, password });
-      navigate('/app');
+      const result = await linkOAuthToAccount({ token, email, password });
+      // Navigate to MFA setup or verify page
+      if (result.redirect_url) {
+        window.location.href = result.redirect_url;
+      } else {
+        navigate('/app');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid email or password');
     } finally {

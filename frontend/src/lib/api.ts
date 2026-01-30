@@ -441,13 +441,13 @@ export const getPendingOAuth = (token: string) =>
   fetchApi<PendingOAuthInfo>(`/auth/oauth/pending/${token}`);
 
 export const linkOAuthToAccount = (data: LinkAccountRequest) =>
-  fetchApi<{ ok: boolean; message: string }>('/auth/oauth/link', {
+  fetchApi<{ ok: boolean; redirect_url: string }>('/auth/oauth/link', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 
 export const createAccountFromOAuth = (data: CreateFromOAuthRequest) =>
-  fetchApi<{ ok: boolean; message: string }>('/auth/oauth/create', {
+  fetchApi<{ ok: boolean; redirect_url: string }>('/auth/oauth/create', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -596,8 +596,14 @@ export interface Document {
   file_exists?: boolean;
 }
 
-export const getDocuments = (category?: string) =>
-  fetchApi<Document[]>(`/documents${category ? `?category=${category}` : ''}`);
+export const getDocuments = (options?: { category?: string; businesses?: string; unassigned_only?: boolean }) => {
+  const params = new URLSearchParams();
+  if (options?.category) params.append('category', options.category);
+  if (options?.businesses) params.append('businesses', options.businesses);
+  if (options?.unassigned_only) params.append('unassigned_only', 'true');
+  const queryString = params.toString();
+  return fetchApi<Document[]>(`/documents${queryString ? `?${queryString}` : ''}`);
+};
 
 export const createDocument = (data: Partial<Document>) =>
   fetchApi<Document>('/documents', { method: 'POST', body: JSON.stringify(data) });
@@ -636,8 +642,14 @@ export interface Contact {
   updated_at: string;
 }
 
-export const getContacts = (contactType?: string) =>
-  fetchApi<Contact[]>(`/contacts${contactType ? `?contact_type=${contactType}` : ''}`);
+export const getContacts = (options?: { contactType?: string; businesses?: string; unassigned_only?: boolean }) => {
+  const params = new URLSearchParams();
+  if (options?.contactType) params.append('contact_type', options.contactType);
+  if (options?.businesses) params.append('businesses', options.businesses);
+  if (options?.unassigned_only) params.append('unassigned_only', 'true');
+  const queryString = params.toString();
+  return fetchApi<Contact[]>(`/contacts${queryString ? `?${queryString}` : ''}`);
+};
 
 export const createContact = (data: Partial<Contact>) =>
   fetchApi<Contact>('/contacts', { method: 'POST', body: JSON.stringify(data) });
@@ -703,8 +715,14 @@ export interface Deadline {
   updated_at: string;
 }
 
-export const getDeadlines = (deadlineType?: string, includeCompleted = false) =>
-  fetchApi<Deadline[]>(`/deadlines?include_completed=${includeCompleted}${deadlineType ? `&deadline_type=${deadlineType}` : ''}`);
+export const getDeadlines = (options?: { deadlineType?: string; includeCompleted?: boolean; businesses?: string; unassigned_only?: boolean }) => {
+  const params = new URLSearchParams();
+  params.append('include_completed', String(options?.includeCompleted ?? false));
+  if (options?.deadlineType) params.append('deadline_type', options.deadlineType);
+  if (options?.businesses) params.append('businesses', options.businesses);
+  if (options?.unassigned_only) params.append('unassigned_only', 'true');
+  return fetchApi<Deadline[]>(`/deadlines?${params}`);
+};
 
 export const createDeadline = (data: Partial<Deadline>) =>
   fetchApi<Deadline>('/deadlines', { method: 'POST', body: JSON.stringify(data) });
@@ -891,7 +909,12 @@ export const lockVault = () =>
 export const resetVault = () =>
   fetchApi<{ ok: boolean; message: string }>('/vault/reset', { method: 'DELETE' });
 
-export const getCredentials = () => fetchApi<CredentialMasked[]>('/credentials');
+export const getCredentials = (options?: { businesses?: string; unassigned_only?: boolean }) => {
+  const params = new URLSearchParams();
+  if (options?.businesses) params.append('businesses', options.businesses);
+  if (options?.unassigned_only) params.append('unassigned_only', 'true');
+  return fetchApi<CredentialMasked[]>(`/credentials${params.toString() ? `?${params}` : ''}`);
+};
 
 export const getCredential = (id: number) => fetchApi<CredentialDecrypted>(`/credentials/${id}`);
 
@@ -1210,6 +1233,8 @@ export const getTasks = (params?: {
   status?: string;
   assigned_to_id?: number;
   include_completed?: boolean;
+  businesses?: string;
+  unassigned_only?: boolean;
 }) => {
   const searchParams = new URLSearchParams();
   if (params?.board_id) searchParams.append('board_id', String(params.board_id));
@@ -1217,6 +1242,8 @@ export const getTasks = (params?: {
   if (params?.status) searchParams.append('status', params.status);
   if (params?.assigned_to_id) searchParams.append('assigned_to_id', String(params.assigned_to_id));
   if (params?.include_completed) searchParams.append('include_completed', 'true');
+  if (params?.businesses) searchParams.append('businesses', params.businesses);
+  if (params?.unassigned_only) searchParams.append('unassigned_only', 'true');
   const query = searchParams.toString();
   return fetchApi<Task[]>(`/tasks${query ? `?${query}` : ''}`);
 };
@@ -1376,11 +1403,15 @@ export const getMetrics = (params?: {
   metric_type?: string;
   start_date?: string;
   end_date?: string;
+  businesses?: string;
+  unassigned_only?: boolean;
 }) => {
   const searchParams = new URLSearchParams();
   if (params?.metric_type) searchParams.append('metric_type', params.metric_type);
   if (params?.start_date) searchParams.append('start_date', params.start_date);
   if (params?.end_date) searchParams.append('end_date', params.end_date);
+  if (params?.businesses) searchParams.append('businesses', params.businesses);
+  if (params?.unassigned_only) searchParams.append('unassigned_only', 'true');
   const query = searchParams.toString();
   return fetchApi<Metric[]>(`/metrics${query ? `?${query}` : ''}`);
 };
@@ -1535,6 +1566,31 @@ export interface AdditionalListing {
   handle: string | null;
 }
 
+// SEO Types
+export interface SEOKeyword {
+  keyword: string;
+  priority?: number;  // 1-10
+  monthly_searches?: number;
+  notes?: string;
+}
+
+export interface ContentPillar {
+  topic: string;
+  description?: string;
+}
+
+export interface SEOCompetitor {
+  domain: string;
+  name?: string;
+  notes?: string;
+}
+
+export interface SEOChecklistTask {
+  completed: boolean;
+  completed_at?: string;
+  notes?: string;
+}
+
 export interface WebPresence {
   id: number;
   // Domain
@@ -1576,6 +1632,31 @@ export interface WebPresence {
   bbb_accredited: boolean;
   additional_listings: AdditionalListing[] | null;
   notes: string | null;
+  // SEO
+  primary_keywords: SEOKeyword[] | null;
+  secondary_keywords: SEOKeyword[] | null;
+  meta_title_template: string | null;
+  meta_description: string | null;
+  brand_name: string | null;
+  tagline: string | null;
+  canonical_url: string | null;
+  robots_directives: string | null;
+  sitemap_url: string | null;
+  google_search_console_id: string | null;
+  google_analytics_id: string | null;
+  bing_webmaster_id: string | null;
+  og_image_url: string | null;
+  og_type: string | null;
+  twitter_card_type: string | null;
+  twitter_handle: string | null;
+  business_name: string | null;
+  business_address: string | null;
+  business_phone: string | null;
+  service_areas: string[] | null;
+  content_pillars: ContentPillar[] | null;
+  target_audience: string | null;
+  competitors: SEOCompetitor[] | null;
+  seo_checklist_progress: Record<string, SEOChecklistTask> | null;
   created_at: string;
   updated_at: string;
 }
