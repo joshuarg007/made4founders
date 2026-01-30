@@ -18,6 +18,7 @@ import {
   Eye,
   MessageCircle,
   AlertCircle,
+  Building2,
 } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
 import CountrySelect from '../components/CountrySelect';
@@ -26,6 +27,7 @@ import AddressAutocomplete from '../components/AddressAutocomplete';
 import { getContacts, createContact, updateContact, deleteContact, type Contact } from '../lib/api';
 import { format } from 'date-fns';
 import BusinessFilter from '../components/BusinessFilter';
+import { useBusiness } from '../context/BusinessContext';
 import { validators, validationMessages } from '../lib/validation';
 import { getCountryByName } from '../lib/countries';
 
@@ -602,6 +604,7 @@ const contactTypes = [
 ];
 
 export default function Contacts() {
+  const { businesses } = useBusiness();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('all');
@@ -630,7 +633,8 @@ export default function Contacts() {
     birthday_day: '',
     tags: '',
     responsibilities: '',
-    notes: ''
+    notes: '',
+    business_id: null as number | null
   });
 
   // Additional emails and phones
@@ -929,7 +933,7 @@ export default function Contacts() {
       }
       setShowModal(false);
       setEditingContact(null);
-      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' });
+      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '', business_id: null });
       setAdditionalEmails([]);
       setAdditionalPhones([]);
       setValidationErrors({});
@@ -977,7 +981,8 @@ export default function Contacts() {
       birthday_day,
       tags: contact.tags || '',
       responsibilities: contact.responsibilities || '',
-      notes: contact.notes || ''
+      notes: contact.notes || '',
+      business_id: contact.business_id || null
     });
     setAdditionalEmails(contact.additional_emails || []);
     setAdditionalPhones(contact.additional_phones || []);
@@ -1012,7 +1017,7 @@ export default function Contacts() {
           <p className="text-gray-400 mt-1">Your business rolodex</p>
         </div>
         <button
-          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '' }); setAdditionalEmails([]); setAdditionalPhones([]); setValidationErrors({}); setShowValidationSummary(false); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
+          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '', business_id: null }); setAdditionalEmails([]); setAdditionalPhones([]); setValidationErrors({}); setShowValidationSummary(false); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
         >
           <Plus className="w-4 h-4" />
@@ -1360,6 +1365,27 @@ export default function Contacts() {
                     ))}
                   </select>
                 </div>
+                {/* Business selector */}
+                {businesses.length > 0 && (
+                  <div className="col-span-2">
+                    <label className="block text-sm text-gray-400 mb-1">
+                      <Building2 className="w-3.5 h-3.5 inline mr-1" />
+                      Business
+                    </label>
+                    <select
+                      value={formData.business_id || ''}
+                      onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
+                      className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                    >
+                      <option value="" className="bg-[#1a1d24] text-white">No business (org-level)</option>
+                      {businesses.filter(b => !b.is_archived).map((b) => (
+                        <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">
+                          {b.emoji} {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {/* Contact Info Section */}
                 <div className="col-span-2 pt-2 border-t border-white/10">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Contact Information</p>
