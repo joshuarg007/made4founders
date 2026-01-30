@@ -1806,7 +1806,7 @@ export default function Vault() {
       setCredentials([]);
       setViewingCredential(null);
       // Navigate to dashboard after locking
-      navigate('/dashboard');
+      navigate('/app');
     } catch (err) {
       setError('Failed to lock vault');
     }
