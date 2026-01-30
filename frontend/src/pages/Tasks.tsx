@@ -19,6 +19,7 @@ import {
 } from '../lib/api';
 import type { TaskBoard, TaskColumn, Task, UserBrief, TaskComment, TimeEntry, TaskActivity } from '../lib/api';
 import { format, formatDistanceToNow, isPast, isToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import BusinessFilter from '../components/BusinessFilter';
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: 'bg-white/50/20 text-gray-300 border-gray-500/30',
@@ -49,6 +50,7 @@ export default function Tasks() {
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
   const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('calendar');
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
 
   // Modal states
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -82,7 +84,7 @@ export default function Tasks() {
     if (currentBoard) {
       loadTasks();
     }
-  }, [currentBoard, showCompleted]);
+  }, [currentBoard, showCompleted, businessFilter]);
 
   const loadData = async () => {
     try {
@@ -105,9 +107,17 @@ export default function Tasks() {
   const loadTasks = async () => {
     if (!currentBoard) return;
     try {
+      const businessesParam = businessFilter === 'all'
+        ? undefined
+        : businessFilter === 'none'
+          ? undefined
+          : businessFilter.join(',');
+
       const tasksData = await getTasks({
         board_id: currentBoard.id,
         include_completed: showCompleted,
+        businesses: businessesParam,
+        unassigned_only: businessFilter === 'none'
       });
       setTasks(tasksData);
     } catch (error) {
@@ -455,6 +465,13 @@ export default function Tasks() {
               className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
             />
           </div>
+
+          {/* Business filter */}
+          <BusinessFilter
+            value={businessFilter}
+            onChange={setBusinessFilter}
+            showNoBusiness
+          />
 
           {/* Priority filter */}
           <select

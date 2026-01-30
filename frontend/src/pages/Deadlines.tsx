@@ -14,6 +14,7 @@ import {
 import { getDeadlines, createDeadline, updateDeadline, deleteDeadline, completeDeadline, type Deadline } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import CommentsSection from '../components/CommentsSection';
+import BusinessFilter from '../components/BusinessFilter';
 import { format, isBefore, isAfter, addDays } from 'date-fns';
 
 const deadlineTypes = [
@@ -33,6 +34,7 @@ export default function Deadlines() {
   const [selectedType, setSelectedType] = useState('all');
   const [showCompleted, setShowCompleted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null);
   const [selectedDeadline, setSelectedDeadline] = useState<Deadline | null>(null);
@@ -47,17 +49,25 @@ export default function Deadlines() {
   });
 
   const loadDeadlines = async () => {
-    const data = await getDeadlines(
-      selectedType === 'all' ? undefined : selectedType,
-      showCompleted
-    );
+    const businessesParam = businessFilter === 'all'
+      ? undefined
+      : businessFilter === 'none'
+        ? undefined
+        : businessFilter.join(',');
+
+    const data = await getDeadlines({
+      deadlineType: selectedType === 'all' ? undefined : selectedType,
+      includeCompleted: showCompleted,
+      businesses: businessesParam,
+      unassigned_only: businessFilter === 'none'
+    });
     setDeadlines(data);
     setLoading(false);
   };
 
   useEffect(() => {
     loadDeadlines();
-  }, [selectedType, showCompleted]);
+  }, [selectedType, showCompleted, businessFilter]);
 
   const filteredDeadlines = deadlines.filter(d =>
     d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -152,6 +162,11 @@ export default function Deadlines() {
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#1a1d24] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
           />
         </div>
+        <BusinessFilter
+          value={businessFilter}
+          onChange={setBusinessFilter}
+          showNoBusiness
+        />
         <div className="flex gap-2 overflow-x-auto pb-2">
           {deadlineTypes.map((type) => (
             <button

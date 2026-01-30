@@ -1797,6 +1797,48 @@ class WebPresence(Base):
     # Additional notes
     notes = Column(Text, nullable=True)
 
+    # ============ SEO ============
+
+    # Keywords - JSON arrays: [{keyword, priority (1-10), monthly_searches, notes}]
+    primary_keywords = Column(Text, nullable=True)
+    secondary_keywords = Column(Text, nullable=True)
+
+    # Meta Information
+    meta_title_template = Column(String(70), nullable=True)  # e.g., "{page} | {brand}"
+    meta_description = Column(String(160), nullable=True)  # Default meta description
+    brand_name = Column(String(100), nullable=True)  # Brand name for SEO
+    tagline = Column(String(200), nullable=True)  # Brand tagline
+
+    # Technical SEO
+    canonical_url = Column(String(500), nullable=True)  # Primary canonical URL
+    robots_directives = Column(String(100), nullable=True)  # index, follow, etc.
+    sitemap_url = Column(String(500), nullable=True)  # URL to XML sitemap
+    google_search_console_id = Column(String(100), nullable=True)  # GSC verification
+    google_analytics_id = Column(String(50), nullable=True)  # GA4 measurement ID
+    bing_webmaster_id = Column(String(100), nullable=True)  # Bing verification
+
+    # Open Graph / Social SEO
+    og_image_url = Column(String(500), nullable=True)  # Default OG image
+    og_type = Column(String(50), nullable=True)  # website, article, product
+    twitter_card_type = Column(String(50), nullable=True)  # summary, summary_large_image
+    twitter_handle = Column(String(50), nullable=True)  # @handle for Twitter cards
+
+    # Local SEO
+    business_name = Column(String(200), nullable=True)  # NAP: Name
+    business_address = Column(Text, nullable=True)  # NAP: Full address
+    business_phone = Column(String(50), nullable=True)  # NAP: Phone
+    service_areas = Column(Text, nullable=True)  # JSON array of service areas
+
+    # Content Strategy
+    content_pillars = Column(Text, nullable=True)  # JSON array: [{topic, description}]
+    target_audience = Column(Text, nullable=True)  # Description of target audience
+
+    # Competitor Tracking - JSON array: [{domain, name, notes}]
+    competitors = Column(Text, nullable=True)
+
+    # SEO Checklist Progress - JSON object: {task_id: {completed, completed_at, notes}}
+    seo_checklist_progress = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -2041,6 +2083,126 @@ class MeetingBusiness(Base):
     business = relationship("Business", backref="meeting_associations")
 
     __table_args__ = (UniqueConstraint('meeting_id', 'business_id', name='uq_meeting_business'),)
+
+
+class TaskBusiness(Base):
+    """Junction table for Task to Business many-to-many relationship"""
+    __tablename__ = "task_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    task = relationship("Task", backref="business_associations")
+    business = relationship("Business", backref="task_associations")
+
+    __table_args__ = (UniqueConstraint('task_id', 'business_id', name='uq_task_business'),)
+
+
+class MetricBusiness(Base):
+    """Junction table for Metric to Business many-to-many relationship"""
+    __tablename__ = "metric_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    metric_id = Column(Integer, ForeignKey("metrics.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    metric = relationship("Metric", backref="business_associations")
+    business = relationship("Business", backref="metric_associations")
+
+    __table_args__ = (UniqueConstraint('metric_id', 'business_id', name='uq_metric_business'),)
+
+
+class MeetingTranscriptBusiness(Base):
+    """Junction table for MeetingTranscript to Business many-to-many relationship"""
+    __tablename__ = "meeting_transcript_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    transcript_id = Column(Integer, ForeignKey("meeting_transcripts.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    transcript = relationship("MeetingTranscript", backref="business_associations")
+    business = relationship("Business", backref="transcript_associations")
+
+    __table_args__ = (UniqueConstraint('transcript_id', 'business_id', name='uq_transcript_business'),)
+
+
+class BrandColorBusiness(Base):
+    """Junction table for BrandColor to Business many-to-many relationship (shared colors)"""
+    __tablename__ = "brand_color_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    color_id = Column(Integer, ForeignKey("brand_colors.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    color = relationship("BrandColor", backref="business_associations")
+    business = relationship("Business", backref="brand_color_associations")
+
+    __table_args__ = (UniqueConstraint('color_id', 'business_id', name='uq_brand_color_business'),)
+
+
+class BrandFontBusiness(Base):
+    """Junction table for BrandFont to Business many-to-many relationship (shared fonts)"""
+    __tablename__ = "brand_font_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    font_id = Column(Integer, ForeignKey("brand_fonts.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    font = relationship("BrandFont", backref="business_associations")
+    business = relationship("Business", backref="brand_font_associations")
+
+    __table_args__ = (UniqueConstraint('font_id', 'business_id', name='uq_brand_font_business'),)
+
+
+class BrandAssetBusiness(Base):
+    """Junction table for BrandAsset to Business many-to-many relationship (shared assets)"""
+    __tablename__ = "brand_asset_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    asset_id = Column(Integer, ForeignKey("brand_assets.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    asset = relationship("BrandAsset", backref="business_associations")
+    business = relationship("Business", backref="brand_asset_associations")
+
+    __table_args__ = (UniqueConstraint('asset_id', 'business_id', name='uq_brand_asset_business'),)
+
+
+class BrandGuidelineBusiness(Base):
+    """Junction table for BrandGuideline to Business many-to-many relationship (shared guidelines)"""
+    __tablename__ = "brand_guideline_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    guideline_id = Column(Integer, ForeignKey("brand_guidelines.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    guideline = relationship("BrandGuideline", backref="business_associations")
+    business = relationship("Business", backref="brand_guideline_associations")
+
+    __table_args__ = (UniqueConstraint('guideline_id', 'business_id', name='uq_brand_guideline_business'),)
+
+
+class ChecklistProgressBusiness(Base):
+    """Junction table for ChecklistProgress to Business many-to-many relationship"""
+    __tablename__ = "checklist_progress_businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    progress_id = Column(Integer, ForeignKey("checklist_progress.id", ondelete="CASCADE"), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    progress = relationship("ChecklistProgress", backref="business_associations")
+    business = relationship("Business", backref="checklist_progress_associations")
+
+    __table_args__ = (UniqueConstraint('progress_id', 'business_id', name='uq_checklist_progress_business'),)
 
 
 class MeetingTranscript(Base):

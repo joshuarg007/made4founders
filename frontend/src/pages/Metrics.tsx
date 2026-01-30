@@ -23,6 +23,7 @@ import {
   deleteMetric,
 } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import BusinessFilter from '../components/BusinessFilter';
 
 // Simple sparkline chart component
 function Sparkline({ data, color }: { data: number[]; color: string }) {
@@ -155,6 +156,7 @@ export default function Metrics() {
   const [showModal, setShowModal] = useState(false);
   const [editingMetric, setEditingMetric] = useState<Metric | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
   const [formData, setFormData] = useState({
     metric_type: 'mrr' as string,
     name: '',
@@ -166,14 +168,23 @@ export default function Metrics() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [businessFilter]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      const businessesParam = businessFilter === 'all'
+        ? undefined
+        : businessFilter === 'none'
+          ? undefined
+          : businessFilter.join(',');
+
       const [summaryData, metricsData] = await Promise.all([
         getMetricsSummary(),
-        getMetrics(),
+        getMetrics({
+          businesses: businessesParam,
+          unassigned_only: businessFilter === 'none'
+        }),
       ]);
       setSummaries(summaryData);
       setMetrics(metricsData);
@@ -308,15 +319,22 @@ export default function Metrics() {
           <h1 className="text-2xl font-bold text-white mb-1">Metrics</h1>
           <p className="text-gray-400">Track your key business metrics over time</p>
         </div>
-        {canEdit && (
-          <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-violet-600 text-white rounded-lg hover:opacity-90 transition"
-          >
-            <Plus className="w-4 h-4" />
-            Add Metric
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          <BusinessFilter
+            value={businessFilter}
+            onChange={setBusinessFilter}
+            showNoBusiness
+          />
+          {canEdit && (
+            <button
+              onClick={() => handleOpenModal()}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-violet-600 text-white rounded-lg hover:opacity-90 transition"
+            >
+              <Plus className="w-4 h-4" />
+              Add Metric
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Metric Cards */}

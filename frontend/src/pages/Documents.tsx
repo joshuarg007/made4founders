@@ -17,6 +17,7 @@ import {
 import { getDocuments, createDocument, updateDocument, deleteDocument, type Document } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import CommentsSection from '../components/CommentsSection';
+import BusinessFilter from '../components/BusinessFilter';
 import { format, isBefore, addDays } from 'date-fns';
 import ResizableModal from '../components/ResizableModal';
 
@@ -40,6 +41,7 @@ export default function Documents() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
@@ -59,7 +61,14 @@ export default function Documents() {
   const [modalFile, setModalFile] = useState<File | null>(null);
 
   const loadDocuments = async () => {
-    const data = await getDocuments(selectedCategory === 'all' ? undefined : selectedCategory);
+    const options: { category?: string; businesses?: string; unassigned_only?: boolean } = {};
+    if (selectedCategory !== 'all') options.category = selectedCategory;
+    if (businessFilter === 'none') {
+      options.unassigned_only = true;
+    } else if (Array.isArray(businessFilter) && businessFilter.length > 0) {
+      options.businesses = businessFilter.join(',');
+    }
+    const data = await getDocuments(Object.keys(options).length > 0 ? options : undefined);
     setDocuments(data);
     setLoading(false);
   };
@@ -138,7 +147,7 @@ export default function Documents() {
 
   useEffect(() => {
     loadDocuments();
-  }, [selectedCategory]);
+  }, [selectedCategory, businessFilter]);
 
   const filteredDocuments = documents.filter(d =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -299,6 +308,11 @@ export default function Documents() {
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#1a1d24] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
           />
         </div>
+        <BusinessFilter
+          value={businessFilter}
+          onChange={setBusinessFilter}
+          className="w-48"
+        />
         <div className="flex gap-2 overflow-x-auto pb-2">
           {categories.map((cat) => (
             <button

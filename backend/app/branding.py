@@ -161,7 +161,9 @@ def get_user_organization(user: User, db: Session) -> Organization:
 @router.get("/colors", response_model=List[BrandColorResponse])
 def get_brand_colors(
     business_id: Optional[int] = None,
+    businesses: Optional[str] = None,  # Comma-separated business IDs
     include_org_level: bool = True,
+    unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -169,12 +171,33 @@ def get_brand_colors(
 
     Args:
         business_id: Filter by specific business (None = org-level only)
+        businesses: Comma-separated list of business IDs for multi-select filtering
         include_org_level: Include org-level colors when filtering by business
+        unassigned_only: Return only colors with no business assignment
     """
     org = get_user_organization(current_user, db)
     query = db.query(BrandColor).filter(BrandColor.organization_id == org.id)
 
-    if business_id:
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+
+    if unassigned_only:
+        # Only items with no business assignment
+        query = query.filter(BrandColor.business_id.is_(None))
+    elif filter_business_ids:
+        # Multi-business filter
+        if include_org_level:
+            query = query.filter(
+                (BrandColor.business_id.in_(filter_business_ids)) | (BrandColor.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandColor.business_id.in_(filter_business_ids))
+    elif business_id:
         # Verify business belongs to org
         business = db.query(Business).filter(
             Business.id == business_id,
@@ -190,9 +213,7 @@ def get_brand_colors(
             )
         else:
             query = query.filter(BrandColor.business_id == business_id)
-    else:
-        # Only org-level colors
-        query = query.filter(BrandColor.business_id.is_(None))
+    # If no filter, return all colors (both org-level and business-specific)
 
     colors = query.all()
     return colors
@@ -295,7 +316,9 @@ def delete_brand_color(
 @router.get("/fonts", response_model=List[BrandFontResponse])
 def get_brand_fonts(
     business_id: Optional[int] = None,
+    businesses: Optional[str] = None,  # Comma-separated business IDs
     include_org_level: bool = True,
+    unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -303,7 +326,24 @@ def get_brand_fonts(
     org = get_user_organization(current_user, db)
     query = db.query(BrandFont).filter(BrandFont.organization_id == org.id)
 
-    if business_id:
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+
+    if unassigned_only:
+        query = query.filter(BrandFont.business_id.is_(None))
+    elif filter_business_ids:
+        if include_org_level:
+            query = query.filter(
+                (BrandFont.business_id.in_(filter_business_ids)) | (BrandFont.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandFont.business_id.in_(filter_business_ids))
+    elif business_id:
         business = db.query(Business).filter(
             Business.id == business_id,
             Business.organization_id == org.id
@@ -317,8 +357,7 @@ def get_brand_fonts(
             )
         else:
             query = query.filter(BrandFont.business_id == business_id)
-    else:
-        query = query.filter(BrandFont.business_id.is_(None))
+    # If no filter, return all fonts
 
     fonts = query.all()
     return fonts
@@ -407,15 +446,52 @@ def delete_brand_font(
 @router.get("/assets", response_model=List[BrandAssetResponse])
 def get_brand_assets(
     asset_type: Optional[str] = None,
+    business_id: Optional[int] = None,
+    businesses: Optional[str] = None,  # Comma-separated business IDs
+    include_org_level: bool = True,
+    unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all brand assets for the organization."""
+    """Get all brand assets for the organization, optionally filtered by business."""
     org = get_user_organization(current_user, db)
     query = db.query(BrandAsset).filter(BrandAsset.organization_id == org.id)
 
     if asset_type:
         query = query.filter(BrandAsset.asset_type == asset_type)
+
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+
+    if unassigned_only:
+        query = query.filter(BrandAsset.business_id.is_(None))
+    elif filter_business_ids:
+        if include_org_level:
+            query = query.filter(
+                (BrandAsset.business_id.in_(filter_business_ids)) | (BrandAsset.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandAsset.business_id.in_(filter_business_ids))
+    elif business_id:
+        business = db.query(Business).filter(
+            Business.id == business_id,
+            Business.organization_id == org.id
+        ).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+        if include_org_level:
+            query = query.filter(
+                (BrandAsset.business_id == business_id) | (BrandAsset.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandAsset.business_id == business_id)
+    # If no filter, return all assets
 
     return query.all()
 
@@ -592,7 +668,9 @@ def delete_brand_asset(
 def get_brand_guidelines(
     category: Optional[str] = None,
     business_id: Optional[int] = None,
+    businesses: Optional[str] = None,  # Comma-separated business IDs
     include_org_level: bool = True,
+    unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -603,7 +681,24 @@ def get_brand_guidelines(
     if category:
         query = query.filter(BrandGuideline.category == category)
 
-    if business_id:
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+
+    if unassigned_only:
+        query = query.filter(BrandGuideline.business_id.is_(None))
+    elif filter_business_ids:
+        if include_org_level:
+            query = query.filter(
+                (BrandGuideline.business_id.in_(filter_business_ids)) | (BrandGuideline.business_id.is_(None))
+            )
+        else:
+            query = query.filter(BrandGuideline.business_id.in_(filter_business_ids))
+    elif business_id:
         business = db.query(Business).filter(
             Business.id == business_id,
             Business.organization_id == org.id
@@ -617,8 +712,7 @@ def get_brand_guidelines(
             )
         else:
             query = query.filter(BrandGuideline.business_id == business_id)
-    else:
-        query = query.filter(BrandGuideline.business_id.is_(None))
+    # If no filter, return all guidelines
 
     return query.order_by(BrandGuideline.order_index).all()
 

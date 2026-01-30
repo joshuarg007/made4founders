@@ -44,6 +44,7 @@ import {
   type CredentialCreate,
   type CustomField,
 } from '../lib/api';
+import BusinessFilter from '../components/BusinessFilter';
 
 const categories = [
   { value: 'banking', label: 'Banking', icon: '🏦', color: 'emerald', border: 'border-l-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
@@ -1671,6 +1672,7 @@ export default function Vault() {
   const [showFormPassword, setShowFormPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // View mode and favorites (persisted in localStorage)
@@ -1712,7 +1714,7 @@ export default function Vault() {
     if (vaultStatus?.is_unlocked) {
       loadCredentials();
     }
-  }, [vaultStatus?.is_unlocked]);
+  }, [vaultStatus?.is_unlocked, businessFilter]);
 
   // Persist view mode, favorites, and sorting
   useEffect(() => {
@@ -1744,7 +1746,16 @@ export default function Vault() {
 
   const loadCredentials = async () => {
     try {
-      const creds = await getCredentials();
+      const businessesParam = businessFilter === 'all'
+        ? undefined
+        : businessFilter === 'none'
+          ? undefined
+          : businessFilter.join(',');
+
+      const creds = await getCredentials({
+        businesses: businessesParam,
+        unassigned_only: businessFilter === 'none'
+      });
       setCredentials(creds);
     } catch (err) {
       setError('Failed to load credentials');
@@ -2214,6 +2225,12 @@ export default function Vault() {
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#1a1d24] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500"
           />
         </div>
+
+        <BusinessFilter
+          value={businessFilter}
+          onChange={setBusinessFilter}
+          showNoBusiness
+        />
 
         <div className="flex flex-wrap gap-2">
           <button

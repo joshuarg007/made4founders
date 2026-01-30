@@ -12,7 +12,6 @@ import {
   BarChart3,
   TrendingUp,
   Landmark,
-  Megaphone,
   ChevronDown,
   Rocket,
   Shield,
@@ -38,6 +37,10 @@ import {
   ClipboardList,
   Activity,
   Bell,
+  Globe,
+  Palette,
+  Search,
+  Share2,
   UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -123,7 +126,10 @@ const navSections: NavSection[] = [
       hoverText: 'hover:text-purple-400',
     },
     items: [
-      { to: '/app/social-hub', icon: Megaphone, label: 'Marketing' },
+      { to: '/app/web-presence', icon: Globe, label: 'Web Presence' },
+      { to: '/app/branding', icon: Palette, label: 'Brand Identity' },
+      { to: '/app/seo', icon: Search, label: 'SEO' },
+      { to: '/app/social-hub', icon: Share2, label: 'Social Hub' },
       { to: '/app/analytics', icon: BarChart3, label: 'Analytics' },
       { to: '/app/marketplaces', icon: Store, label: 'Markets' },
       { to: '/app/market-intelligence', icon: TrendingUp, label: 'Intelligence' },

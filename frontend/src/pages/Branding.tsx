@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import api from '../lib/api';
+import BusinessFilter from '../components/BusinessFilter';
 
 // Types
 interface BrandColor {
@@ -116,6 +117,7 @@ export default function Branding() {
   const [activeTab, setActiveTab] = useState<Tab>('colors');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
 
   // Data
   const [colors, setColors] = useState<BrandColor[]>([]);
@@ -130,19 +132,31 @@ export default function Branding() {
   const [showGuidelineModal, setShowGuidelineModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
-  // Load data on mount
+  // Load data on mount and when business filter changes
   useEffect(() => {
     loadData();
-  }, []);
+  }, [businessFilter]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      const businessesParam = businessFilter === 'all'
+        ? undefined
+        : businessFilter === 'none'
+          ? undefined
+          : businessFilter.join(',');
+      const unassignedOnly = businessFilter === 'none';
+
+      const params = new URLSearchParams();
+      if (businessesParam) params.append('businesses', businessesParam);
+      if (unassignedOnly) params.append('unassigned_only', 'true');
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+
       const [colorsRes, fontsRes, assetsRes, guidelinesRes] = await Promise.all([
-        api.get('/api/branding/colors'),
-        api.get('/api/branding/fonts'),
-        api.get('/api/branding/assets'),
-        api.get('/api/branding/guidelines'),
+        api.get(`/api/branding/colors${queryString}`),
+        api.get(`/api/branding/fonts${queryString}`),
+        api.get(`/api/branding/assets${queryString}`),
+        api.get(`/api/branding/guidelines${queryString}`),
       ]);
       setColors(colorsRes.data);
       setFonts(fontsRes.data);
@@ -195,13 +209,20 @@ export default function Branding() {
           <h1 className="text-2xl font-bold text-white">Brand Assets</h1>
           <p className="text-gray-400 mt-1">Manage your brand colors, fonts, logos, and guidelines</p>
         </div>
-        <button
-          onClick={exportBrandKit}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-gray-300 hover:bg-[#1a1d24]/10 hover:text-white transition"
-        >
-          <Download className="w-4 h-4" />
-          Export Brand Kit
-        </button>
+        <div className="flex items-center gap-4">
+          <BusinessFilter
+            value={businessFilter}
+            onChange={setBusinessFilter}
+            showNoBusiness
+          />
+          <button
+            onClick={exportBrandKit}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-gray-300 hover:bg-[#1a1d24]/10 hover:text-white transition"
+          >
+            <Download className="w-4 h-4" />
+            Export Brand Kit
+          </button>
+        </div>
       </div>
 
       {error && (

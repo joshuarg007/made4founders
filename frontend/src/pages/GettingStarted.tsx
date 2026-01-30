@@ -34,6 +34,7 @@ import {
   Search,
   Filter
 } from 'lucide-react';
+import BusinessFilter from '../components/BusinessFilter';
 
 const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:8000/api';
 
@@ -1150,14 +1151,27 @@ export default function GettingStarted() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
 
   useEffect(() => {
     fetchProgress();
-  }, []);
+  }, [businessFilter]);
 
   const fetchProgress = async () => {
     try {
-      const res = await fetch(`${API_BASE}/checklist/bulk`, { credentials: 'include' });
+      const businessesParam = businessFilter === 'all'
+        ? undefined
+        : businessFilter === 'none'
+          ? undefined
+          : businessFilter.join(',');
+      const unassignedOnly = businessFilter === 'none';
+
+      const params = new URLSearchParams();
+      if (businessesParam) params.append('businesses', businessesParam);
+      if (unassignedOnly) params.append('unassigned_only', 'true');
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+
+      const res = await fetch(`${API_BASE}/checklist/bulk${queryString}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setProgress(data.items || {});
@@ -1414,6 +1428,11 @@ export default function GettingStarted() {
             className="w-full pl-9 pr-4 py-2 bg-[#1a1d24] border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
           />
         </div>
+        <BusinessFilter
+          value={businessFilter}
+          onChange={setBusinessFilter}
+          showNoBusiness
+        />
         <div className="flex gap-2">
           <button
             onClick={() => setFilterPriority(filterPriority === 'required' ? null : 'required')}

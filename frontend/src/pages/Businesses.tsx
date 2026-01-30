@@ -11,6 +11,8 @@ import {
   Flame,
   X,
   Check,
+  AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 import type { Business } from '../lib/api';
@@ -51,6 +53,12 @@ export default function Businesses() {
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
+
+  // Delete confirmation modal state
+  const [deleteTarget, setDeleteTarget] = useState<Business | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteAcknowledged, setDeleteAcknowledged] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -128,13 +136,18 @@ export default function Businesses() {
     }
   };
 
-  const handleDelete = async (business: BusinessNode) => {
-    if (!confirm(`Are you sure you want to ${business.children?.length ? 'archive' : 'delete'} "${business.name}"?`)) {
-      return;
-    }
+  const handleDeleteClick = (business: BusinessNode) => {
+    setDeleteTarget(business);
+    setDeleteConfirmText('');
+    setDeleteAcknowledged(false);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget || deleteConfirmText !== deleteTarget.name || !deleteAcknowledged) return;
+
+    setDeleting(true);
     try {
-      const response = await fetch(`/api/businesses/${business.id}`, {
+      const response = await fetch(`/api/businesses/${deleteTarget.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -142,8 +155,25 @@ export default function Businesses() {
       if (!response.ok) throw new Error('Failed to delete business');
 
       await refreshBusinesses();
+      setDeleteTarget(null);
     } catch (err) {
       console.error('Failed to delete business:', err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleRestore = async (business: Business) => {
+    try {
+      const response = await fetch(`/api/businesses/${business.id}/restore`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) throw new Error('Failed to restore business');
+      await refreshBusinesses();
+    } catch (err) {
+      console.error('Failed to restore business:', err);
     }
   };
 
@@ -239,10 +269,19 @@ export default function Businesses() {
             >
               <Archive className="w-4 h-4" />
             </button>
+            {business.is_archived ? (
+              <button
+                onClick={() => handleRestore(business)}
+                className="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition"
+                title="Restore"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            ) : null}
             <button
-              onClick={() => handleDelete(business)}
+              onClick={() => handleDeleteClick(business)}
               className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
-              title="Delete"
+              title={business.is_archived ? "Permanently Delete" : "Delete"}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -481,6 +520,125 @@ export default function Businesses() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal with Legal Warning */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1d24] rounded-2xl border border-red-500/30 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-3 p-6 border-b border-red-500/20 bg-red-500/5">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Permanently Delete Business</h2>
+                <p className="text-sm text-red-400">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-gray-300">
+                You are about to permanently delete <strong className="text-white">"{deleteTarget.name}"</strong> and
+                ALL associated business-specific data including:
+              </p>
+
+              <ul className="text-sm text-gray-400 space-y-1 pl-4">
+                <li>• Cap table and shareholder records</li>
+                <li>• Investor updates and data room files</li>
+                <li>• Financial records and invoices</li>
+                <li>• Business checklist progress</li>
+                <li>• Web presence and SEO settings</li>
+                <li>• Brand identity assets</li>
+                <li>• All business associations with contacts, documents, etc.</li>
+              </ul>
+
+              {/* Legal Warning */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-amber-400 mb-2">Legal Notice</h4>
+                    <p className="text-sm text-amber-200/80 leading-relaxed">
+                      Many jurisdictions require businesses to retain financial records, tax documents,
+                      and corporate records for <strong>3-7+ years</strong>. Deleting this data may:
+                    </p>
+                    <ul className="text-sm text-amber-200/80 mt-2 space-y-1">
+                      <li>• Violate tax record retention requirements</li>
+                      <li>• Compromise your ability to respond to audits</li>
+                      <li>• Destroy evidence needed for legal proceedings</li>
+                      <li>• Impact your liability protections</li>
+                    </ul>
+                    <p className="text-sm text-amber-300 mt-3 font-medium">
+                      We strongly recommend ARCHIVING instead of deleting.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Confirmation Input */}
+              <div className="mt-6">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Type <strong className="text-white">"{deleteTarget.name}"</strong> to confirm deletion:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-red-500/50 transition"
+                  placeholder={deleteTarget.name}
+                />
+              </div>
+
+              {/* Acknowledgment Checkbox */}
+              <label className="flex items-start gap-3 cursor-pointer mt-4">
+                <input
+                  type="checkbox"
+                  checked={deleteAcknowledged}
+                  onChange={e => setDeleteAcknowledged(e.target.checked)}
+                  className="mt-1 rounded border-white/20 bg-[#1a1d24]/5 text-red-500 focus:ring-red-500/50"
+                />
+                <span className="text-sm text-gray-300">
+                  I understand the legal implications and accept full responsibility for permanently
+                  deleting this business and all associated data.
+                </span>
+              </label>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setDeleteTarget(null);
+                    setDeleteConfirmText('');
+                    setDeleteAcknowledged(false);
+                  }}
+                  className="flex-1 px-4 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-[#1a1d24]/5 transition font-medium"
+                >
+                  Cancel
+                </button>
+                {!deleteTarget.is_archived && (
+                  <button
+                    onClick={() => {
+                      handleArchiveToggle(deleteTarget);
+                      setDeleteTarget(null);
+                    }}
+                    className="flex-1 px-4 py-3 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition font-medium flex items-center justify-center gap-2"
+                  >
+                    <Archive className="w-4 h-4" />
+                    Archive Instead
+                  </button>
+                )}
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleteConfirmText !== deleteTarget.name || !deleteAcknowledged || deleting}
+                  className="flex-1 px-4 py-3 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {deleting ? 'Deleting...' : 'Permanently Delete'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1504,6 +1504,31 @@ class AdditionalListing(BaseModel):
     handle: Optional[str] = None
 
 
+# SEO Helper Schemas
+class SEOKeyword(BaseModel):
+    keyword: str
+    priority: Optional[int] = 5  # 1-10, higher = more important
+    monthly_searches: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class ContentPillar(BaseModel):
+    topic: str
+    description: Optional[str] = None
+
+
+class Competitor(BaseModel):
+    domain: str
+    name: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class SEOChecklistTask(BaseModel):
+    completed: bool = False
+    completed_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
 class WebPresenceBase(BaseModel):
     # Domain
     domain_name: Optional[str] = None
@@ -1557,6 +1582,48 @@ class WebPresenceBase(BaseModel):
     additional_listings: Optional[List[AdditionalListing]] = None
 
     notes: Optional[str] = None
+
+    # ============ SEO ============
+
+    # Keywords
+    primary_keywords: Optional[List[SEOKeyword]] = None
+    secondary_keywords: Optional[List[SEOKeyword]] = None
+
+    # Meta Information
+    meta_title_template: Optional[str] = None
+    meta_description: Optional[str] = None
+    brand_name: Optional[str] = None
+    tagline: Optional[str] = None
+
+    # Technical SEO
+    canonical_url: Optional[str] = None
+    robots_directives: Optional[str] = None
+    sitemap_url: Optional[str] = None
+    google_search_console_id: Optional[str] = None
+    google_analytics_id: Optional[str] = None
+    bing_webmaster_id: Optional[str] = None
+
+    # Open Graph / Social SEO
+    og_image_url: Optional[str] = None
+    og_type: Optional[str] = None
+    twitter_card_type: Optional[str] = None
+    twitter_handle: Optional[str] = None
+
+    # Local SEO
+    business_name: Optional[str] = None
+    business_address: Optional[str] = None
+    business_phone: Optional[str] = None
+    service_areas: Optional[List[str]] = None
+
+    # Content Strategy
+    content_pillars: Optional[List[ContentPillar]] = None
+    target_audience: Optional[str] = None
+
+    # Competitor Tracking
+    competitors: Optional[List[Competitor]] = None
+
+    # SEO Checklist Progress
+    seo_checklist_progress: Optional[dict] = None
 
 
 class WebPresenceCreate(WebPresenceBase):

@@ -25,6 +25,7 @@ import StateSelect from '../components/StateSelect';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import { getContacts, createContact, updateContact, deleteContact, type Contact } from '../lib/api';
 import { format } from 'date-fns';
+import BusinessFilter from '../components/BusinessFilter';
 import { validators, validationMessages } from '../lib/validation';
 import { getCountryByName } from '../lib/countries';
 
@@ -605,6 +606,7 @@ export default function Contacts() {
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -855,14 +857,21 @@ export default function Contacts() {
   }, []);
 
   const loadContacts = async () => {
-    const data = await getContacts(selectedType === 'all' ? undefined : selectedType);
+    const options: { contactType?: string; businesses?: string; unassigned_only?: boolean } = {};
+    if (selectedType !== 'all') options.contactType = selectedType;
+    if (businessFilter === 'none') {
+      options.unassigned_only = true;
+    } else if (Array.isArray(businessFilter) && businessFilter.length > 0) {
+      options.businesses = businessFilter.join(',');
+    }
+    const data = await getContacts(Object.keys(options).length > 0 ? options : undefined);
     setContacts(data);
     setLoading(false);
   };
 
   useEffect(() => {
     loadContacts();
-  }, [selectedType]);
+  }, [selectedType, businessFilter]);
 
   const filteredContacts = contacts.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1013,14 +1022,21 @@ export default function Contacts() {
 
       {/* Search & Filter */}
       <div className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search contacts..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#1a1d24] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search contacts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#1a1d24] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+            />
+          </div>
+          <BusinessFilter
+            value={businessFilter}
+            onChange={setBusinessFilter}
+            className="w-48"
           />
         </div>
         <div className="flex flex-wrap gap-2">

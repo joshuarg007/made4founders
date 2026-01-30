@@ -73,6 +73,47 @@ def handle_oauth_mfa_check(user: User, response: Response, db: Session) -> Respo
     response.headers["Location"] = f"{FRONTEND_URL}/setup-mfa?token={setup_token}"
     return response
 
+
+def get_oauth_mfa_redirect_url(user: User, response: Response) -> str:
+    """
+    Get the MFA redirect URL for OAuth flows (used by JSON API endpoints).
+    Also sets auth cookies if needed.
+
+    Returns:
+        - URL string for MFA verify or setup page
+    """
+    # Check if MFA is enabled and configured - require verification
+    if user.mfa_enabled and user.mfa_secret:
+        mfa_token = jwt.encode(
+            {
+                "sub": user.email,
+                "typ": "mfa",
+                "src": "oauth",
+                "exp": datetime.utcnow() + timedelta(minutes=5),
+            },
+            security.SECRET_KEY,
+            algorithm=security.ALGORITHM,
+        )
+        return f"/mfa-verify?token={mfa_token}"
+
+    # MFA not enabled or secret missing - require setup (mandatory for all users)
+    setup_token = jwt.encode(
+        {
+            "sub": user.email,
+            "typ": "mfa_setup",
+            "src": "oauth",
+            "exp": datetime.utcnow() + timedelta(minutes=30),
+        },
+        security.SECRET_KEY,
+        algorithm=security.ALGORITHM,
+    )
+    # Set temporary auth cookies for the setup flow
+    access = security.create_access_token(user.email)
+    refresh = security.create_refresh_token(user.email)
+    security.set_auth_cookies(response, access, refresh)
+
+    return f"/setup-mfa?token={setup_token}"
+
 # ============ CONFIGURATION ============
 
 # Google OAuth
@@ -1207,8 +1248,9 @@ async def link_oauth_to_account(
     # Clean up pending OAuth
     del pending_oauth[request.token]
 
-    # MFA is mandatory - redirect to verify or setup
-    return handle_oauth_mfa_check(user, response, db)
+    # MFA is mandatory - return JSON with redirect URL
+    redirect_url = get_oauth_mfa_redirect_url(user, response)
+    return {"ok": True, "redirect_url": redirect_url}
 
 
 @router.post("/oauth/create")
@@ -1315,9 +1357,8 @@ async def create_account_from_oauth(
     refresh = security.create_refresh_token(user.email)
     security.set_auth_cookies(response, access, refresh)
 
-    response.status_code = 302
-    response.headers["Location"] = f"{FRONTEND_URL}/setup-mfa?token={setup_token}"
-    return response
+    # Return JSON with redirect URL (for frontend fetch API)
+    return {"ok": True, "redirect_url": f"/setup-mfa?token={setup_token}"}
 
 
 # ============ CLEANUP ============

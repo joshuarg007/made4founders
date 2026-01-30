@@ -2954,23 +2954,43 @@ def check_file_exists(file_path: str) -> bool:
 def get_documents(
     category: str = None,
     business_id: int = None,
+    businesses: str = None,  # Comma-separated business IDs for multi-select filtering
     include_children: bool = False,
     unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get documents with optional business filtering."""
+    """Get documents with optional business filtering.
+
+    Args:
+        businesses: Comma-separated business IDs (e.g., "1,2,3") for multi-select filtering
+        business_id: Single business ID (legacy, use 'businesses' instead)
+        unassigned_only: If true, only return documents with no business assignment
+    """
     query = db.query(Document).filter(Document.organization_id == current_user.organization_id)
     if category:
         query = query.filter(Document.category == category)
 
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+    elif business_id:
+        filter_business_ids = [business_id]
+
     # Business filtering via junction table
-    if business_id:
-        business_ids = [business_id]
+    if filter_business_ids:
         if include_children:
-            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+            # Expand to include children of each selected business
+            all_ids = set()
+            for bid in filter_business_ids:
+                all_ids.update(_get_descendant_business_ids(db, bid, current_user.organization_id))
+            filter_business_ids = list(all_ids)
         doc_ids = db.query(DocumentBusiness.document_id).filter(
-            DocumentBusiness.business_id.in_(business_ids)
+            DocumentBusiness.business_id.in_(filter_business_ids)
         ).subquery()
         query = query.filter(Document.id.in_(doc_ids))
     elif unassigned_only:
@@ -3555,6 +3575,7 @@ def _serialize_contact(contact: Contact, db: Session = None) -> dict:
 def get_contacts(
     contact_type: str = None,
     business_id: int = None,
+    businesses: str = None,  # Comma-separated business IDs
     include_children: bool = False,
     unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
@@ -3566,13 +3587,25 @@ def get_contacts(
     if contact_type:
         query = query.filter(Contact.contact_type == contact_type)
 
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+    elif business_id:
+        filter_business_ids = [business_id]
+
     # Business filtering via junction table
-    if business_id:
-        business_ids = [business_id]
+    if filter_business_ids:
         if include_children:
-            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+            all_ids = set()
+            for bid in filter_business_ids:
+                all_ids.update(_get_descendant_business_ids(db, bid, current_user.organization_id))
+            filter_business_ids = list(all_ids)
         contact_ids = db.query(ContactBusiness.contact_id).filter(
-            ContactBusiness.business_id.in_(business_ids)
+            ContactBusiness.business_id.in_(filter_business_ids)
         ).subquery()
         query = query.filter(Contact.id.in_(contact_ids))
     elif unassigned_only:
@@ -3985,6 +4018,7 @@ def get_deadlines(
     deadline_type: str = None,
     include_completed: bool = False,
     business_id: int = None,
+    businesses: str = None,  # Comma-separated business IDs
     include_children: bool = False,
     unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
@@ -3997,13 +4031,25 @@ def get_deadlines(
     if not include_completed:
         query = query.filter(Deadline.is_completed == False)
 
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+    elif business_id:
+        filter_business_ids = [business_id]
+
     # Business filtering via junction table
-    if business_id:
-        business_ids = [business_id]
+    if filter_business_ids:
         if include_children:
-            business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
+            all_ids = set()
+            for bid in filter_business_ids:
+                all_ids.update(_get_descendant_business_ids(db, bid, current_user.organization_id))
+            filter_business_ids = list(all_ids)
         deadline_ids = db.query(DeadlineBusiness.deadline_id).filter(
-            DeadlineBusiness.business_id.in_(business_ids)
+            DeadlineBusiness.business_id.in_(filter_business_ids)
         ).subquery()
         query = query.filter(Deadline.id.in_(deadline_ids))
     elif unassigned_only:
@@ -4673,9 +4719,42 @@ def get_checklist_progress(current_user: User = Depends(get_current_user), db: S
 
 
 @app.get("/api/checklist/bulk")
-def get_checklist_progress_bulk(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get all checklist items as a dict keyed by item_id"""
-    items = db.query(ChecklistProgress).filter(ChecklistProgress.organization_id == current_user.organization_id).all()
+def get_checklist_progress_bulk(
+    business_id: int = None,
+    businesses: str = None,  # Comma-separated business IDs
+    unassigned_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all checklist items as a dict keyed by item_id. Supports business filtering."""
+    query = db.query(ChecklistProgress).filter(ChecklistProgress.organization_id == current_user.organization_id)
+
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+
+    # Business filtering via junction table
+    if unassigned_only:
+        # Items with no business assignment
+        assigned_ids = db.query(ChecklistProgressBusiness.progress_id).subquery()
+        query = query.filter(~ChecklistProgress.id.in_(assigned_ids))
+    elif filter_business_ids:
+        progress_ids = db.query(ChecklistProgressBusiness.progress_id).filter(
+            ChecklistProgressBusiness.business_id.in_(filter_business_ids)
+        ).subquery()
+        query = query.filter(ChecklistProgress.id.in_(progress_ids))
+    elif business_id:
+        progress_ids = db.query(ChecklistProgressBusiness.progress_id).filter(
+            ChecklistProgressBusiness.business_id == business_id
+        ).subquery()
+        query = query.filter(ChecklistProgress.id.in_(progress_ids))
+    # If no filter, return all items
+
+    items = query.all()
     return {"items": {item.item_id: ChecklistProgressResponse.model_validate(item).model_dump() for item in items}}
 
 
@@ -4916,6 +4995,7 @@ def _serialize_credential_masked(credential: Credential, db: Session) -> dict:
 @app.get("/api/credentials")
 def get_credentials(
     business_id: int = None,
+    businesses: str = None,  # Comma-separated business IDs
     include_children: bool = False,
     unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
@@ -4926,16 +5006,28 @@ def get_credentials(
         Credential.organization_id == current_user.organization_id
     )
 
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+    elif business_id:
+        filter_business_ids = [business_id]
+
     # Business filtering
     if unassigned_only:
         # Get credentials with no business associations
         assigned_ids = db.query(CredentialBusiness.credential_id).distinct()
         query = query.filter(~Credential.id.in_(assigned_ids))
-    elif business_id:
-        target_business_ids = [business_id]
+    elif filter_business_ids:
         if include_children:
-            target_business_ids = _get_descendant_business_ids(db, business_id, current_user.organization_id)
-        query = query.join(CredentialBusiness).filter(CredentialBusiness.business_id.in_(target_business_ids))
+            all_ids = set()
+            for bid in filter_business_ids:
+                all_ids.update(_get_descendant_business_ids(db, bid, current_user.organization_id))
+            filter_business_ids = list(all_ids)
+        query = query.join(CredentialBusiness).filter(CredentialBusiness.business_id.in_(filter_business_ids))
 
     credentials = query.order_by(Credential.name).all()
     return [_serialize_credential_masked(c, db) for c in credentials]
@@ -6039,6 +6131,9 @@ def get_tasks(
     column_id: int = None,
     status: str = None,
     assigned_to_id: int = None,
+    business_id: int = None,
+    businesses: str = None,  # Comma-separated business IDs
+    unassigned_only: bool = False,
     include_completed: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -6061,6 +6156,22 @@ def get_tasks(
         query = query.filter(Task.assigned_to_id == assigned_to_id)
     if not include_completed:
         query = query.filter(Task.status != "done")
+
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+    elif business_id:
+        filter_business_ids = [business_id]
+
+    # Business filtering (using direct business_id on Task)
+    if filter_business_ids:
+        query = query.filter(Task.business_id.in_(filter_business_ids))
+    elif unassigned_only:
+        query = query.filter(Task.business_id == None)
 
     tasks = query.order_by(Task.position, Task.created_at.desc()).all()
 
@@ -6675,6 +6786,9 @@ def get_metrics(
     metric_type: str = None,
     start_date: datetime = None,
     end_date: datetime = None,
+    business_id: int = None,
+    businesses: str = None,  # Comma-separated business IDs
+    unassigned_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -6686,6 +6800,23 @@ def get_metrics(
         query = query.filter(Metric.date >= start_date)
     if end_date:
         query = query.filter(Metric.date <= end_date)
+
+    # Parse multi-business filter
+    filter_business_ids = []
+    if businesses:
+        try:
+            filter_business_ids = [int(b.strip()) for b in businesses.split(",") if b.strip()]
+        except ValueError:
+            pass
+    elif business_id:
+        filter_business_ids = [business_id]
+
+    # Business filtering
+    if filter_business_ids:
+        query = query.filter(Metric.business_id.in_(filter_business_ids))
+    elif unassigned_only:
+        query = query.filter(Metric.business_id == None)
+
     return query.order_by(Metric.date.desc()).all()
 
 
@@ -7328,6 +7459,31 @@ def serialize_web_presence(presence: WebPresence) -> dict:
         "bbb_accredited": presence.bbb_accredited,
         "additional_listings": safe_json_loads(presence.additional_listings),
         "notes": presence.notes,
+        # SEO Fields
+        "primary_keywords": safe_json_loads(presence.primary_keywords),
+        "secondary_keywords": safe_json_loads(presence.secondary_keywords),
+        "meta_title_template": presence.meta_title_template,
+        "meta_description": presence.meta_description,
+        "brand_name": presence.brand_name,
+        "tagline": presence.tagline,
+        "canonical_url": presence.canonical_url,
+        "robots_directives": presence.robots_directives,
+        "sitemap_url": presence.sitemap_url,
+        "google_search_console_id": presence.google_search_console_id,
+        "google_analytics_id": presence.google_analytics_id,
+        "bing_webmaster_id": presence.bing_webmaster_id,
+        "og_image_url": presence.og_image_url,
+        "og_type": presence.og_type,
+        "twitter_card_type": presence.twitter_card_type,
+        "twitter_handle": presence.twitter_handle,
+        "business_name": presence.business_name,
+        "business_address": presence.business_address,
+        "business_phone": presence.business_phone,
+        "service_areas": safe_json_loads(presence.service_areas),
+        "content_pillars": safe_json_loads(presence.content_pillars),
+        "target_audience": presence.target_audience,
+        "competitors": safe_json_loads(presence.competitors),
+        "seo_checklist_progress": safe_json_loads(presence.seo_checklist_progress),
         "created_at": presence.created_at,
         "updated_at": presence.updated_at,
     }
@@ -7365,14 +7521,29 @@ def update_web_presence(
             db.refresh(presence)
 
         update_data = data.model_dump(exclude_unset=True)
+
+        # Fields that need JSON serialization
+        json_list_fields = (
+            'additional_emails', 'additional_websites', 'additional_socials', 'additional_listings',
+            'primary_keywords', 'secondary_keywords', 'service_areas', 'content_pillars', 'competitors'
+        )
+        json_dict_fields = ('seo_checklist_progress',)
+
         for key, value in update_data.items():
             # Serialize list fields to JSON
-            if key in ('additional_emails', 'additional_websites', 'additional_socials', 'additional_listings') and value is not None:
+            if key in json_list_fields and value is not None:
                 try:
                     value = json.dumps([item.model_dump() if hasattr(item, 'model_dump') else item for item in value])
                 except (TypeError, AttributeError) as e:
                     logger.warning(f"Failed to serialize {key}: {e}")
                     value = json.dumps(value) if value else None
+            # Serialize dict fields to JSON
+            elif key in json_dict_fields and value is not None:
+                try:
+                    value = json.dumps(value)
+                except (TypeError, AttributeError) as e:
+                    logger.warning(f"Failed to serialize {key}: {e}")
+                    value = None
             setattr(presence, key, value)
 
         db.commit()
