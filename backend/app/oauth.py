@@ -18,12 +18,60 @@ from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from jose import jwt
+
 from .database import get_db
 from .models import User, Organization, SubscriptionStatus, SubscriptionTier, OAuthConnection
 from .auth import get_current_user
 from . import security
 
 router = APIRouter()
+
+
+def handle_oauth_mfa_check(user: User, response: Response, db: Session) -> Response:
+    """
+    Check MFA status for OAuth login and redirect accordingly.
+    MFA is mandatory for all users.
+
+    Returns:
+        - Response with redirect to MFA verify (if MFA enabled)
+        - Response with redirect to MFA setup (if MFA not yet configured)
+    """
+    # Check if MFA is enabled and configured - require verification
+    if user.mfa_enabled and user.mfa_secret:
+        mfa_token = jwt.encode(
+            {
+                "sub": user.email,
+                "typ": "mfa",
+                "src": "oauth",  # Mark as OAuth-originated
+                "exp": datetime.utcnow() + timedelta(minutes=5),
+            },
+            security.SECRET_KEY,
+            algorithm=security.ALGORITHM,
+        )
+        response.status_code = 302
+        response.headers["Location"] = f"{FRONTEND_URL}/mfa-verify?token={mfa_token}"
+        return response
+
+    # MFA not enabled or secret missing - require setup (mandatory for all users)
+    setup_token = jwt.encode(
+        {
+            "sub": user.email,
+            "typ": "mfa_setup",
+            "src": "oauth",
+            "exp": datetime.utcnow() + timedelta(minutes=30),
+        },
+        security.SECRET_KEY,
+        algorithm=security.ALGORITHM,
+    )
+    # Set temporary auth cookies for the setup flow
+    access = security.create_access_token(user.email)
+    refresh = security.create_refresh_token(user.email)
+    security.set_auth_cookies(response, access, refresh)
+
+    response.status_code = 302
+    response.headers["Location"] = f"{FRONTEND_URL}/setup-mfa?token={setup_token}"
+    return response
 
 # ============ CONFIGURATION ============
 
@@ -287,15 +335,8 @@ async def google_callback(
             user.email_verified_at = datetime.utcnow()
         db.commit()
 
-    # Create auth tokens
-    access = security.create_access_token(user.email)
-    refresh = security.create_refresh_token(user.email)
-    security.set_auth_cookies(response, access, refresh)
-
-    # Redirect to frontend
-    response.status_code = 302
-    response.headers["Location"] = f"{FRONTEND_URL}/app"
-    return response
+    # MFA is mandatory - redirect to verify or setup
+    return handle_oauth_mfa_check(user, response, db)
 
 
 # ============ GITHUB OAUTH ============
@@ -457,15 +498,8 @@ async def github_callback(
             user.email_verified_at = datetime.utcnow()
         db.commit()
 
-    # Create auth tokens
-    access = security.create_access_token(user.email)
-    refresh = security.create_refresh_token(user.email)
-    security.set_auth_cookies(response, access, refresh)
-
-    # Redirect to frontend
-    response.status_code = 302
-    response.headers["Location"] = f"{FRONTEND_URL}/app"
-    return response
+    # MFA is mandatory - redirect to verify or setup
+    return handle_oauth_mfa_check(user, response, db)
 
 
 # ============ LINKEDIN OAUTH ============
@@ -646,15 +680,8 @@ async def linkedin_callback(
             db.add(oauth_conn)
         db.commit()
 
-    # Create auth tokens
-    access = security.create_access_token(user.email)
-    refresh = security.create_refresh_token(user.email)
-    security.set_auth_cookies(response, access, refresh)
-
-    # Redirect to frontend
-    response.status_code = 302
-    response.headers["Location"] = f"{FRONTEND_URL}/app"
-    return response
+    # MFA is mandatory - redirect to verify or setup
+    return handle_oauth_mfa_check(user, response, db)
 
 
 # ============ TWITTER/X OAUTH ============
@@ -849,13 +876,8 @@ async def twitter_callback(
             db.add(oauth_conn)
         db.commit()
 
-    access = security.create_access_token(user.email)
-    refresh = security.create_refresh_token(user.email)
-    security.set_auth_cookies(response, access, refresh)
-
-    response.status_code = 302
-    response.headers["Location"] = f"{FRONTEND_URL}/app"
-    return response
+    # MFA is mandatory - redirect to verify or setup
+    return handle_oauth_mfa_check(user, response, db)
 
 
 # ============ FACEBOOK OAUTH ============
@@ -1037,13 +1059,8 @@ async def facebook_callback(
             db.add(oauth_conn)
         db.commit()
 
-    access = security.create_access_token(user.email)
-    refresh = security.create_refresh_token(user.email)
-    security.set_auth_cookies(response, access, refresh)
-
-    response.status_code = 302
-    response.headers["Location"] = f"{FRONTEND_URL}/app"
-    return response
+    # MFA is mandatory - redirect to verify or setup
+    return handle_oauth_mfa_check(user, response, db)
 
 
 # ============ ACCOUNT LINKING ============
@@ -1190,12 +1207,8 @@ async def link_oauth_to_account(
     # Clean up pending OAuth
     del pending_oauth[request.token]
 
-    # Create auth tokens and set cookies
-    access = security.create_access_token(user.email)
-    refresh = security.create_refresh_token(user.email)
-    security.set_auth_cookies(response, access, refresh)
-
-    return {"ok": True, "message": f"{provider.title()} account linked successfully"}
+    # MFA is mandatory - redirect to verify or setup
+    return handle_oauth_mfa_check(user, response, db)
 
 
 @router.post("/oauth/create")
@@ -1286,12 +1299,25 @@ async def create_account_from_oauth(
     # Clean up pending OAuth
     del pending_oauth[request.token]
 
-    # Create auth tokens and set cookies
+    # New accounts always need MFA setup (mandatory)
+    setup_token = jwt.encode(
+        {
+            "sub": user.email,
+            "typ": "mfa_setup",
+            "src": "oauth",
+            "exp": datetime.utcnow() + timedelta(minutes=30),
+        },
+        security.SECRET_KEY,
+        algorithm=security.ALGORITHM,
+    )
+    # Set temporary auth cookies for the setup flow
     access = security.create_access_token(user.email)
     refresh = security.create_refresh_token(user.email)
     security.set_auth_cookies(response, access, refresh)
 
-    return {"ok": True, "message": "Account created successfully"}
+    response.status_code = 302
+    response.headers["Location"] = f"{FRONTEND_URL}/setup-mfa?token={setup_token}"
+    return response
 
 
 # ============ CLEANUP ============

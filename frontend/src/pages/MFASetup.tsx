@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { setupMFA, verifyMFASetup } from '../lib/api';
 import { Loader2, AlertCircle, ArrowLeft, Shield, Copy, Check, Eye, EyeOff } from 'lucide-react';
 
 export default function MFASetup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { mfaSetupRequired, clearMfaSetupRequired, refreshUser, isAuthenticated } = useAuth();
+
+  // Check if coming from OAuth flow (has token in URL)
+  const oauthToken = searchParams.get('token');
 
   const [step, setStep] = useState<'loading' | 'setup' | 'verify' | 'backup'>('loading');
   const [qrCode, setQrCode] = useState('');
@@ -21,21 +25,27 @@ export default function MFASetup() {
   const [savedBackupCodes, setSavedBackupCodes] = useState(false);
 
   useEffect(() => {
+    // If coming from OAuth flow with token, allow MFA setup even if already authenticated
+    if (oauthToken && isAuthenticated) {
+      initSetup();
+      return;
+    }
+
     // If user is already authenticated and doesn't need MFA setup, redirect to app
     if (isAuthenticated && !mfaSetupRequired) {
       navigate('/app', { replace: true });
       return;
     }
 
-    // If not authenticated and no setup required state, redirect to login
-    if (!isAuthenticated && !mfaSetupRequired) {
+    // If not authenticated and no setup required state and no OAuth token, redirect to login
+    if (!isAuthenticated && !mfaSetupRequired && !oauthToken) {
       navigate('/login', { replace: true });
       return;
     }
 
     // Initialize MFA setup
     initSetup();
-  }, [isAuthenticated, mfaSetupRequired, navigate]);
+  }, [isAuthenticated, mfaSetupRequired, oauthToken, navigate]);
 
   const initSetup = async () => {
     try {
@@ -73,7 +83,13 @@ export default function MFASetup() {
 
     clearMfaSetupRequired();
     await refreshUser();
-    navigate('/app', { replace: true });
+
+    // For OAuth flows, do a full page reload to ensure auth state is properly refreshed
+    if (oauthToken) {
+      window.location.href = '/app';
+    } else {
+      navigate('/app', { replace: true });
+    }
   };
 
   const copyToClipboard = async (text: string, type: 'secret' | 'backup') => {
