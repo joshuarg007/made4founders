@@ -6,7 +6,7 @@ import {
   CheckCircle2, Circle, AlertCircle, Calendar, User, X,
   Trash2, Edit3, Play, Square, Save,
   Send, Timer, History, Flag, CalendarDays, ChevronLeft, ChevronRight,
-  ChevronDown, ChevronUp, Link2, Copy, RefreshCw
+  ChevronDown, ChevronUp, Link2, Copy, RefreshCw, Building2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { playXPSound } from '../lib/sounds';
@@ -20,6 +20,7 @@ import {
 import type { TaskBoard, TaskColumn, Task, UserBrief, TaskComment, TimeEntry, TaskActivity } from '../lib/api';
 import { format, formatDistanceToNow, isPast, isToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import BusinessFilter from '../components/BusinessFilter';
+import { useBusiness } from '../context/BusinessContext';
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: 'bg-white/50/20 text-gray-300 border-gray-500/30',
@@ -37,6 +38,7 @@ const PRIORITY_ICONS: Record<string, React.ReactNode> = {
 
 export default function Tasks() {
   const { user, canEdit } = useAuth();
+  const { businesses } = useBusiness();
   const isAdmin = user?.role === 'admin';
 
   // State
@@ -73,6 +75,7 @@ export default function Tasks() {
     due_date: '',
     assigned_to_id: null as number | null,
     column_id: null as number | null,
+    business_id: null as number | null,
   });
 
   // Load data
@@ -306,6 +309,7 @@ export default function Tasks() {
       due_date: '',
       assigned_to_id: null,
       column_id: null,
+      business_id: null,
     });
   };
 
@@ -318,6 +322,7 @@ export default function Tasks() {
       due_date: task.due_date ? task.due_date.split('T')[0] : '',
       assigned_to_id: task.assigned_to_id,
       column_id: task.column_id,
+      business_id: task.business_id || null,
     });
     setShowTaskModal(true);
   };
@@ -648,6 +653,24 @@ export default function Tasks() {
                   >
                     {currentBoard.columns.map(col => (
                       <option key={col.id} value={col.id} className="bg-[#1a1d24] text-white">{col.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {businesses.length > 0 && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    <Building2 className="w-3.5 h-3.5 inline mr-1" />
+                    Business
+                  </label>
+                  <select
+                    value={taskForm.business_id || ''}
+                    onChange={(e) => setTaskForm({ ...taskForm, business_id: e.target.value ? Number(e.target.value) : null })}
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="" className="bg-[#1a1d24] text-white">No business (org-level)</option>
+                    {businesses.filter(b => !b.is_archived).map((b) => (
+                      <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.emoji} {b.name}</option>
                     ))}
                   </select>
                 </div>

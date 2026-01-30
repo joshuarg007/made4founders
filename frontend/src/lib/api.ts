@@ -591,6 +591,7 @@ export interface Document {
   expiration_date: string | null;
   tags: string | null;
   is_sensitive: boolean;
+  business_id: number | null;
   created_at: string;
   updated_at: string;
   file_exists?: boolean;
@@ -638,6 +639,7 @@ export interface Contact {
   responsibilities: string | null;
   notes: string | null;
   last_contacted: string | null;
+  business_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -711,6 +713,7 @@ export interface Deadline {
   completed_at: string | null;
   related_service_id: number | null;
   related_document_id: number | null;
+  business_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -1140,6 +1143,7 @@ export interface Task {
   description: string | null;
   board_id: number;
   column_id: number | null;
+  business_id: number | null;
   status: string;
   priority: string;
   position: number;

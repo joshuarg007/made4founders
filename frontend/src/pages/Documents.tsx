@@ -13,9 +13,11 @@ import {
   Lock,
   X,
   MessageCircle,
+  Building2,
 } from 'lucide-react';
 import { getDocuments, createDocument, updateDocument, deleteDocument, type Document } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useBusiness } from '../context/BusinessContext';
 import CommentsSection from '../components/CommentsSection';
 import BusinessFilter from '../components/BusinessFilter';
 import { format, isBefore, addDays } from 'date-fns';
@@ -37,6 +39,7 @@ const categories = [
 
 export default function Documents() {
   const { canEdit } = useAuth();
+  const { businesses } = useBusiness();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -52,7 +55,8 @@ export default function Documents() {
     description: '',
     expiration_date: '',
     tags: '',
-    is_sensitive: false
+    is_sensitive: false,
+    business_id: null as number | null
   });
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -200,7 +204,7 @@ export default function Documents() {
     setShowModal(false);
     setEditingDocument(null);
     setModalFile(null);
-    setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false });
+    setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false, business_id: null });
     loadDocuments();
   };
 
@@ -213,7 +217,8 @@ export default function Documents() {
       description: doc.description || '',
       expiration_date: doc.expiration_date ? doc.expiration_date.split('T')[0] : '',
       tags: doc.tags || '',
-      is_sensitive: doc.is_sensitive || false
+      is_sensitive: doc.is_sensitive || false,
+      business_id: doc.business_id || null
     });
     setShowModal(true);
   };
@@ -245,7 +250,7 @@ export default function Documents() {
         </div>
         {canEdit && (
           <button
-            onClick={() => { setEditingDocument(null); setModalFile(null); setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false }); setShowModal(true); }}
+            onClick={() => { setEditingDocument(null); setModalFile(null); setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false, business_id: null }); setShowModal(true); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
           >
             <Plus className="w-4 h-4" />
@@ -580,6 +585,28 @@ export default function Documents() {
                   ))}
                 </select>
               </div>
+
+              {/* Business selector */}
+              {businesses.length > 0 && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    <Building2 className="w-3.5 h-3.5 inline mr-1" />
+                    Business
+                  </label>
+                  <select
+                    value={formData.business_id || ''}
+                    onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="" className="bg-[#1a1d24] text-white">No business (org-level)</option>
+                    {businesses.filter(b => !b.is_archived).map((b) => (
+                      <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">
+                        {b.emoji} {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* File Upload Section - only show when adding new document */}
               {!editingDocument && (

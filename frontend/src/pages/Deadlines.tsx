@@ -15,7 +15,9 @@ import { getDeadlines, createDeadline, updateDeadline, deleteDeadline, completeD
 import { useAuth } from '../context/AuthContext';
 import CommentsSection from '../components/CommentsSection';
 import BusinessFilter from '../components/BusinessFilter';
+import { useBusiness } from '../context/BusinessContext';
 import { format, isBefore, isAfter, addDays } from 'date-fns';
+import { Building2 } from 'lucide-react';
 
 const deadlineTypes = [
   { value: 'all', label: 'All', icon: '📋' },
@@ -29,6 +31,7 @@ const deadlineTypes = [
 
 export default function Deadlines() {
   const { canEdit } = useAuth();
+  const { businesses } = useBusiness();
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('all');
@@ -45,7 +48,8 @@ export default function Deadlines() {
     due_date: '',
     reminder_days: 7,
     is_recurring: false,
-    recurrence_months: 12
+    recurrence_months: 12,
+    business_id: null as number | null
   });
 
   const loadDeadlines = async () => {
@@ -89,7 +93,7 @@ export default function Deadlines() {
     }
     setShowModal(false);
     setEditingDeadline(null);
-    setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12 });
+    setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12, business_id: null });
     loadDeadlines();
   };
 
@@ -102,7 +106,8 @@ export default function Deadlines() {
       due_date: deadline.due_date.split('T')[0],
       reminder_days: deadline.reminder_days,
       is_recurring: deadline.is_recurring,
-      recurrence_months: deadline.recurrence_months || 12
+      recurrence_months: deadline.recurrence_months || 12,
+      business_id: deadline.business_id || null
     });
     setShowModal(true);
   };
@@ -141,7 +146,7 @@ export default function Deadlines() {
         </div>
         {canEdit && (
           <button
-            onClick={() => { setEditingDeadline(null); setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12 }); setShowModal(true); }}
+            onClick={() => { setEditingDeadline(null); setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12, business_id: null }); setShowModal(true); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
           >
             <Plus className="w-4 h-4" />
@@ -356,6 +361,24 @@ export default function Deadlines() {
                   className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
                 />
               </div>
+              {businesses.length > 0 && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    <Building2 className="w-3.5 h-3.5 inline mr-1" />
+                    Business
+                  </label>
+                  <select
+                    value={formData.business_id || ''}
+                    onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="" className="bg-[#1a1d24] text-white">No business (org-level)</option>
+                    {businesses.filter(b => !b.is_archived).map((b) => (
+                      <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.emoji} {b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input

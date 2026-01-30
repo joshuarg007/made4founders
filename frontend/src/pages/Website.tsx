@@ -20,7 +20,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { getWebPresence, updateWebPresence, type WebPresence, type AdditionalEmail, type AdditionalWebsite, type AdditionalSocial, type AdditionalListing } from '../lib/api';
-import SEOSettings from '../components/SEOSettings';
+import BusinessFilter from '../components/BusinessFilter';
+import { useBusiness } from '../context/BusinessContext';
 
 const registrars = ['Namecheap', 'Cloudflare', 'GoDaddy', 'Google Domains', 'Porkbun', 'Other'];
 const emailProviders = ['Google Workspace', 'Microsoft 365', 'Zoho Mail', 'Fastmail', 'ProtonMail', 'Other'];
@@ -63,6 +64,8 @@ const listingPlatforms = [
 ];
 
 export default function Website() {
+  const { businesses } = useBusiness();
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -193,18 +196,27 @@ export default function Website() {
           <h1 className="text-3xl font-bold text-white">Web Presence</h1>
           <p className="text-gray-400 mt-1">Manage your online presence and digital assets</p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={!hasChanges || saving}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-            hasChanges
-              ? 'bg-gradient-to-r from-cyan-500 to-violet-600 text-white hover:opacity-90'
-              : 'bg-[#1a1d24]/5 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Save Changes
-        </button>
+        <div className="flex items-center gap-4">
+          {businesses.length > 0 && (
+            <BusinessFilter
+              value={businessFilter}
+              onChange={setBusinessFilter}
+              showNoBusiness
+            />
+          )}
+          <button
+            onClick={handleSave}
+            disabled={!hasChanges || saving}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+              hasChanges
+                ? 'bg-gradient-to-r from-cyan-500 to-violet-600 text-white hover:opacity-90'
+                : 'bg-[#1a1d24]/5 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Save Changes
+          </button>
+        </div>
       </div>
 
       {/* Current Status Overview */}
@@ -964,9 +976,6 @@ export default function Website() {
           className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 resize-none"
         />
       </div>
-
-      {/* SEO Settings */}
-      <SEOSettings formData={formData} onChange={handleChange} />
 
       {/* Quick Links */}
       <div className="bg-[#1a1d24] rounded-xl border border-white/10 p-6">

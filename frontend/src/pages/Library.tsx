@@ -19,6 +19,8 @@ import CountrySelect from '../components/CountrySelect';
 import StateSelect from '../components/StateSelect';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import { getCountryByName } from '../lib/countries';
+import BusinessFilter from '../components/BusinessFilter';
+import { useBusiness } from '../context/BusinessContext';
 
 const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
 
@@ -70,6 +72,8 @@ const IDENTIFIER_TYPES = [
 ];
 
 export default function Library() {
+  const { businesses } = useBusiness();
+  const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
   const [identifiers, setIdentifiers] = useState<BusinessIdentifier[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -289,9 +293,18 @@ export default function Library() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">Business Library</h1>
-        <p className="text-gray-400">Manage your business information, identifiers, and formation documents</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-2">Business Library</h1>
+          <p className="text-gray-400">Manage your business information, identifiers, and formation documents</p>
+        </div>
+        {businesses.length > 0 && (
+          <BusinessFilter
+            value={businessFilter}
+            onChange={setBusinessFilter}
+            showNoBusiness
+          />
+        )}
       </div>
 
       {/* Business Information Card */}
