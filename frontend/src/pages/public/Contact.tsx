@@ -3,6 +3,10 @@ import { Mail, MessageSquare, Building2, Send, CheckCircle, AlertCircle } from '
 import SEO from '../../components/SEO';
 import { validators, validationMessages } from '../../lib/validation';
 
+// Site2CRM Integration
+const SITE2CRM_API = "https://api.site2crm.io/api/public/leads";
+const SITE2CRM_ORG_KEY = "org_jUITQNG0ZcPF_KJ0vplRQV8rwWk0pvR9";
+
 interface FormData {
   name: string;
   email: string;
@@ -69,6 +73,23 @@ export default function Contact() {
           throw new Error(data.detail?.message || 'Too many requests. Please try again later.');
         }
         throw new Error(data.detail?.message || 'Failed to submit');
+      }
+
+      // Also push to Site2CRM for lead tracking
+      try {
+        await fetch(SITE2CRM_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Org-Key": SITE2CRM_ORG_KEY },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            company: formData.company || undefined,
+            notes: `[${formData.subject}] ${formData.message}`,
+            source: "made4founders.com",
+          }),
+        });
+      } catch {
+        // Silent - don't fail the form if Site2CRM is down
       }
 
       setStatus({ type: 'success', message: "Thanks for reaching out! We'll get back to you within 24 hours." });
