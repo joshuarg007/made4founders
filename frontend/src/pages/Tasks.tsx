@@ -51,7 +51,7 @@ export default function Tasks() {
   const [filterAssignee, setFilterAssignee] = useState<number | null>(null);
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
-  const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('calendar');
+  const [viewMode, setViewMode] = useState<'kanban' | 'calendar' | 'week'>('calendar');
   const [businessFilter, setBusinessFilter] = useState<number[] | 'all' | 'none'>('all');
 
   // Modal states
@@ -390,23 +390,34 @@ export default function Tasks() {
           </div>
           <div className="flex items-center gap-3">
             {/* View toggle */}
-            <div className="flex items-center bg-[#1a1d24]/5 border border-white/10 rounded-lg p-1">
+            <div className="flex items-center bg-[#1a1d24] border border-white/10 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('calendar')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
                   viewMode === 'calendar'
-                    ? 'bg-cyan-500/20 text-cyan-300'
+                    ? 'bg-gradient-to-r from-cyan-500 to-violet-600 text-white'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
                 <CalendarDays className="w-4 h-4" />
-                Calendar
+                Month
+              </button>
+              <button
+                onClick={() => setViewMode('week')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                  viewMode === 'week'
+                    ? 'bg-gradient-to-r from-cyan-500 to-violet-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                Week
               </button>
               <button
                 onClick={() => setViewMode('kanban')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
                   viewMode === 'kanban'
-                    ? 'bg-cyan-500/20 text-cyan-300'
+                    ? 'bg-gradient-to-r from-cyan-500 to-violet-600 text-white'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -539,7 +550,7 @@ export default function Tasks() {
       )}
 
       {/* Calendar View */}
-      {viewMode === 'calendar' && currentBoard && (
+      {(viewMode === 'calendar' || viewMode === 'week') && currentBoard && (
         <CalendarView
           tasks={tasks}
           backlogColumn={currentBoard.columns.find(c => c.status === 'backlog')}
@@ -548,6 +559,16 @@ export default function Tasks() {
           searchQuery={searchQuery}
           filterAssignee={filterAssignee}
           filterPriority={filterPriority}
+          viewMode={viewMode}
+          onAddTask={(date: Date) => {
+            resetTaskForm();
+            setEditingTask(null);
+            setTaskForm(prev => ({
+              ...prev,
+              due_date: format(date, 'yyyy-MM-dd')
+            }));
+            setShowTaskModal(true);
+          }}
         />
       )}
 
@@ -1425,6 +1446,8 @@ function CalendarView({
   searchQuery,
   filterAssignee,
   filterPriority,
+  viewMode,
+  onAddTask,
 }: {
   tasks: Task[];
   backlogColumn?: TaskColumn;
@@ -1433,8 +1456,10 @@ function CalendarView({
   searchQuery: string;
   filterAssignee: number | null;
   filterPriority: string | null;
+  viewMode: 'calendar' | 'week';
+  onAddTask: (date: Date) => void;
 }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   // Filter tasks
   const filteredTasks = tasks
@@ -1463,70 +1488,80 @@ function CalendarView({
   };
 
   // Calendar navigation
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const goToToday = () => setCurrentMonth(new Date());
+  const navigateNext = () => {
+    if (viewMode === 'week') {
+      setCurrentDate(prev => {
+        const next = new Date(prev);
+        next.setDate(next.getDate() + 7);
+        return next;
+      });
+    } else {
+      setCurrentDate(addMonths(currentDate, 1));
+    }
+  };
 
-  // Generate calendar days
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
+  const navigatePrev = () => {
+    if (viewMode === 'week') {
+      setCurrentDate(prev => {
+        const next = new Date(prev);
+        next.setDate(next.getDate() - 7);
+        return next;
+      });
+    } else {
+      setCurrentDate(subMonths(currentDate, 1));
+    }
+  };
+
+  const goToToday = () => setCurrentDate(new Date());
+
+  // Generate calendar days for month view
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart);
   const calendarEnd = endOfWeek(monthEnd);
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
+  // Generate days for week view
+  const weekStart = startOfWeek(currentDate);
+  const weekEnd = endOfWeek(currentDate);
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Get header text based on view mode
+  const getHeaderText = () => {
+    if (viewMode === 'week') {
+      return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
+    }
+    return format(currentDate, 'MMMM yyyy');
+  };
+
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Sidebar with Backlog and Undated */}
-      <div className="w-72 flex-shrink-0 border-r border-white/10 flex flex-col bg-[#1a1d24]/5">
+      <div className="w-72 flex-shrink-0 border-r border-white/10 flex flex-col bg-[#12141a]">
         {/* Backlog Section */}
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="p-3 border-b border-white/10">
+          <div className="p-3 border-b border-white/10 bg-[#1a1d24]">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-white flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-white/50" />
+                <span className="w-3 h-3 rounded-full bg-gray-500" />
                 Backlog
               </h3>
-              <span className="px-2 py-0.5 text-xs rounded-full bg-[#1a1d24]/10 text-gray-400">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
                 {backlogTasks.length}
               </span>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
             {backlogTasks.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">No backlog tasks</p>
+              <p className="text-gray-600 text-sm text-center py-4">No backlog tasks</p>
             ) : (
               backlogTasks.map(task => (
-                <div
+                <SidebarTaskCard
                   key={task.id}
-                  onClick={() => onTaskClick(task)}
-                  className={`p-2.5 rounded-lg bg-[#1a1d24] border border-white/10 hover:border-white/20 cursor-pointer transition ${
-                    task.status === 'done' ? 'opacity-60' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCompleteTask(task.id);
-                      }}
-                      className="mt-0.5 flex-shrink-0"
-                    >
-                      {task.status === 'done' ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
-                      ) : (
-                        <Circle className="w-4 h-4 text-gray-500 hover:text-cyan-400 transition" />
-                      )}
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`text-sm text-white truncate ${task.status === 'done' ? 'line-through' : ''}`}>
-                        {task.title}
-                      </h4>
-                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border mt-1 ${PRIORITY_COLORS[task.priority]}`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  task={task}
+                  onTaskClick={onTaskClick}
+                  onCompleteTask={onCompleteTask}
+                />
               ))
             )}
           </div>
@@ -1534,30 +1569,224 @@ function CalendarView({
 
         {/* Undated Section */}
         <div className="flex flex-col flex-1 min-h-0 border-t border-white/10">
-          <div className="p-3 border-b border-white/10">
+          <div className="p-3 border-b border-white/10 bg-[#1a1d24]">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-white flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-orange-500" />
                 Undated
               </h3>
-              <span className="px-2 py-0.5 text-xs rounded-full bg-[#1a1d24]/10 text-gray-400">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-gray-400">
                 {undatedTasks.length}
               </span>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
             {undatedTasks.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">No undated tasks</p>
+              <p className="text-gray-600 text-sm text-center py-4">No undated tasks</p>
             ) : (
               undatedTasks.map(task => (
-                <div
+                <SidebarTaskCard
                   key={task.id}
-                  onClick={() => onTaskClick(task)}
-                  className={`p-2.5 rounded-lg bg-[#1a1d24] border border-white/10 hover:border-white/20 cursor-pointer transition ${
-                    task.status === 'done' ? 'opacity-60' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
+                  task={task}
+                  onTaskClick={onTaskClick}
+                  onCompleteTask={onCompleteTask}
+                  showStatus
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar */}
+      <div className="flex-1 flex flex-col p-4 overflow-hidden bg-[#12141a]">
+        {/* Calendar Header */}
+        <div className="flex items-center justify-between mb-4 bg-[#1a1d24] rounded-xl p-4 border border-white/10">
+          <button
+            onClick={navigatePrev}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-white">
+              {getHeaderText()}
+            </h2>
+            <button
+              onClick={goToToday}
+              className="px-3 py-1.5 text-sm bg-white/10 text-gray-300 hover:text-white hover:bg-white/20 rounded-lg transition"
+            >
+              Today
+            </button>
+          </div>
+
+          <button
+            onClick={navigateNext}
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {viewMode === 'calendar' ? (
+          /* Month View */
+          <>
+            {/* Day headers */}
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center text-sm font-medium text-gray-400 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="flex-1 grid grid-cols-7 gap-1 auto-rows-fr overflow-hidden">
+              {calendarDays.map(day => (
+                <CalendarDayCell
+                  key={day.toISOString()}
+                  day={day}
+                  currentMonth={currentDate}
+                  tasks={getTasksForDay(day)}
+                  onTaskClick={onTaskClick}
+                  onAddTask={onAddTask}
+                  isWeekView={false}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          /* Week View */
+          <div className="flex-1 grid grid-cols-7 gap-3 overflow-hidden">
+            {weekDays.map(day => (
+              <CalendarDayCell
+                key={day.toISOString()}
+                day={day}
+                currentMonth={currentDate}
+                tasks={getTasksForDay(day)}
+                onTaskClick={onTaskClick}
+                onAddTask={onAddTask}
+                isWeekView={true}
+                onCompleteTask={onCompleteTask}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Sidebar Task Card Component
+function SidebarTaskCard({
+  task,
+  onTaskClick,
+  onCompleteTask,
+  showStatus = false,
+}: {
+  task: Task;
+  onTaskClick: (task: Task) => void;
+  onCompleteTask: (taskId: number) => void;
+  showStatus?: boolean;
+}) {
+  return (
+    <div
+      onClick={() => onTaskClick(task)}
+      className={`p-2.5 rounded-lg bg-[#1a1d24] border border-white/10 hover:border-white/20 cursor-pointer transition group ${
+        task.status === 'done' ? 'opacity-60' : ''
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCompleteTask(task.id);
+          }}
+          className="mt-0.5 flex-shrink-0"
+        >
+          {task.status === 'done' ? (
+            <CheckCircle2 className="w-4 h-4 text-green-400" />
+          ) : (
+            <Circle className="w-4 h-4 text-gray-500 group-hover:text-cyan-400 transition" />
+          )}
+        </button>
+        <div className="flex-1 min-w-0">
+          <h4 className={`text-sm text-white truncate ${task.status === 'done' ? 'line-through' : ''}`}>
+            {task.title}
+          </h4>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border ${PRIORITY_COLORS[task.priority]}`}>
+              {task.priority}
+            </span>
+            {showStatus && (
+              <span className="text-xs text-gray-500">{task.status?.replace('_', ' ')}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Calendar Day Cell Component
+function CalendarDayCell({
+  day,
+  currentMonth,
+  tasks,
+  onTaskClick,
+  onAddTask,
+  isWeekView,
+  onCompleteTask,
+}: {
+  day: Date;
+  currentMonth: Date;
+  tasks: Task[];
+  onTaskClick: (task: Task) => void;
+  onAddTask: (date: Date) => void;
+  isWeekView: boolean;
+  onCompleteTask?: (taskId: number) => void;
+}) {
+  const isCurrentMonth = isSameMonth(day, currentMonth);
+  const isCurrentDay = isSameDay(day, new Date());
+  const hasOverdue = tasks.some(t => isPast(new Date(t.due_date!)) && t.status !== 'done');
+
+  if (isWeekView) {
+    // Week view - larger cards
+    return (
+      <div className={`rounded-xl border overflow-hidden flex flex-col ${
+        isCurrentDay
+          ? 'border-cyan-500/50 bg-cyan-500/5'
+          : 'border-white/10 bg-[#1a1d24] hover:border-white/20'
+      } transition`}>
+        {/* Day header */}
+        <div className={`p-3 border-b border-white/10 text-center ${
+          isCurrentDay ? 'bg-gradient-to-r from-cyan-500/20 to-violet-600/20' : ''
+        }`}>
+          <div className="text-xs text-gray-500 uppercase">{format(day, 'EEE')}</div>
+          <div className={`text-2xl font-bold ${isCurrentDay ? 'text-cyan-400' : 'text-white'}`}>
+            {format(day, 'd')}
+          </div>
+        </div>
+
+        {/* Tasks */}
+        <div className="flex-1 p-2 space-y-2 overflow-y-auto">
+          {tasks.map(task => {
+            const isOverdue = task.due_date && isPast(new Date(task.due_date)) && task.status !== 'done';
+            return (
+              <div
+                key={task.id}
+                onClick={() => onTaskClick(task)}
+                className={`p-2 rounded-lg text-xs cursor-pointer transition group ${
+                  task.status === 'done'
+                    ? 'bg-green-500/10 text-gray-500'
+                    : isOverdue
+                      ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                      : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  {onCompleteTask && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1566,132 +1795,115 @@ function CalendarView({
                       className="mt-0.5 flex-shrink-0"
                     >
                       {task.status === 'done' ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
                       ) : (
-                        <Circle className="w-4 h-4 text-gray-500 hover:text-cyan-400 transition" />
+                        <Circle className="w-3.5 h-3.5 text-gray-500 group-hover:text-cyan-400 transition" />
                       )}
                     </button>
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`text-sm text-white truncate ${task.status === 'done' ? 'line-through' : ''}`}>
-                        {task.title}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border ${PRIORITY_COLORS[task.priority]}`}>
-                          {task.priority}
-                        </span>
-                        <span className="text-xs text-gray-500">{task.status?.replace('_', ' ')}</span>
-                      </div>
-                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className={`font-medium truncate block ${task.status === 'done' ? 'line-through' : ''}`}>
+                      {task.title}
+                    </span>
+                    {task.description && (
+                      <p className="text-gray-500 truncate mt-0.5 text-[10px]">{task.description}</p>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar */}
-      <div className="flex-1 flex flex-col p-4 overflow-hidden">
-        {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">
-            {format(currentMonth, 'MMMM yyyy')}
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToToday}
-              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
-            >
-              Today
-            </button>
-            <button
-              onClick={prevMonth}
-              className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={nextMonth}
-              className="p-2 text-gray-400 hover:text-white hover:bg-[#1a1d24]/10 rounded-lg transition"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar grid */}
-        <div className="flex-1 grid grid-cols-7 gap-1 auto-rows-fr overflow-hidden">
-          {calendarDays.map(day => {
-            const dayTasks = getTasksForDay(day);
-            const isCurrentMonth = isSameMonth(day, currentMonth);
-            const isCurrentDay = isSameDay(day, new Date());
-            const hasOverdue = dayTasks.some(t => isPast(new Date(t.due_date!)) && t.status !== 'done');
-
-            return (
-              <div
-                key={day.toISOString()}
-                className={`rounded-lg border overflow-hidden flex flex-col ${
-                  isCurrentMonth
-                    ? 'bg-[#1a1d24]/5 border-white/10'
-                    : 'bg-[#1a1d24]/[0.02] border-white/5'
-                } ${isCurrentDay ? 'ring-2 ring-cyan-500/50' : ''}`}
-              >
-                {/* Day number */}
-                <div className={`px-2 py-1 text-right ${
-                  isCurrentDay
-                    ? 'bg-cyan-500/20'
-                    : hasOverdue
-                    ? 'bg-red-500/10'
-                    : ''
-                }`}>
-                  <span className={`text-xs font-medium ${
-                    isCurrentMonth
-                      ? isCurrentDay
-                        ? 'text-cyan-300'
-                        : 'text-gray-300'
-                      : 'text-gray-400'
-                  }`}>
-                    {format(day, 'd')}
-                  </span>
-                </div>
-
-                {/* Tasks */}
-                <div className="flex-1 p-1 overflow-y-auto space-y-1">
-                  {dayTasks.slice(0, 3).map(task => (
-                    <div
-                      key={task.id}
-                      onClick={() => onTaskClick(task)}
-                      className={`px-1.5 py-1 rounded text-xs cursor-pointer truncate transition ${
-                        task.status === 'done'
-                          ? 'bg-green-500/20 text-green-300 line-through'
-                          : isPast(new Date(task.due_date!))
-                          ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                          : 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30'
-                      }`}
-                      title={task.title}
-                    >
-                      {task.title}
-                    </div>
-                  ))}
-                  {dayTasks.length > 3 && (
-                    <div className="text-xs text-gray-500 text-center">
-                      +{dayTasks.length - 3} more
-                    </div>
-                  )}
+                <div className="flex items-center gap-1 mt-1.5">
+                  <span className={`w-2 h-2 rounded-full ${
+                    task.priority === 'urgent' ? 'bg-red-500' :
+                    task.priority === 'high' ? 'bg-orange-500' :
+                    task.priority === 'medium' ? 'bg-blue-500' : 'bg-gray-500'
+                  }`} />
+                  <span className="text-[10px] text-gray-500 capitalize">{task.priority}</span>
                 </div>
               </div>
             );
           })}
+
+          {tasks.length === 0 && (
+            <div className="text-center py-4 text-gray-600 text-xs">No tasks</div>
+          )}
+
+          {/* Add task button */}
+          <button
+            onClick={() => onAddTask(day)}
+            className="w-full p-2 rounded-lg border border-dashed border-white/20 text-gray-500 hover:text-white hover:border-cyan-500/50 hover:bg-cyan-500/10 transition text-xs flex items-center justify-center gap-1"
+          >
+            <Plus className="w-3 h-3" />
+            Add Task
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  // Month view - compact cells
+  return (
+    <div
+      className={`rounded-lg border overflow-hidden flex flex-col group ${
+        isCurrentMonth
+          ? 'bg-[#1a1d24] border-white/10'
+          : 'bg-[#12141a] border-white/5'
+      } ${isCurrentDay ? 'ring-2 ring-cyan-500/50 ring-offset-1 ring-offset-[#12141a]' : ''} transition hover:border-white/20`}
+    >
+      {/* Day number */}
+      <div className={`px-2 py-1.5 flex items-center justify-between ${
+        isCurrentDay
+          ? 'bg-gradient-to-r from-cyan-500/20 to-violet-600/20'
+          : hasOverdue
+          ? 'bg-red-500/10'
+          : ''
+      }`}>
+        <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
+          isCurrentDay
+            ? 'bg-gradient-to-r from-cyan-500 to-violet-600 text-white'
+            : isCurrentMonth
+              ? 'text-white'
+              : 'text-gray-600'
+        }`}>
+          {format(day, 'd')}
+        </span>
+        <button
+          onClick={() => onAddTask(day)}
+          className="w-6 h-6 rounded-full bg-white/10 text-gray-400 hover:text-white hover:bg-cyan-500/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Tasks */}
+      <div className="flex-1 p-1 overflow-y-auto space-y-1">
+        {tasks.slice(0, 3).map(task => {
+          const isOverdue = task.due_date && isPast(new Date(task.due_date)) && task.status !== 'done';
+          return (
+            <div
+              key={task.id}
+              onClick={() => onTaskClick(task)}
+              className={`px-2 py-1 rounded text-xs cursor-pointer truncate transition ${
+                task.status === 'done'
+                  ? 'bg-green-500/20 text-green-400 line-through'
+                  : isOverdue
+                    ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+              title={task.title}
+            >
+              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${
+                task.priority === 'urgent' ? 'bg-red-500' :
+                task.priority === 'high' ? 'bg-orange-500' :
+                task.priority === 'medium' ? 'bg-blue-500' : 'bg-gray-500'
+              }`} />
+              {task.title}
+            </div>
+          );
+        })}
+        {tasks.length > 3 && (
+          <div className="text-xs text-gray-500 text-center px-1">
+            +{tasks.length - 3} more
+          </div>
+        )}
       </div>
     </div>
   );
