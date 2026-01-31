@@ -557,7 +557,7 @@ export default function Dashboard() {
               <div className="text-sm text-gray-400">Open Tasks</div>
             </Link>
 
-            <Link to="/app/deadlines" className="group p-5 rounded-2xl bg-[#1a1d24] border border-white/10 hover:border-amber-500/50 transition">
+            <Link to="/app/tasks" className="group p-5 rounded-2xl bg-[#1a1d24] border border-white/10 hover:border-amber-500/50 transition">
               <div className="flex items-center justify-between mb-3">
                 <Calendar className="w-5 h-5 text-amber-400" />
                 {stats && stats.overdue_deadlines > 0 && (
@@ -711,7 +711,7 @@ export default function Dashboard() {
                 <span className="text-sm text-gray-300">New Task</span>
               </Link>
               <Link
-                to="/app/deadlines"
+                to="/app/tasks"
                 className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#1a1d24]/5 hover:bg-[#1a1d24]/10 border border-white/5 hover:border-violet-500/30 transition text-center group"
               >
                 <Calendar className="w-6 h-6 text-violet-400 group-hover:scale-110 transition-transform" />

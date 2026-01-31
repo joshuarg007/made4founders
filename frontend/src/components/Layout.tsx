@@ -111,7 +111,6 @@ const navSections: NavSection[] = [
       { to: '/app/documents', icon: FileText, label: 'Documents' },
       { to: '/app/meetings', icon: Video, label: 'Meetings' },
       { to: '/app/contacts', icon: Users, label: 'Contacts' },
-      { to: '/app/deadlines', icon: Calendar, label: 'Deadlines' },
     ],
   },
   {

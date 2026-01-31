@@ -349,7 +349,7 @@ export default function DailyBrief() {
       return <Link to="/app/tasks" className="block">{content}</Link>;
     }
     if (isDeadline && !isCompleted) {
-      return <Link to="/app/deadlines" className="block">{content}</Link>;
+      return <Link to="/app/tasks" className="block">{content}</Link>;
     }
     if (isDocument) {
       return <Link to="/app/documents" className="block">{content}</Link>;
@@ -850,7 +850,7 @@ export default function DailyBrief() {
         <Link to="/app/tasks" className="text-sm text-gray-500 hover:text-cyan-400 transition">
           All Tasks
         </Link>
-        <Link to="/app/deadlines" className="text-sm text-gray-500 hover:text-cyan-400 transition">
+        <Link to="/app/tasks" className="text-sm text-gray-500 hover:text-cyan-400 transition">
           All Deadlines
         </Link>
         <Link to="/app/contacts" className="text-sm text-gray-500 hover:text-cyan-400 transition">

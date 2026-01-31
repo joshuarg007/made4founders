@@ -59,7 +59,7 @@ const ACTIVITY_COLORS: Record<string, string> = {
 // Entity type routes for navigation
 const ENTITY_ROUTES: Record<string, string> = {
   task: '/app/tasks',
-  deadline: '/app/deadlines',
+  deadline: '/app/tasks',
   document: '/app/documents',
   contact: '/app/contacts',
   metric: '/app/analytics',

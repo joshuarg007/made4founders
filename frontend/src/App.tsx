@@ -68,7 +68,6 @@ const GettingStarted = lazyWithRetry(() => import('./pages/GettingStarted'))
 const Documents = lazyWithRetry(() => import('./pages/Documents'))
 const Meetings = lazyWithRetry(() => import('./pages/Meetings'))
 const Contacts = lazyWithRetry(() => import('./pages/Contacts'))
-const Deadlines = lazyWithRetry(() => import('./pages/Deadlines'))
 const Library = lazyWithRetry(() => import('./pages/Library'))
 const Users = lazyWithRetry(() => import('./pages/Users'))
 const Tasks = lazyWithRetry(() => import('./pages/Tasks'))
@@ -147,7 +146,6 @@ function App() {
           <Route path="documents" element={<Documents />} />
           <Route path="meetings" element={<Meetings />} />
           <Route path="contacts" element={<Contacts />} />
-          <Route path="deadlines" element={<Deadlines />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="users" element={<Users />} />
 
@@ -187,7 +185,7 @@ function App() {
         <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
         <Route path="/documents" element={<Navigate to="/app/documents" replace />} />
         <Route path="/contacts" element={<Navigate to="/app/contacts" replace />} />
-        <Route path="/deadlines" element={<Navigate to="/app/deadlines" replace />} />
+        <Route path="/deadlines" element={<Navigate to="/app/tasks" replace />} />
         <Route path="/library" element={<Navigate to="/app/library" replace />} />
         <Route path="/tasks" element={<Navigate to="/app/tasks" replace />} />
         <Route path="/users" element={<Navigate to="/app/users" replace />} />

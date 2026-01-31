@@ -81,7 +81,7 @@ export default function BusinessSummaryCard({ business }: BusinessSummaryCardPro
       subtext: stats?.deadlines_overdue ? `${stats.deadlines_overdue} overdue` : undefined,
       icon: Calendar,
       color: stats?.deadlines_overdue ? 'red' : 'amber',
-      link: '/app/deadlines',
+      link: '/app/tasks',
     },
     {
       label: 'Tasks',
