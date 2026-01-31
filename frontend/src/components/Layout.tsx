@@ -244,9 +244,8 @@ function LayoutContent() {
     <div className="flex h-screen bg-[#0f1117]">
       {/* Mobile Header */}
       <div className="fixed top-0 left-0 right-0 z-50 md:hidden bg-[#1a1d24] border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        <Link to="/app" className="flex items-center gap-2">
-          <img src="/logo.webp" alt="Made4Founders" className="h-8 w-auto" />
-          <span className="text-sm font-bold text-white">M4F</span>
+        <Link to="/app">
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-6 w-auto" />
         </Link>
         <div className="flex items-center gap-2">
           <NotificationBell />
@@ -278,9 +277,8 @@ function LayoutContent() {
       `}>
         {/* Logo */}
         <div className="p-4 border-b border-white/10">
-          <Link to="/app" className="flex items-center gap-3 hover:opacity-80 transition-opacity" onClick={() => setMobileMenuOpen(false)}>
-            <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
-            <span className="text-lg font-bold text-white">Made4Founders</span>
+          <Link to="/app" className="hover:opacity-80 transition-opacity" onClick={() => setMobileMenuOpen(false)}>
+            <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-10 w-auto" />
           </Link>
         </div>
 
