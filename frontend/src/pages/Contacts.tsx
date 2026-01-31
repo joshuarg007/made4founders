@@ -18,7 +18,6 @@ import {
   Eye,
   MessageCircle,
   AlertCircle,
-  Building2,
 } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
 import CountrySelect from '../components/CountrySelect';
@@ -27,6 +26,7 @@ import AddressAutocomplete from '../components/AddressAutocomplete';
 import { getContacts, createContact, updateContact, deleteContact, type Contact } from '../lib/api';
 import { format } from 'date-fns';
 import BusinessFilter from '../components/BusinessFilter';
+import BusinessSelect from '../components/BusinessSelect';
 import { useBusiness } from '../context/BusinessContext';
 import { validators, validationMessages } from '../lib/validation';
 import { getCountryByName } from '../lib/countries';
@@ -604,7 +604,7 @@ const contactTypes = [
 ];
 
 export default function Contacts() {
-  const { businesses, currentBusiness } = useBusiness();
+  const { currentBusiness } = useBusiness();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('all');
@@ -1366,26 +1366,13 @@ export default function Contacts() {
                   </select>
                 </div>
                 {/* Business selector */}
-                {businesses.length > 0 && (
-                  <div className="col-span-2">
-                    <label className="block text-sm text-gray-400 mb-1">
-                      <Building2 className="w-3.5 h-3.5 inline mr-1" />
-                      Business
-                    </label>
-                    <select
-                      value={formData.business_id || ''}
-                      onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
-                      className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                    >
-                      <option value="" className="bg-[#1a1d24] text-white">No business (org-level)</option>
-                      {businesses.filter(b => !b.is_archived).map((b) => (
-                        <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">
-                          {b.emoji} {b.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div className="col-span-2">
+                  <BusinessSelect
+                    value={formData.business_id}
+                    onChange={(id) => setFormData({ ...formData, business_id: id })}
+                    label="Business"
+                  />
+                </div>
                 {/* Contact Info Section */}
                 <div className="col-span-2 pt-2 border-t border-white/10">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Contact Information</p>

@@ -13,13 +13,13 @@ import {
   Lock,
   X,
   MessageCircle,
-  Building2,
 } from 'lucide-react';
 import { getDocuments, createDocument, updateDocument, deleteDocument, type Document } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
 import CommentsSection from '../components/CommentsSection';
 import BusinessFilter from '../components/BusinessFilter';
+import BusinessSelect from '../components/BusinessSelect';
 import { format, isBefore, addDays } from 'date-fns';
 import ResizableModal from '../components/ResizableModal';
 
@@ -39,7 +39,7 @@ const categories = [
 
 export default function Documents() {
   const { canEdit } = useAuth();
-  const { businesses, currentBusiness } = useBusiness();
+  const { currentBusiness } = useBusiness();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -587,26 +587,11 @@ export default function Documents() {
               </div>
 
               {/* Business selector */}
-              {businesses.length > 0 && (
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    <Building2 className="w-3.5 h-3.5 inline mr-1" />
-                    Business
-                  </label>
-                  <select
-                    value={formData.business_id || ''}
-                    onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
-                  >
-                    <option value="" className="bg-[#1a1d24] text-white">No business (org-level)</option>
-                    {businesses.filter(b => !b.is_archived).map((b) => (
-                      <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">
-                        {b.emoji} {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <BusinessSelect
+                value={formData.business_id}
+                onChange={(id) => setFormData({ ...formData, business_id: id })}
+                label="Business"
+              />
 
               {/* File Upload Section - only show when adding new document */}
               {!editingDocument && (

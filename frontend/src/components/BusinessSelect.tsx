@@ -3,24 +3,24 @@ import { Building2, ChevronDown, X, Check, Plus } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 import { createBusiness } from '../lib/api';
 
-interface BusinessFilterProps {
-  value: number[] | 'all' | 'none';
-  onChange: (value: number[] | 'all' | 'none') => void;
+interface BusinessSelectProps {
+  value: number | null;
+  onChange: (value: number | null) => void;
   className?: string;
-  showNoBusiness?: boolean;
   label?: string;
+  showLabel?: boolean;
 }
 
 const EMOJI_OPTIONS = ['🏢', '🚀', '💼', '🎯', '⚡', '🌟', '💡', '🔥', '📈', '🛠️', '🎨', '🌐'];
 const COLOR_OPTIONS = ['#06b6d4', '#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#3b82f6', '#eab308', '#ef4444'];
 
-export default function BusinessFilter({
+export default function BusinessSelect({
   value,
   onChange,
   className = '',
-  showNoBusiness = true,
   label = 'Business',
-}: BusinessFilterProps) {
+  showLabel = true,
+}: BusinessSelectProps) {
   const { businesses, refreshBusinesses } = useBusiness();
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -44,33 +44,9 @@ export default function BusinessFilter({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isAll = value === 'all';
-  const isNone = value === 'none';
-  const selectedIds = Array.isArray(value) ? value : [];
-
-  const handleToggleAll = () => {
-    onChange('all');
+  const handleSelectBusiness = (businessId: number | null) => {
+    onChange(businessId);
     setIsOpen(false);
-  };
-
-  const handleToggleNone = () => {
-    onChange('none');
-    setIsOpen(false);
-  };
-
-  const handleToggleBusiness = (businessId: number) => {
-    if (isAll || isNone) {
-      onChange([businessId]);
-    } else if (selectedIds.includes(businessId)) {
-      const newIds = selectedIds.filter(id => id !== businessId);
-      if (newIds.length === 0) {
-        onChange('all');
-      } else {
-        onChange(newIds);
-      }
-    } else {
-      onChange([...selectedIds, businessId]);
-    }
   };
 
   const handleCreateBusiness = async (e: React.FormEvent) => {
@@ -85,7 +61,7 @@ export default function BusinessFilter({
         color: newBusiness.color,
       });
       await refreshBusinesses();
-      onChange([created.id]);
+      onChange(created.id);
       setShowCreateModal(false);
       setIsOpen(false);
       setNewBusiness({ name: '', emoji: '🏢', color: '#06b6d4' });
@@ -98,18 +74,14 @@ export default function BusinessFilter({
   };
 
   const getDisplayText = () => {
-    if (isAll) return 'All Businesses';
-    if (isNone) return 'No Business';
-    if (selectedIds.length === 1) {
-      const business = activeBusinesses.find(b => b.id === selectedIds[0]);
-      return business ? `${business.emoji || '🏢'} ${business.name}` : 'Select...';
-    }
-    return `${selectedIds.length} businesses`;
+    if (value === null) return 'No business (org-level)';
+    const business = activeBusinesses.find(b => b.id === value);
+    return business ? `${business.emoji || '🏢'} ${business.name}` : 'Select business...';
   };
 
   const getAccentColor = () => {
-    if (selectedIds.length === 1) {
-      const business = activeBusinesses.find(b => b.id === selectedIds[0]);
+    if (value !== null) {
+      const business = activeBusinesses.find(b => b.id === value);
       return business?.color || null;
     }
     return null;
@@ -117,15 +89,10 @@ export default function BusinessFilter({
 
   const accentColor = getAccentColor();
 
-  const getSelectedBusinesses = () => {
-    if (!Array.isArray(value)) return [];
-    return activeBusinesses.filter(b => value.includes(b.id));
-  };
-
   return (
     <>
       <div className={`relative ${className}`} ref={dropdownRef}>
-        <label className="block text-xs text-gray-500 mb-1">{label}</label>
+        {showLabel && <label className="block text-sm text-gray-400 mb-1">{label}</label>}
 
         {/* Trigger Button */}
         <button
@@ -170,51 +137,33 @@ export default function BusinessFilter({
 
               <div className="border-t border-white/5 my-1" />
 
-              {/* All option */}
+              {/* No Business option */}
               <button
                 type="button"
-                onClick={handleToggleAll}
+                onClick={() => handleSelectBusiness(null)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-white/5 transition ${
-                  isAll ? 'bg-cyan-500/10 text-cyan-400' : 'text-gray-300'
+                  value === null ? 'bg-gray-500/10 text-gray-400' : 'text-gray-400'
                 }`}
               >
                 <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                  isAll ? 'bg-cyan-500 border-cyan-500' : 'border-white/20'
+                  value === null ? 'bg-gray-500 border-gray-500' : 'border-white/20'
                 }`}>
-                  {isAll && <Check className="w-3 h-3 text-white" />}
+                  {value === null && <Check className="w-3 h-3 text-white" />}
                 </div>
-                <span>All Businesses</span>
+                <span>No business (org-level)</span>
               </button>
-
-              {/* No Business option */}
-              {showNoBusiness && (
-                <button
-                  type="button"
-                  onClick={handleToggleNone}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-white/5 transition ${
-                    isNone ? 'bg-gray-500/10 text-gray-400' : 'text-gray-400'
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                    isNone ? 'bg-gray-500 border-gray-500' : 'border-white/20'
-                  }`}>
-                    {isNone && <Check className="w-3 h-3 text-white" />}
-                  </div>
-                  <span>No Business</span>
-                </button>
-              )}
 
               {/* Divider */}
               {activeBusinesses.length > 0 && <div className="border-t border-white/5 my-1" />}
 
               {/* Business list */}
               {activeBusinesses.map(business => {
-                const isSelected = selectedIds.includes(business.id);
+                const isSelected = value === business.id;
                 return (
                   <button
                     key={business.id}
                     type="button"
-                    onClick={() => handleToggleBusiness(business.id)}
+                    onClick={() => handleSelectBusiness(business.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-white/5 transition ${
                       isSelected ? 'bg-cyan-500/10 text-cyan-400' : 'text-gray-300'
                     }`}
@@ -238,32 +187,6 @@ export default function BusinessFilter({
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* Selected Pills (when multiple selected) */}
-        {Array.isArray(value) && value.length > 1 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {getSelectedBusinesses().map(business => (
-              <span
-                key={business.id}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
-                style={{
-                  backgroundColor: business.color ? `${business.color}20` : 'rgba(6,182,212,0.2)',
-                  color: business.color || '#22d3ee',
-                }}
-              >
-                {business.emoji && <span>{business.emoji}</span>}
-                {business.name}
-                <button
-                  type="button"
-                  onClick={() => handleToggleBusiness(business.id)}
-                  className="hover:text-white transition"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
           </div>
         )}
       </div>

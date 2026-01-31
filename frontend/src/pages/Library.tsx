@@ -20,6 +20,7 @@ import StateSelect from '../components/StateSelect';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import { getCountryByName } from '../lib/countries';
 import BusinessFilter from '../components/BusinessFilter';
+import BusinessSelect from '../components/BusinessSelect';
 import { useBusiness } from '../context/BusinessContext';
 
 const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api`;
@@ -588,23 +589,11 @@ export default function Library() {
                   className="w-full px-3 py-2 bg-[#1a1d24] border border-white/10 rounded-lg text-white focus:outline-none focus:border-violet-500/50"
                 />
               </div>
-              {businesses.length > 0 && (
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Business</label>
-                  <select
-                    value={newIdentifier.business_id ?? ''}
-                    onChange={(e) => setNewIdentifier({ ...newIdentifier, business_id: e.target.value ? parseInt(e.target.value) : null })}
-                    className="w-full px-3 py-2 bg-[#1a1d24] border border-white/10 rounded-lg text-white focus:outline-none focus:border-violet-500/50"
-                  >
-                    <option value="" className="bg-[#1a1d24] text-white">No business</option>
-                    {businesses.filter(b => !b.is_archived).map(b => (
-                      <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">
-                        {b.emoji ? `${b.emoji} ` : ''}{b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <BusinessSelect
+                value={newIdentifier.business_id}
+                onChange={(id) => setNewIdentifier({ ...newIdentifier, business_id: id })}
+                label="Business"
+              />
             </div>
             <div className="flex justify-end gap-2">
               <button

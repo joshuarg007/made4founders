@@ -14,10 +14,10 @@ import {
   Copy,
   Star,
   ExternalLink,
-  Building2,
 } from 'lucide-react';
 import api from '../lib/api';
 import BusinessFilter from '../components/BusinessFilter';
+import BusinessSelect from '../components/BusinessSelect';
 import { useBusiness } from '../context/BusinessContext';
 
 // Types
@@ -116,7 +116,7 @@ const ASSET_TYPES = [
 type Tab = 'colors' | 'fonts' | 'assets' | 'guidelines';
 
 export default function Branding() {
-  const { businesses } = useBusiness();
+  useBusiness(); // Initialize business context
   const [activeTab, setActiveTab] = useState<Tab>('colors');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -298,7 +298,6 @@ export default function Branding() {
       {showColorModal && (
         <ColorModal
           color={editingItem}
-          businesses={businesses}
           onClose={() => setShowColorModal(false)}
           onSave={loadData}
         />
@@ -307,7 +306,6 @@ export default function Branding() {
       {showFontModal && (
         <FontModal
           font={editingItem}
-          businesses={businesses}
           onClose={() => setShowFontModal(false)}
           onSave={loadData}
         />
@@ -316,7 +314,6 @@ export default function Branding() {
       {showAssetModal && (
         <AssetModal
           asset={editingItem}
-          businesses={businesses}
           onClose={() => setShowAssetModal(false)}
           onSave={loadData}
         />
@@ -325,7 +322,6 @@ export default function Branding() {
       {showGuidelineModal && (
         <GuidelineModal
           guideline={editingItem}
-          businesses={businesses}
           onClose={() => setShowGuidelineModal(false)}
           onSave={loadData}
         />
@@ -801,9 +797,8 @@ function GuidelinesTab({ guidelines, onAdd, onEdit, onRefresh }: {
 
 // ============ Modals ============
 
-function ColorModal({ color, businesses, onClose, onSave }: {
+function ColorModal({ color, onClose, onSave }: {
   color: BrandColor | null;
-  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -843,22 +838,11 @@ function ColorModal({ color, businesses, onClose, onSave }: {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Business Selection */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              <Building2 className="w-3 h-3 inline mr-1" />
-              Business (optional)
-            </label>
-            <select
-              value={formData.business_id ?? ''}
-              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
-            >
-              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
-              {businesses.map((b) => (
-                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
-              ))}
-            </select>
-          </div>
+          <BusinessSelect
+            value={formData.business_id}
+            onChange={(id) => setFormData({ ...formData, business_id: id })}
+            label="Business (optional)"
+          />
 
           <div>
             <label className="block text-sm text-gray-400 mb-1">Color Type</label>
@@ -937,9 +921,8 @@ function ColorModal({ color, businesses, onClose, onSave }: {
   );
 }
 
-function FontModal({ font, businesses, onClose, onSave }: {
+function FontModal({ font, onClose, onSave }: {
   font: BrandFont | null;
-  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -980,22 +963,11 @@ function FontModal({ font, businesses, onClose, onSave }: {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Business Selection */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              <Building2 className="w-3 h-3 inline mr-1" />
-              Business (optional)
-            </label>
-            <select
-              value={formData.business_id ?? ''}
-              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
-            >
-              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
-              {businesses.map((b) => (
-                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
-              ))}
-            </select>
-          </div>
+          <BusinessSelect
+            value={formData.business_id}
+            onChange={(id) => setFormData({ ...formData, business_id: id })}
+            label="Business (optional)"
+          />
 
           <div>
             <label className="block text-sm text-gray-400 mb-1">Font Family</label>
@@ -1086,9 +1058,8 @@ function FontModal({ font, businesses, onClose, onSave }: {
   );
 }
 
-function AssetModal({ asset, businesses, onClose, onSave }: {
+function AssetModal({ asset, onClose, onSave }: {
   asset: BrandAsset | null;
-  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -1156,22 +1127,11 @@ function AssetModal({ asset, businesses, onClose, onSave }: {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Business Selection */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              <Building2 className="w-3 h-3 inline mr-1" />
-              Business (optional)
-            </label>
-            <select
-              value={formData.business_id ?? ''}
-              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
-            >
-              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
-              {businesses.map((b) => (
-                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
-              ))}
-            </select>
-          </div>
+          <BusinessSelect
+            value={formData.business_id}
+            onChange={(id) => setFormData({ ...formData, business_id: id })}
+            label="Business (optional)"
+          />
 
           {!asset && (
             <div>
@@ -1293,9 +1253,8 @@ function AssetModal({ asset, businesses, onClose, onSave }: {
   );
 }
 
-function GuidelineModal({ guideline, businesses, onClose, onSave }: {
+function GuidelineModal({ guideline, onClose, onSave }: {
   guideline: BrandGuideline | null;
-  businesses: { id: number; name: string }[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -1341,22 +1300,11 @@ function GuidelineModal({ guideline, businesses, onClose, onSave }: {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Business Selection */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              <Building2 className="w-3 h-3 inline mr-1" />
-              Business (optional)
-            </label>
-            <select
-              value={formData.business_id ?? ''}
-              onChange={(e) => setFormData({ ...formData, business_id: e.target.value ? Number(e.target.value) : null })}
-              className="w-full px-4 py-3 rounded-lg bg-[#1a1d24]/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50 transition"
-            >
-              <option value="" className="bg-[#1a1d24] text-white">Organization-wide (all businesses)</option>
-              {businesses.map((b) => (
-                <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">{b.name}</option>
-              ))}
-            </select>
-          </div>
+          <BusinessSelect
+            value={formData.business_id}
+            onChange={(id) => setFormData({ ...formData, business_id: id })}
+            label="Business (optional)"
+          />
 
           <div className="border-t border-white/10 pt-4">
             <h3 className="text-sm font-medium text-gray-300 mb-3">Company Identity</h3>
