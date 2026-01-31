@@ -136,7 +136,7 @@ export default function Signup() {
 
         {/* Logo */}
         <Link to="/" className="mb-8 hover:opacity-80 transition-opacity">
-          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
         </Link>
 
         {/* Card */}
