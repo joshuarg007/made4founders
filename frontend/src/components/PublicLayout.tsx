@@ -189,11 +189,11 @@ export default function PublicLayout() {
               &copy; {new Date().getFullYear()} Axion Deep Labs. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
-              <img src="/qr-code.png" alt="Scan to visit Axion Deep" className="w-20 h-20 rounded" />
               <span className="flex items-center gap-2 text-xs text-gray-400">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
                 All systems operational
               </span>
+              <img src="/qr-code.png" alt="Scan to visit Axion Deep" className="w-16 h-16 rounded" />
             </div>
           </div>
         </div>
