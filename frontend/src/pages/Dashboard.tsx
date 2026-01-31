@@ -538,49 +538,6 @@ export default function Dashboard() {
           {currentBusiness && (
             <BusinessSummaryCard business={currentBusiness} />
           )}
-
-          {/* Quick Post to Social */}
-          <div className="rounded-2xl bg-[#1a1d24] border border-white/10 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Send className="w-5 h-5 text-violet-400" />
-                <h3 className="font-semibold text-white">Quick Post</h3>
-              </div>
-              <Link
-                to="/app/marketing"
-                className="text-xs text-violet-400 hover:text-violet-300 transition"
-              >
-                Open Hub
-              </Link>
-            </div>
-
-            <p className="text-sm text-gray-400 mb-4">
-              Share an update with your audience
-            </p>
-
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs text-gray-500">Post to:</span>
-              <div className="flex gap-2">
-                <div className="p-2 rounded-lg bg-black/50 border border-white/10 hover:border-white/20 transition cursor-pointer">
-                  <Twitter className="w-4 h-4 text-white" />
-                </div>
-                <div className="p-2 rounded-lg bg-[#0A66C2]/20 border border-[#0A66C2]/30 hover:border-[#0A66C2]/50 transition cursor-pointer">
-                  <Linkedin className="w-4 h-4 text-[#0A66C2]" />
-                </div>
-                <div className="p-2 rounded-lg bg-gradient-to-br from-[#833AB4]/20 via-[#E1306C]/20 to-[#F77737]/20 border border-[#E1306C]/30 hover:border-[#E1306C]/50 transition cursor-pointer">
-                  <Instagram className="w-4 h-4 text-[#E1306C]" />
-                </div>
-              </div>
-            </div>
-
-            <Link
-              to="/app/marketing"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium transition"
-            >
-              <Send className="w-4 h-4" />
-              Create Post
-            </Link>
-          </div>
         </div>
 
         {/* Middle Column - Stats & Deadlines */}
@@ -717,6 +674,23 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+
+          {/* Vault Status */}
+          <Link
+            to="/app/vault"
+            className="flex items-center justify-between p-5 rounded-2xl bg-[#1a1d24] border border-white/10 hover:border-emerald-500/30 transition group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-white">Credential Vault</h3>
+                <p className="text-xs text-gray-400">AES-256 encrypted</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition" />
+          </Link>
         </div>
 
         {/* Right Column - Tasks & Actions */}
@@ -841,22 +815,48 @@ export default function Dashboard() {
             </Link>
           )}
 
-          {/* Vault Status */}
-          <Link
-            to="/app/vault"
-            className="flex items-center justify-between p-5 rounded-2xl bg-[#1a1d24] border border-white/10 hover:border-emerald-500/30 transition group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-emerald-400" />
+          {/* Quick Post to Social */}
+          <div className="rounded-2xl bg-[#1a1d24] border border-white/10 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Send className="w-5 h-5 text-violet-400" />
+                <h3 className="font-semibold text-white">Quick Post</h3>
               </div>
-              <div>
-                <h3 className="font-medium text-white">Credential Vault</h3>
-                <p className="text-xs text-gray-400">AES-256 encrypted</p>
+              <Link
+                to="/app/marketing"
+                className="text-xs text-violet-400 hover:text-violet-300 transition"
+              >
+                Open Hub
+              </Link>
+            </div>
+
+            <p className="text-sm text-gray-400 mb-4">
+              Share an update with your audience
+            </p>
+
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs text-gray-500">Post to:</span>
+              <div className="flex gap-2">
+                <div className="p-2 rounded-lg bg-black/50 border border-white/10 hover:border-white/20 transition cursor-pointer">
+                  <Twitter className="w-4 h-4 text-white" />
+                </div>
+                <div className="p-2 rounded-lg bg-[#0A66C2]/20 border border-[#0A66C2]/30 hover:border-[#0A66C2]/50 transition cursor-pointer">
+                  <Linkedin className="w-4 h-4 text-[#0A66C2]" />
+                </div>
+                <div className="p-2 rounded-lg bg-gradient-to-br from-[#833AB4]/20 via-[#E1306C]/20 to-[#F77737]/20 border border-[#E1306C]/30 hover:border-[#E1306C]/50 transition cursor-pointer">
+                  <Instagram className="w-4 h-4 text-[#E1306C]" />
+                </div>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition" />
-          </Link>
+
+            <Link
+              to="/app/marketing"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium transition"
+            >
+              <Send className="w-4 h-4" />
+              Create Post
+            </Link>
+          </div>
         </div>
       </div>
 
