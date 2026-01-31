@@ -7,7 +7,7 @@ Respects organization boundaries and manages token budgets.
 
 import logging
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -35,7 +35,7 @@ class DataContextBuilder:
         context = {
             "intent": intent,
             "query": query,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
         # Build context based on intent
@@ -81,7 +81,7 @@ class DataContextBuilder:
         )
 
         # Get recent transactions for burn rate
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
         transactions = self.db.query(TellerTransaction).filter(
             TellerTransaction.organization_id == self.organization_id,
             TellerTransaction.date >= thirty_days_ago.date()
@@ -194,7 +194,7 @@ class DataContextBuilder:
         from ..models import Deadline, ChecklistProgress
 
         # Upcoming deadlines
-        today = datetime.utcnow().date()
+        today = datetime.now(UTC).date()
         upcoming_deadlines = self.db.query(Deadline).filter(
             Deadline.organization_id == self.organization_id,
             Deadline.due_date >= today,
@@ -269,7 +269,7 @@ class DataContextBuilder:
         from ..models import BudgetPeriod, BudgetLineItem, BudgetCategory
 
         # Get current budget period
-        today = datetime.utcnow().date()
+        today = datetime.now(UTC).date()
         current_period = self.db.query(BudgetPeriod).filter(
             BudgetPeriod.organization_id == self.organization_id,
             BudgetPeriod.start_date <= today,

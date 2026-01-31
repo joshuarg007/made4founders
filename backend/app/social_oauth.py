@@ -10,7 +10,7 @@ Supports:
 import os
 import secrets
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -55,7 +55,7 @@ def generate_state(user_id: int, provider: str, business_id: Optional[int] = Non
         "user_id": user_id,
         "provider": provider,
         "business_id": business_id,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
     return state
 
@@ -68,7 +68,7 @@ def validate_state(state: str, provider: str) -> Optional[dict]:
     if data["provider"] != provider:
         return None
     # Expire after 10 minutes
-    if (datetime.utcnow() - data["created_at"]).total_seconds() > 600:
+    if (datetime.now(UTC) - data["created_at"]).total_seconds() > 600:
         del oauth_states[state]
         return None
     del oauth_states[state]
@@ -277,7 +277,7 @@ async def twitter_callback(
 
     expires_at = None
     if tokens.get("expires_in"):
-        expires_at = datetime.utcnow() + timedelta(seconds=tokens["expires_in"])
+        expires_at = datetime.now(UTC) + timedelta(seconds=tokens["expires_in"])
 
     if existing:
         existing.access_token = tokens["access_token"]
@@ -286,7 +286,7 @@ async def twitter_callback(
         existing.provider_user_id = twitter_user.get("id")
         existing.provider_username = twitter_user.get("username")
         existing.is_active = True
-        existing.updated_at = datetime.utcnow()
+        existing.updated_at = datetime.now(UTC)
     else:
         connection = OAuthConnection(
             organization_id=user.organization_id,
@@ -349,8 +349,8 @@ async def refresh_twitter_token(client: httpx.AsyncClient, connection: OAuthConn
     connection.access_token = tokens["access_token"]
     connection.refresh_token = tokens.get("refresh_token", connection.refresh_token)
     if tokens.get("expires_in"):
-        connection.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens["expires_in"])
-    connection.updated_at = datetime.utcnow()
+        connection.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens["expires_in"])
+    connection.updated_at = datetime.now(UTC)
     db.commit()
 
     return tokens["access_token"]
@@ -394,7 +394,7 @@ async def create_twitter_post(
             access_token = connection.access_token
 
             # Check if token is expired and refresh if needed
-            if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+            if connection.token_expires_at and connection.token_expires_at < datetime.now(UTC):
                 new_token = await refresh_twitter_token(client, connection, db)
                 if not new_token:
                     return TwitterPostResponse(
@@ -547,7 +547,7 @@ async def linkedin_callback(
 
     expires_at = None
     if tokens.get("expires_in"):
-        expires_at = datetime.utcnow() + timedelta(seconds=tokens["expires_in"])
+        expires_at = datetime.now(UTC) + timedelta(seconds=tokens["expires_in"])
 
     if existing:
         existing.access_token = tokens["access_token"]
@@ -556,7 +556,7 @@ async def linkedin_callback(
         existing.provider_user_id = linkedin_user.get("sub")
         existing.provider_username = linkedin_user.get("name")
         existing.is_active = True
-        existing.updated_at = datetime.utcnow()
+        existing.updated_at = datetime.now(UTC)
     else:
         connection = OAuthConnection(
             organization_id=user.organization_id,
@@ -619,7 +619,7 @@ async def create_linkedin_post(
         )
 
     # Check token expiration
-    if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+    if connection.token_expires_at and connection.token_expires_at < datetime.now(UTC):
         return LinkedInPostResponse(
             success=False,
             error="LinkedIn token expired. Please reconnect your LinkedIn account."
@@ -820,7 +820,7 @@ async def facebook_callback(
 
     expires_at = None
     if tokens.get("expires_in"):
-        expires_at = datetime.utcnow() + timedelta(seconds=tokens["expires_in"])
+        expires_at = datetime.now(UTC) + timedelta(seconds=tokens["expires_in"])
 
     if existing:
         existing.access_token = tokens["access_token"]
@@ -828,7 +828,7 @@ async def facebook_callback(
         existing.provider_user_id = fb_user.get("id")
         existing.provider_username = fb_user.get("name")
         existing.is_active = True
-        existing.updated_at = datetime.utcnow()
+        existing.updated_at = datetime.now(UTC)
     else:
         connection = OAuthConnection(
             organization_id=user.organization_id,
@@ -890,7 +890,7 @@ async def create_facebook_post(
         )
 
     # Check token expiration
-    if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+    if connection.token_expires_at and connection.token_expires_at < datetime.now(UTC):
         return FacebookPostResponse(
             success=False,
             error="Facebook token expired. Please reconnect your Facebook account."
@@ -1049,7 +1049,7 @@ async def instagram_callback(
         OAuthConnection.provider == "instagram",
     ).first()
 
-    expires_at = datetime.utcnow() + timedelta(days=60)
+    expires_at = datetime.now(UTC) + timedelta(days=60)
 
     if existing:
         existing.access_token = tokens["access_token"]
@@ -1057,7 +1057,7 @@ async def instagram_callback(
         existing.provider_user_id = instagram_account.get("id")
         existing.provider_username = instagram_account.get("username")
         existing.is_active = True
-        existing.updated_at = datetime.utcnow()
+        existing.updated_at = datetime.now(UTC)
     else:
         connection = OAuthConnection(
             organization_id=user.organization_id,
@@ -1107,7 +1107,7 @@ async def post_to_social(
     if not connection:
         raise HTTPException(status_code=400, detail=f"No active {platform} connection")
 
-    if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+    if connection.token_expires_at and connection.token_expires_at < datetime.now(UTC):
         raise HTTPException(status_code=400, detail=f"{platform} token expired. Please reconnect.")
 
     try:

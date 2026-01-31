@@ -11,7 +11,7 @@ import os
 import time
 import hashlib
 import logging
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from typing import Callable, Dict, Optional
 from collections import defaultdict
 from functools import wraps
@@ -301,7 +301,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         duration_ms = (time.time() - start_time) * 1000
 
         audit_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "path": request.url.path,
             "method": request.method,
             "status_code": response.status_code,

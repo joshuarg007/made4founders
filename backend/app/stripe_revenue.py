@@ -5,7 +5,7 @@ Connect user's Stripe account to pull revenue metrics (MRR, ARR, churn).
 
 import os
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, UTC, timedelta, date
 from typing import Optional, List, Dict, Any
 from collections import defaultdict
 
@@ -186,7 +186,7 @@ async def oauth_callback(
             existing.refresh_token = refresh_token
             existing.is_active = True
             existing.sync_status = "pending"
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
             db.commit()
             connection = existing
         else:
@@ -239,7 +239,7 @@ async def disconnect_stripe(
 
     # Soft delete - keep data but mark inactive
     connection.is_active = False
-    connection.updated_at = datetime.utcnow()
+    connection.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "success"}
@@ -320,7 +320,7 @@ def sync_stripe_data(connection_id: int):
         sync_subscriptions(connection, db)
 
         # Update connection status
-        connection.last_sync_at = datetime.utcnow()
+        connection.last_sync_at = datetime.now(UTC)
         connection.sync_status = "synced"
         connection.sync_error = None
         db.commit()
@@ -358,7 +358,7 @@ def sync_customers(connection: StripeConnection, db: Session):
         if existing:
             existing.email = customer_data.email
             existing.name = customer_data.name
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
         else:
             new_customer = StripeCustomerSync(
                 organization_id=org_id,
@@ -418,7 +418,7 @@ def sync_subscriptions(connection: StripeConnection, db: Session):
             existing.plan_name = plan_name
             existing.current_period_end = period_end
             existing.canceled_at = canceled_at
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
         else:
             new_sub = StripeSubscriptionSync(
                 organization_id=org_id,
@@ -473,7 +473,7 @@ async def get_revenue_metrics(
     ).count()
 
     # Get new customers in last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
     new_customers_30d = db.query(StripeCustomerSync).filter(
         StripeCustomerSync.organization_id == org_id,
         StripeCustomerSync.customer_created_at >= thirty_days_ago
@@ -497,7 +497,7 @@ async def get_revenue_metrics(
 
     # Calculate MoM growth (compare current MRR to 30 days ago)
     # For now, use subscription count growth as proxy
-    sixty_days_ago = datetime.utcnow() - timedelta(days=60)
+    sixty_days_ago = datetime.now(UTC) - timedelta(days=60)
     old_active_count = db.query(StripeSubscriptionSync).filter(
         StripeSubscriptionSync.organization_id == org_id,
         StripeSubscriptionSync.subscription_created_at <= thirty_days_ago,

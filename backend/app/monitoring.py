@@ -16,7 +16,7 @@ import os
 import logging
 import time
 import platform
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from typing import Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -35,7 +35,7 @@ router = APIRouter()
 # Configuration
 ALERT_WEBHOOK_URL = os.getenv("ALERT_WEBHOOK_URL", "")  # Slack webhook or similar
 ALERT_EMAIL = os.getenv("ALERT_EMAIL", "")
-UPTIME_START = datetime.utcnow()
+UPTIME_START = datetime.now(UTC)
 
 
 class HealthStatus(BaseModel):
@@ -198,7 +198,7 @@ async def send_alert(title: str, message: str, severity: str = "warning"):
                     "title": title,
                     "text": message,
                     "footer": "Made4Founders Monitoring",
-                    "ts": int(datetime.utcnow().timestamp())
+                    "ts": int(datetime.now(UTC).timestamp())
                 }]
             }
 
@@ -219,7 +219,7 @@ async def send_alert(title: str, message: str, severity: str = "warning"):
                 <h2>{title}</h2>
                 <p>{message}</p>
                 <hr>
-                <p><small>Sent by Made4Founders Monitoring at {datetime.utcnow().isoformat()}</small></p>
+                <p><small>Sent by Made4Founders Monitoring at {datetime.now(UTC).isoformat()}</small></p>
                 """
             )
         except Exception as e:
@@ -246,7 +246,7 @@ async def quick_health(db: Session = Depends(get_db)):
 
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(UTC).isoformat()
     }
 
 
@@ -272,11 +272,11 @@ async def detailed_status(db: Session = Depends(get_db)):
     else:
         overall = "healthy"
 
-    uptime = int((datetime.utcnow() - UPTIME_START).total_seconds())
+    uptime = int((datetime.now(UTC) - UPTIME_START).total_seconds())
 
     return HealthStatus(
         status=overall,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         uptime_seconds=uptime,
         version=os.getenv("APP_VERSION", "1.0.0"),
         checks=checks
@@ -290,7 +290,7 @@ async def system_metrics(current_user: User = Depends(require_admin)):
     """
     metrics = get_system_metrics()
     return {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "metrics": metrics.dict()
     }
 

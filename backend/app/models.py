@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Boolean, ForeignKey, Enum, Float, JSON, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 import enum
 
 from .database import Base
@@ -142,8 +142,8 @@ class Organization(Base):
     settings = Column(JSON, nullable=True)  # JSON for flexible org settings
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     users = relationship("User", back_populates="organization")
@@ -236,8 +236,8 @@ class Business(Base):
     active_title = Column(String(50), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", back_populates="businesses", foreign_keys=[organization_id])
@@ -296,7 +296,7 @@ class Quest(Base):
     min_level = Column(Integer, default=1)  # Minimum business level to receive this quest
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class BusinessQuest(Base):
@@ -330,7 +330,7 @@ class BusinessQuest(Base):
     xp_reward = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     business = relationship("Business", backref="quests")
@@ -392,7 +392,7 @@ class Achievement(Base):
     is_secret = Column(Boolean, default=False)  # Hidden until unlocked
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class BusinessAchievement(Base):
@@ -420,8 +420,8 @@ class BusinessAchievement(Base):
     xp_reward = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     business = relationship("Business", backref="earned_achievements")
@@ -505,8 +505,8 @@ class Challenge(Base):
     max_participants = Column(Integer, default=2)   # 2 = head-to-head
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -551,8 +551,8 @@ class ChallengeParticipant(Base):
     xp_lost = Column(Integer, default=0)           # XP lost from wager
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     challenge = relationship("Challenge", back_populates="participants")
@@ -578,7 +578,7 @@ class SubscriptionHistory(Base):
     stripe_payment_intent_id = Column(String(255), nullable=True)
 
     event_metadata = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     organization = relationship("Organization", back_populates="subscription_history")
 
@@ -608,8 +608,8 @@ class OAuthConnection(Base):
     page_name = Column(String(255), nullable=True)
     page_access_token = Column(Text, nullable=True)  # Encrypted
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class AccountingConnection(Base):
@@ -633,8 +633,8 @@ class AccountingConnection(Base):
     is_active = Column(Boolean, default=True)
 
     last_sync_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class ZoomConnection(Base):
@@ -656,8 +656,8 @@ class ZoomConnection(Base):
     scopes = Column(Text, nullable=True)  # Comma-separated scopes
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class GoogleMeetConnection(Base):
@@ -679,8 +679,8 @@ class GoogleMeetConnection(Base):
     scopes = Column(Text, nullable=True)  # Comma-separated scopes
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class TeamsConnection(Base):
@@ -703,8 +703,8 @@ class TeamsConnection(Base):
     scopes = Column(Text, nullable=True)  # Comma-separated scopes
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 # ============ BRANDING MODELS ============
@@ -725,8 +725,8 @@ class BrandColor(Base):
     description = Column(Text, nullable=True)
     sort_order = Column(Integer, default=0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class BrandFont(Base):
@@ -743,8 +743,8 @@ class BrandFont(Base):
     font_weight = Column(String(50), nullable=True)  # "400", "400,500,700"
     usage_type = Column(String(50), default=FontUsage.BODY.value)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class BrandAsset(Base):
@@ -774,8 +774,8 @@ class BrandAsset(Base):
     is_primary = Column(Boolean, default=False)  # Primary asset for this type
     sort_order = Column(Integer, default=0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class BrandGuideline(Base):
@@ -804,8 +804,8 @@ class BrandGuideline(Base):
 
     order_index = Column(Integer, default=0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 # ============ MARKETING MODELS ============
@@ -833,8 +833,8 @@ class EmailTemplate(Base):
     thumbnail_path = Column(String(500), nullable=True)
     is_default = Column(Boolean, default=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class MarketingCampaign(Base):
@@ -865,8 +865,8 @@ class MarketingCampaign(Base):
     scheduled_at = Column(DateTime, nullable=True)
     sent_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     created_by = relationship("User", backref="created_campaigns")
     email_template = relationship("EmailTemplate")
@@ -896,8 +896,8 @@ class CampaignVersion(Base):
     post_url = Column(String(500), nullable=True)
     error_message = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     campaign = relationship("MarketingCampaign", back_populates="versions")
 
@@ -931,8 +931,8 @@ class EmailAnalytics(Base):
     # Top links
     top_links = Column(JSON, nullable=True)  # [{url, clicks, unique_clicks}]
 
-    fetched_at = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    fetched_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     campaign = relationship("MarketingCampaign", backref="email_analytics")
 
@@ -961,8 +961,8 @@ class SocialAnalytics(Base):
     # Platform-specific stored as JSON
     platform_metrics = Column(JSON, nullable=True)
 
-    fetched_at = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    fetched_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     campaign_version = relationship("CampaignVersion", backref="social_analytics")
 
@@ -987,8 +987,8 @@ class EmailIntegration(Base):
     is_active = Column(Boolean, default=True)
     last_synced_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 # ============ DOCUMENT TEMPLATES ============
@@ -1023,8 +1023,8 @@ class DocumentTemplate(Base):
     preview_image = Column(String(500), nullable=True)
     download_count = Column(Integer, default=0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 # ============ EXISTING ENUMS (unchanged) ============
@@ -1151,8 +1151,8 @@ class Marketplace(Base):
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class Service(Base):
@@ -1170,8 +1170,8 @@ class Service(Base):
     icon = Column(String(100), nullable=True)  # emoji or icon name
     is_favorite = Column(Boolean, default=False)
     last_visited = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class Document(Base):
@@ -1188,8 +1188,8 @@ class Document(Base):
     expiration_date = Column(DateTime, nullable=True)
     tags = Column(String(500), nullable=True)  # Comma-separated tags
     is_sensitive = Column(Boolean, default=False)  # Requires password to download
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class Contact(Base):
@@ -1221,8 +1221,8 @@ class Contact(Base):
     responsibilities = Column(Text, nullable=True)  # What this contact handles for you
     notes = Column(Text, nullable=True)
     last_contacted = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class Meeting(Base):
@@ -1247,8 +1247,8 @@ class Meeting(Base):
     tags = Column(Text, nullable=True)  # Comma-separated tags
     is_recurring = Column(Boolean, default=False)
     recurrence_pattern = Column(String(100), nullable=True)  # weekly, monthly, etc.
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class Deadline(Base):
@@ -1268,8 +1268,8 @@ class Deadline(Base):
     completed_at = Column(DateTime, nullable=True)
     related_service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
     related_document_id = Column(Integer, ForeignKey("documents.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     related_service = relationship("Service", backref="deadlines")
     related_document = relationship("Document", backref="deadlines")
@@ -1295,8 +1295,8 @@ class BusinessInfo(Base):
     state = Column(String(50), nullable=True)
     zip_code = Column(String(20), nullable=True)
     country = Column(String(50), default="United States")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class BusinessIdentifier(Base):
@@ -1314,8 +1314,8 @@ class BusinessIdentifier(Base):
     expiration_date = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     related_document_id = Column(Integer, ForeignKey("documents.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     related_document = relationship("Document")
 
@@ -1334,8 +1334,8 @@ class ChecklistProgress(Base):
     data = Column(Text, nullable=True)  # JSON string for structured data (e.g., selected options)
     related_document_id = Column(Integer, ForeignKey("documents.id"), nullable=True)
     related_identifier_id = Column(Integer, ForeignKey("business_identifiers.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     related_document = relationship("Document")
     related_identifier = relationship("BusinessIdentifier")
@@ -1404,8 +1404,8 @@ class User(Base):
     # Email verification token expiry
     email_verification_token_expires = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", back_populates="users")
@@ -1427,8 +1427,8 @@ class UserSession(Base):
     ip_address = Column(String(45), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    last_used_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    last_used_at = Column(DateTime, default=lambda: datetime.now(UTC))
     expires_at = Column(DateTime, nullable=False)
 
     # Status
@@ -1448,7 +1448,7 @@ class TokenBlacklist(Base):
     token_id = Column(String(32), unique=True, nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     expires_at = Column(DateTime, nullable=False)
-    revoked_at = Column(DateTime, default=datetime.utcnow)
+    revoked_at = Column(DateTime, default=lambda: datetime.now(UTC))
     reason = Column(String(100), nullable=True)
 
 
@@ -1460,8 +1460,8 @@ class VaultConfig(Base):
     organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, unique=True)
     master_password_hash = Column(String(255), nullable=False)  # bcrypt hash
     salt = Column(String(255), nullable=False)  # For key derivation
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class Credential(Base):
@@ -1485,8 +1485,8 @@ class Credential(Base):
     encrypted_custom_fields = Column(Text, nullable=True)  # JSON array of custom fields
 
     related_service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     related_service = relationship("Service")
 
@@ -1507,8 +1507,8 @@ class ProductOffered(Base):
     icon = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class ProductUsed(Base):
@@ -1538,8 +1538,8 @@ class ProductUsed(Base):
     license_type = Column(String(100), nullable=True)  # free, starter, pro, enterprise
     status = Column(String(50), default="active")  # active, trial, cancelled, considering
     contract_end_date = Column(DateTime, nullable=True)  # When contract ends
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class WebLink(Base):
@@ -1556,8 +1556,8 @@ class WebLink(Base):
     icon = Column(String(100), nullable=True)
     is_favorite = Column(Boolean, default=False)
     last_visited = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 # ============ Task Management Models ============
@@ -1600,8 +1600,8 @@ class TaskBoard(Base):
     is_default = Column(Boolean, default=False)
     icon = Column(String(100), nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     created_by = relationship("User", backref="created_boards")
     columns = relationship("TaskColumn", back_populates="board", order_by="TaskColumn.position", cascade="all, delete-orphan")
@@ -1618,8 +1618,8 @@ class TaskColumn(Base):
     position = Column(Integer, default=0)
     color = Column(String(20), nullable=True)
     wip_limit = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     board = relationship("TaskBoard", back_populates="columns")
     tasks = relationship("Task", back_populates="column", order_by="Task.position")
@@ -1663,8 +1663,8 @@ class Task(Base):
     # Metadata
     tags = Column(String(500), nullable=True)
     icon = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     board = relationship("TaskBoard", backref="tasks")
@@ -1687,8 +1687,8 @@ class TaskComment(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     content = Column(Text, nullable=False)
     is_edited = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     task = relationship("Task", back_populates="comments")
     user = relationship("User", backref="task_comments")
@@ -1710,8 +1710,8 @@ class TimeEntry(Base):
     description = Column(String(500), nullable=True)
     is_running = Column(Boolean, default=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     task = relationship("Task", back_populates="time_entries")
     user = relationship("User", backref="time_entries")
@@ -1730,7 +1730,7 @@ class TaskActivity(Base):
     old_value = Column(String(255), nullable=True)
     new_value = Column(String(255), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     task = relationship("Task", back_populates="activities")
     user = relationship("User", backref="task_activities")
@@ -1839,8 +1839,8 @@ class WebPresence(Base):
     # SEO Checklist Progress - JSON object: {task_id: {completed, completed_at, notes}}
     seo_checklist_progress = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class BankAccountType(str, enum.Enum):
@@ -1869,8 +1869,8 @@ class BankAccount(Base):
     url = Column(String(500), nullable=True)
     icon = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class MetricType(str, enum.Enum):
@@ -1903,8 +1903,8 @@ class Metric(Base):
     date = Column(DateTime, nullable=False)  # Date this metric applies to
     notes = Column(Text, nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     created_by = relationship("User", backref="metrics")
 
@@ -1923,8 +1923,8 @@ class MetricGoal(Base):
     notes = Column(Text, nullable=True)
     is_achieved = Column(Boolean, default=False)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     created_by = relationship("User", backref="metric_goals")
 
@@ -1945,7 +1945,7 @@ class ContactSubmission(Base):
     is_read = Column(Boolean, default=False)
     is_replied = Column(Boolean, default=False)
     replied_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 # ============ BUSINESS JUNCTION TABLES (Many-to-Many) ============
@@ -1957,7 +1957,7 @@ class ContactBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     contact_id = Column(Integer, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     contact = relationship("Contact", backref="business_associations")
     business = relationship("Business", backref="contact_associations")
@@ -1972,7 +1972,7 @@ class DocumentBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     document = relationship("Document", backref="business_associations")
     business = relationship("Business", backref="document_associations")
@@ -1987,7 +1987,7 @@ class CredentialBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     credential_id = Column(Integer, ForeignKey("credentials.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     credential = relationship("Credential", backref="business_associations")
     business = relationship("Business", backref="credential_associations")
@@ -2002,7 +2002,7 @@ class WebLinkBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     web_link_id = Column(Integer, ForeignKey("web_links.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     web_link = relationship("WebLink", backref="business_associations")
     business = relationship("Business", backref="web_link_associations")
@@ -2017,7 +2017,7 @@ class ProductOfferedBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_offered_id = Column(Integer, ForeignKey("products_offered.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     product_offered = relationship("ProductOffered", backref="business_associations")
     business = relationship("Business", backref="product_offered_associations")
@@ -2032,7 +2032,7 @@ class ProductUsedBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_used_id = Column(Integer, ForeignKey("products_used.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     product_used = relationship("ProductUsed", backref="business_associations")
     business = relationship("Business", backref="product_used_associations")
@@ -2047,7 +2047,7 @@ class ServiceBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     service_id = Column(Integer, ForeignKey("services.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     service = relationship("Service", backref="business_associations")
     business = relationship("Business", backref="service_associations")
@@ -2062,7 +2062,7 @@ class DeadlineBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     deadline_id = Column(Integer, ForeignKey("deadlines.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     deadline = relationship("Deadline", backref="business_associations")
     business = relationship("Business", backref="deadline_associations")
@@ -2077,7 +2077,7 @@ class MeetingBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     meeting_id = Column(Integer, ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     meeting = relationship("Meeting", backref="business_associations")
     business = relationship("Business", backref="meeting_associations")
@@ -2092,7 +2092,7 @@ class TaskBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     task = relationship("Task", backref="business_associations")
     business = relationship("Business", backref="task_associations")
@@ -2107,7 +2107,7 @@ class MetricBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     metric_id = Column(Integer, ForeignKey("metrics.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     metric = relationship("Metric", backref="business_associations")
     business = relationship("Business", backref="metric_associations")
@@ -2122,7 +2122,7 @@ class MeetingTranscriptBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     transcript_id = Column(Integer, ForeignKey("meeting_transcripts.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     transcript = relationship("MeetingTranscript", backref="business_associations")
     business = relationship("Business", backref="transcript_associations")
@@ -2137,7 +2137,7 @@ class BrandColorBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     color_id = Column(Integer, ForeignKey("brand_colors.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     color = relationship("BrandColor", backref="business_associations")
     business = relationship("Business", backref="brand_color_associations")
@@ -2152,7 +2152,7 @@ class BrandFontBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     font_id = Column(Integer, ForeignKey("brand_fonts.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     font = relationship("BrandFont", backref="business_associations")
     business = relationship("Business", backref="brand_font_associations")
@@ -2167,7 +2167,7 @@ class BrandAssetBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     asset_id = Column(Integer, ForeignKey("brand_assets.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     asset = relationship("BrandAsset", backref="business_associations")
     business = relationship("Business", backref="brand_asset_associations")
@@ -2182,7 +2182,7 @@ class BrandGuidelineBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     guideline_id = Column(Integer, ForeignKey("brand_guidelines.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     guideline = relationship("BrandGuideline", backref="business_associations")
     business = relationship("Business", backref="brand_guideline_associations")
@@ -2197,7 +2197,7 @@ class ChecklistProgressBusiness(Base):
     id = Column(Integer, primary_key=True, index=True)
     progress_id = Column(Integer, ForeignKey("checklist_progress.id", ondelete="CASCADE"), nullable=False)
     business_id = Column(Integer, ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     progress = relationship("ChecklistProgress", backref="business_associations")
     business = relationship("Business", backref="checklist_progress_associations")
@@ -2241,8 +2241,8 @@ class MeetingTranscript(Base):
     tags = Column(String(500), nullable=True)
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="meeting_transcripts")
@@ -2272,7 +2272,7 @@ class AuditLog(Base):
     # Additional data (JSON)
     details = Column(Text, nullable=True)  # JSON object with extra context
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
     # Relationships
     organization = relationship("Organization", backref="audit_logs")
@@ -2306,8 +2306,8 @@ class TellerEnrollment(Base):
     # Status
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="teller_enrollments")
@@ -2341,8 +2341,8 @@ class TellerAccount(Base):
     # Status
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="teller_accounts")
@@ -2388,8 +2388,8 @@ class TellerTransaction(Base):
     notes = Column(Text, nullable=True)
     is_excluded = Column(Boolean, default=False)  # Exclude from calculations
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="teller_transactions")
@@ -2423,8 +2423,8 @@ class StripeConnection(Base):
     # Status
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="stripe_connections")
@@ -2450,8 +2450,8 @@ class StripeCustomerSync(Base):
     # Timestamps
     customer_created_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="stripe_customers")
@@ -2480,8 +2480,8 @@ class StripeSubscriptionSync(Base):
     current_period_end = Column(DateTime, nullable=True)
     canceled_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="stripe_subscriptions")
@@ -2521,8 +2521,8 @@ class GoogleCalendarConnection(Base):
     # Status
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="google_calendar_connections")
@@ -2564,8 +2564,8 @@ class SlackConnection(Base):
     # Status
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="slack_connections")
@@ -2625,8 +2625,8 @@ class Shareholder(Base):
     notes = Column(Text, nullable=True)
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="shareholders")
@@ -2677,8 +2677,8 @@ class ShareClass(Base):
     display_order = Column(Integer, default=0)
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="share_classes")
@@ -2727,8 +2727,8 @@ class EquityGrant(Base):
 
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="equity_grants")
@@ -2775,8 +2775,8 @@ class StockOption(Base):
 
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="stock_options")
@@ -2820,8 +2820,8 @@ class SafeNote(Base):
 
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="safe_notes")
@@ -2863,8 +2863,8 @@ class ConvertibleNote(Base):
 
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="convertible_notes")
@@ -2904,8 +2904,8 @@ class FundingRound(Base):
 
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="funding_rounds")
@@ -2949,8 +2949,8 @@ class Valuation409A(Base):
     notes = Column(Text, nullable=True)
 
     created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="valuations_409a")
@@ -3008,8 +3008,8 @@ class InvestorUpdate(Base):
     # Creator
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="investor_updates")
@@ -3038,7 +3038,7 @@ class InvestorUpdateRecipient(Base):
     opened_at = Column(DateTime, nullable=True)
     clicked_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     investor_update = relationship("InvestorUpdate", back_populates="recipients")
@@ -3067,8 +3067,8 @@ class DataRoomFolder(Base):
     visibility = Column(String(50), default="internal")  # internal, investors, custom
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="data_room_folders")
@@ -3099,8 +3099,8 @@ class DataRoomDocument(Base):
     download_count = Column(Integer, default=0)
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="data_room_documents")
@@ -3139,8 +3139,8 @@ class ShareableLink(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="shareable_links")
@@ -3176,7 +3176,7 @@ class DataRoomAccess(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="data_room_access_logs")
@@ -3213,8 +3213,8 @@ class BudgetCategory(Base):
     merchant_keywords = Column(Text, nullable=True)  # ["AWS", "Google Cloud", "Stripe"]
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="budget_categories")
@@ -3242,8 +3242,8 @@ class BudgetPeriod(Base):
     total_budget = Column(Float, default=0.0)
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="budget_periods")
@@ -3275,8 +3275,8 @@ class BudgetLineItem(Base):
     notes = Column(Text, nullable=True)
     last_calculated_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="budget_line_items")
@@ -3326,8 +3326,8 @@ class Invoice(Base):
     # Creator
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="invoices")
@@ -3355,7 +3355,7 @@ class InvoiceLineItem(Base):
     product_id = Column(Integer, ForeignKey("products_offered.id", ondelete="SET NULL"), nullable=True)
 
     sort_order = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     invoice = relationship("Invoice", back_populates="line_items")
@@ -3377,7 +3377,7 @@ class InvoicePayment(Base):
     stripe_payment_intent_id = Column(String(100), nullable=True)
 
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     invoice = relationship("Invoice", back_populates="payments")
@@ -3459,8 +3459,8 @@ class Employee(Base):
 
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="employees")
@@ -3489,8 +3489,8 @@ class PTOPolicy(Base):
     applies_to_contractors = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="pto_policies")
@@ -3512,8 +3512,8 @@ class PTOBalance(Base):
 
     balance_year = Column(Integer, nullable=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="pto_balances")
@@ -3549,8 +3549,8 @@ class PTORequest(Base):
     reviewed_at = Column(DateTime, nullable=True)
     review_notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="pto_requests")
@@ -3580,8 +3580,8 @@ class OnboardingTemplate(Base):
     is_default = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="onboarding_templates")
@@ -3606,8 +3606,8 @@ class OnboardingChecklist(Base):
     is_completed = Column(Boolean, default=False)
     completed_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="onboarding_checklists")
@@ -3642,8 +3642,8 @@ class OnboardingTask(Base):
 
     sort_order = Column(Integer, default=0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     checklist = relationship("OnboardingChecklist", backref="tasks")
@@ -3666,8 +3666,8 @@ class AIConversation(Base):
     title = Column(String(255), nullable=True)  # Auto-generated from first message
     is_archived = Column(Boolean, default=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="ai_conversations")
@@ -3690,7 +3690,7 @@ class AIMessage(Base):
     data_cards = Column(JSON, nullable=True)  # Structured data for rich display
     suggested_actions = Column(JSON, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     conversation = relationship("AIConversation", backref="messages")
@@ -3722,8 +3722,8 @@ class Competitor(Base):
     headquarters = Column(String(255), nullable=True)
     employee_count = Column(String(50), nullable=True)  # "10-50", "100-500", etc.
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="competitors")
@@ -3755,7 +3755,7 @@ class CompetitorUpdate(Base):
     is_starred = Column(Boolean, default=False)
 
     published_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     competitor = relationship("Competitor", backref="updates")
@@ -3783,8 +3783,8 @@ class DocumentSummary(Base):
     tokens_used = Column(Integer, nullable=True)
     processing_time_ms = Column(Integer, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     document = relationship("Document", backref="ai_summaries")
@@ -3834,8 +3834,8 @@ class Comment(Base):
     # Threading support - parent comment for replies
     parent_id = Column(Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     user = relationship("User", backref="comments")
@@ -3888,7 +3888,7 @@ class Notification(Base):
     is_read = Column(Boolean, default=False)
     read_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     user = relationship("User", foreign_keys=[user_id], backref="notifications")
@@ -3943,7 +3943,7 @@ class Activity(Base):
     # Additional context (JSON for flexibility)
     extra_data = Column(JSON, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     user = relationship("User", backref="activities")
@@ -3999,10 +3999,10 @@ class GuestUser(Base):
 
     # Invite tracking
     invited_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    invited_at = Column(DateTime, default=datetime.utcnow)
+    invited_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="guest_users")
@@ -4046,7 +4046,7 @@ class LLMUsage(Base):
     # Timing
     processing_time_ms = Column(Integer, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="llm_usage_records")
@@ -4075,7 +4075,7 @@ class WatchedStock(Base):
     name = Column(String(255), nullable=True)  # e.g., "Apple Inc."
     notes = Column(Text, nullable=True)  # User notes about why they're watching
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     organization = relationship("Organization", backref="watched_stocks")

@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Request
@@ -62,11 +62,11 @@ def authenticate_user(db: Session, email: str, password: str) -> tuple[Optional[
         return None, "invalid_credentials"
 
     # Check if account is locked
-    if user.locked_until and user.locked_until > datetime.utcnow():
+    if user.locked_until and user.locked_until > datetime.now(UTC):
         return None, "account_locked"
 
     # Clear lockout if expired
-    if user.locked_until and user.locked_until <= datetime.utcnow():
+    if user.locked_until and user.locked_until <= datetime.now(UTC):
         user.locked_until = None
         user.failed_login_attempts = 0
         db.commit()
@@ -78,7 +78,7 @@ def authenticate_user(db: Session, email: str, password: str) -> tuple[Optional[
 
         # Lock account if threshold reached
         if user.failed_login_attempts >= LOCKOUT_THRESHOLD:
-            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_DURATION_MINUTES)
+            user.locked_until = datetime.now(UTC) + timedelta(minutes=LOCKOUT_DURATION_MINUTES)
 
         db.commit()
         return None, "invalid_credentials"
@@ -203,7 +203,7 @@ async def login(
             {
                 "sub": user.email,
                 "typ": "mfa",
-                "exp": datetime.utcnow() + timedelta(minutes=5),
+                "exp": datetime.now(UTC) + timedelta(minutes=5),
             },
             security.SECRET_KEY,
             algorithm=security.ALGORITHM,
@@ -221,7 +221,7 @@ async def login(
             {
                 "sub": user.email,
                 "typ": "mfa_setup",
-                "exp": datetime.utcnow() + timedelta(minutes=30),
+                "exp": datetime.now(UTC) + timedelta(minutes=30),
             },
             security.SECRET_KEY,
             algorithm=security.ALGORITHM,
@@ -311,7 +311,7 @@ async def login_with_captcha(
             {
                 "sub": user.email,
                 "typ": "mfa",
-                "exp": datetime.utcnow() + timedelta(minutes=5),
+                "exp": datetime.now(UTC) + timedelta(minutes=5),
             },
             security.SECRET_KEY,
             algorithm=security.ALGORITHM,
@@ -329,7 +329,7 @@ async def login_with_captcha(
             {
                 "sub": user.email,
                 "typ": "mfa_setup",
-                "exp": datetime.utcnow() + timedelta(minutes=30),
+                "exp": datetime.now(UTC) + timedelta(minutes=30),
             },
             security.SECRET_KEY,
             algorithm=security.ALGORITHM,
@@ -531,7 +531,7 @@ async def register(
 
     # Generate email verification token
     verification_token = secrets.token_urlsafe(32)
-    verification_expires = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
+    verification_expires = datetime.now(UTC) + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
 
     # Create user with verification token (not verified yet)
     hashed_password = security.get_password_hash(user_data.password)
@@ -571,7 +571,7 @@ def verify_email(
         raise HTTPException(status_code=400, detail="Invalid verification token")
 
     # Check if token has expired
-    if user.email_verification_token_expires and user.email_verification_token_expires < datetime.utcnow():
+    if user.email_verification_token_expires and user.email_verification_token_expires < datetime.now(UTC):
         raise HTTPException(status_code=400, detail="Verification token has expired")
 
     # Mark email as verified
@@ -598,7 +598,7 @@ async def resend_verification(
 
     # Generate new verification token
     verification_token = secrets.token_urlsafe(32)
-    verification_expires = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
+    verification_expires = datetime.now(UTC) + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
 
     user.email_verification_token = verification_token
     user.email_verification_token_expires = verification_expires
@@ -625,7 +625,7 @@ async def forgot_password(
 
     # Generate password reset token
     reset_token = secrets.token_urlsafe(32)
-    reset_expires = datetime.utcnow() + timedelta(hours=PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
+    reset_expires = datetime.now(UTC) + timedelta(hours=PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
 
     user.password_reset_token = reset_token
     user.password_reset_token_expires = reset_expires
@@ -649,7 +649,7 @@ def reset_password(
         raise HTTPException(status_code=400, detail="Invalid reset token")
 
     # Check if token has expired
-    if user.password_reset_token_expires and user.password_reset_token_expires < datetime.utcnow():
+    if user.password_reset_token_expires and user.password_reset_token_expires < datetime.now(UTC):
         raise HTTPException(status_code=400, detail="Reset token has expired")
 
     # Update password

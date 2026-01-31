@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 import json
 import os
 import logging
@@ -637,7 +637,7 @@ def send_investor_update(
 
                 if success:
                     recipient.status = "sent"
-                    recipient.sent_at = datetime.utcnow()
+                    recipient.sent_at = datetime.now(UTC)
                     sent += 1
                 else:
                     recipient.status = "failed"
@@ -645,7 +645,7 @@ def send_investor_update(
                     failed += 1
 
             update.status = "sent"
-            update.sent_at = datetime.utcnow()
+            update.sent_at = datetime.now(UTC)
             update.sent_count = sent
             update.failed_count = failed
             db_session.commit()
@@ -684,7 +684,7 @@ def schedule_investor_update(
     if update.status == 'sent':
         raise HTTPException(status_code=400, detail="Update already sent")
 
-    if scheduled_at <= datetime.utcnow():
+    if scheduled_at <= datetime.now(UTC):
         raise HTTPException(status_code=400, detail="Scheduled time must be in the future")
 
     update.status = "scheduled"

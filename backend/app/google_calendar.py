@@ -6,7 +6,7 @@ Two-way sync between M4F deadlines/meetings and Google Calendar.
 import os
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional, List, Dict, Any
 from urllib.parse import urlencode
 
@@ -116,7 +116,7 @@ async def get_connect_url(
     oauth_states[state] = {
         "org_id": current_user.organization_id,
         "user_id": current_user.id,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(UTC)
     }
 
     # Cleanup old states
@@ -199,12 +199,12 @@ async def oauth_callback(
             # Update existing connection
             existing.access_token = access_token
             existing.refresh_token = refresh_token or existing.refresh_token
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
             existing.calendar_id = calendar_id
             existing.calendar_name = calendar_name
             existing.is_active = True
             existing.sync_status = "pending"
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
             connection = existing
         else:
             # Create new connection
@@ -213,7 +213,7 @@ async def oauth_callback(
                 user_id=user_id,
                 access_token=access_token,
                 refresh_token=refresh_token,
-                token_expires_at=datetime.utcnow() + timedelta(seconds=expires_in),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
                 calendar_id=calendar_id,
                 calendar_name=calendar_name,
                 sync_status="pending"
@@ -258,7 +258,7 @@ async def disconnect_calendar(
         logger.warning(f"Failed to revoke token: {e}")
 
     connection.is_active = False
-    connection.updated_at = datetime.utcnow()
+    connection.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "success"}
@@ -313,7 +313,7 @@ async def update_settings(
     connection.sync_deadlines = settings.sync_deadlines
     connection.sync_meetings = settings.sync_meetings
     connection.calendar_id = settings.calendar_id
-    connection.updated_at = datetime.utcnow()
+    connection.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "success"}
@@ -402,7 +402,7 @@ async def get_upcoming_events(
 
     access_token = await refresh_token_if_needed(connection, db)
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     time_max = now + timedelta(days=days)
 
     async with httpx.AsyncClient() as client:
@@ -537,7 +537,7 @@ async def push_meeting_to_calendar(
 
 def cleanup_expired_states():
     """Remove expired OAuth states."""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expired = [
         key for key, data in oauth_states.items()
         if now - data.get("created_at", now) > timedelta(minutes=10)
@@ -548,7 +548,7 @@ def cleanup_expired_states():
 
 async def refresh_token_if_needed(connection: GoogleCalendarConnection, db: Session) -> str:
     """Refresh access token if expired."""
-    if connection.token_expires_at and connection.token_expires_at > datetime.utcnow():
+    if connection.token_expires_at and connection.token_expires_at > datetime.now(UTC):
         return connection.access_token
 
     if not connection.refresh_token:
@@ -572,7 +572,7 @@ async def refresh_token_if_needed(connection: GoogleCalendarConnection, db: Sess
 
         tokens = response.json()
         connection.access_token = tokens.get("access_token")
-        connection.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
+        connection.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
         db.commit()
 
         return connection.access_token
@@ -691,7 +691,7 @@ def sync_calendar_data(connection_id: int):
         finally:
             loop.close()
 
-        connection.last_sync_at = datetime.utcnow()
+        connection.last_sync_at = datetime.now(UTC)
         connection.sync_status = "synced"
         connection.sync_error = None
         db.commit()
@@ -721,7 +721,7 @@ async def sync_calendar_async(connection: GoogleCalendarConnection, db: Session)
         deadlines = db.query(Deadline).filter(
             Deadline.organization_id == org_id,
             Deadline.is_completed == False,
-            Deadline.due_date >= datetime.utcnow()
+            Deadline.due_date >= datetime.now(UTC)
         ).all()
 
         for deadline in deadlines:
@@ -736,7 +736,7 @@ async def sync_calendar_async(connection: GoogleCalendarConnection, db: Session)
     if connection.sync_meetings:
         meetings = db.query(Meeting).filter(
             Meeting.organization_id == org_id,
-            Meeting.meeting_date >= datetime.utcnow()
+            Meeting.meeting_date >= datetime.now(UTC)
         ).all()
 
         for meeting in meetings:

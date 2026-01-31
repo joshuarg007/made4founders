@@ -13,8 +13,10 @@ import {
   Check,
   AlertTriangle,
   RotateCcw,
+  Star,
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
+import EmojiPicker from '../components/EmojiPicker';
 import type { Business } from '../lib/api';
 
 interface BusinessNode extends Business {
@@ -32,7 +34,6 @@ const BUSINESS_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
-const EMOJIS = ['🚀', '💼', '🏢', '🎯', '⭐', '💎', '🔥', '🌟', '📦', '🛒', '🎨', '🔧', '📱', '💻', '🌐', '🏆'];
 
 const COLORS = [
   '#FF6B35', '#F7931E', '#FFD700', '#7CB342', '#00BCD4',
@@ -48,7 +49,7 @@ const getLevelTitle = (level: number): string => {
 };
 
 export default function Businesses() {
-  const { businesses, refreshBusinesses } = useBusiness();
+  const { businesses, refreshBusinesses, currentBusiness, switchBusiness } = useBusiness();
   const [showModal, setShowModal] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -225,6 +226,11 @@ export default function Businesses() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-white truncate">{business.name}</span>
+                {currentBusiness?.id === business.id && (
+                  <span className="px-1.5 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-current" /> Default
+                  </span>
+                )}
                 {business.is_archived && (
                   <span className="px-1.5 py-0.5 text-xs bg-white/50/20 text-gray-400 rounded">Archived</span>
                 )}
@@ -252,6 +258,15 @@ export default function Businesses() {
 
           {/* Actions */}
           <div className="flex items-center gap-1">
+            {!business.is_archived && currentBusiness?.id !== business.id && (
+              <button
+                onClick={() => switchBusiness(business.id)}
+                className="p-2 text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition"
+                title="Set as Default"
+              >
+                <Star className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={() => {
                 setEditingBusiness(business);
@@ -433,22 +448,11 @@ export default function Businesses() {
               {/* Emoji */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Icon</label>
-                <div className="flex flex-wrap gap-2">
-                  {EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, emoji })}
-                      className={`w-10 h-10 text-xl rounded-lg border transition ${
-                        formData.emoji === emoji
-                          ? 'border-cyan-500 bg-cyan-500/20'
-                          : 'border-white/10 hover:border-white/30'
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+                <EmojiPicker
+                  value={formData.emoji}
+                  onChange={(emoji) => setFormData({ ...formData, emoji })}
+                  placeholder="🏢"
+                />
               </div>
 
               {/* Color */}

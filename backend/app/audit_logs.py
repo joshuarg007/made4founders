@@ -13,7 +13,7 @@ Endpoints:
 """
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional, List
 from io import StringIO
 import csv
@@ -176,7 +176,7 @@ async def audit_log_stats(
     Get audit log statistics (admin only).
     """
     org_id = current_user.organization_id
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
 
@@ -298,7 +298,7 @@ async def export_audit_logs(
     csv_content = output.getvalue()
     output.close()
 
-    filename = f"audit_logs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    filename = f"audit_logs_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.csv"
 
     return Response(
         content=csv_content,

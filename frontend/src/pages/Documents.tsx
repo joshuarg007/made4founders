@@ -39,7 +39,7 @@ const categories = [
 
 export default function Documents() {
   const { canEdit } = useAuth();
-  const { businesses } = useBusiness();
+  const { businesses, currentBusiness } = useBusiness();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -204,7 +204,7 @@ export default function Documents() {
     setShowModal(false);
     setEditingDocument(null);
     setModalFile(null);
-    setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false, business_id: null });
+    setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false, business_id: currentBusiness?.id || null });
     loadDocuments();
   };
 
@@ -250,7 +250,7 @@ export default function Documents() {
         </div>
         {canEdit && (
           <button
-            onClick={() => { setEditingDocument(null); setModalFile(null); setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false, business_id: null }); setShowModal(true); }}
+            onClick={() => { setEditingDocument(null); setModalFile(null); setFormData({ name: '', category: 'other', external_url: '', description: '', expiration_date: '', tags: '', is_sensitive: false, business_id: currentBusiness?.id || null }); setShowModal(true); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
           >
             <Plus className="w-4 h-4" />

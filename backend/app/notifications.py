@@ -12,7 +12,7 @@ Endpoints:
 """
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Header
@@ -55,7 +55,7 @@ async def send_deadline_reminders(
     - Deadlines due tomorrow
     - Deadlines due in the next 7 days (once per deadline)
     """
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     tomorrow = today + timedelta(days=1)
     week_from_now = today + timedelta(days=7)
 
@@ -121,7 +121,7 @@ async def send_deadline_reminders(
                 sent_count += 1
 
             # Only send weekly reminder on Mondays to avoid spam
-            if datetime.utcnow().weekday() == 0 and week_deadlines:
+            if datetime.now(UTC).weekday() == 0 and week_deadlines:
                 await send_deadline_reminder_email(
                     email=user.email,
                     name=user.name,
@@ -151,7 +151,7 @@ async def send_weekly_digest(
 
     Should be called once per week (e.g., Monday morning) by a scheduler.
     """
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     week_ago = today - timedelta(days=7)
     week_from_now = today + timedelta(days=7)
 

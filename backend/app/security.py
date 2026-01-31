@@ -10,7 +10,7 @@ Features:
 import os
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional
 
 from fastapi import Response, Request
@@ -75,7 +75,7 @@ def create_access_token(sub: str, expires_delta: Optional[timedelta] = None) -> 
     - Expiration (exp)
     - Type indicator (typ)
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expire = now + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
 
     payload = {
@@ -93,7 +93,7 @@ def create_refresh_token(sub: str, expires_delta: Optional[timedelta] = None) ->
     """
     Create a secure refresh token with extended lifetime.
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expire = now + (expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
 
     payload = {

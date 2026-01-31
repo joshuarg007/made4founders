@@ -9,7 +9,7 @@ Features:
 """
 
 import json
-from datetime import datetime, date
+from datetime import datetime, UTC, date
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -747,7 +747,7 @@ def calculate_actuals(
         else:
             item.status = "over"
 
-        item.last_calculated_at = datetime.utcnow()
+        item.last_calculated_at = datetime.now(UTC)
 
     db.commit()
 

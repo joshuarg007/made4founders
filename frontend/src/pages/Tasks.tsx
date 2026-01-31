@@ -38,7 +38,7 @@ const PRIORITY_ICONS: Record<string, React.ReactNode> = {
 
 export default function Tasks() {
   const { user, canEdit } = useAuth();
-  const { businesses } = useBusiness();
+  const { businesses, currentBusiness } = useBusiness();
   const isAdmin = user?.role === 'admin';
 
   // State
@@ -309,7 +309,7 @@ export default function Tasks() {
       due_date: '',
       assigned_to_id: null,
       column_id: null,
-      business_id: null,
+      business_id: currentBusiness?.id || null,
     });
   };
 

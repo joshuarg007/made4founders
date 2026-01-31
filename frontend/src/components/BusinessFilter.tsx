@@ -77,6 +77,17 @@ export default function BusinessFilter({
     return `${selectedIds.length} businesses`;
   };
 
+  // Get accent color for single business selection
+  const getAccentColor = () => {
+    if (selectedIds.length === 1) {
+      const business = activeBusinesses.find(b => b.id === selectedIds[0]);
+      return business?.color || null;
+    }
+    return null;
+  };
+
+  const accentColor = getAccentColor();
+
   const getSelectedBusinesses = () => {
     if (!Array.isArray(value)) return [];
     return activeBusinesses.filter(b => value.includes(b.id));
@@ -90,10 +101,19 @@ export default function BusinessFilter({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/50 border border-white/10 text-white hover:border-white/20 transition text-sm"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#1a1d24]/50 border text-white hover:border-white/20 transition text-sm"
+        style={{
+          borderColor: accentColor ? `${accentColor}50` : 'rgba(255,255,255,0.1)',
+          borderLeftWidth: accentColor ? '3px' : '1px',
+          borderLeftColor: accentColor || 'rgba(255,255,255,0.1)',
+        }}
       >
         <div className="flex items-center gap-2 truncate">
-          <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          {accentColor ? (
+            <div className="w-4 h-4 rounded flex-shrink-0" style={{ backgroundColor: accentColor }} />
+          ) : (
+            <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          )}
           <span className="truncate">{getDisplayText()}</span>
         </div>
         <ChevronDown className={`w-4 h-4 text-gray-400 transition ${isOpen ? 'rotate-180' : ''}`} />
@@ -178,12 +198,16 @@ export default function BusinessFilter({
       )}
 
       {/* Selected Pills (when multiple selected) */}
-      {Array.isArray(value) && value.length > 0 && (
+      {Array.isArray(value) && value.length > 1 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
           {getSelectedBusinesses().map(business => (
             <span
               key={business.id}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-xs"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
+              style={{
+                backgroundColor: business.color ? `${business.color}20` : 'rgba(6,182,212,0.2)',
+                color: business.color || '#22d3ee',
+              }}
             >
               {business.emoji && <span>{business.emoji}</span>}
               {business.name}

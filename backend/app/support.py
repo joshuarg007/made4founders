@@ -7,7 +7,7 @@ Handles:
 """
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -55,7 +55,7 @@ async def submit_contact_form(
     user_name = request.name or (current_user.name if current_user else "Anonymous User")
 
     # Generate ticket ID
-    ticket_id = f"TKT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    ticket_id = f"TKT-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
 
     # Try to send email
     try:
@@ -71,7 +71,7 @@ async def submit_contact_form(
         <h3>Message:</h3>
         <p>{request.message.replace(chr(10), '<br>')}</p>
         <hr>
-        <p><small>Submitted at {datetime.utcnow().isoformat()} UTC</small></p>
+        <p><small>Submitted at {datetime.now(UTC).isoformat()} UTC</small></p>
         """
 
         await send_email(

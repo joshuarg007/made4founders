@@ -8,7 +8,7 @@ Features:
 - Payment tracking
 """
 
-from datetime import datetime, date
+from datetime import datetime, UTC, date
 from typing import Optional, List
 from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -609,7 +609,7 @@ def record_payment(
     # Check if fully paid
     if invoice.paid_amount >= invoice.total_amount:
         invoice.status = "paid"
-        invoice.paid_at = datetime.utcnow()
+        invoice.paid_at = datetime.now(UTC)
 
     db.commit()
     db.refresh(db_payment)
@@ -687,7 +687,7 @@ def send_invoice(
         raise HTTPException(status_code=400, detail="Invoice cannot be sent")
 
     invoice.status = "sent"
-    invoice.email_sent_at = datetime.utcnow()
+    invoice.email_sent_at = datetime.now(UTC)
 
     db.commit()
 
@@ -726,7 +726,7 @@ def mark_invoice_paid(
         invoice.paid_amount = invoice.total_amount
 
     invoice.status = "paid"
-    invoice.paid_at = datetime.utcnow()
+    invoice.paid_at = datetime.now(UTC)
     invoice.payment_method = payment_method
 
     db.commit()

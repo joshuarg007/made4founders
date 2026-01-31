@@ -11,7 +11,7 @@ Provides endpoints for:
 import logging
 import os
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -102,7 +102,7 @@ async def get_ai_status(
     import httpx
     from .models import LLMUsage
     from sqlalchemy import func
-    from datetime import datetime, timedelta
+    from datetime import datetime, UTC, timedelta
 
     providers = {}
 
@@ -164,7 +164,7 @@ async def get_ai_status(
         preferred_provider = org.settings.get("llm_provider")
 
     # Get usage stats by provider (this month)
-    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     usage_by_provider = {}
 
     try:
@@ -244,10 +244,10 @@ async def get_ai_usage(
     """Get detailed AI usage statistics for the current month."""
     from .models import LLMUsage
     from sqlalchemy import func
-    from datetime import datetime
+    from datetime import datetime, UTC, UTC
 
-    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    month_end = datetime.utcnow()
+    month_start = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_end = datetime.now(UTC)
 
     # Get usage by provider
     provider_stats = db.query(
@@ -1162,7 +1162,7 @@ async def refresh_all_competitors(
                 total_updates += 1
 
             # Update last_checked_at
-            competitor.last_checked_at = datetime.utcnow()
+            competitor.last_checked_at = datetime.now(UTC)
 
         except Exception as e:
             logger.error(f"Error refreshing competitor {competitor.name}: {e}")
@@ -1477,7 +1477,7 @@ async def create_tasks_from_transcript(
         due_date = None
         if item.get("due_date"):
             try:
-                from datetime import datetime
+                from datetime import datetime, UTC, UTC
                 due_date = datetime.strptime(item["due_date"], "%Y-%m-%d")
             except ValueError:
                 pass

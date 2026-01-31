@@ -11,7 +11,7 @@ Requires Azure AD app registration with appropriate permissions.
 import os
 import secrets
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional
 from urllib.parse import urlencode
 import json
@@ -117,8 +117,8 @@ async def refresh_teams_token(connection: TeamsConnection, db: Session) -> bool:
             connection.access_token = tokens["access_token"]
             if "refresh_token" in tokens:
                 connection.refresh_token = tokens["refresh_token"]
-            connection.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
-            connection.updated_at = datetime.utcnow()
+            connection.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
+            connection.updated_at = datetime.now(UTC)
             db.commit()
 
             logger.info(f"Teams token refreshed for connection {connection.id}")
@@ -132,7 +132,7 @@ async def refresh_teams_token(connection: TeamsConnection, db: Session) -> bool:
 async def get_valid_teams_token(connection: TeamsConnection, db: Session) -> Optional[str]:
     """Get a valid access token, refreshing if necessary."""
     if connection.token_expires_at:
-        if connection.token_expires_at < datetime.utcnow() + timedelta(minutes=5):
+        if connection.token_expires_at < datetime.now(UTC) + timedelta(minutes=5):
             if not await refresh_teams_token(connection, db):
                 return None
 
@@ -207,11 +207,11 @@ async def teams_login(
     _oauth_states[state] = {
         "user_id": current_user.id,
         "organization_id": current_user.organization_id,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
 
     # Clean old states (older than 10 minutes)
-    cutoff = datetime.utcnow() - timedelta(minutes=10)
+    cutoff = datetime.now(UTC) - timedelta(minutes=10)
     expired = [k for k, v in _oauth_states.items() if v["created_at"] < cutoff]
     for k in expired:
         del _oauth_states[k]
@@ -307,12 +307,12 @@ async def teams_callback(
             existing.access_token = access_token
             if refresh_token:
                 existing.refresh_token = refresh_token
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
             existing.microsoft_email = ms_user.get("mail") or ms_user.get("userPrincipalName")
             existing.microsoft_name = ms_user.get("displayName")
             existing.tenant_id = tenant_id
             existing.is_active = True
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
         else:
             # Create new connection
             connection = TeamsConnection(
@@ -324,7 +324,7 @@ async def teams_callback(
                 tenant_id=tenant_id,
                 access_token=access_token,
                 refresh_token=refresh_token,
-                token_expires_at=datetime.utcnow() + timedelta(seconds=expires_in),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
                 scopes=",".join(TEAMS_SCOPES),
                 is_active=True,
             )
@@ -380,7 +380,7 @@ async def teams_disconnect(
 
     if connection:
         connection.is_active = False
-        connection.updated_at = datetime.utcnow()
+        connection.updated_at = datetime.now(UTC)
         db.commit()
 
     return {"ok": True, "message": "Microsoft Teams disconnected"}
@@ -407,7 +407,7 @@ async def list_recordings(
         raise HTTPException(status_code=400, detail="Microsoft Teams not connected. Please connect your Teams account first.")
 
     # Get online meetings from the user (uses beta API for transcripts)
-    from_date = (datetime.utcnow() - timedelta(days=days_back)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    from_date = (datetime.now(UTC) - timedelta(days=days_back)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # List user's online meetings
     params = {
@@ -623,7 +623,7 @@ async def import_transcript(
         summary=summary_data.summary if summary_data else None,
         action_items=json.dumps(summary_data.action_items) if summary_data else None,
         key_points=json.dumps(summary_data.key_points) if summary_data else None,
-        summary_generated_at=datetime.utcnow() if summary_data else None,
+        summary_generated_at=datetime.now(UTC) if summary_data else None,
     )
 
     db.add(transcript)

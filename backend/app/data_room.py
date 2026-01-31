@@ -9,7 +9,7 @@ Features:
 """
 
 import secrets
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
@@ -871,7 +871,7 @@ def access_shared_content(
         raise HTTPException(status_code=410, detail="Link has been revoked")
 
     # Check expiry
-    if link.expires_at and link.expires_at < datetime.utcnow():
+    if link.expires_at and link.expires_at < datetime.now(UTC):
         raise HTTPException(status_code=410, detail="Link has expired")
 
     # Check access limit
@@ -978,7 +978,7 @@ def download_shared_document(
     if not link.is_active:
         raise HTTPException(status_code=410, detail="Link has been revoked")
 
-    if link.expires_at and link.expires_at < datetime.utcnow():
+    if link.expires_at and link.expires_at < datetime.now(UTC):
         raise HTTPException(status_code=410, detail="Link has expired")
 
     if link.access_limit and link.current_accesses >= link.access_limit:

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
+import BusinessSummaryCard from '../components/BusinessSummaryCard';
 import {
   getDashboardStats,
   getDailyBrief,
@@ -532,6 +533,11 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* Business Summary Card */}
+          {currentBusiness && (
+            <BusinessSummaryCard business={currentBusiness} />
+          )}
 
           {/* Quick Post to Social */}
           <div className="rounded-2xl bg-[#1a1d24] border border-white/10 p-6">

@@ -35,7 +35,36 @@ export function dispatchApiError(error: ApiError) {
   apiErrorEvent.dispatchEvent(new CustomEvent('api-error', { detail: error }));
 }
 
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+// Token refresh state to prevent multiple concurrent refresh attempts
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  // If already refreshing, wait for that to complete
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/token/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+async function fetchApi<T>(endpoint: string, options?: RequestInit, isRetry = false): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     credentials: 'include',
     headers: {
@@ -44,6 +73,18 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
     },
     ...options,
   });
+
+  // Handle 401 - attempt token refresh and retry once
+  if (res.status === 401 && !isRetry && !endpoint.includes('/auth/')) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      // Retry the original request
+      return fetchApi<T>(endpoint, options, true);
+    }
+    // Refresh failed - redirect to login
+    window.location.href = '/login';
+    throw new ApiError(401, 'Session expired');
+  }
 
   if (!res.ok) {
     let technicalMessage: string | undefined;
@@ -1811,7 +1852,7 @@ export const postToFacebook = (data: FacebookPostRequest) =>
 
 
 // ============ Axios-like API wrapper for legacy components ============
-// Used by Marketing.tsx, Branding.tsx
+// Used by Marketing.tsx, Branding.tsx, Integrations.tsx
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyData = any;
 
@@ -1820,67 +1861,55 @@ interface ApiConfig {
   headers?: Record<string, string>;
 }
 
+// Helper to handle 401 with refresh for the api object
+async function apiRequest<T>(
+  method: string,
+  url: string,
+  data?: AnyData,
+  config?: ApiConfig,
+  isRetry = false
+): Promise<{ data: T }> {
+  const isFormData = data instanceof FormData;
+  const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
+    method,
+    credentials: 'include',
+    headers: method === 'GET' || isFormData
+      ? { ...config?.headers }
+      : { 'Content-Type': 'application/json', ...config?.headers },
+    body: method === 'GET' ? undefined : (isFormData ? data : (data ? JSON.stringify(data) : undefined)),
+  });
+
+  // Handle 401 - attempt token refresh and retry once
+  if (res.status === 401 && !isRetry && !url.includes('/auth/')) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return apiRequest<T>(method, url, data, config, true);
+    }
+    window.location.href = '/login';
+    throw { response: { status: 401, data: { detail: 'Session expired' } } };
+  }
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw { response: { status: res.status, data: error } };
+  }
+  if (config?.responseType === 'blob') {
+    return { data: await res.blob() as T };
+  }
+  return { data: await res.json() as T };
+}
+
 const api = {
-  get: async <T = AnyData>(url: string, config?: ApiConfig): Promise<{ data: T }> => {
-    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...config?.headers },
-    });
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
-      throw { response: { status: res.status, data: error } };
-    }
-    if (config?.responseType === 'blob') {
-      return { data: await res.blob() as T };
-    }
-    return { data: await res.json() as T };
-  },
-  post: async <T = AnyData>(url: string, data?: AnyData, config?: ApiConfig): Promise<{ data: T }> => {
-    const isFormData = data instanceof FormData;
-    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: isFormData ? config?.headers : { 'Content-Type': 'application/json', ...config?.headers },
-      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
-    });
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
-      throw { response: { status: res.status, data: error } };
-    }
-    if (config?.responseType === 'blob') {
-      return { data: await res.blob() as T };
-    }
-    return { data: await res.json() as T };
-  },
-  put: async <T = AnyData>(url: string, data?: AnyData, config?: ApiConfig): Promise<{ data: T }> => {
-    const isFormData = data instanceof FormData;
-    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: isFormData ? config?.headers : { 'Content-Type': 'application/json', ...config?.headers },
-      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
-    });
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
-      throw { response: { status: res.status, data: error } };
-    }
-    if (config?.responseType === 'blob') {
-      return { data: await res.blob() as T };
-    }
-    return { data: await res.json() as T };
-  },
-  delete: async <T = AnyData>(url: string): Promise<{ data: T }> => {
-    const res = await fetch(`${API_BASE.replace('/api', '')}${url}`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
-      throw { response: { status: res.status, data: error } };
-    }
-    return { data: await res.json() as T };
-  },
+  get: <T = AnyData>(url: string, config?: ApiConfig): Promise<{ data: T }> =>
+    apiRequest<T>('GET', url, undefined, config),
+  post: <T = AnyData>(url: string, data?: AnyData, config?: ApiConfig): Promise<{ data: T }> =>
+    apiRequest<T>('POST', url, data, config),
+  put: <T = AnyData>(url: string, data?: AnyData, config?: ApiConfig): Promise<{ data: T }> =>
+    apiRequest<T>('PUT', url, data, config),
+  patch: <T = AnyData>(url: string, data?: AnyData, config?: ApiConfig): Promise<{ data: T }> =>
+    apiRequest<T>('PATCH', url, data, config),
+  delete: <T = AnyData>(url: string, config?: ApiConfig): Promise<{ data: T }> =>
+    apiRequest<T>('DELETE', url, undefined, config),
 };
 
 // =============== Audit Logs ===============

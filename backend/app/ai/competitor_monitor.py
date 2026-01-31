@@ -8,7 +8,7 @@ import os
 import logging
 import asyncio
 from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 
 import aiohttp
 import feedparser
@@ -155,7 +155,7 @@ class CompetitorMonitor:
         Returns:
             Dict with news and rss_entries
         """
-        from_date = datetime.utcnow() - timedelta(days=days_back)
+        from_date = datetime.now(UTC) - timedelta(days=days_back)
 
         # Build search query
         query = competitor_name

@@ -31,7 +31,7 @@ const deadlineTypes = [
 
 export default function Deadlines() {
   const { canEdit } = useAuth();
-  const { businesses } = useBusiness();
+  const { businesses, currentBusiness } = useBusiness();
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('all');
@@ -93,7 +93,7 @@ export default function Deadlines() {
     }
     setShowModal(false);
     setEditingDeadline(null);
-    setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12, business_id: null });
+    setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12, business_id: currentBusiness?.id || null });
     loadDeadlines();
   };
 
@@ -146,7 +146,7 @@ export default function Deadlines() {
         </div>
         {canEdit && (
           <button
-            onClick={() => { setEditingDeadline(null); setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12, business_id: null }); setShowModal(true); }}
+            onClick={() => { setEditingDeadline(null); setFormData({ title: '', description: '', deadline_type: 'other', due_date: '', reminder_days: 7, is_recurring: false, recurrence_months: 12, business_id: currentBusiness?.id || null }); setShowModal(true); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
           >
             <Plus className="w-4 h-4" />

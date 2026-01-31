@@ -16,7 +16,7 @@ import os
 import logging
 import shutil
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Header
@@ -99,7 +99,7 @@ def create_database_backup() -> tuple[str, int]:
         raise HTTPException(status_code=500, detail="Database file not found")
 
     # Create timestamped backup filename
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     backup_filename = f"db_backup_{timestamp}.db"
 
     # Create temp copy (SQLite safe backup)
@@ -151,7 +151,7 @@ def list_s3_backups() -> List[BackupInfo]:
         )
 
         backups = []
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         for obj in response.get('Contents', []):
             key = obj['Key']
@@ -346,7 +346,7 @@ async def restore_backup(
             raise HTTPException(status_code=400, detail="Invalid backup file")
 
         # Backup current database first
-        pre_restore_backup = f"{DATABASE_PATH}.pre_restore_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        pre_restore_backup = f"{DATABASE_PATH}.pre_restore_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
         shutil.copy2(DATABASE_PATH, pre_restore_backup)
 
         # Replace database

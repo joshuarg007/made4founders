@@ -6,7 +6,7 @@ Free tier: 1,000 connected accounts (vs Plaid's $0.10/call)
 
 import os
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, UTC, timedelta, date
 from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
@@ -647,7 +647,7 @@ async def update_transaction(
     if is_excluded is not None:
         txn.is_excluded = is_excluded
 
-    txn.updated_at = datetime.utcnow()
+    txn.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "success"}
@@ -735,7 +735,7 @@ async def sync_accounts_for_enrollment(enrollment_id: int, db: Session):
                 # Update balances
                 existing.balance_current = ledger_balance
                 existing.balance_available = available_balance
-                existing.updated_at = datetime.utcnow()
+                existing.updated_at = datetime.now(UTC)
             else:
                 # Create new account
                 new_account = TellerAccount(
@@ -754,7 +754,7 @@ async def sync_accounts_for_enrollment(enrollment_id: int, db: Session):
                 )
                 db.add(new_account)
 
-        enrollment.last_sync_at = datetime.utcnow()
+        enrollment.last_sync_at = datetime.now(UTC)
         enrollment.sync_status = "synced"
         enrollment.sync_error = None
         db.commit()
@@ -852,7 +852,7 @@ def sync_transactions_for_enrollment(enrollment_id: int):
                 continue
 
         # Update status
-        enrollment.last_sync_at = datetime.utcnow()
+        enrollment.last_sync_at = datetime.now(UTC)
         enrollment.sync_status = "synced"
         enrollment.sync_error = None
         db.commit()

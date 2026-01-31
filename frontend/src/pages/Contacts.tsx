@@ -604,7 +604,7 @@ const contactTypes = [
 ];
 
 export default function Contacts() {
-  const { businesses } = useBusiness();
+  const { businesses, currentBusiness } = useBusiness();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('all');
@@ -933,7 +933,7 @@ export default function Contacts() {
       }
       setShowModal(false);
       setEditingContact(null);
-      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '', business_id: null });
+      setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '', business_id: currentBusiness?.id || null });
       setAdditionalEmails([]);
       setAdditionalPhones([]);
       setValidationErrors({});
@@ -1017,7 +1017,7 @@ export default function Contacts() {
           <p className="text-gray-400 mt-1">Your business rolodex</p>
         </div>
         <button
-          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '', business_id: null }); setAdditionalEmails([]); setAdditionalPhones([]); setValidationErrors({}); setShowValidationSummary(false); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
+          onClick={() => { setEditingContact(null); setFormData({ name: '', title: '', company: '', contact_type: 'other', email: '', phone: '', address: '', city: '', state: '', country: '', timezone: '', website: '', linkedin_url: '', twitter_handle: '', birthday_year: '', birthday_month: '', birthday_day: '', tags: '', responsibilities: '', notes: '', business_id: currentBusiness?.id || null }); setAdditionalEmails([]); setAdditionalPhones([]); setValidationErrors({}); setShowValidationSummary(false); setShowTitleDropdown(false); setTitleSearch(''); setShowCustomTitle(false); setShowResponsibilitiesDropdown(false); setResponsibilitySearch(''); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition"
         >
           <Plus className="w-4 h-4" />

@@ -7,7 +7,7 @@ Includes @mention detection and notification creation.
 
 import re
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -316,7 +316,7 @@ async def update_comment(
     # Update content
     comment.content = data.content
     comment.is_edited = True
-    comment.updated_at = datetime.utcnow()
+    comment.updated_at = datetime.now(UTC)
 
     # Re-extract mentions (in case they changed)
     mentioned_user_ids = extract_mentions(data.content, org_id, db)

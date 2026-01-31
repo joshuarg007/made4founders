@@ -17,7 +17,7 @@ Permissions:
 import secrets
 import os
 from typing import Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -53,7 +53,7 @@ def get_guest_by_token(token: str, db: Session) -> Optional[GuestUser]:
     ).first()
 
     if guest and guest.token_expires_at:
-        if guest.token_expires_at < datetime.utcnow():
+        if guest.token_expires_at < datetime.now(UTC):
             return None  # Token expired
 
     return guest
@@ -225,7 +225,7 @@ async def invite_guest_user(
         guest_type=data.guest_type,
         shareholder_id=data.shareholder_id,
         access_token=generate_guest_token(),
-        token_expires_at=datetime.utcnow() + timedelta(days=GUEST_TOKEN_EXPIRY_DAYS),
+        token_expires_at=datetime.now(UTC) + timedelta(days=GUEST_TOKEN_EXPIRY_DAYS),
         permissions=data.permissions or {"data_room": ["view"]},
         invited_by_id=current_user.id
     )
@@ -311,7 +311,7 @@ async def update_guest_user(
     if data.is_active is not None:
         guest.is_active = data.is_active
 
-    guest.updated_at = datetime.utcnow()
+    guest.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(guest)
 
@@ -341,7 +341,7 @@ async def revoke_guest_access(
         raise HTTPException(status_code=404, detail="Guest not found")
 
     guest.is_active = False
-    guest.updated_at = datetime.utcnow()
+    guest.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"ok": True}
@@ -371,8 +371,8 @@ async def resend_guest_invite(
 
     # Generate new token
     guest.access_token = generate_guest_token()
-    guest.token_expires_at = datetime.utcnow() + timedelta(days=GUEST_TOKEN_EXPIRY_DAYS)
-    guest.updated_at = datetime.utcnow()
+    guest.token_expires_at = datetime.now(UTC) + timedelta(days=GUEST_TOKEN_EXPIRY_DAYS)
+    guest.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(guest)
 
@@ -447,7 +447,7 @@ async def guest_login(
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     # Update last accessed
-    guest.last_accessed_at = datetime.utcnow()
+    guest.last_accessed_at = datetime.now(UTC)
     db.commit()
     db.refresh(guest)
 

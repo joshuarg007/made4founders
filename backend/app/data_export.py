@@ -17,7 +17,7 @@ import json
 import csv
 from io import StringIO, BytesIO
 import zipfile
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from typing import List, Dict, Any
 
 from fastapi import APIRouter, Depends, Response
@@ -75,7 +75,7 @@ async def export_all_data(
 
     # Gather all user data
     export_data = {
-        "export_date": datetime.utcnow().isoformat(),
+        "export_date": datetime.now(UTC).isoformat(),
         "user": {
             "email": current_user.email,
             "name": current_user.name,
@@ -160,7 +160,7 @@ async def export_all_data(
 
     # Return as JSON file download
     json_content = json.dumps(export_data, indent=2, default=str)
-    filename = f"made4founders_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    filename = f"made4founders_export_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
 
     return Response(
         content=json_content,
@@ -187,7 +187,7 @@ async def export_contacts_csv(
     data = [model_to_dict(c) for c in contacts]
     csv_content = create_csv(data, columns)
 
-    filename = f"contacts_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+    filename = f"contacts_{datetime.now(UTC).strftime('%Y%m%d')}.csv"
 
     return Response(
         content=csv_content,
@@ -213,7 +213,7 @@ async def export_deadlines_csv(
     data = [model_to_dict(d) for d in deadlines]
     csv_content = create_csv(data, columns)
 
-    filename = f"deadlines_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+    filename = f"deadlines_{datetime.now(UTC).strftime('%Y%m%d')}.csv"
 
     return Response(
         content=csv_content,
@@ -259,7 +259,7 @@ async def export_tasks_csv(
 
     csv_content = create_csv(tasks_data, columns)
 
-    filename = f"tasks_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+    filename = f"tasks_{datetime.now(UTC).strftime('%Y%m%d')}.csv"
 
     return Response(
         content=csv_content,
@@ -285,7 +285,7 @@ async def export_metrics_csv(
     data = [model_to_dict(m) for m in metrics]
     csv_content = create_csv(data, columns)
 
-    filename = f"metrics_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+    filename = f"metrics_{datetime.now(UTC).strftime('%Y%m%d')}.csv"
 
     return Response(
         content=csv_content,

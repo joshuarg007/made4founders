@@ -10,7 +10,7 @@ This module handles:
 import os
 import secrets
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -44,7 +44,7 @@ def handle_oauth_mfa_check(user: User, response: Response, db: Session) -> Respo
                 "sub": user.email,
                 "typ": "mfa",
                 "src": "oauth",  # Mark as OAuth-originated
-                "exp": datetime.utcnow() + timedelta(minutes=5),
+                "exp": datetime.now(UTC) + timedelta(minutes=5),
             },
             security.SECRET_KEY,
             algorithm=security.ALGORITHM,
@@ -59,7 +59,7 @@ def handle_oauth_mfa_check(user: User, response: Response, db: Session) -> Respo
             "sub": user.email,
             "typ": "mfa_setup",
             "src": "oauth",
-            "exp": datetime.utcnow() + timedelta(minutes=30),
+            "exp": datetime.now(UTC) + timedelta(minutes=30),
         },
         security.SECRET_KEY,
         algorithm=security.ALGORITHM,
@@ -89,7 +89,7 @@ def get_oauth_mfa_redirect_url(user: User, response: Response) -> str:
                 "sub": user.email,
                 "typ": "mfa",
                 "src": "oauth",
-                "exp": datetime.utcnow() + timedelta(minutes=5),
+                "exp": datetime.now(UTC) + timedelta(minutes=5),
             },
             security.SECRET_KEY,
             algorithm=security.ALGORITHM,
@@ -102,7 +102,7 @@ def get_oauth_mfa_redirect_url(user: User, response: Response) -> str:
             "sub": user.email,
             "typ": "mfa_setup",
             "src": "oauth",
-            "exp": datetime.utcnow() + timedelta(minutes=30),
+            "exp": datetime.now(UTC) + timedelta(minutes=30),
         },
         security.SECRET_KEY,
         algorithm=security.ALGORITHM,
@@ -159,7 +159,7 @@ OAUTH_STATE_EXPIRY_MINUTES = 10
 
 def cleanup_expired_oauth_states():
     """Remove expired OAuth states to prevent memory exhaustion."""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expired_keys = [
         key for key, data in oauth_states.items()
         if now - data.get("created_at", now) > timedelta(minutes=OAUTH_STATE_EXPIRY_MINUTES)
@@ -186,8 +186,8 @@ def validate_oauth_state(state: str, provider: str) -> bool:
         return False
 
     # Check expiration
-    created_at = state_data.get("created_at", datetime.utcnow())
-    if datetime.utcnow() - created_at > timedelta(minutes=OAUTH_STATE_EXPIRY_MINUTES):
+    created_at = state_data.get("created_at", datetime.now(UTC))
+    if datetime.now(UTC) - created_at > timedelta(minutes=OAUTH_STATE_EXPIRY_MINUTES):
         del oauth_states[state]
         return False
 
@@ -248,7 +248,7 @@ async def google_login():
         raise HTTPException(status_code=500, detail="Google OAuth not configured")
 
     state = generate_state()
-    oauth_states[state] = {"provider": "google", "created_at": datetime.utcnow()}
+    oauth_states[state] = {"provider": "google", "created_at": datetime.now(UTC)}
 
     params = {
         "client_id": GOOGLE_CLIENT_ID,
@@ -373,7 +373,7 @@ async def google_callback(
             user.avatar_url = avatar
         if not user.email_verified:
             user.email_verified = True
-            user.email_verified_at = datetime.utcnow()
+            user.email_verified_at = datetime.now(UTC)
         db.commit()
 
     # MFA is mandatory - redirect to verify or setup
@@ -389,7 +389,7 @@ async def github_login():
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
 
     state = generate_state()
-    oauth_states[state] = {"provider": "github", "created_at": datetime.utcnow()}
+    oauth_states[state] = {"provider": "github", "created_at": datetime.now(UTC)}
 
     params = {
         "client_id": GITHUB_CLIENT_ID,
@@ -536,7 +536,7 @@ async def github_callback(
             user.avatar_url = avatar
         if not user.email_verified:
             user.email_verified = True
-            user.email_verified_at = datetime.utcnow()
+            user.email_verified_at = datetime.now(UTC)
         db.commit()
 
     # MFA is mandatory - redirect to verify or setup
@@ -552,7 +552,7 @@ async def linkedin_login():
         raise HTTPException(status_code=500, detail="LinkedIn OAuth not configured")
 
     state = generate_state()
-    oauth_states[state] = {"provider": "linkedin", "created_at": datetime.utcnow()}
+    oauth_states[state] = {"provider": "linkedin", "created_at": datetime.now(UTC)}
 
     # LinkedIn OAuth 2.0 with OpenID Connect
     params = {
@@ -685,7 +685,7 @@ async def linkedin_callback(
             user.avatar_url = avatar
         if not user.email_verified:
             user.email_verified = True
-            user.email_verified_at = datetime.utcnow()
+            user.email_verified_at = datetime.now(UTC)
         db.commit()
 
     # Store LinkedIn tokens for social posting (if user has organization)
@@ -702,10 +702,10 @@ async def linkedin_callback(
         if existing_conn:
             existing_conn.access_token = access_token
             existing_conn.refresh_token = tokens.get("refresh_token")
-            existing_conn.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
+            existing_conn.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
             existing_conn.provider_user_id = linkedin_id
             existing_conn.is_active = True
-            existing_conn.updated_at = datetime.utcnow()
+            existing_conn.updated_at = datetime.now(UTC)
         else:
             oauth_conn = OAuthConnection(
                 organization_id=user.organization_id,
@@ -714,7 +714,7 @@ async def linkedin_callback(
                 provider_user_id=linkedin_id,
                 access_token=access_token,
                 refresh_token=tokens.get("refresh_token"),
-                token_expires_at=datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600)),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600)),
                 scopes="openid,profile,email,w_member_social",
                 is_active=True,
             )
@@ -748,7 +748,7 @@ async def twitter_login():
     code_verifier, code_challenge = generate_pkce_pair()
     oauth_states[state] = {
         "provider": "twitter",
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
         "code_verifier": code_verifier,
     }
 
@@ -891,7 +891,7 @@ async def twitter_callback(
 
         expires_at = None
         if tokens.get("expires_in"):
-            expires_at = datetime.utcnow() + timedelta(seconds=tokens["expires_in"])
+            expires_at = datetime.now(UTC) + timedelta(seconds=tokens["expires_in"])
 
         if existing_conn:
             existing_conn.access_token = access_token
@@ -900,7 +900,7 @@ async def twitter_callback(
             existing_conn.provider_user_id = twitter_id
             existing_conn.provider_username = username
             existing_conn.is_active = True
-            existing_conn.updated_at = datetime.utcnow()
+            existing_conn.updated_at = datetime.now(UTC)
         else:
             oauth_conn = OAuthConnection(
                 organization_id=user.organization_id,
@@ -930,7 +930,7 @@ async def facebook_login():
         raise HTTPException(status_code=500, detail="Facebook OAuth not configured")
 
     state = generate_state()
-    oauth_states[state] = {"provider": "facebook", "created_at": datetime.utcnow()}
+    oauth_states[state] = {"provider": "facebook", "created_at": datetime.now(UTC)}
 
     params = {
         "client_id": FACEBOOK_APP_ID,
@@ -1061,7 +1061,7 @@ async def facebook_callback(
             user.avatar_url = avatar
         if email and not user.email_verified:
             user.email_verified = True
-            user.email_verified_at = datetime.utcnow()
+            user.email_verified_at = datetime.now(UTC)
         db.commit()
 
     # Store Facebook tokens for social posting
@@ -1076,7 +1076,7 @@ async def facebook_callback(
 
         expires_at = None
         if tokens.get("expires_in"):
-            expires_at = datetime.utcnow() + timedelta(seconds=tokens["expires_in"])
+            expires_at = datetime.now(UTC) + timedelta(seconds=tokens["expires_in"])
 
         if existing_conn:
             existing_conn.access_token = access_token
@@ -1084,7 +1084,7 @@ async def facebook_callback(
             existing_conn.provider_user_id = facebook_id
             existing_conn.provider_username = name
             existing_conn.is_active = True
-            existing_conn.updated_at = datetime.utcnow()
+            existing_conn.updated_at = datetime.now(UTC)
         else:
             oauth_conn = OAuthConnection(
                 organization_id=user.organization_id,
@@ -1139,7 +1139,7 @@ def store_pending_oauth(
         "access_token": access_token,
         "refresh_token": refresh_token,
         "expires_in": expires_in,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
     return token
 
@@ -1153,7 +1153,7 @@ async def get_pending_oauth(token: str):
     data = pending_oauth[token]
 
     # Check if expired (10 minutes)
-    if (datetime.utcnow() - data["created_at"]).total_seconds() > 600:
+    if (datetime.now(UTC) - data["created_at"]).total_seconds() > 600:
         del pending_oauth[token]
         raise HTTPException(status_code=404, detail="Pending OAuth expired")
 
@@ -1179,7 +1179,7 @@ async def link_oauth_to_account(
     oauth_data = pending_oauth[request.token]
 
     # Check if expired
-    if (datetime.utcnow() - oauth_data["created_at"]).total_seconds() > 600:
+    if (datetime.now(UTC) - oauth_data["created_at"]).total_seconds() > 600:
         del pending_oauth[request.token]
         raise HTTPException(status_code=404, detail="Pending OAuth expired")
 
@@ -1221,7 +1221,7 @@ async def link_oauth_to_account(
 
         expires_at = None
         if oauth_data.get("expires_in"):
-            expires_at = datetime.utcnow() + timedelta(seconds=oauth_data["expires_in"])
+            expires_at = datetime.now(UTC) + timedelta(seconds=oauth_data["expires_in"])
 
         if existing_conn:
             existing_conn.access_token = oauth_data["access_token"]
@@ -1229,7 +1229,7 @@ async def link_oauth_to_account(
             existing_conn.token_expires_at = expires_at
             existing_conn.provider_user_id = provider_id
             existing_conn.is_active = True
-            existing_conn.updated_at = datetime.utcnow()
+            existing_conn.updated_at = datetime.now(UTC)
         else:
             oauth_conn = OAuthConnection(
                 organization_id=user.organization_id,
@@ -1266,7 +1266,7 @@ async def create_account_from_oauth(
     oauth_data = pending_oauth[request.token]
 
     # Check if expired
-    if (datetime.utcnow() - oauth_data["created_at"]).total_seconds() > 600:
+    if (datetime.now(UTC) - oauth_data["created_at"]).total_seconds() > 600:
         del pending_oauth[request.token]
         raise HTTPException(status_code=404, detail="Pending OAuth expired")
 
@@ -1295,7 +1295,7 @@ async def create_account_from_oauth(
         slug=slug,
         subscription_tier=SubscriptionTier.FREE.value,
         subscription_status=SubscriptionStatus.TRIALING.value,
-        trial_ends_at=datetime.utcnow() + timedelta(days=14),
+        trial_ends_at=datetime.now(UTC) + timedelta(days=14),
     )
     db.add(org)
     db.flush()
@@ -1308,7 +1308,7 @@ async def create_account_from_oauth(
         oauth_provider_id=provider_id,
         avatar_url=avatar,
         email_verified="@" in email and ".placeholder" not in email,
-        email_verified_at=datetime.utcnow() if ("@" in email and ".placeholder" not in email) else None,
+        email_verified_at=datetime.now(UTC) if ("@" in email and ".placeholder" not in email) else None,
         organization_id=org.id,
         is_org_owner=True,
         role="admin",
@@ -1322,7 +1322,7 @@ async def create_account_from_oauth(
 
     expires_at = None
     if oauth_data.get("expires_in"):
-        expires_at = datetime.utcnow() + timedelta(seconds=oauth_data["expires_in"])
+        expires_at = datetime.now(UTC) + timedelta(seconds=oauth_data["expires_in"])
 
     oauth_conn = OAuthConnection(
         organization_id=org.id,
@@ -1347,7 +1347,7 @@ async def create_account_from_oauth(
             "sub": user.email,
             "typ": "mfa_setup",
             "src": "oauth",
-            "exp": datetime.utcnow() + timedelta(minutes=30),
+            "exp": datetime.now(UTC) + timedelta(minutes=30),
         },
         security.SECRET_KEY,
         algorithm=security.ALGORITHM,
@@ -1365,7 +1365,7 @@ async def create_account_from_oauth(
 
 def cleanup_old_states():
     """Remove expired state tokens and pending OAuth data (call periodically)."""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # Clean up oauth_states
     expired_states = [

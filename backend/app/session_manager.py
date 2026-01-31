@@ -8,7 +8,7 @@ Features:
 - Automatic cleanup of expired sessions
 """
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional, List, Dict
 
 from sqlalchemy.orm import Session
@@ -25,7 +25,7 @@ class TokenBlacklistCache:
     def __init__(self):
         self._cache: Dict[str, datetime] = {}  # token_id -> expires_at
         self._lock = threading.RLock()
-        self._last_cleanup = datetime.utcnow()
+        self._last_cleanup = datetime.now(UTC)
         self._cleanup_interval = timedelta(minutes=5)
 
     def add(self, token_id: str, expires_at: datetime) -> None:
@@ -41,7 +41,7 @@ class TokenBlacklistCache:
 
     def _cleanup_if_needed(self) -> None:
         """Remove expired entries from cache."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         if now - self._last_cleanup < self._cleanup_interval:
             return
 
@@ -57,7 +57,7 @@ class TokenBlacklistCache:
         Load active blacklisted tokens from database.
         Returns count of tokens loaded.
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         entries = db.query(TokenBlacklist).filter(
             TokenBlacklist.expires_at > now
         ).all()
@@ -130,7 +130,7 @@ def update_session_activity(db: Session, token_id: str) -> bool:
     ).first()
 
     if session:
-        session.last_used_at = datetime.utcnow()
+        session.last_used_at = datetime.now(UTC)
         db.commit()
         return True
     return False
@@ -153,7 +153,7 @@ def revoke_session(
         True if successful
     """
     session.is_revoked = True
-    session.revoked_at = datetime.utcnow()
+    session.revoked_at = datetime.now(UTC)
     session.revoked_reason = reason
 
     # Add to token blacklist in database
@@ -222,7 +222,7 @@ def get_user_sessions(db: Session, user_id: int) -> List[UserSession]:
     return db.query(UserSession).filter(
         UserSession.user_id == user_id,
         UserSession.is_revoked == False,
-        UserSession.expires_at > datetime.utcnow()
+        UserSession.expires_at > datetime.now(UTC)
     ).order_by(UserSession.last_used_at.desc()).all()
 
 
@@ -264,7 +264,7 @@ def is_token_revoked(db: Session, token_id: str) -> bool:
     # Slow path: check database
     entry = db.query(TokenBlacklist).filter(
         TokenBlacklist.token_id == token_id,
-        TokenBlacklist.expires_at > datetime.utcnow()
+        TokenBlacklist.expires_at > datetime.now(UTC)
     ).first()
 
     if entry:
@@ -286,7 +286,7 @@ def cleanup_expired_sessions(db: Session) -> dict:
     Returns:
         Dict with counts of removed entries
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # Delete expired sessions
     session_count = db.query(UserSession).filter(

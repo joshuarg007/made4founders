@@ -8,7 +8,7 @@ and templated responses. Falls back to AI only for complex/novel queries.
 import re
 import logging
 from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, and_
@@ -264,7 +264,7 @@ def get_metric_with_trend(db: Session, org_id: int, metric_type: str, days_back:
         return {"current": None, "previous": None, "trend": "stable", "change": None}
 
     # Get value from previous period
-    cutoff = datetime.utcnow() - timedelta(days=days_back)
+    cutoff = datetime.now(UTC) - timedelta(days=days_back)
     previous = db.query(Metric).filter(
         Metric.organization_id == org_id,
         Metric.metric_type == metric_type,
@@ -297,7 +297,7 @@ def get_period_transactions(db: Session, org_id: int, days: int = 30) -> Dict[st
     """Get transaction totals for a period."""
     from ..models import TellerTransaction
 
-    start_date = (datetime.utcnow() - timedelta(days=days)).date()
+    start_date = (datetime.now(UTC) - timedelta(days=days)).date()
 
     transactions = db.query(TellerTransaction).filter(
         TellerTransaction.organization_id == org_id,
@@ -702,7 +702,7 @@ def handle_expenses_breakdown(db: Session, org_id: int, message: str) -> Dict[st
     """Handle expense breakdown questions."""
     from ..models import TellerTransaction
 
-    thirty_days_ago = (datetime.utcnow() - timedelta(days=30)).date()
+    thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).date()
 
     transactions = db.query(TellerTransaction).filter(
         TellerTransaction.organization_id == org_id,
@@ -1224,7 +1224,7 @@ def handle_deadlines(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle deadline questions."""
     from ..models import Deadline
 
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     week_later = today + timedelta(days=7)
     month_later = today + timedelta(days=30)
 
@@ -1295,7 +1295,7 @@ def handle_overdue(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle overdue items questions."""
     from ..models import Deadline, Task
 
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
 
     overdue_deadlines = db.query(Deadline).filter(
         Deadline.organization_id == org_id,
@@ -1305,7 +1305,7 @@ def handle_overdue(db: Session, org_id: int, message: str) -> Dict[str, Any]:
 
     overdue_tasks = db.query(Task).filter(
         Task.organization_id == org_id,
-        Task.due_date < datetime.utcnow(),
+        Task.due_date < datetime.now(UTC),
         Task.status != 'done'
     ).all()
 
@@ -1403,7 +1403,7 @@ def handle_budget(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     """Handle budget questions."""
     from ..models import BudgetPeriod, BudgetLineItem
 
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     current_period = db.query(BudgetPeriod).filter(
         BudgetPeriod.organization_id == org_id,
         BudgetPeriod.start_date <= today,
@@ -1559,7 +1559,7 @@ def handle_pto(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     approved_upcoming = db.query(PTORequest).filter(
         PTORequest.organization_id == org_id,
         PTORequest.status == "approved",
-        PTORequest.start_date >= datetime.utcnow().date()
+        PTORequest.start_date >= datetime.now(UTC).date()
     ).all()
 
     parts = ["**PTO Status** 🏖️\n"]
@@ -1606,7 +1606,7 @@ def handle_tasks(db: Session, org_id: int, message: str) -> Dict[str, Any]:
     ).all()
 
     high_priority = [t for t in tasks if t.priority == 'high']
-    overdue = [t for t in tasks if t.due_date and t.due_date < datetime.utcnow()]
+    overdue = [t for t in tasks if t.due_date and t.due_date < datetime.now(UTC)]
     in_progress = [t for t in tasks if t.status == 'in_progress']
     not_started = [t for t in tasks if t.status == 'todo']
 
@@ -1656,7 +1656,7 @@ def handle_work_overview(db: Session, org_id: int, message: str) -> Dict[str, An
     ).all()
 
     high_priority = [t for t in tasks if t.priority == 'high']
-    overdue_tasks = [t for t in tasks if t.due_date and t.due_date < datetime.utcnow()]
+    overdue_tasks = [t for t in tasks if t.due_date and t.due_date < datetime.now(UTC)]
     in_progress = [t for t in tasks if t.status == 'in_progress']
     not_started = [t for t in tasks if t.status == 'todo']
 
@@ -1719,7 +1719,7 @@ def handle_overview(db: Session, org_id: int, message: str) -> Dict[str, Any]:
         StripeSubscriptionSync.status == "active"
     ).count()
 
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     overdue = db.query(Deadline).filter(
         Deadline.organization_id == org_id,
         Deadline.due_date < today,

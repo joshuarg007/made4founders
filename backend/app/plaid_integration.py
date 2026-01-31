@@ -5,7 +5,7 @@ Real-time bank balances, transactions, and runway calculation.
 
 import os
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, UTC, timedelta, date
 from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
@@ -663,7 +663,7 @@ async def update_transaction(
     if is_excluded is not None:
         txn.is_excluded = is_excluded
 
-    txn.updated_at = datetime.utcnow()
+    txn.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "success"}
@@ -701,7 +701,7 @@ async def sync_accounts_for_item(item_id: int, db: Session):
                 existing.balance_available = acc_data.balances.available
                 existing.balance_current = acc_data.balances.current
                 existing.balance_limit = acc_data.balances.limit
-                existing.updated_at = datetime.utcnow()
+                existing.updated_at = datetime.now(UTC)
             else:
                 # Create new account
                 new_account = PlaidAccount(
@@ -720,7 +720,7 @@ async def sync_accounts_for_item(item_id: int, db: Session):
                 )
                 db.add(new_account)
 
-        item.last_sync_at = datetime.utcnow()
+        item.last_sync_at = datetime.now(UTC)
         item.sync_status = "synced"
         item.sync_error = None
         db.commit()
@@ -807,7 +807,7 @@ def sync_transactions_for_item(item_id: int):
                     existing.name = txn_data.name
                     existing.merchant_name = txn_data.merchant_name
                     existing.pending = txn_data.pending
-                    existing.updated_at = datetime.utcnow()
+                    existing.updated_at = datetime.now(UTC)
                     modified_count += 1
 
             # Process removed transactions
@@ -825,7 +825,7 @@ def sync_transactions_for_item(item_id: int):
 
         # Update cursor and status
         item.cursor = cursor
-        item.last_sync_at = datetime.utcnow()
+        item.last_sync_at = datetime.now(UTC)
         item.sync_status = "synced"
         item.sync_error = None
         db.commit()

@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 import json
 
 from .database import get_db
@@ -758,7 +758,7 @@ def approve_pto_request(
 
     pto_request.status = "approved"
     pto_request.reviewed_by_id = current_user.id
-    pto_request.reviewed_at = datetime.utcnow()
+    pto_request.reviewed_at = datetime.now(UTC)
     pto_request.review_notes = review_notes
 
     # Move from pending to used when request date arrives
@@ -801,7 +801,7 @@ def deny_pto_request(
 
     pto_request.status = "denied"
     pto_request.reviewed_by_id = current_user.id
-    pto_request.reviewed_at = datetime.utcnow()
+    pto_request.reviewed_at = datetime.now(UTC)
     pto_request.review_notes = review_notes
 
     db.commit()
@@ -1218,7 +1218,7 @@ def complete_onboarding_task(
         raise HTTPException(status_code=400, detail="Task already completed")
 
     task.is_completed = True
-    task.completed_at = datetime.utcnow()
+    task.completed_at = datetime.now(UTC)
     task.completed_by_id = current_user.id
     task.completion_notes = notes
 
@@ -1228,7 +1228,7 @@ def complete_onboarding_task(
 
     if checklist.completed_tasks >= checklist.total_tasks:
         checklist.is_completed = True
-        checklist.completed_at = datetime.utcnow()
+        checklist.completed_at = datetime.now(UTC)
 
     db.commit()
 

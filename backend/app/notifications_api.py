@@ -6,7 +6,7 @@ Notifications are created by other parts of the system (comments, assignments, e
 """
 
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -160,7 +160,7 @@ async def mark_notifications_read(
     """
     user_id = current_user.id
     org_id = current_user.organization_id
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     query = db.query(Notification).filter(
         Notification.user_id == user_id,

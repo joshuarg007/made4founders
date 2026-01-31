@@ -12,7 +12,7 @@ Transcripts are auto-generated and stored alongside recordings.
 import os
 import secrets
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional
 from urllib.parse import urlencode
 import json
@@ -112,8 +112,8 @@ async def refresh_google_token(connection: GoogleMeetConnection, db: Session) ->
             # Google doesn't always return a new refresh token
             if "refresh_token" in tokens:
                 connection.refresh_token = tokens["refresh_token"]
-            connection.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
-            connection.updated_at = datetime.utcnow()
+            connection.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
+            connection.updated_at = datetime.now(UTC)
             db.commit()
 
             logger.info(f"Google token refreshed for connection {connection.id}")
@@ -127,7 +127,7 @@ async def refresh_google_token(connection: GoogleMeetConnection, db: Session) ->
 async def get_valid_google_token(connection: GoogleMeetConnection, db: Session) -> Optional[str]:
     """Get a valid access token, refreshing if necessary."""
     if connection.token_expires_at:
-        if connection.token_expires_at < datetime.utcnow() + timedelta(minutes=5):
+        if connection.token_expires_at < datetime.now(UTC) + timedelta(minutes=5):
             if not await refresh_google_token(connection, db):
                 return None
 
@@ -198,11 +198,11 @@ async def google_meet_login(
     _oauth_states[state] = {
         "user_id": current_user.id,
         "organization_id": current_user.organization_id,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
 
     # Clean old states (older than 10 minutes)
-    cutoff = datetime.utcnow() - timedelta(minutes=10)
+    cutoff = datetime.now(UTC) - timedelta(minutes=10)
     expired = [k for k, v in _oauth_states.items() if v["created_at"] < cutoff]
     for k in expired:
         del _oauth_states[k]
@@ -284,11 +284,11 @@ async def google_meet_callback(
             existing.access_token = access_token
             if refresh_token:  # Only update if we got a new one
                 existing.refresh_token = refresh_token
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
             existing.google_email = google_user.get("email")
             existing.google_name = google_user.get("name")
             existing.is_active = True
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
         else:
             # Create new connection
             connection = GoogleMeetConnection(
@@ -299,7 +299,7 @@ async def google_meet_callback(
                 google_name=google_user.get("name"),
                 access_token=access_token,
                 refresh_token=refresh_token,
-                token_expires_at=datetime.utcnow() + timedelta(seconds=expires_in),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
                 scopes=",".join(GOOGLE_MEET_SCOPES),
                 is_active=True,
             )
@@ -355,7 +355,7 @@ async def google_meet_disconnect(
 
     if connection:
         connection.is_active = False
-        connection.updated_at = datetime.utcnow()
+        connection.updated_at = datetime.now(UTC)
         db.commit()
 
     return {"ok": True, "message": "Google Meet disconnected"}
@@ -383,7 +383,7 @@ async def list_recordings(
 
     # Search for Meet recordings in Google Drive
     # Meet recordings are stored with specific naming patterns
-    from_date = (datetime.utcnow() - timedelta(days=days_back)).strftime("%Y-%m-%dT%H:%M:%S")
+    from_date = (datetime.now(UTC) - timedelta(days=days_back)).strftime("%Y-%m-%dT%H:%M:%S")
 
     # Search query for Meet recordings (video files in Meet Recordings folder)
     query = f"(name contains 'Meet Recording' or fullText contains 'meet.google.com') and mimeType contains 'video' and modifiedTime > '{from_date}'"
@@ -579,7 +579,7 @@ async def import_transcript(
         summary=summary_data.summary if summary_data else None,
         action_items=json.dumps(summary_data.action_items) if summary_data else None,
         key_points=json.dumps(summary_data.key_points) if summary_data else None,
-        summary_generated_at=datetime.utcnow() if summary_data else None,
+        summary_generated_at=datetime.now(UTC) if summary_data else None,
     )
 
     db.add(transcript)

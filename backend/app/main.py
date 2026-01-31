@@ -16,7 +16,7 @@ import re
 import secrets
 import mimetypes
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import List
 import os
 import shutil
@@ -478,7 +478,7 @@ async def startup_validation():
 # ============ Dashboard ============
 @app.get("/api/dashboard/stats", response_model=DashboardStats)
 def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     thirty_days = now + timedelta(days=30)
     org_id = current_user.organization_id
 
@@ -738,6 +738,71 @@ def get_business(
     return business
 
 
+@app.get("/api/businesses/{business_id}/stats")
+def get_business_stats(
+    business_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get statistics for a specific business"""
+    business = db.query(Business).filter(
+        Business.id == business_id,
+        Business.organization_id == current_user.organization_id
+    ).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    # Document count
+    documents_count = db.query(Document).filter(
+        Document.organization_id == current_user.organization_id,
+        Document.business_id == business_id
+    ).count()
+
+    # Contact count
+    contacts_count = db.query(Contact).filter(
+        Contact.organization_id == current_user.organization_id,
+        Contact.business_id == business_id
+    ).count()
+
+    # Deadline counts
+    deadlines_query = db.query(Deadline).filter(
+        Deadline.organization_id == current_user.organization_id,
+        Deadline.business_id == business_id,
+        Deadline.is_completed == False
+    )
+    deadlines_count = deadlines_query.count()
+    deadlines_overdue = deadlines_query.filter(
+        Deadline.due_date < datetime.now(UTC)
+    ).count()
+
+    # Task counts
+    tasks_query = db.query(Task).filter(
+        Task.organization_id == current_user.organization_id,
+        Task.business_id == business_id
+    )
+    tasks_count = tasks_query.filter(Task.status != 'done').count()
+    tasks_in_progress = tasks_query.filter(Task.status == 'in_progress').count()
+
+    # Checklist progress for this business
+    checklist_items = db.query(ChecklistProgress).filter(
+        ChecklistProgress.organization_id == current_user.organization_id,
+        ChecklistProgress.business_id == business_id
+    ).all()
+    total_items = 96  # Total checklist items
+    completed_items = sum(1 for item in checklist_items if item.is_completed)
+    checklist_progress = int((completed_items / total_items) * 100) if total_items > 0 else 0
+
+    return {
+        "documents_count": documents_count,
+        "contacts_count": contacts_count,
+        "deadlines_count": deadlines_count,
+        "deadlines_overdue": deadlines_overdue,
+        "tasks_count": tasks_count,
+        "tasks_in_progress": tasks_in_progress,
+        "checklist_progress": checklist_progress,
+    }
+
+
 @app.put("/api/businesses/{business_id}", response_model=BusinessResponse)
 def update_business(
     business_id: int,
@@ -794,7 +859,7 @@ def delete_business(
     if children:
         # Soft delete (archive) if has children
         business.is_archived = True
-        business.archived_at = datetime.utcnow()
+        business.archived_at = datetime.now(UTC)
         db.commit()
         return {"message": "Business archived (has children)", "archived": True}
 
@@ -819,7 +884,7 @@ def archive_business(
         raise HTTPException(status_code=404, detail="Business not found")
 
     business.is_archived = True
-    business.archived_at = datetime.utcnow()
+    business.archived_at = datetime.now(UTC)
     db.commit()
     return {"message": "Business archived", "business_id": business_id}
 
@@ -965,7 +1030,7 @@ def _update_achievement_progress_internal(db: Session, business_id: int, action_
 
         if ba.current_count >= ba.target_count:
             ba.is_unlocked = True
-            ba.unlocked_at = datetime.utcnow()
+            ba.unlocked_at = datetime.now(UTC)
 
 
 def _calculate_task_xp(task, completed_early: bool = False) -> int:
@@ -1622,7 +1687,7 @@ def _update_quest_progress(db: Session, business_id: int, action_type: str, incr
         BusinessQuest.is_completed == False,
         Quest.action_type == action_type,
         # Not expired
-        (BusinessQuest.expires_at == None) | (BusinessQuest.expires_at > datetime.utcnow())
+        (BusinessQuest.expires_at == None) | (BusinessQuest.expires_at > datetime.now(UTC))
     ).all()
 
     for bq in active_quests:
@@ -1631,7 +1696,7 @@ def _update_quest_progress(db: Session, business_id: int, action_type: str, incr
         # Check if quest is now complete
         if bq.current_count >= bq.target_count:
             bq.is_completed = True
-            bq.completed_at = datetime.utcnow()
+            bq.completed_at = datetime.now(UTC)
 
 
 # Quest API Endpoints
@@ -1686,13 +1751,13 @@ def get_business_quests(
     if not include_completed:
         query = query.filter(
             (BusinessQuest.is_claimed == False) |
-            (BusinessQuest.completed_at > datetime.utcnow() - timedelta(hours=24))
+            (BusinessQuest.completed_at > datetime.now(UTC) - timedelta(hours=24))
         )
 
     # Filter out expired uncompleted quests
     query = query.filter(
         (BusinessQuest.expires_at == None) |
-        (BusinessQuest.expires_at > datetime.utcnow()) |
+        (BusinessQuest.expires_at > datetime.now(UTC)) |
         (BusinessQuest.is_completed == True)
     )
 
@@ -1733,7 +1798,7 @@ def claim_quest_reward(
 
     # Award XP
     bq.is_claimed = True
-    bq.claimed_at = datetime.utcnow()
+    bq.claimed_at = datetime.now(UTC)
 
     result = _award_xp(db, business_id, bq.xp_reward, current_user.organization_id, current_user)
 
@@ -1835,7 +1900,7 @@ def _update_achievement_progress(db: Session, business_id: int, action_type: str
         # Check if achievement is now complete
         if ba.current_count >= ba.target_count:
             ba.is_unlocked = True
-            ba.unlocked_at = datetime.utcnow()
+            ba.unlocked_at = datetime.now(UTC)
 
     db.commit()
 
@@ -2184,7 +2249,7 @@ def _complete_challenge(db: Session, challenge: Challenge, winner_id: int = None
             challenge.winner_id = None  # No one made progress
 
     challenge.status = "completed"
-    challenge.completed_at = datetime.utcnow()
+    challenge.completed_at = datetime.now(UTC)
 
     # Distribute XP
     total_wagered = sum(p.xp_wagered for p in participants)
@@ -2275,7 +2340,7 @@ def _build_challenge_response(
     # Calculate time remaining
     time_remaining = None
     if challenge.ends_at and challenge.status == "active":
-        delta = challenge.ends_at - datetime.utcnow()
+        delta = challenge.ends_at - datetime.now(UTC)
         if delta.total_seconds() > 0:
             days = delta.days
             hours = delta.seconds // 3600
@@ -2380,7 +2445,7 @@ def create_challenge(
         business_id=business.id,
         is_creator=True,
         has_accepted=True,
-        accepted_at=datetime.utcnow(),
+        accepted_at=datetime.now(UTC),
         starting_count=starting_count,
         current_count=starting_count,
         xp_wagered=challenge_data.xp_wager,
@@ -2412,7 +2477,7 @@ def get_challenges(
     # Check for expired challenges and complete them
     expired_challenges = db.query(Challenge).filter(
         Challenge.status == "active",
-        Challenge.ends_at < datetime.utcnow()
+        Challenge.ends_at < datetime.now(UTC)
     ).all()
     for challenge in expired_challenges:
         _complete_challenge(db, challenge)
@@ -2560,7 +2625,7 @@ def join_challenge_by_code(
         business_id=business.id,
         is_creator=False,
         has_accepted=True,
-        accepted_at=datetime.utcnow(),
+        accepted_at=datetime.now(UTC),
         starting_count=starting_count,
         current_count=starting_count,
         xp_wagered=request.xp_wager,
@@ -2577,8 +2642,8 @@ def join_challenge_by_code(
     # If challenge is now full, start it
     if challenge.participant_count >= challenge.max_participants:
         challenge.status = "active"
-        challenge.starts_at = datetime.utcnow()
-        challenge.ends_at = datetime.utcnow() + DURATION_MAP.get(challenge.duration, timedelta(days=7))
+        challenge.starts_at = datetime.now(UTC)
+        challenge.ends_at = datetime.now(UTC) + DURATION_MAP.get(challenge.duration, timedelta(days=7))
 
     db.commit()
     db.refresh(challenge)
@@ -2622,7 +2687,7 @@ def accept_challenge(
         raise HTTPException(status_code=400, detail=f"Insufficient XP. You have {business.xp} XP")
 
     participation.has_accepted = True
-    participation.accepted_at = datetime.utcnow()
+    participation.accepted_at = datetime.now(UTC)
     participation.xp_wagered = request.xp_wager
     participation.starting_count = _get_current_count_for_challenge_type(db, business.id, challenge.challenge_type)
     participation.current_count = participation.starting_count
@@ -2639,8 +2704,8 @@ def accept_challenge(
 
     if all_accepted and challenge.participant_count >= 2:
         challenge.status = "active"
-        challenge.starts_at = datetime.utcnow()
-        challenge.ends_at = datetime.utcnow() + DURATION_MAP.get(challenge.duration, timedelta(days=7))
+        challenge.starts_at = datetime.now(UTC)
+        challenge.ends_at = datetime.now(UTC) + DURATION_MAP.get(challenge.duration, timedelta(days=7))
 
     db.commit()
     db.refresh(challenge)
@@ -2668,7 +2733,7 @@ def decline_challenge(
     if participation.has_accepted:
         raise HTTPException(status_code=400, detail="Already accepted - cannot decline")
 
-    participation.declined_at = datetime.utcnow()
+    participation.declined_at = datetime.now(UTC)
     db.delete(participation)
 
     challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
@@ -2924,7 +2989,7 @@ def record_service_visit(service_id: int, current_user: User = Depends(get_curre
     ).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
-    service.last_visited = datetime.utcnow()
+    service.last_visited = datetime.now(UTC)
     db.commit()
     return {"ok": True}
 
@@ -4102,7 +4167,7 @@ def update_deadline(deadline_id: int, deadline: DeadlineUpdate, current_user: Us
 
     # If marking as completed, set completed_at
     if update_data.get("is_completed") and not db_deadline.is_completed:
-        update_data["completed_at"] = datetime.utcnow()
+        update_data["completed_at"] = datetime.now(UTC)
 
     for key, value in update_data.items():
         setattr(db_deadline, key, value)
@@ -4202,7 +4267,7 @@ def complete_deadline(deadline_id: int, current_user: User = Depends(get_current
         raise HTTPException(status_code=404, detail="Deadline not found")
 
     deadline.is_completed = True
-    deadline.completed_at = datetime.utcnow()
+    deadline.completed_at = datetime.now(UTC)
 
     # If recurring, create next deadline
     if deadline.is_recurring and deadline.recurrence_months:
@@ -4243,7 +4308,7 @@ def get_daily_brief(current_user: User = Depends(get_current_user), db: Session 
     Categorized by urgency: overdue, today, this_week, heads_up
     """
     org_id = current_user.organization_id
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
     week_end = today_start + timedelta(days=7)
@@ -4783,7 +4848,7 @@ def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_u
         for key, value in progress.model_dump(exclude_unset=True).items():
             setattr(existing, key, value)
         if progress.is_completed and not existing.completed_at:
-            existing.completed_at = datetime.utcnow()
+            existing.completed_at = datetime.now(UTC)
             # Award XP for newly completing checklist item
             if not was_completed and existing.business_id:
                 _award_xp(db, existing.business_id, XP_CHECKLIST_COMPLETE, current_user.organization_id)
@@ -4801,7 +4866,7 @@ def create_or_update_checklist_item(progress: ChecklistProgressCreate, current_u
         item_data["organization_id"] = current_user.organization_id
         db_item = ChecklistProgress(**item_data)
         if progress.is_completed:
-            db_item.completed_at = datetime.utcnow()
+            db_item.completed_at = datetime.now(UTC)
         db.add(db_item)
         db.commit()
         db.refresh(db_item)
@@ -4828,7 +4893,7 @@ def update_checklist_item(item_id: str, progress: ChecklistProgressUpdate, curre
     was_completed = db_item.is_completed
 
     if update_data.get("is_completed") and not db_item.is_completed:
-        update_data["completed_at"] = datetime.utcnow()
+        update_data["completed_at"] = datetime.now(UTC)
     elif update_data.get("is_completed") is False:
         update_data["completed_at"] = None
 
@@ -5838,7 +5903,7 @@ def record_web_link_visit(link_id: int, current_user: User = Depends(get_current
     ).first()
     if not link:
         raise HTTPException(status_code=404, detail="Web link not found")
-    link.last_visited = datetime.utcnow()
+    link.last_visited = datetime.now(UTC)
     db.commit()
     return {"ok": True}
 
@@ -6271,7 +6336,7 @@ def update_task(
 
         # Set completed_at if status is done
         if update_data["status"] == "done" and not db_task.completed_at:
-            update_data["completed_at"] = datetime.utcnow()
+            update_data["completed_at"] = datetime.now(UTC)
 
             # Award XP for task completion
             # Use task's business_id, or fall back to board's business_id
@@ -6281,7 +6346,7 @@ def update_task(
                 business_id = board.business_id if board else None
 
             if business_id:
-                completed_early = db_task.due_date and datetime.utcnow() < db_task.due_date
+                completed_early = db_task.due_date and datetime.now(UTC) < db_task.due_date
                 xp_amount = _calculate_task_xp(db_task, completed_early)
                 _award_xp(db, business_id, xp_amount, current_user.organization_id)
                 # Update quest and achievement progress
@@ -6374,7 +6439,7 @@ def complete_task(
 
     old_status = db_task.status
     db_task.status = "done"
-    db_task.completed_at = datetime.utcnow()
+    db_task.completed_at = datetime.now(UTC)
 
     # Move to Done column if board has one
     done_column = db.query(TaskColumn).filter(
@@ -6402,7 +6467,7 @@ def complete_task(
         business_id = board.business_id if board else None
 
     if business_id:
-        completed_early = db_task.due_date and datetime.utcnow() < db_task.due_date
+        completed_early = db_task.due_date and datetime.now(UTC) < db_task.due_date
         xp_amount = _calculate_task_xp(db_task, completed_early)
         _award_xp(db, business_id, xp_amount, current_user.organization_id)
         # Update quest and achievement progress
@@ -6477,7 +6542,7 @@ def move_task(
 
         # Update completed_at based on new status
         if target_column.status == "done" and not db_task.completed_at:
-            db_task.completed_at = datetime.utcnow()
+            db_task.completed_at = datetime.now(UTC)
         elif target_column.status != "done":
             db_task.completed_at = None
 
@@ -6665,7 +6730,7 @@ def start_timer(
     db_entry = TimeEntry(
         task_id=timer.task_id,
         user_id=current_user.id,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(UTC),
         description=timer.description,
         is_running=True
     )
@@ -6695,7 +6760,7 @@ def stop_timer(
     if not db_entry.is_running:
         raise HTTPException(status_code=400, detail="Timer is not running")
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     db_entry.ended_at = now
     db_entry.is_running = False
     db_entry.duration_minutes = int((now - db_entry.started_at).total_seconds() / 60)
@@ -6965,7 +7030,7 @@ def get_metric_chart_data(
     db: Session = Depends(get_db)
 ):
     """Get metric data formatted for charts."""
-    start_date = datetime.utcnow() - timedelta(days=months * 30)
+    start_date = datetime.now(UTC) - timedelta(days=months * 30)
 
     metrics = db.query(Metric).filter(
         Metric.organization_id == current_user.organization_id,
@@ -7028,7 +7093,7 @@ def get_analytics_dashboard(
 
     org_id = current_user.organization_id
     days = get_period_days(period)
-    start_date = datetime.utcnow() - timedelta(days=days)
+    start_date = datetime.now(UTC) - timedelta(days=days)
     prev_start = start_date - timedelta(days=days)
     prev_end = start_date
 
@@ -7218,7 +7283,7 @@ def get_multi_metric_chart(
     org_id = current_user.organization_id
     types = [t.strip() for t in metric_types.split(',')]
     days = get_period_days(period)
-    start_date = datetime.utcnow() - timedelta(days=days)
+    start_date = datetime.now(UTC) - timedelta(days=days)
 
     result = {}
     for mt in types:
@@ -7887,7 +7952,7 @@ def check_ai_usage_limit(db: Session, organization_id: int) -> tuple[bool, int, 
     limit = AI_SUMMARY_LIMITS.get(tier, AI_SUMMARY_LIMITS["free"])
 
     # Check if we need to reset (new month)
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     if org.ai_usage_reset_at:
         if now.year > org.ai_usage_reset_at.year or now.month > org.ai_usage_reset_at.month:
             # Reset for new month
@@ -7999,7 +8064,7 @@ async def upload_transcript(
         summary=summary_data.summary if summary_data else None,
         action_items=json.dumps(summary_data.action_items) if summary_data else None,
         key_points=json.dumps(summary_data.key_points) if summary_data else None,
-        summary_generated_at=datetime.utcnow() if summary_data else None,
+        summary_generated_at=datetime.now(UTC) if summary_data else None,
         tags=tags,
         notes=notes,
     )
@@ -8160,7 +8225,7 @@ def regenerate_summary(
     transcript.summary = summary_data.summary
     transcript.action_items = json.dumps(summary_data.action_items)
     transcript.key_points = json.dumps(summary_data.key_points)
-    transcript.summary_generated_at = datetime.utcnow()
+    transcript.summary_generated_at = datetime.now(UTC)
 
     db.commit()
 
@@ -8440,7 +8505,7 @@ def get_stock_quote(
             day_low=info.get("dayLow"),
             fifty_two_week_high=info.get("fiftyTwoWeekHigh"),
             fifty_two_week_low=info.get("fiftyTwoWeekLow"),
-            last_updated=datetime.utcnow()
+            last_updated=datetime.now(UTC)
         )
 
     except HTTPException:
@@ -8488,7 +8553,7 @@ def get_stock_quotes_bulk(
                     "day_low": info.get("dayLow"),
                     "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
                     "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
-                    "last_updated": datetime.utcnow().isoformat()
+                    "last_updated": datetime.now(UTC).isoformat()
                 }
         except Exception as e:
             logger.warning(f"Error fetching quote for {symbol}: {e}")
@@ -8620,7 +8685,7 @@ async def get_market_news(
     try:
         articles = await news_client.search(
             query=query,
-            from_date=datetime.utcnow() - timedelta(days=7),
+            from_date=datetime.now(UTC) - timedelta(days=7),
             page_size=20,
             sort_by="publishedAt"
         )
@@ -8632,9 +8697,9 @@ async def get_market_news(
                 if published:
                     published_dt = datetime.fromisoformat(published.replace("Z", "+00:00"))
                 else:
-                    published_dt = datetime.utcnow()
+                    published_dt = datetime.now(UTC)
             except Exception:
-                published_dt = datetime.utcnow()
+                published_dt = datetime.now(UTC)
 
             source = article.get("source", {})
             source_name = source.get("name", "") if isinstance(source, dict) else str(source)

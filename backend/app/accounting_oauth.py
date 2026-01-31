@@ -12,7 +12,7 @@ import os
 import secrets
 import httpx
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional, Any, Callable, TypeVar
 from urllib.parse import urlencode
 import base64
@@ -55,7 +55,7 @@ async def get_intuit_discovery() -> dict:
 
     # Check if cache is valid
     if _intuit_discovery_cache and _intuit_discovery_cache_time:
-        cache_age = (datetime.utcnow() - _intuit_discovery_cache_time).total_seconds()
+        cache_age = (datetime.now(UTC) - _intuit_discovery_cache_time).total_seconds()
         if cache_age < DISCOVERY_CACHE_TTL:
             return _intuit_discovery_cache
 
@@ -64,7 +64,7 @@ async def get_intuit_discovery() -> dict:
             response = await client.get(INTUIT_DISCOVERY_URL)
             response.raise_for_status()
             _intuit_discovery_cache = response.json()
-            _intuit_discovery_cache_time = datetime.utcnow()
+            _intuit_discovery_cache_time = datetime.now(UTC)
             logger.info("Fetched Intuit discovery document successfully")
             return _intuit_discovery_cache
     except Exception as e:
@@ -173,7 +173,7 @@ def generate_state(user_id: int, provider: str) -> str:
     oauth_states[state] = {
         "user_id": user_id,
         "provider": provider,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
     return state
 
@@ -186,7 +186,7 @@ def validate_state(state: str, provider: str) -> Optional[int]:
     if data["provider"] != provider:
         return None
     # Expire after 10 minutes
-    if (datetime.utcnow() - data["created_at"]).total_seconds() > 600:
+    if (datetime.now(UTC) - data["created_at"]).total_seconds() > 600:
         del oauth_states[state]
         return None
     del oauth_states[state]
@@ -360,7 +360,7 @@ async def quickbooks_callback(
         if existing:
             existing.access_token = tokens["access_token"]
             existing.refresh_token = tokens.get("refresh_token")
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
             existing.company_id = realmId
             existing.company_name = company_info.get("CompanyName", "QuickBooks Company")
             existing.is_active = True
@@ -373,7 +373,7 @@ async def quickbooks_callback(
                 company_name=company_info.get("CompanyName", "QuickBooks Company"),
                 access_token=tokens["access_token"],
                 refresh_token=tokens.get("refresh_token"),
-                token_expires_at=datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600)),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600)),
                 is_active=True,
             )
             db.add(connection)
@@ -461,7 +461,7 @@ async def xero_callback(
         if existing:
             existing.access_token = tokens["access_token"]
             existing.refresh_token = tokens.get("refresh_token")
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 1800))
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 1800))
             existing.company_id = tenant.get("tenantId")
             existing.company_name = tenant.get("tenantName", "Xero Organization")
             existing.is_active = True
@@ -474,7 +474,7 @@ async def xero_callback(
                 company_name=tenant.get("tenantName", "Xero Organization"),
                 access_token=tokens["access_token"],
                 refresh_token=tokens.get("refresh_token"),
-                token_expires_at=datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 1800)),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 1800)),
                 is_active=True,
             )
             db.add(connection)
@@ -561,7 +561,7 @@ async def freshbooks_callback(
         if existing:
             existing.access_token = tokens["access_token"]
             existing.refresh_token = tokens.get("refresh_token")
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 43200))
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 43200))
             existing.company_id = str(business.get("id", ""))
             existing.company_name = business.get("name", "FreshBooks Business")
             existing.is_active = True
@@ -574,7 +574,7 @@ async def freshbooks_callback(
                 company_name=business.get("name", "FreshBooks Business"),
                 access_token=tokens["access_token"],
                 refresh_token=tokens.get("refresh_token"),
-                token_expires_at=datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 43200)),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 43200)),
                 is_active=True,
             )
             db.add(connection)
@@ -664,7 +664,7 @@ async def zoho_callback(
         if existing:
             existing.access_token = tokens["access_token"]
             existing.refresh_token = tokens.get("refresh_token")
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
             existing.company_id = str(org.get("organization_id", ""))
             existing.company_name = org.get("name", "Zoho Organization")
             existing.extra_data = json.dumps({"api_domain": tokens.get("api_domain", "https://books.zoho.com")})
@@ -678,7 +678,7 @@ async def zoho_callback(
                 company_name=org.get("name", "Zoho Organization"),
                 access_token=tokens["access_token"],
                 refresh_token=tokens.get("refresh_token"),
-                token_expires_at=datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600)),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600)),
                 extra_data=json.dumps({"api_domain": tokens.get("api_domain", "https://books.zoho.com")}),
                 is_active=True,
             )
@@ -711,14 +711,14 @@ async def sync_accounting_data(
         raise HTTPException(status_code=404, detail=f"No active {provider} connection found")
 
     # Check if token needs refresh
-    if connection.token_expires_at and connection.token_expires_at < datetime.utcnow():
+    if connection.token_expires_at and connection.token_expires_at < datetime.now(UTC):
         await refresh_token(connection, db)
 
     # Perform sync based on provider
     summary = await fetch_financial_summary(connection)
 
     # Update last sync time
-    connection.last_sync_at = datetime.utcnow()
+    connection.last_sync_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "synced", "provider": provider, "summary": summary}
@@ -830,7 +830,7 @@ async def refresh_token(connection: AccountingConnection, db: Session):
             connection.access_token = tokens["access_token"]
             if tokens.get("refresh_token"):
                 connection.refresh_token = tokens["refresh_token"]
-            connection.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
+            connection.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
             db.commit()
 
     except Exception as e:
@@ -843,8 +843,8 @@ async def refresh_token(connection: AccountingConnection, db: Session):
 async def fetch_financial_summary(connection: AccountingConnection) -> FinancialSummary:
     """Fetch financial summary from the connected accounting provider."""
     summary = FinancialSummary(
-        period_start=datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+        period_end=datetime.now(UTC),
     )
 
     try:
@@ -877,8 +877,8 @@ async def fetch_quickbooks_summary(client: httpx.AsyncClient, connection: Accoun
     log_intuit_tid(pnl_response, f"pnl_report_{connection.company_id}")
 
     summary = FinancialSummary(
-        period_start=datetime.utcnow().replace(day=1),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(UTC).replace(day=1),
+        period_end=datetime.now(UTC),
     )
 
     if pnl_response.status_code == 200:
@@ -900,8 +900,8 @@ async def fetch_xero_summary(client: httpx.AsyncClient, connection: AccountingCo
     }
 
     summary = FinancialSummary(
-        period_start=datetime.utcnow().replace(day=1),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(UTC).replace(day=1),
+        period_end=datetime.now(UTC),
     )
 
     # Get invoices
@@ -927,8 +927,8 @@ async def fetch_freshbooks_summary(client: httpx.AsyncClient, connection: Accoun
     account_id = connection.company_id
 
     summary = FinancialSummary(
-        period_start=datetime.utcnow().replace(day=1),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(UTC).replace(day=1),
+        period_end=datetime.now(UTC),
     )
 
     # Get invoices
@@ -953,8 +953,8 @@ async def fetch_zoho_summary(client: httpx.AsyncClient, connection: AccountingCo
     headers = {"Authorization": f"Zoho-oauthtoken {connection.access_token}"}
 
     summary = FinancialSummary(
-        period_start=datetime.utcnow().replace(day=1),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(UTC).replace(day=1),
+        period_end=datetime.now(UTC),
     )
 
     # Get invoices

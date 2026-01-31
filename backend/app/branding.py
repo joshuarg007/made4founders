@@ -5,7 +5,7 @@ Branding API routes for managing brand assets, colors, fonts, and guidelines.
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, UTC, UTC
 import os
 import shutil
 import uuid
@@ -859,7 +859,7 @@ def export_brand_kit(
 
     export_data = {
         "organization": org.name,
-        "exported_at": datetime.utcnow().isoformat(),
+        "exported_at": datetime.now(UTC).isoformat(),
         "colors": {
             color.color_type: {
                 "hex": color.hex_value,

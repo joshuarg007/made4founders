@@ -10,7 +10,7 @@ Supports:
 import os
 import secrets
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional, List
 from urllib.parse import urlencode
 import base64
@@ -118,8 +118,8 @@ async def refresh_zoom_token(connection: ZoomConnection, db: Session) -> bool:
             connection.access_token = tokens["access_token"]
             if "refresh_token" in tokens:
                 connection.refresh_token = tokens["refresh_token"]
-            connection.token_expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
-            connection.updated_at = datetime.utcnow()
+            connection.token_expires_at = datetime.now(UTC) + timedelta(seconds=tokens.get("expires_in", 3600))
+            connection.updated_at = datetime.now(UTC)
             db.commit()
 
             logger.info(f"Zoom token refreshed for connection {connection.id}")
@@ -134,7 +134,7 @@ async def get_valid_zoom_token(connection: ZoomConnection, db: Session) -> Optio
     """Get a valid access token, refreshing if necessary."""
     # Check if token is expired or about to expire (5 min buffer)
     if connection.token_expires_at:
-        if connection.token_expires_at < datetime.utcnow() + timedelta(minutes=5):
+        if connection.token_expires_at < datetime.now(UTC) + timedelta(minutes=5):
             if not await refresh_zoom_token(connection, db):
                 return None
 
@@ -207,11 +207,11 @@ async def zoom_login(
     _oauth_states[state] = {
         "user_id": current_user.id,
         "organization_id": current_user.organization_id,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
 
     # Clean old states (older than 10 minutes)
-    cutoff = datetime.utcnow() - timedelta(minutes=10)
+    cutoff = datetime.now(UTC) - timedelta(minutes=10)
     expired = [k for k, v in _oauth_states.items() if v["created_at"] < cutoff]
     for k in expired:
         del _oauth_states[k]
@@ -295,11 +295,11 @@ async def zoom_callback(
             # Update existing connection
             existing.access_token = access_token
             existing.refresh_token = refresh_token
-            existing.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+            existing.token_expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
             existing.zoom_email = zoom_user.get("email")
             existing.zoom_name = zoom_user.get("first_name", "") + " " + zoom_user.get("last_name", "")
             existing.is_active = True
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
         else:
             # Create new connection
             connection = ZoomConnection(
@@ -310,7 +310,7 @@ async def zoom_callback(
                 zoom_name=zoom_user.get("first_name", "") + " " + zoom_user.get("last_name", ""),
                 access_token=access_token,
                 refresh_token=refresh_token,
-                token_expires_at=datetime.utcnow() + timedelta(seconds=expires_in),
+                token_expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
                 scopes=",".join(ZOOM_SCOPES),
                 is_active=True,
             )
@@ -366,7 +366,7 @@ async def zoom_disconnect(
 
     if connection:
         connection.is_active = False
-        connection.updated_at = datetime.utcnow()
+        connection.updated_at = datetime.now(UTC)
         db.commit()
 
     return {"ok": True, "message": "Zoom disconnected"}
@@ -395,9 +395,9 @@ async def list_recordings(
 
     # Default to last 30 days
     if not from_date:
-        from_date = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
+        from_date = (datetime.now(UTC) - timedelta(days=30)).strftime("%Y-%m-%d")
     if not to_date:
-        to_date = datetime.utcnow().strftime("%Y-%m-%d")
+        to_date = datetime.now(UTC).strftime("%Y-%m-%d")
 
     params = {
         "from": from_date,
@@ -623,7 +623,7 @@ async def import_transcript(
         summary=summary_data.summary if summary_data else None,
         action_items=json.dumps(summary_data.action_items) if summary_data else None,
         key_points=json.dumps(summary_data.key_points) if summary_data else None,
-        summary_generated_at=datetime.utcnow() if summary_data else None,
+        summary_generated_at=datetime.now(UTC) if summary_data else None,
     )
 
     db.add(transcript)

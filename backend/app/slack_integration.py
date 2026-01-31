@@ -6,7 +6,7 @@ Notifications, alerts, and daily digest via Slack.
 import os
 import logging
 import secrets
-from datetime import datetime, timedelta, date
+from datetime import datetime, UTC, timedelta, date
 from typing import Optional, List, Dict, Any
 from urllib.parse import urlencode
 
@@ -120,7 +120,7 @@ async def get_connect_url(
     oauth_states[state] = {
         "org_id": current_user.organization_id,
         "user_id": current_user.id,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(UTC)
     }
 
     # Cleanup old states
@@ -201,7 +201,7 @@ async def oauth_callback(
             existing.channel_id = webhook_channel_id
             existing.channel_name = webhook_channel
             existing.is_active = True
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
             db.commit()
             connection = existing
         else:
@@ -250,7 +250,7 @@ async def disconnect_slack(
         raise HTTPException(status_code=404, detail="No Slack workspace connected")
 
     connection.is_active = False
-    connection.updated_at = datetime.utcnow()
+    connection.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "success"}
@@ -311,7 +311,7 @@ async def update_settings(
     connection.notify_metrics = settings.notify_metrics
     connection.daily_digest = settings.daily_digest
     connection.daily_digest_time = settings.daily_digest_time
-    connection.updated_at = datetime.utcnow()
+    connection.updated_at = datetime.now(UTC)
     db.commit()
 
     return {"status": "success"}
@@ -631,7 +631,7 @@ async def send_custom_alert(
 
 def cleanup_expired_states():
     """Remove expired OAuth states."""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expired = [
         key for key, data in oauth_states.items()
         if now - data.get("created_at", now) > timedelta(minutes=10)

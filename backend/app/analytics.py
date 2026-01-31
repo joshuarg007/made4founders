@@ -12,7 +12,7 @@ Endpoints:
 """
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Optional, List
 from collections import defaultdict
 
@@ -51,7 +51,7 @@ class AnalyticsEvent(Base):
     # Metadata
     properties = Column(Text, nullable=True)  # JSON
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
 
 class TrackEventRequest(BaseModel):
@@ -138,7 +138,7 @@ async def get_analytics_stats(
     """
     Get analytics statistics (admin only).
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
     period_start = today_start - timedelta(days=days)
