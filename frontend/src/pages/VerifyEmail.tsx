@@ -71,7 +71,7 @@ export default function VerifyEmail() {
     return (
       <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center p-4">
         <div className="mb-8">
-          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
         </div>
 
         <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8 text-center">
@@ -88,7 +88,7 @@ export default function VerifyEmail() {
     return (
       <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center p-4">
         <div className="mb-8">
-          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
         </div>
 
         <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8 text-center">
@@ -115,7 +115,7 @@ export default function VerifyEmail() {
     return (
       <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center p-4">
         <div className="mb-8">
-          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
         </div>
 
         <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8 text-center">
@@ -173,7 +173,7 @@ export default function VerifyEmail() {
   return (
     <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center p-4">
       <div className="mb-8">
-        <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
+        <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
       </div>
 
       <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8 text-center">

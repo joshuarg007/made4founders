@@ -207,7 +207,7 @@ export default function Login() {
 
         {/* Logo */}
         <div className="mb-8">
-          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
         </div>
 
         {/* MFA Card */}
@@ -285,7 +285,7 @@ export default function Login() {
 
       {/* Logo */}
       <div className="mb-8">
-        <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
+        <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
       </div>
 
       {/* Card */}
