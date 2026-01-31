@@ -17,7 +17,7 @@ import secrets
 import mimetypes
 from sqlalchemy.orm import Session
 from datetime import datetime, UTC, timedelta
-from typing import List
+from typing import List, Optional
 import os
 import shutil
 import logging
