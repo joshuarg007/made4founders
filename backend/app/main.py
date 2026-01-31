@@ -4585,13 +4585,17 @@ def mask_identifier(value: str, identifier_type: str) -> str:
 
 @app.get("/api/business-identifiers", response_model=List[BusinessIdentifierMasked])
 def get_business_identifiers(
+    business_id: Optional[int] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get all identifiers with masked values (requires auth)."""
-    identifiers = db.query(BusinessIdentifier).filter(
+    query = db.query(BusinessIdentifier).filter(
         BusinessIdentifier.organization_id == current_user.organization_id
-    ).order_by(BusinessIdentifier.identifier_type).all()
+    )
+    if business_id is not None:
+        query = query.filter(BusinessIdentifier.business_id == business_id)
+    identifiers = query.order_by(BusinessIdentifier.identifier_type).all()
     masked_list = []
     for ident in identifiers:
         masked_list.append(BusinessIdentifierMasked(
@@ -4599,6 +4603,7 @@ def get_business_identifiers(
             identifier_type=ident.identifier_type,
             label=ident.label,
             masked_value=mask_identifier(ident.value, ident.identifier_type),
+            business_id=ident.business_id,
             issuing_authority=ident.issuing_authority,
             issue_date=ident.issue_date,
             expiration_date=ident.expiration_date,
@@ -4635,6 +4640,7 @@ def get_business_identifier(
         identifier_type=ident.identifier_type,
         label=ident.label,
         value=decrypted_value,
+        business_id=ident.business_id,
         issuing_authority=ident.issuing_authority,
         issue_date=ident.issue_date,
         expiration_date=ident.expiration_date,
@@ -4679,6 +4685,7 @@ def create_business_identifier(
     # Encrypt the value before storing
     identifier_data = identifier.model_dump()
     identifier_data["value"] = encrypt_identifier_value(identifier_data["value"])
+    identifier_data["organization_id"] = current_user.organization_id
 
     db_ident = BusinessIdentifier(**identifier_data)
     db.add(db_ident)
@@ -4693,6 +4700,7 @@ def create_business_identifier(
         identifier_type=db_ident.identifier_type,
         label=db_ident.label,
         value=decrypt_identifier_value(db_ident.value),
+        business_id=db_ident.business_id,
         issuing_authority=db_ident.issuing_authority,
         issue_date=db_ident.issue_date,
         expiration_date=db_ident.expiration_date,
@@ -4742,6 +4750,7 @@ def update_business_identifier(
         identifier_type=db_ident.identifier_type,
         label=db_ident.label,
         value=decrypt_identifier_value(db_ident.value),
+        business_id=db_ident.business_id,
         issuing_authority=db_ident.issuing_authority,
         issue_date=db_ident.issue_date,
         expiration_date=db_ident.expiration_date,

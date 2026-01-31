@@ -675,6 +675,7 @@ class BusinessIdentifierBase(BaseModel):
     identifier_type: str
     label: str
     value: str
+    business_id: Optional[int] = None
     issuing_authority: Optional[str] = None
     issue_date: Optional[datetime] = None
     expiration_date: Optional[datetime] = None
@@ -690,6 +691,7 @@ class BusinessIdentifierUpdate(BaseModel):
     identifier_type: Optional[str] = None
     label: Optional[str] = None
     value: Optional[str] = None
+    business_id: Optional[int] = None
     issuing_authority: Optional[str] = None
     issue_date: Optional[datetime] = None
     expiration_date: Optional[datetime] = None
@@ -712,6 +714,7 @@ class BusinessIdentifierMasked(BaseModel):
     identifier_type: str
     label: str
     masked_value: str  # e.g., "XX-XXX1234"
+    business_id: Optional[int] = None
     issuing_authority: Optional[str] = None
     issue_date: Optional[datetime] = None
     expiration_date: Optional[datetime] = None

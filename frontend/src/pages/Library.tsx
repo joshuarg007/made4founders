@@ -47,6 +47,7 @@ interface BusinessIdentifier {
   identifier_type: string;
   label: string;
   masked_value: string;
+  business_id: number | null;
   issuing_authority: string | null;
   issue_date: string | null;
   expiration_date: string | null;
@@ -88,6 +89,7 @@ export default function Library() {
     identifier_type: 'ein',
     label: '',
     value: '',
+    business_id: null as number | null,
     issuing_authority: '',
     notes: ''
   });
@@ -258,6 +260,7 @@ export default function Library() {
           identifier_type: 'ein',
           label: '',
           value: '',
+          business_id: null,
           issuing_authority: '',
           notes: ''
         });
@@ -290,6 +293,16 @@ export default function Library() {
       </div>
     );
   }
+
+  // Filter identifiers based on business filter
+  const filteredIdentifiers = identifiers.filter(ident => {
+    if (businessFilter === 'all') return true;
+    if (businessFilter === 'none') return ident.business_id === null;
+    if (Array.isArray(businessFilter)) {
+      return ident.business_id !== null && businessFilter.includes(ident.business_id);
+    }
+    return true;
+  });
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -575,6 +588,23 @@ export default function Library() {
                   className="w-full px-3 py-2 bg-[#1a1d24] border border-white/10 rounded-lg text-white focus:outline-none focus:border-violet-500/50"
                 />
               </div>
+              {businesses.length > 0 && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Business</label>
+                  <select
+                    value={newIdentifier.business_id ?? ''}
+                    onChange={(e) => setNewIdentifier({ ...newIdentifier, business_id: e.target.value ? parseInt(e.target.value) : null })}
+                    className="w-full px-3 py-2 bg-[#1a1d24] border border-white/10 rounded-lg text-white focus:outline-none focus:border-violet-500/50"
+                  >
+                    <option value="" className="bg-[#1a1d24] text-white">No business</option>
+                    {businesses.filter(b => !b.is_archived).map(b => (
+                      <option key={b.id} value={b.id} className="bg-[#1a1d24] text-white">
+                        {b.emoji ? `${b.emoji} ` : ''}{b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <button
@@ -595,15 +625,15 @@ export default function Library() {
         )}
 
         {/* Identifiers List */}
-        {identifiers.length === 0 ? (
+        {filteredIdentifiers.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Shield className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No identifiers added yet</p>
-            <p className="text-sm">Add your EIN, D-U-N-S number, and other business IDs</p>
+            <p>{identifiers.length === 0 ? 'No identifiers added yet' : 'No identifiers match the current filter'}</p>
+            <p className="text-sm">{identifiers.length === 0 ? 'Add your EIN, D-U-N-S number, and other business IDs' : 'Try changing the business filter'}</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {identifiers.map((ident) => (
+            {filteredIdentifiers.map((ident) => (
               <div
                 key={ident.id}
                 className="flex items-center justify-between p-4 bg-[#0f1117] rounded-lg border border-white/5"
@@ -613,11 +643,23 @@ export default function Library() {
                     <Hash className="w-5 h-5 text-gray-400" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-white">{ident.label}</span>
                       <span className="px-2 py-0.5 text-xs bg-[#1a1d24]/10 text-gray-400 rounded">
                         {IDENTIFIER_TYPES.find(t => t.value === ident.identifier_type)?.label || ident.identifier_type}
                       </span>
+                      {ident.business_id && businesses.find(b => b.id === ident.business_id) && (
+                        <span
+                          className="px-2 py-0.5 text-xs rounded"
+                          style={{
+                            backgroundColor: `${businesses.find(b => b.id === ident.business_id)?.color || '#6366f1'}20`,
+                            color: businesses.find(b => b.id === ident.business_id)?.color || '#6366f1',
+                          }}
+                        >
+                          {businesses.find(b => b.id === ident.business_id)?.emoji}{' '}
+                          {businesses.find(b => b.id === ident.business_id)?.name}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <code className="text-lg font-mono text-cyan-400">
