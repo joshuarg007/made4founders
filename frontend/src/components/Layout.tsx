@@ -278,7 +278,7 @@ function LayoutContent() {
         {/* Logo */}
         <div className="p-4 border-b border-white/10">
           <Link to="/app" className="hover:opacity-80 transition-opacity" onClick={() => setMobileMenuOpen(false)}>
-            <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-14 w-auto" />
+            <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-20 w-auto" />
           </Link>
         </div>
 
@@ -407,7 +407,6 @@ function LayoutContent() {
                 Built by Axion Deep Labs
               </a>
             </div>
-            <img src="/qr-code.png" alt="Scan to visit Axion Deep" className="w-16 h-16 rounded mt-2" />
           </div>
         </div>
       </aside>
