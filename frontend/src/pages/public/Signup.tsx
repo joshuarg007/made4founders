@@ -135,12 +135,8 @@ export default function Signup() {
         </Link>
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 mb-8 hover:opacity-80 transition-opacity">
-          <img src="/logo.webp" alt="Made4Founders" className="h-20 w-auto" width={68} height={83} />
-          <div>
-            <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
-            <p className="text-sm text-gray-400">By Founders, For Founders</p>
-          </div>
+        <Link to="/" className="mb-8 hover:opacity-80 transition-opacity">
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
         </Link>
 
         {/* Card */}

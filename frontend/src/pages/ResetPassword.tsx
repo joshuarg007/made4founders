@@ -73,12 +73,8 @@ export default function ResetPassword() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center p-4 relative">
-        <div className="flex items-center gap-3 mb-8">
-          <img src="/logo.webp" alt="Made4Founders" className="h-20 w-auto" width={68} height={83} />
-          <div>
-            <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
-            <p className="text-sm text-gray-400">By Founders, For Founders</p>
-          </div>
+        <div className="mb-8">
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
         </div>
 
         <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8 text-center">
@@ -110,12 +106,8 @@ export default function ResetPassword() {
         Back to Login
       </Link>
 
-      <div className="flex items-center gap-3 mb-8">
-        <img src="/logo.webp" alt="Made4Founders" className="h-20 w-auto" width={68} height={83} />
-        <div>
-          <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
-          <p className="text-sm text-gray-400">By Founders, For Founders</p>
-        </div>
+      <div className="mb-8">
+        <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
       </div>
 
       <div className="w-full max-w-md bg-[#1a1d24] rounded-2xl border border-white/10 p-8">

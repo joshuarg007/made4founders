@@ -206,12 +206,8 @@ export default function Login() {
         </button>
 
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-8">
-          <img src="/logo.webp" alt="Made4Founders" className="h-20 w-auto" width={68} height={83} />
-          <div>
-            <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
-            <p className="text-sm text-gray-400">By Founders, For Founders</p>
-          </div>
+        <div className="mb-8">
+          <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
         </div>
 
         {/* MFA Card */}
@@ -288,12 +284,8 @@ export default function Login() {
       </Link>
 
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-8">
-        <img src="/logo.webp" alt="Made4Founders" className="h-20 w-auto" width={68} height={83} />
-        <div>
-          <h1 className="text-2xl font-bold text-white">Made4Founders</h1>
-          <p className="text-sm text-gray-400">By Founders, For Founders</p>
-        </div>
+      <div className="mb-8">
+        <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-16 w-auto" />
       </div>
 
       {/* Card */}
@@ -401,7 +393,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/25 active:scale-[0.98]"
           >
             {isSubmitting ? (
               <>
@@ -430,7 +422,7 @@ export default function Login() {
             type="button"
             onClick={() => handleOAuthLogin('google')}
             disabled={oauthLoading !== null}
-            className="w-full py-3 px-4 rounded-lg bg-[#1a1d24] text-white font-medium hover:bg-white/5 transition disabled:opacity-50 flex items-center justify-center gap-3"
+            className="w-full py-3 px-4 rounded-lg bg-white text-gray-800 font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-3 hover:bg-gray-100 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] border border-gray-200"
           >
             {oauthLoading === 'google' ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -506,11 +498,11 @@ export default function Login() {
               setIsRegister(!isRegister);
               setError('');
             }}
-            className="text-sm text-gray-400 hover:text-white transition"
+            className="text-sm text-gray-400 transition group"
           >
             {isRegister
               ? 'Already have an account? Sign in'
-              : "Don't have an account? Create one"}
+              : (<>Don't have an account? <span className="shine-button inline-block px-3 py-1 ml-1 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-medium">Create one</span></>)}
           </button>
         </div>
       </div>

@@ -20,9 +20,8 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
-              <span className="text-lg font-bold text-white">Made4Founders</span>
+            <Link to="/" className="group">
+              <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-10 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -120,9 +119,8 @@ export default function PublicLayout() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
-              <Link to="/" className="flex items-center gap-3">
-                <img src="/logo.webp" alt="Made4Founders" className="h-14 w-auto" width={42} height={52} />
-                <span className="text-lg font-bold text-white">Made4Founders</span>
+              <Link to="/">
+                <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-10 w-auto" />
               </Link>
               <p className="mt-4 text-sm text-gray-400">
                 Built by founders, for founders. Secure. Profitable. Fun.

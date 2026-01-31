@@ -187,12 +187,8 @@ export default function LinkAccount() {
       </Link>
 
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-8">
-        <img src="/logo.webp" alt="Made4Founders" className="h-16 w-auto" />
-        <div>
-          <h1 className="text-xl font-bold text-white">Made4Founders</h1>
-          <p className="text-sm text-gray-400">Account Setup</p>
-        </div>
+      <div className="mb-8">
+        <img src="/made4founders-logo-horizontal.png" alt="Made4Founders" className="h-14 w-auto" />
       </div>
 
       {/* Card */}
