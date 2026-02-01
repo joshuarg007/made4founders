@@ -111,7 +111,7 @@ def _base_html_template(content: str, preview_text: str = "") -> str:
                                         <p style="margin: 0 0 8px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 1px;">
                                             A Product By
                                         </p>
-                                        <img src="https://axiondeep.com/images/logo.webp" alt="Axion Deep Labs" width="120" style="display: inline-block; max-width: 120px; height: auto; opacity: 0.8;">
+                                        <img src="https://axiondeep.com/images/email-logo.png" alt="Axion Deep Labs" width="120" style="display: inline-block; max-width: 120px; height: auto;">
                                         <p style="margin: 12px 0 0; font-size: 11px; color: #4b5563;">
                                             &copy; {current_year} Axion Deep Labs Inc. All rights reserved.
                                         </p>
