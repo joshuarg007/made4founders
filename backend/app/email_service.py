@@ -9,6 +9,7 @@ Features:
 import os
 import logging
 from typing import Optional
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,114 @@ def _get_ses_client():
             logger.error(f"Failed to create SES client: {e}")
             return None
     return _ses_client
+
+
+def _base_html_template(content: str, preview_text: str = "") -> str:
+    """
+    Base HTML email template with Made4Founders branding.
+    Includes logo header, legal disclaimer, and Axion Deep Labs footer.
+    """
+    current_year = datetime.now().year
+    return f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{APP_NAME}</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {{font-family: Arial, sans-serif !important;}}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <!-- Preview text -->
+    <div style="display: none; max-height: 0; overflow: hidden;">
+        {preview_text}
+    </div>
+
+    <!-- Email container -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f1117;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Content card -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #1a1d24; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden;">
+                    <!-- Header with Logo -->
+                    <tr>
+                        <td style="padding: 32px 40px 24px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <img src="https://made4founders.com/made4founders-logo-horizontal.png" alt="Made4Founders" width="200" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 32px 40px;">
+                            {content}
+                        </td>
+                    </tr>
+
+                    <!-- Legal Disclaimer -->
+                    <tr>
+                        <td style="padding: 24px 40px; border-top: 1px solid rgba(255,255,255,0.1); background-color: #13151a;">
+                            <p style="margin: 0 0 16px; font-size: 12px; color: #6b7280; line-height: 1.6; text-align: center;">
+                                This email was sent by {APP_NAME}. You received this because you have an account with us
+                                or requested this notification.
+                            </p>
+                            <p style="margin: 0 0 16px; font-size: 12px; color: #6b7280; text-align: center;">
+                                <a href="{FRONTEND_URL}/app/settings" style="color: #06b6d4; text-decoration: none;">Email Preferences</a>
+                                &nbsp;&bull;&nbsp;
+                                <a href="{FRONTEND_URL}/privacy" style="color: #06b6d4; text-decoration: none;">Privacy Policy</a>
+                                &nbsp;&bull;&nbsp;
+                                <a href="{FRONTEND_URL}/terms" style="color: #06b6d4; text-decoration: none;">Terms of Service</a>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Axion Deep Labs Footer -->
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #0a0b0d; border-top: 1px solid rgba(255,255,255,0.05);">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <p style="margin: 0 0 8px; font-size: 11px; color: #4b5563; text-transform: uppercase; letter-spacing: 1px;">
+                                            A Product By
+                                        </p>
+                                        <img src="https://axiondeep.com/images/logo.webp" alt="Axion Deep Labs" width="120" style="display: inline-block; max-width: 120px; height: auto; opacity: 0.8;">
+                                        <p style="margin: 12px 0 0; font-size: 11px; color: #4b5563;">
+                                            &copy; {current_year} Axion Deep Labs Inc. All rights reserved.
+                                        </p>
+                                        <p style="margin: 8px 0 0; font-size: 10px; color: #374151;">
+                                            Delaware, USA &bull; <a href="mailto:labs@axiondeep.com" style="color: #6b7280; text-decoration: none;">labs@axiondeep.com</a>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+
+def _button_html(text: str, url: str, color: str = "#06b6d4") -> str:
+    """Generate an HTML button for emails."""
+    return f"""
+<table role="presentation" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
+    <tr>
+        <td style="border-radius: 8px; background: linear-gradient(to right, #06b6d4, #8b5cf6);">
+            <a href="{url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px;">
+                {text}
+            </a>
+        </td>
+    </tr>
+</table>
+"""
 
 
 def _send_email(to: str, subject: str, html: str) -> bool:
@@ -74,31 +183,32 @@ async def send_verification_email(email: str, token: str, name: Optional[str] = 
     verification_url = f"{FRONTEND_URL}/verify-email?token={token}"
     greeting = f"Hi {name}," if name else "Hi there,"
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">Welcome to {APP_NAME}!</h2>
-        <p>{greeting}</p>
-        <p>Thanks for signing up! Please verify your email address by clicking the button below:</p>
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="{verification_url}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 500;">
-                Verify Email Address
-            </a>
-        </p>
-        <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
-        <p style="color: #666; font-size: 14px; word-break: break-all;">{verification_url}</p>
-        <p style="color: #666; font-size: 14px;">This link expires in 24 hours.</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-        <p style="color: #999; font-size: 12px;">If you didn't create an account with {APP_NAME}, please ignore this email.</p>
-    </body>
-    </html>
-    """
+    content = f"""
+<h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #f3f4f6;">
+    Welcome to {APP_NAME}!
+</h1>
+<p style="margin: 0 0 16px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    {greeting.replace(',', '')} Thanks for signing up!
+</p>
+<p style="margin: 0 0 8px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    Please verify your email address to complete your registration and start managing your business.
+</p>
+{_button_html("Verify Email Address", verification_url)}
+<p style="margin: 0 0 8px; font-size: 14px; color: #6b7280; line-height: 1.6;">
+    Or copy and paste this link into your browser:
+</p>
+<p style="margin: 0 0 16px; font-size: 13px; color: #6b7280; word-break: break-all; background-color: #13151a; padding: 12px; border-radius: 8px;">
+    {verification_url}
+</p>
+<p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
+    This link expires in <strong style="color: #f59e0b;">24 hours</strong>.
+</p>
+<p style="margin: 16px 0 0; font-size: 13px; color: #4b5563; line-height: 1.6;">
+    If you didn't create an account with {APP_NAME}, please ignore this email.
+</p>
+"""
 
+    html_content = _base_html_template(content, "Verify your email to complete registration")
     subject = f"Verify your {APP_NAME} email"
     success = _send_email(email, subject, html_content)
     if success:
@@ -123,31 +233,34 @@ async def send_password_reset_email(email: str, token: str, name: Optional[str] 
     reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
     greeting = f"Hi {name}," if name else "Hi there,"
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">Password Reset Request</h2>
-        <p>{greeting}</p>
-        <p>We received a request to reset your password. Click the button below to create a new password:</p>
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="{reset_url}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 500;">
-                Reset Password
-            </a>
-        </p>
-        <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
-        <p style="color: #666; font-size: 14px; word-break: break-all;">{reset_url}</p>
-        <p style="color: #666; font-size: 14px;"><strong>This link expires in 1 hour.</strong></p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-        <p style="color: #999; font-size: 12px;">If you didn't request a password reset, please ignore this email or contact support if you have concerns. Your password will remain unchanged.</p>
-    </body>
-    </html>
-    """
+    content = f"""
+<h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #f3f4f6;">
+    Password Reset Request
+</h1>
+<p style="margin: 0 0 16px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    {greeting.replace(',', '')} We received a request to reset your password.
+</p>
+<p style="margin: 0 0 8px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    Click the button below to create a new password:
+</p>
+{_button_html("Reset Password", reset_url)}
+<p style="margin: 0 0 8px; font-size: 14px; color: #6b7280; line-height: 1.6;">
+    Or copy and paste this link into your browser:
+</p>
+<p style="margin: 0 0 16px; font-size: 13px; color: #6b7280; word-break: break-all; background-color: #13151a; padding: 12px; border-radius: 8px;">
+    {reset_url}
+</p>
+<div style="margin: 16px 0; padding: 12px 16px; background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+    <p style="margin: 0; font-size: 14px; color: #f87171;">
+        <strong>This link expires in 1 hour.</strong>
+    </p>
+</div>
+<p style="margin: 0; font-size: 13px; color: #4b5563; line-height: 1.6;">
+    If you didn't request a password reset, please ignore this email or contact support if you have concerns. Your password will remain unchanged.
+</p>
+"""
 
+    html_content = _base_html_template(content, "Reset your password")
     subject = f"Reset your {APP_NAME} password"
     success = _send_email(email, subject, html_content)
     if success:
@@ -183,15 +296,15 @@ async def send_deadline_reminder_email(
     # Determine subject and intro text
     if reminder_type == "today":
         subject = f"{len(deadlines)} deadline(s) due TODAY - {APP_NAME}"
-        intro = "You have deadlines due <strong>today</strong>:"
+        intro = "You have deadlines due <strong style='color: #ef4444;'>today</strong>:"
         urgency_color = "#ef4444"  # red
     elif reminder_type == "tomorrow":
         subject = f"{len(deadlines)} deadline(s) due tomorrow - {APP_NAME}"
-        intro = "You have deadlines due <strong>tomorrow</strong>:"
+        intro = "You have deadlines due <strong style='color: #f59e0b;'>tomorrow</strong>:"
         urgency_color = "#f59e0b"  # amber
     else:  # week
         subject = f"{len(deadlines)} deadline(s) coming up this week - {APP_NAME}"
-        intro = "You have deadlines due <strong>this week</strong>:"
+        intro = "You have deadlines due <strong style='color: #3b82f6;'>this week</strong>:"
         urgency_color = "#3b82f6"  # blue
 
     # Build deadline list HTML
@@ -209,41 +322,20 @@ async def send_deadline_reminder_email(
         </tr>
         '''
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #e5e7eb; background-color: #0f1117; margin: 0; padding: 20px;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #1a1d24; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
-            <div style="padding: 24px 24px 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <h2 style="color: {urgency_color}; margin: 0 0 8px 0; font-size: 20px;">Deadline Reminder</h2>
-                <p style="margin: 0; color: #9ca3af;">{greeting}</p>
-            </div>
-            <div style="padding: 16px 24px;">
-                <p style="margin: 0 0 16px 0;">{intro}</p>
-                <table style="width: 100%; border-collapse: collapse; background-color: #13151a; border-radius: 8px; overflow: hidden;">
-                    {deadline_items}
-                </table>
-            </div>
-            <div style="padding: 16px 24px 24px 24px;">
-                <a href="{FRONTEND_URL}/app/deadlines" style="display: inline-block; background: linear-gradient(to right, #06b6d4, #8b5cf6); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500;">
-                    View All Deadlines
-                </a>
-            </div>
-            <div style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); background-color: #13151a;">
-                <p style="color: #6b7280; font-size: 12px; margin: 0;">
-                    You received this email because you have deadline reminders enabled in your {APP_NAME} settings.
-                    <a href="{FRONTEND_URL}/app/settings" style="color: #60a5fa;">Manage preferences</a>
-                </p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+    content = f"""
+<h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: {urgency_color};">
+    Deadline Reminder
+</h1>
+<p style="margin: 0 0 16px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    {greeting.replace(',', '')} {intro}
+</p>
+<table style="width: 100%; border-collapse: collapse; background-color: #13151a; border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
+    {deadline_items}
+</table>
+{_button_html("View All Deadlines", f"{FRONTEND_URL}/app/deadlines")}
+"""
 
+    html_content = _base_html_template(content, f"{len(deadlines)} deadline(s) need your attention")
     success = _send_email(email, subject, html_content)
     if success:
         logger.info(f"Deadline reminder ({reminder_type}) sent to {email}")
@@ -277,55 +369,44 @@ async def send_weekly_digest_email(
     upcoming_deadlines = stats.get('upcoming_deadlines', 0)
     xp_earned = stats.get('xp_earned', 0)
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #e5e7eb; background-color: #0f1117; margin: 0; padding: 20px;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #1a1d24; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
-            <div style="padding: 24px 24px 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <h2 style="color: #22d3ee; margin: 0 0 8px 0; font-size: 20px;">Your Weekly Summary</h2>
-                <p style="margin: 0; color: #9ca3af;">{greeting} Here's how your week went.</p>
-            </div>
-            <div style="padding: 16px 24px;">
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                    <div style="background-color: #13151a; border-radius: 8px; padding: 16px; text-align: center;">
-                        <div style="font-size: 28px; font-weight: bold; color: #22d3ee;">{tasks_completed}</div>
-                        <div style="font-size: 13px; color: #9ca3af;">Tasks Completed</div>
-                    </div>
-                    <div style="background-color: #13151a; border-radius: 8px; padding: 16px; text-align: center;">
-                        <div style="font-size: 28px; font-weight: bold; color: #10b981;">{deadlines_met}</div>
-                        <div style="font-size: 13px; color: #9ca3af;">Deadlines Met</div>
-                    </div>
-                    <div style="background-color: #13151a; border-radius: 8px; padding: 16px; text-align: center;">
-                        <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">{upcoming_deadlines}</div>
-                        <div style="font-size: 13px; color: #9ca3af;">Upcoming Deadlines</div>
-                    </div>
-                    <div style="background-color: #13151a; border-radius: 8px; padding: 16px; text-align: center;">
-                        <div style="font-size: 28px; font-weight: bold; color: #a855f7;">{xp_earned}</div>
-                        <div style="font-size: 13px; color: #9ca3af;">XP Earned</div>
-                    </div>
-                </div>
-            </div>
-            <div style="padding: 16px 24px 24px 24px;">
-                <a href="{FRONTEND_URL}/app" style="display: inline-block; background: linear-gradient(to right, #06b6d4, #8b5cf6); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500;">
-                    View Dashboard
-                </a>
-            </div>
-            <div style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); background-color: #13151a;">
-                <p style="color: #6b7280; font-size: 12px; margin: 0;">
-                    You received this email because weekly digest is enabled in your {APP_NAME} settings.
-                    <a href="{FRONTEND_URL}/app/settings" style="color: #60a5fa;">Manage preferences</a>
-                </p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+    content = f"""
+<h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #22d3ee;">
+    Your Weekly Summary
+</h1>
+<p style="margin: 0 0 24px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    {greeting.replace(',', '')} Here's how your week went.
+</p>
 
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
+    <tr>
+        <td width="48%" style="padding: 16px; background-color: #13151a; border-radius: 8px; text-align: center; vertical-align: top;">
+            <div style="font-size: 32px; font-weight: bold; color: #22d3ee;">{tasks_completed}</div>
+            <div style="font-size: 13px; color: #9ca3af; margin-top: 4px;">Tasks Completed</div>
+        </td>
+        <td width="4%"></td>
+        <td width="48%" style="padding: 16px; background-color: #13151a; border-radius: 8px; text-align: center; vertical-align: top;">
+            <div style="font-size: 32px; font-weight: bold; color: #10b981;">{deadlines_met}</div>
+            <div style="font-size: 13px; color: #9ca3af; margin-top: 4px;">Deadlines Met</div>
+        </td>
+    </tr>
+    <tr><td colspan="3" height="12"></td></tr>
+    <tr>
+        <td width="48%" style="padding: 16px; background-color: #13151a; border-radius: 8px; text-align: center; vertical-align: top;">
+            <div style="font-size: 32px; font-weight: bold; color: #f59e0b;">{upcoming_deadlines}</div>
+            <div style="font-size: 13px; color: #9ca3af; margin-top: 4px;">Upcoming Deadlines</div>
+        </td>
+        <td width="4%"></td>
+        <td width="48%" style="padding: 16px; background-color: #13151a; border-radius: 8px; text-align: center; vertical-align: top;">
+            <div style="font-size: 32px; font-weight: bold; color: #a855f7;">{xp_earned}</div>
+            <div style="font-size: 13px; color: #9ca3af; margin-top: 4px;">XP Earned</div>
+        </td>
+    </tr>
+</table>
+
+{_button_html("View Dashboard", f"{FRONTEND_URL}/app")}
+"""
+
+    html_content = _base_html_template(content, f"Your weekly summary: {tasks_completed} tasks completed")
     subject = f"Your {APP_NAME} Weekly Summary"
     success = _send_email(email, subject, html_content)
     if success:
@@ -358,30 +439,47 @@ async def send_login_alert_email(
     greeting = f"Hi {name}," if name else "Hi there,"
     device_str = device_info or "Unknown device"
     ip_str = ip_address or "Unknown IP"
+    login_time = datetime.now().strftime("%B %d, %Y at %H:%M UTC")
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">New Login Detected</h2>
-        <p>{greeting}</p>
-        <p>We noticed a new login to your {APP_NAME} account:</p>
-        <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>Device:</strong> {device_str}</p>
-            <p style="margin: 8px 0 0 0;"><strong>IP Address:</strong> {ip_str}</p>
-        </div>
-        <p>If this was you, you can ignore this email.</p>
-        <p>If you didn't log in, please secure your account immediately by changing your password and enabling two-factor authentication.</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-        <p style="color: #999; font-size: 12px;">{APP_NAME} Security Team</p>
-    </body>
-    </html>
-    """
+    content = f"""
+<h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #f59e0b;">
+    New Login Detected
+</h1>
+<p style="margin: 0 0 16px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    {greeting.replace(',', '')} We noticed a new login to your {APP_NAME} account.
+</p>
 
+<div style="margin: 24px 0; padding: 20px; background-color: #13151a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+    <table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; font-size: 15px;">
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; width: 100px;">Device:</td>
+            <td style="padding: 8px 0; color: #f3f4f6; font-weight: 500;">{device_str}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280;">IP Address:</td>
+            <td style="padding: 8px 0; color: #f3f4f6; font-weight: 500; font-family: monospace;">{ip_str}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280;">Time:</td>
+            <td style="padding: 8px 0; color: #f3f4f6; font-weight: 500;">{login_time}</td>
+        </tr>
+    </table>
+</div>
+
+<p style="margin: 0 0 16px; font-size: 16px; color: #9ca3af; line-height: 1.6;">
+    If this was you, you can safely ignore this email.
+</p>
+
+<div style="margin: 16px 0; padding: 16px; background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+    <p style="margin: 0; font-size: 14px; color: #f87171; line-height: 1.6;">
+        <strong>Wasn't you?</strong> Secure your account immediately by changing your password and enabling two-factor authentication.
+    </p>
+</div>
+
+{_button_html("Review Account Security", f"{FRONTEND_URL}/app/settings")}
+"""
+
+    html_content = _base_html_template(content, "New login to your account detected")
     subject = f"New login to your {APP_NAME} account"
     success = _send_email(email, subject, html_content)
     if success:
